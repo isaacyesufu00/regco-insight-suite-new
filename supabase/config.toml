@@ -1,0 +1,16 @@
+project_id = "pdplkprcomjslilznbsl"
+
+[functions.send-demo-notification]
+verify_jwt = false
+
+[functions.onboard-client]
+verify_jwt = false
+
+[functions.calculate-compliance-score]
+verify_jwt = false
+
+[functions.send-deadline-reminders]
+verify_jwt = false
+
+[functions.send-support-notification]
+verify_jwt = false
