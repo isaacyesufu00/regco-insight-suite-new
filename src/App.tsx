@@ -40,6 +40,7 @@ import FeatureMonitoring from "./pages/FeatureMonitoring";
 import SupportTickets from "./pages/SupportTickets";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import AuthConfirm from "./pages/auth/Confirm";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +59,8 @@ const App = () => (
             <Route path="/book-demo" element={<BookDemo />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/confirm" element={<AuthConfirm />} />
+            <Route path="/auth/callback" element={<AuthConfirm />} />
             <Route path="/about" element={<About />} />
             <Route path="/security" element={<Security />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
