@@ -35,6 +35,7 @@ const Confirm = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [hasValidToken, setHasValidToken] = useState(false);
@@ -43,73 +44,85 @@ const Confirm = () => {
   const config = strengthConfig[strength];
   const isWeak = strength === "weak";
 
-  // Extract token from URL on mount
   useEffect(() => {
-    const initToken = async () => {
-      try {
-        // Try to get token from hash (recovery/signup flow)
-        const hash = window.location.hash.substring(1);
-        const params = new URLSearchParams(hash);
-        const hashToken = params.get("access_token");
-        const hashType = params.get("type");
+    let resolved = false;
 
-        // Try to get token from query params (invite flow)
-        const queryToken = searchParams.get("token");
-        const queryType = searchParams.get("type");
-
-        const token = hashToken || queryToken;
-        const type = hashType || queryType;
-
-        if (!token) {
-          setHasValidToken(false);
-          setLoading(false);
-          return;
-        }
-
-        // For hash-based tokens (recovery/signup), set the session
-        if (hashToken && (hashType === "recovery" || hashType === "signup")) {
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token: hashToken,
-            refresh_token: params.get("refresh_token") || "",
-          });
-
-          if (!sessionError) {
-            setHasValidToken(true);
-          } else {
-            setHasValidToken(false);
-          }
-        }
-        // For query-based tokens (invite), verify OTP
-        else if (queryToken && queryType === "invite") {
-          const email = searchParams.get("email");
-          if (!email) {
-            setHasValidToken(false);
-            setLoading(false);
-            return;
-          }
-
-          const { error: otpError } = await supabase.auth.verifyOtp({
-            email,
-            token: queryToken,
-            type: "invite",
-          });
-
-          if (!otpError) {
-            setHasValidToken(true);
-          } else {
-            setHasValidToken(false);
-          }
-        } else {
-          setHasValidToken(false);
-        }
-      } catch (err) {
-        setHasValidToken(false);
-      } finally {
-        setLoading(false);
-      }
+    const resolve = (valid: boolean) => {
+      if (resolved) return;
+      resolved = true;
+      setHasValidToken(valid);
+      setLoading(false);
     };
 
-    initToken();
+    // PRIMARY: Listen for Supabase to auto-process the URL hash tokens.
+    // Supabase v2 detects access_token/refresh_token in the hash automatically and
+    // fires PASSWORD_RECOVERY (for recovery links) or SIGNED_IN (for invite/signup links).
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY" && session) {
+          resolve(true);
+        } else if (event === "SIGNED_IN" && session) {
+          // Covers invite and signup flows
+          resolve(true);
+        }
+      }
+    );
+
+    // FALLBACK A: If onAuthStateChange already fired before this effect ran
+    // (race condition), getSession() will return the established session.
+    // Also covers manual hash parsing if detectSessionInUrl is off.
+    const init = async () => {
+      // Check if Supabase already established a session from the URL hash
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        resolve(true);
+        return;
+      }
+
+      // FALLBACK B: Manually read hash tokens in case detectSessionInUrl didn't
+      // auto-process them (or the hash is still present).
+      const hash = window.location.hash.substring(1);
+      const hashParams = new URLSearchParams(hash);
+      const accessToken = hashParams.get("access_token");
+      const refreshToken = hashParams.get("refresh_token") || "";
+      const hashType = hashParams.get("type");
+
+      if (accessToken && (hashType === "recovery" || hashType === "signup" || hashType === "invite")) {
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (!sessionError) {
+          resolve(true);
+          return;
+        }
+      }
+
+      // FALLBACK C: Query-param invite tokens (?token=xxx&type=invite&email=xxx)
+      const queryToken = searchParams.get("token");
+      const queryType = searchParams.get("type");
+      const email = searchParams.get("email");
+
+      if (queryToken && queryType === "invite" && email) {
+        const { error: otpError } = await supabase.auth.verifyOtp({
+          email,
+          token: queryToken,
+          type: "invite",
+        });
+        if (!otpError) {
+          resolve(true);
+          return;
+        }
+      }
+
+      // If nothing resolved yet, give onAuthStateChange up to 3 seconds to fire
+      // (it can lag slightly behind the async URL hash processing).
+      setTimeout(() => resolve(false), 3000);
+    };
+
+    init();
+
+    return () => subscription.unsubscribe();
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -125,9 +138,9 @@ const Confirm = () => {
       return;
     }
 
-    setLoading(true);
+    setSubmitting(true);
     const { error: updateError } = await supabase.auth.updateUser({ password });
-    setLoading(false);
+    setSubmitting(false);
 
     if (updateError) {
       setError(updateError.message);
@@ -179,7 +192,11 @@ const Confirm = () => {
           </div>
           <h2 className="text-xl font-bold mb-2" style={{ color: "#1a1a2e" }}>Invalid or Expired Link</h2>
           <p className="text-sm mb-6" style={{ color: "#8a8a9a" }}>
-            This link is invalid or has expired. Please contact <a href="mailto:support@regco.com" className="font-semibold" style={{ color: "#3b6ef8" }}>support@regco.com</a> for assistance.
+            This link is invalid or has expired. Please contact{" "}
+            <a href="mailto:support@regco.com" className="font-semibold" style={{ color: "#3b6ef8" }}>
+              support@regco.com
+            </a>{" "}
+            for assistance.
           </p>
           <Button asChild variant="outline" className="rounded-full px-6">
             <Link to="/login">Back to Login</Link>
@@ -192,11 +209,11 @@ const Confirm = () => {
   const submitButton = (
     <Button
       type="submit"
-      disabled={loading || isWeak}
+      disabled={submitting || isWeak}
       className="w-full text-white font-semibold h-11"
       style={{ background: isWeak ? undefined : "#3b6ef8", borderRadius: 12 }}
     >
-      {loading ? "Setting Password..." : "Set Password and Access Dashboard"}
+      {submitting ? "Setting Password..." : "Set Password and Access Dashboard"}
     </Button>
   );
 
@@ -206,8 +223,8 @@ const Confirm = () => {
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center gap-2 mb-2">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ color: "#3b6ef8" }}>
-              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2"/>
-              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
+              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
             <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo</span>
           </Link>
