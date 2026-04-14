@@ -29,11 +29,13 @@ interface Profile {
   company_name: string | null;
   rc_number: string | null;
   cbn_license_category: string | null;
+  compliance_lead_name: string | null;
 }
 
 interface DataSource {
   id: string;
   file_name: string;
+  file_path: string;
 }
 
 // Fields per report type
@@ -94,9 +96,17 @@ const NewReport = () => {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("profiles").select("company_name, rc_number, cbn_license_category").eq("id", user.id).maybeSingle(),
+      supabase
+        .from("profiles")
+        .select("company_name, rc_number, cbn_license_category, compliance_lead_name")
+        .eq("id", user.id)
+        .maybeSingle(),
       supabase.from("institution_report_types").select("report_type").eq("user_id", user.id),
-      supabase.from("data_sources").select("id, file_name").eq("user_id", user.id).eq("status", "Ready"),
+      supabase
+        .from("data_sources")
+        .select("id, file_name, file_path")
+        .eq("user_id", user.id)
+        .eq("status", "Ready"),
     ]).then(([profileRes, typesRes, dsRes]) => {
       if (profileRes.data) setProfile(profileRes.data);
       if (typesRes.data && typesRes.data.length > 0) {
@@ -117,34 +127,87 @@ const NewReport = () => {
     setSubmitting(true);
 
     try {
-      const { error } = await supabase.from("report_requests").insert({
+      const periodStartStr = periodStart!.toISOString().split("T")[0];
+      const periodEndStr = periodEnd!.toISOString().split("T")[0];
+      const reportName = `${reportType} — ${profile.company_name || "Report"}`;
+
+      // 1. Insert report record with status "pending" and capture the new ID
+      const { data: newReport, error: reportError } = await supabase
+        .from("reports")
+        .insert({
+          user_id: user.id,
+          report_name: reportName,
+          report_type: reportType,
+          status: "pending",
+          reporting_period_start: periodStartStr,
+          reporting_period_end: periodEndStr,
+        })
+        .select()
+        .single();
+
+      if (reportError || !newReport) throw reportError || new Error("Failed to create report record");
+
+      // 2. Also insert into report_requests for tracking
+      await supabase.from("report_requests").insert({
         user_id: user.id,
         institution_name: profile.company_name || "",
         rc_number: profile.rc_number,
         report_type: reportType,
-        reporting_period_start: periodStart!.toISOString().split("T")[0],
-        reporting_period_end: periodEnd!.toISOString().split("T")[0],
+        reporting_period_start: periodStartStr,
+        reporting_period_end: periodEndStr,
         data_source_id: dataSourceId || null,
         form_data: formData,
         status: "Processing",
       });
 
-      if (error) throw error;
+      // 3. Get a signed URL for the selected CBS / data source file
+      let fileUrl = "";
+      if (dataSourceId) {
+        const selectedSource = dataSources.find((ds) => ds.id === dataSourceId);
+        if (selectedSource?.file_path) {
+          const { data: signedData } = await supabase.storage
+            .from("data-sources")
+            .createSignedUrl(selectedSource.file_path, 86400); // 24-hour link
+          fileUrl = signedData?.signedUrl || "";
+        }
+      }
 
-      // Also insert into reports table for dashboard tracking
-      await supabase.from("reports").insert({
-        user_id: user.id,
-        report_name: `${reportType} — ${profile.company_name || "Report"}`,
-        report_type: reportType,
-        status: "Processing",
-        reporting_period_start: periodStart!.toISOString().split("T")[0],
-        reporting_period_end: periodEnd!.toISOString().split("T")[0],
+      // 4. Store the file URL on the report record
+      if (fileUrl) {
+        await supabase.from("reports").update({ file_path: fileUrl }).eq("id", newReport.id);
+      }
+
+      // 5. Invoke the notify-automation edge function
+      await supabase.functions.invoke("notify-automation", {
+        body: {
+          report_id: newReport.id,
+          user_id: user.id,
+          institution_name: profile.company_name,
+          cbn_license_number: profile.rc_number,
+          cbn_license_category: profile.cbn_license_category,
+          compliance_lead_name: profile.compliance_lead_name,
+          reporting_period_start: periodStartStr,
+          reporting_period_end: periodEndStr,
+          file_url: fileUrl,
+          client_email: user.email,
+        },
       });
 
-      setStep(4); // Confirmation
+      // 6. Update report status to "Processing" so the dashboard shows the spinner
+      await supabase
+        .from("reports")
+        .update({ status: "Processing" })
+        .eq("id", newReport.id);
+
+      // 7. Move to confirmation step, then redirect to reports page
+      setStep(4);
       setTimeout(() => navigate("/dashboard/reports"), 3000);
     } catch {
-      toast({ title: "Something went wrong", description: "We couldn't submit your report. Please try again.", variant: "destructive" });
+      toast({
+        title: "Something went wrong",
+        description: "We couldn't submit your report. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -163,15 +226,21 @@ const NewReport = () => {
       <div className="flex items-center gap-1 mb-6">
         {STEPS.map((s, i) => (
           <div key={s} className="flex items-center gap-1">
-            <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors",
-              i < step ? "bg-primary border-primary text-primary-foreground" :
-              i === step ? "border-primary text-primary bg-primary/10" :
-              "border-border text-muted-foreground"
-            )}>
+            <div
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold border-2 transition-colors",
+                i < step
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : i === step
+                  ? "border-primary text-primary bg-primary/10"
+                  : "border-border text-muted-foreground"
+              )}
+            >
               {i < step ? <CheckCircle className="w-4 h-4" /> : i + 1}
             </div>
-            {i < STEPS.length - 1 && <div className={cn("w-8 h-0.5", i < step ? "bg-primary" : "bg-border")} />}
+            {i < STEPS.length - 1 && (
+              <div className={cn("w-8 h-0.5", i < step ? "bg-primary" : "bg-border")} />
+            )}
           </div>
         ))}
       </div>
@@ -216,12 +285,23 @@ const NewReport = () => {
                 <Label>Start Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodStart && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !periodStart && "text-muted-foreground"
+                      )}
+                    >
                       {periodStart ? format(periodStart, "PPP") : "Pick start date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} className="p-3 pointer-events-auto" />
+                    <Calendar
+                      mode="single"
+                      selected={periodStart}
+                      onSelect={setPeriodStart}
+                      className="p-3 pointer-events-auto"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -229,32 +309,47 @@ const NewReport = () => {
                 <Label>End Date</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodEnd && "text-muted-foreground")}>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full justify-start text-left font-normal",
+                        !periodEnd && "text-muted-foreground"
+                      )}
+                    >
                       {periodEnd ? format(periodEnd, "PPP") : "Pick end date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} className="p-3 pointer-events-auto" />
+                    <Calendar
+                      mode="single"
+                      selected={periodEnd}
+                      onSelect={setPeriodEnd}
+                      className="p-3 pointer-events-auto"
+                    />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Data Source</Label>
+              <Label>Data Source (CBS File)</Label>
               {dataSources.length > 0 ? (
                 <Select value={dataSourceId} onValueChange={setDataSourceId}>
-                  <SelectTrigger><SelectValue placeholder="Select a data source" /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an uploaded CBS file" />
+                  </SelectTrigger>
                   <SelectContent>
                     {dataSources.map((ds) => (
-                      <SelectItem key={ds.id} value={ds.id}>{ds.file_name}</SelectItem>
+                      <SelectItem key={ds.id} value={ds.id}>
+                        {ds.file_name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               ) : (
                 <div className="border border-dashed border-border rounded-lg p-4 text-center">
                   <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">Upload your data first</p>
+                  <p className="text-sm text-muted-foreground mb-2">Upload your CBS file first</p>
                   <Button asChild variant="outline" size="sm">
                     <Link to="/dashboard/data-sources">Go to Data Sources</Link>
                   </Button>
@@ -263,7 +358,9 @@ const NewReport = () => {
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
+              <Button variant="outline" onClick={() => setStep(0)}>
+                Back
+              </Button>
               <Button onClick={() => setStep(2)} disabled={!canProceedStep1}>
                 Next <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -292,12 +389,16 @@ const NewReport = () => {
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">CBN License Category</Label>
-                <p className="text-sm font-medium text-foreground">{profile?.cbn_license_category || "—"}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {profile?.cbn_license_category || "—"}
+                </p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Reporting Period</Label>
                 <p className="text-sm font-medium text-foreground">
-                  {periodStart && periodEnd ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}` : "—"}
+                  {periodStart && periodEnd
+                    ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}`
+                    : "—"}
                 </p>
               </div>
             </div>
@@ -315,12 +416,19 @@ const NewReport = () => {
             ))}
 
             {fields.length === 0 && (
-              <p className="text-sm text-muted-foreground">No additional fields required for this report type.</p>
+              <p className="text-sm text-muted-foreground">
+                No additional fields required for this report type.
+              </p>
             )}
 
             <div className="flex justify-between pt-2">
-              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={() => setStep(3)} disabled={fields.length > 0 && !canProceedStep2}>
+              <Button variant="outline" onClick={() => setStep(1)}>
+                Back
+              </Button>
+              <Button
+                onClick={() => setStep(3)}
+                disabled={fields.length > 0 && !canProceedStep2}
+              >
                 Next <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             </div>
@@ -352,9 +460,19 @@ const NewReport = () => {
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-muted-foreground">Period</span>
                 <span className="font-medium text-foreground">
-                  {periodStart && periodEnd ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}` : "—"}
+                  {periodStart && periodEnd
+                    ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}`
+                    : "—"}
                 </span>
               </div>
+              {dataSourceId && (
+                <div className="flex justify-between py-2 border-b border-border">
+                  <span className="text-muted-foreground">Data Source</span>
+                  <span className="font-medium text-foreground">
+                    {dataSources.find((d) => d.id === dataSourceId)?.file_name || "—"}
+                  </span>
+                </div>
+              )}
               {fields.map((f) => (
                 <div key={f.name} className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">{f.label}</span>
@@ -364,9 +482,15 @@ const NewReport = () => {
             </div>
 
             <div className="flex items-center gap-2 pt-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={() => setStep(0)}>Edit Type</Button>
-              <Button variant="outline" size="sm" onClick={() => setStep(1)}>Edit Period</Button>
-              <Button variant="outline" size="sm" onClick={() => setStep(2)}>Edit Details</Button>
+              <Button variant="outline" size="sm" onClick={() => setStep(0)}>
+                Edit Type
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                Edit Period
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setStep(2)}>
+                Edit Details
+              </Button>
               <div className="flex-1" />
               <Button onClick={handleSubmit} disabled={submitting}>
                 {submitting ? "Submitting..." : "Confirm & Generate"}
@@ -383,9 +507,12 @@ const NewReport = () => {
             <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-4 flex items-center justify-center">
               <CheckCircle className="w-8 h-8 text-success" />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Your report is being generated</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              Your report is being generated
+            </h2>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              This usually takes 2 to 5 minutes. We will notify you when it is ready. Redirecting to My Reports…
+              This usually takes 2 to 5 minutes. You can track the status in My Reports.
+              Redirecting there now…
             </p>
           </CardContent>
         </Card>
