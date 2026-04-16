@@ -1,0 +1,37 @@
+I need to update the RegCo dashboard to automatically pass all required credentials and data when calling the notify-automation Supabase edge function. Here is what needs to happen:
+When a client submits a report generation request in the dashboard, the code needs to:
+
+Get the logged-in user's profile from the profiles table in Supabase including: company_name, rc_number, cbn_license_category, compliance_lead_name, notification_email_report_ready
+Upload the CBS file to Supabase Storage bucket called "reports" in a folder named after the user's ID and get back a signed URL that is valid for 3600 seconds
+Create a new row in the reports table with these fields:
+
+user_id: the logged in user's ID
+status: "pending"
+file_url: the signed URL from step 2
+reporting_period_start: from the form input
+reporting_period_end: from the form input
+created_at: current timestamp
+
+
+Call the Supabase edge function named "notify-automation" using supabase.functions.invoke with this exact body structure:
+
+{
+  report_id: the ID of the newly created report row,
+  user_id: the logged in user's ID,
+  institution_name: profile.company_name,
+  cbn_license_number: profile.rc_number,
+  cbn_license_category: profile.cbn_license_category,
+  compliance_lead_name: profile.compliance_lead_name,
+  reporting_period_start: from the form,
+  reporting_period_end: from the form,
+  file_url: the signed URL,
+  client_email: profile.notification_email_report_ready or the user's auth email as fallback
+}
+
+After calling the edge function immediately show a Processing status with a spinner on the screen
+Start polling the reports table every 8 seconds using the report ID to check the status field
+When status changes to "ready" show a Download Report button. The download URL should be generated using Supabase Storage getPublicUrl on the report_url field from the reports table
+When status changes to "failed" show a red error box displaying the error_message field from the reports table, with a button to try again
+Add proper error handling throughout — if anything fails update the report row status to "failed" and show the error message
+
+Please find the relevant files in this project and implement all of this. The Supabase client is already configured in this project. After making all changes push to GitHub.

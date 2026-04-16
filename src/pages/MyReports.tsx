@@ -8,8 +8,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
-import { Download, FileText, Search, RefreshCw, ChevronDown, Loader2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Download,
+  FileText,
+  Search,
+  RefreshCw,
+  ChevronDown,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Report {
   id: string;
@@ -18,12 +31,14 @@ interface Report {
   status: string;
   created_at: string;
   file_path: string | null;
+  file_url: string | null;
+  report_url: string | null;
   reporting_period_start: string | null;
   reporting_period_end: string | null;
   pdf_url: string | null;
   docx_url: string | null;
   xlsx_url: string | null;
-  error_message?: string | null;
+  error_message: string | null;
 }
 
 const isReady = (s: string) => s.toLowerCase() === "ready";
@@ -31,7 +46,7 @@ const isFailed = (s: string) => s.toLowerCase() === "failed";
 const isProcessing = (s: string) =>
   s.toLowerCase() === "processing" || s.toLowerCase() === "pending";
 
-const POLL_INTERVAL_MS = 10_000; // 10 seconds
+const POLL_INTERVAL_MS = 8_000; // 8 seconds
 
 const MyReports = () => {
   const { user } = useAuth();
@@ -41,8 +56,7 @@ const MyReports = () => {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  // Keep a ref to the latest reports so the polling callback can compare statuses
-  // without causing stale closure issues
+  // Ref to latest reports — lets polling compare statuses without stale closures
   const reportsRef = useRef<Report[]>([]);
   useEffect(() => {
     reportsRef.current = reports;
@@ -57,21 +71,17 @@ const MyReports = () => {
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Show toast when a report transitions to "ready"
-      data.forEach((updated) => {
+      // Show a toast when a report transitions to "ready"
+      (data as Report[]).forEach((updated) => {
         const existing = reportsRef.current.find((r) => r.id === updated.id);
-        if (
-          existing &&
-          existing.status !== updated.status &&
-          isReady(updated.status)
-        ) {
+        if (existing && existing.status !== updated.status && isReady(updated.status)) {
           toast({
             title: "Report ready",
             description: `"${updated.report_name}" is ready to download.`,
           });
         }
       });
-      setReports(data);
+      setReports(data as Report[]);
     }
   }, [user, toast]);
 
@@ -80,7 +90,7 @@ const MyReports = () => {
     fetchReports().then(() => setLoading(false));
   }, [fetchReports]);
 
-  // Real-time subscription (primary live updates)
+  // Real-time subscription (primary live updates via Supabase Realtime)
   useEffect(() => {
     if (!user) return;
 
@@ -88,20 +98,13 @@ const MyReports = () => {
       .channel("reports-my")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "reports",
-          filter: `user_id=eq.${user.id}`,
-        },
+        { event: "*", schema: "public", table: "reports", filter: `user_id=eq.${user.id}` },
         (payload) => {
           if (payload.eventType === "INSERT") {
             setReports((p) => [payload.new as Report, ...p]);
           } else if (payload.eventType === "UPDATE") {
             const updated = payload.new as Report;
-            setReports((p) =>
-              p.map((r) => (r.id === updated.id ? updated : r))
-            );
+            setReports((p) => p.map((r) => (r.id === updated.id ? updated : r)));
             if (isReady(updated.status)) {
               toast({
                 title: "Report ready",
@@ -109,9 +112,7 @@ const MyReports = () => {
               });
             }
           } else if (payload.eventType === "DELETE") {
-            setReports((p) =>
-              p.filter((r) => r.id !== (payload.old as { id: string }).id)
-            );
+            setReports((p) => p.filter((r) => r.id !== (payload.old as { id: string }).id));
           }
         }
       )
@@ -122,17 +123,53 @@ const MyReports = () => {
     };
   }, [user, toast]);
 
-  // Polling fallback — every 10 seconds, re-fetch all reports so status changes
-  // are caught even if the real-time subscription misses an event.
+  // Polling fallback — every 8 seconds. Ensures updates are caught even if
+  // the Realtime subscription misses a push.
   useEffect(() => {
     if (!user) return;
-
-    const interval = setInterval(() => {
-      fetchReports();
-    }, POLL_INTERVAL_MS);
-
+    const interval = setInterval(fetchReports, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [user, fetchReports]);
+
+  // Resolve the download URL for a ready report.
+  // Priority: report_url (new flow) → pdf_url → file_path (legacy).
+  const resolveDownloadUrl = (r: Report): string | null => {
+    if (r.report_url) {
+      const { data } = supabase.storage.from("reports").getPublicUrl(r.report_url);
+      return data?.publicUrl || null;
+    }
+    return r.pdf_url || null;
+  };
+
+  const handleDownload = async (r: Report) => {
+    const url = resolveDownloadUrl(r);
+    if (url) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = r.report_name;
+      a.target = "_blank";
+      a.click();
+      return;
+    }
+    // Fallback: try to create a signed URL from file_path
+    if (r.file_path) {
+      const { data } = await supabase.storage
+        .from("reports")
+        .createSignedUrl(r.file_path, 3600);
+      if (data?.signedUrl) {
+        const a = document.createElement("a");
+        a.href = data.signedUrl;
+        a.download = r.report_name;
+        a.click();
+        return;
+      }
+    }
+    toast({
+      title: "Download unavailable",
+      description: "The report file is not yet available. Please try again shortly.",
+      variant: "destructive",
+    });
+  };
 
   const handleDownloadFormat = async (
     url: string | null,
@@ -141,9 +178,7 @@ const MyReports = () => {
   ) => {
     let signedUrl = url;
     if (!signedUrl && filePath) {
-      const { data } = await supabase.storage
-        .from("reports")
-        .createSignedUrl(filePath, 3600);
+      const { data } = await supabase.storage.from("reports").createSignedUrl(filePath, 3600);
       signedUrl = data?.signedUrl || null;
     }
     if (signedUrl) {
@@ -161,44 +196,34 @@ const MyReports = () => {
   };
 
   const handleRetry = async (reportId: string) => {
-    await supabase
-      .from("reports")
-      .update({ status: "Processing" })
-      .eq("id", reportId);
+    await supabase.from("reports").update({ status: "Processing" }).eq("id", reportId);
     toast({ title: "Retrying", description: "We're regenerating your report." });
   };
 
-  const types = Array.from(
-    new Set(reports.map((r) => r.report_type).filter(Boolean))
-  );
+  const types = Array.from(new Set(reports.map((r) => r.report_type).filter(Boolean)));
 
   const filtered = reports.filter((r) => {
-    if (
-      search &&
-      !r.report_name.toLowerCase().includes(search.toLowerCase())
-    )
-      return false;
+    if (search && !r.report_name.toLowerCase().includes(search.toLowerCase())) return false;
     if (typeFilter !== "all" && r.report_type !== typeFilter) return false;
     return true;
   });
 
   const statusBadge = (r: Report) => {
-    const s = r.status;
-    if (isReady(s)) {
+    if (isReady(r.status)) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-success/10 text-success border-success/20">
           Ready
         </span>
       );
     }
-    if (isFailed(s)) {
+    if (isFailed(r.status)) {
       return (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-destructive/10 text-destructive border-destructive/20">
           Failed
         </span>
       );
     }
-    if (isProcessing(s)) {
+    if (isProcessing(r.status)) {
       return (
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border bg-warning/10 text-warning border-warning/20">
           <Loader2 className="h-3 w-3 animate-spin" />
@@ -208,9 +233,79 @@ const MyReports = () => {
     }
     return (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-muted text-muted-foreground">
-        {s}
+        {r.status}
       </span>
     );
+  };
+
+  const actionCell = (r: Report) => {
+    if (isReady(r.status)) {
+      // If the report has a report_url (new flow), show a single download button.
+      // Otherwise fall back to the multi-format dropdown for legacy reports.
+      if (r.report_url) {
+        return (
+          <Button size="sm" onClick={() => handleDownload(r)}>
+            <Download className="mr-1 h-3 w-3" /> Download Report
+          </Button>
+        );
+      }
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="outline">
+              <Download className="mr-1 h-3 w-3" /> Download{" "}
+              <ChevronDown className="ml-1 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={() =>
+                handleDownloadFormat(r.pdf_url, r.file_path, `${r.report_name}.pdf`)
+              }
+            >
+              Download PDF
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDownloadFormat(r.docx_url, null, `${r.report_name}.docx`)}
+            >
+              Download Word (.docx)
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => handleDownloadFormat(r.xlsx_url, null, `${r.report_name}.xlsx`)}
+            >
+              Download Excel (.xlsx)
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
+
+    if (isFailed(r.status)) {
+      return (
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-start gap-2 p-2.5 rounded-lg border border-destructive/30 bg-destructive/5 max-w-[260px] text-left">
+            <AlertCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-destructive break-words">
+              {r.error_message || "We encountered an issue. Our team has been notified."}
+            </p>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => handleRetry(r.id)}>
+            <RefreshCw className="mr-1 h-3 w-3" /> Try Again
+          </Button>
+        </div>
+      );
+    }
+
+    if (isProcessing(r.status)) {
+      return (
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Generating…
+        </span>
+      );
+    }
+
+    return null;
   };
 
   if (loading) {
@@ -256,9 +351,7 @@ const MyReports = () => {
           {filtered.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-1">
-                No reports found
-              </h3>
+              <h3 className="text-lg font-semibold text-foreground mb-1">No reports found</h3>
               <p className="text-sm text-muted-foreground">
                 Try adjusting your search or filter.
               </p>
@@ -273,7 +366,7 @@ const MyReports = () => {
                     <TableHead>Reporting Period</TableHead>
                     <TableHead>Date Generated</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Download</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -286,77 +379,9 @@ const MyReports = () => {
                           ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
                           : "—"}
                       </TableCell>
-                      <TableCell>
-                        {new Date(r.created_at).toLocaleDateString()}
-                      </TableCell>
+                      <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>{statusBadge(r)}</TableCell>
-                      <TableCell className="text-right">
-                        {isReady(r.status) && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="outline">
-                                <Download className="mr-1 h-3 w-3" /> Download{" "}
-                                <ChevronDown className="ml-1 h-3 w-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleDownloadFormat(
-                                    r.pdf_url,
-                                    r.file_path,
-                                    `${r.report_name}.pdf`
-                                  )
-                                }
-                              >
-                                Download PDF
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleDownloadFormat(
-                                    r.docx_url,
-                                    null,
-                                    `${r.report_name}.docx`
-                                  )
-                                }
-                              >
-                                Download Word (.docx)
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleDownloadFormat(
-                                    r.xlsx_url,
-                                    null,
-                                    `${r.report_name}.xlsx`
-                                  )
-                                }
-                              >
-                                Download Excel (.xlsx)
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                        {isFailed(r.status) && (
-                          <div className="flex items-center gap-2 justify-end">
-                            <span className="text-xs text-destructive max-w-[200px] text-right">
-                              {r.error_message ||
-                                "We encountered an issue. Our team has been notified."}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleRetry(r.id)}
-                            >
-                              <RefreshCw className="mr-1 h-3 w-3" /> Retry
-                            </Button>
-                          </div>
-                        )}
-                        {isProcessing(r.status) && (
-                          <span className="text-xs text-muted-foreground">
-                            Generating…
-                          </span>
-                        )}
-                      </TableCell>
+                      <TableCell className="text-right">{actionCell(r)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

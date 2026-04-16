@@ -1,15 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
-import { CheckCircle, ChevronRight, FileText, Upload } from "lucide-react";
+import {
+  CheckCircle,
+  ChevronRight,
+  FileText,
+  Upload,
+  X,
+  Download,
+  AlertCircle,
+  Loader2,
+  RotateCcw,
+} from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
@@ -30,12 +39,7 @@ interface Profile {
   rc_number: string | null;
   cbn_license_category: string | null;
   compliance_lead_name: string | null;
-}
-
-interface DataSource {
-  id: string;
-  file_name: string;
-  file_path: string;
+  notification_email_report_ready: string | null;
 }
 
 // Fields per report type
@@ -73,65 +77,153 @@ const reportFields: Record<string, { name: string; label: string; placeholder: s
   ],
 };
 
-const STEPS = ["Report Type", "Reporting Period", "Report Details", "Review", "Confirmation"];
+const STEPS = ["Report Type", "Reporting Period", "Report Details", "Review", "Processing"];
+
+type ProcessingStatus = "processing" | "ready" | "failed";
 
 const NewReport = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
-  const [dataSources, setDataSources] = useState<DataSource[]>([]);
 
   // Form state
   const [reportType, setReportType] = useState("");
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
-  const [dataSourceId, setDataSourceId] = useState("");
+  const [cbsFile, setCbsFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Step 4 processing state
+  const [currentReportId, setCurrentReportId] = useState<string | null>(null);
+  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("processing");
+  const [downloadUrl, setDownloadUrl] = useState<string>("");
+  const [processingError, setProcessingError] = useState<string>("");
 
   useEffect(() => {
     if (!user) return;
     Promise.all([
       supabase
         .from("profiles")
-        .select("company_name, rc_number, cbn_license_category, compliance_lead_name")
+        .select(
+          "company_name, rc_number, cbn_license_category, compliance_lead_name, notification_email_report_ready"
+        )
         .eq("id", user.id)
         .maybeSingle(),
       supabase.from("institution_report_types").select("report_type").eq("user_id", user.id),
-      supabase
-        .from("data_sources")
-        .select("id, file_name, file_path")
-        .eq("user_id", user.id)
-        .eq("status", "Ready"),
-    ]).then(([profileRes, typesRes, dsRes]) => {
+    ]).then(([profileRes, typesRes]) => {
       if (profileRes.data) setProfile(profileRes.data);
       if (typesRes.data && typesRes.data.length > 0) {
         setAvailableTypes(typesRes.data.map((t) => t.report_type));
       } else {
         setAvailableTypes(ALL_REPORT_TYPES);
       }
-      if (dsRes.data) setDataSources(dsRes.data);
     });
   }, [user]);
+
+  // Poll reports table every 8 seconds while on the processing step
+  useEffect(() => {
+    if (step !== 4 || !currentReportId) return;
+    if (processingStatus === "ready" || processingStatus === "failed") return;
+
+    const interval = setInterval(async () => {
+      const { data, error } = await supabase
+        .from("reports")
+        .select("status, report_url, error_message")
+        .eq("id", currentReportId)
+        .single();
+
+      if (error || !data) return;
+
+      const status = (data.status as string).toLowerCase();
+
+      if (status === "ready") {
+        // Generate public URL from the report_url storage path
+        let url = "";
+        if (data.report_url) {
+          const { data: publicData } = supabase.storage
+            .from("reports")
+            .getPublicUrl(data.report_url as string);
+          url = publicData?.publicUrl || (data.report_url as string);
+        }
+        setDownloadUrl(url);
+        setProcessingStatus("ready");
+      } else if (status === "failed") {
+        setProcessingError(
+          (data.error_message as string | null) ||
+            "An unexpected error occurred. Our team has been notified."
+        );
+        setProcessingStatus("failed");
+      }
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [step, currentReportId, processingStatus]);
+
+  const handleFileSelect = (file: File) => {
+    setCbsFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelect(file);
+  };
 
   const handleFieldChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const resetAndStartOver = () => {
+    setStep(0);
+    setReportType("");
+    setPeriodStart(undefined);
+    setPeriodEnd(undefined);
+    setCbsFile(null);
+    setFormData({});
+    setCurrentReportId(null);
+    setProcessingStatus("processing");
+    setDownloadUrl("");
+    setProcessingError("");
+  };
+
   const handleSubmit = async () => {
-    if (!user || !profile) return;
+    if (!user || !profile || !cbsFile) return;
     setSubmitting(true);
+
+    let createdReportId: string | null = null;
 
     try {
       const periodStartStr = periodStart!.toISOString().split("T")[0];
       const periodEndStr = periodEnd!.toISOString().split("T")[0];
       const reportName = `${reportType} — ${profile.company_name || "Report"}`;
 
-      // 1. Insert report record with status "pending" and capture the new ID
+      // Step 1: Upload CBS file to "reports" bucket under the user's folder
+      const safeFileName = cbsFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const storagePath = `${user.id}/${Date.now()}-${safeFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("reports")
+        .upload(storagePath, cbsFile, { upsert: false });
+
+      if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+
+      // Step 2: Generate a signed URL valid for 3600 seconds
+      const { data: signedData, error: signedError } = await supabase.storage
+        .from("reports")
+        .createSignedUrl(storagePath, 3600);
+
+      if (signedError || !signedData?.signedUrl) {
+        throw new Error("Could not generate a signed URL for the uploaded file.");
+      }
+      const fileUrl = signedData.signedUrl;
+
+      // Step 3: Create the report row in the reports table with status "pending"
       const { data: newReport, error: reportError } = await supabase
         .from("reports")
         .insert({
@@ -139,46 +231,23 @@ const NewReport = () => {
           report_name: reportName,
           report_type: reportType,
           status: "pending",
+          file_url: fileUrl,
           reporting_period_start: periodStartStr,
           reporting_period_end: periodEndStr,
         })
         .select()
         .single();
 
-      if (reportError || !newReport) throw reportError || new Error("Failed to create report record");
-
-      // 2. Also insert into report_requests for tracking
-      await supabase.from("report_requests").insert({
-        user_id: user.id,
-        institution_name: profile.company_name || "",
-        rc_number: profile.rc_number,
-        report_type: reportType,
-        reporting_period_start: periodStartStr,
-        reporting_period_end: periodEndStr,
-        data_source_id: dataSourceId || null,
-        form_data: formData,
-        status: "Processing",
-      });
-
-      // 3. Get a signed URL for the selected CBS / data source file
-      let fileUrl = "";
-      if (dataSourceId) {
-        const selectedSource = dataSources.find((ds) => ds.id === dataSourceId);
-        if (selectedSource?.file_path) {
-          const { data: signedData } = await supabase.storage
-            .from("data-sources")
-            .createSignedUrl(selectedSource.file_path, 86400); // 24-hour link
-          fileUrl = signedData?.signedUrl || "";
-        }
+      if (reportError || !newReport) {
+        throw new Error(reportError?.message || "Failed to create report record.");
       }
+      createdReportId = newReport.id;
 
-      // 4. Store the file URL on the report record
-      if (fileUrl) {
-        await supabase.from("reports").update({ file_path: fileUrl }).eq("id", newReport.id);
-      }
+      // Step 4: Call the notify-automation edge function
+      const clientEmail =
+        profile.notification_email_report_ready || user.email || "";
 
-      // 5. Invoke the notify-automation edge function
-      await supabase.functions.invoke("notify-automation", {
+      const { error: fnError } = await supabase.functions.invoke("notify-automation", {
         body: {
           report_id: newReport.id,
           user_id: user.id,
@@ -189,23 +258,31 @@ const NewReport = () => {
           reporting_period_start: periodStartStr,
           reporting_period_end: periodEndStr,
           file_url: fileUrl,
-          client_email: user.email,
+          client_email: clientEmail,
         },
       });
 
-      // 6. Update report status to "Processing" so the dashboard shows the spinner
-      await supabase
-        .from("reports")
-        .update({ status: "Processing" })
-        .eq("id", newReport.id);
+      if (fnError) throw new Error(`Automation trigger failed: ${fnError.message}`);
 
-      // 7. Move to confirmation step, then redirect to reports page
+      // Step 5: Move to the processing step — polling takes over from here
+      setCurrentReportId(newReport.id);
+      setProcessingStatus("processing");
       setStep(4);
-      setTimeout(() => navigate("/dashboard/reports"), 3000);
-    } catch {
+    } catch (err) {
+      const errMsg =
+        err instanceof Error ? err.message : "An unexpected error occurred.";
+
+      // If we managed to create the report row, mark it as failed
+      if (createdReportId) {
+        await supabase
+          .from("reports")
+          .update({ status: "failed", error_message: errMsg })
+          .eq("id", createdReportId);
+      }
+
       toast({
-        title: "Something went wrong",
-        description: "We couldn't submit your report. Please try again.",
+        title: "Submission failed",
+        description: errMsg,
         variant: "destructive",
       });
     } finally {
@@ -215,7 +292,7 @@ const NewReport = () => {
 
   const fields = reportFields[reportType] || [];
   const canProceedStep0 = !!reportType;
-  const canProceedStep1 = !!periodStart && !!periodEnd;
+  const canProceedStep1 = !!periodStart && !!periodEnd && !!cbsFile;
   const canProceedStep2 = fields.every((f) => formData[f.name]?.trim());
 
   return (
@@ -246,7 +323,7 @@ const NewReport = () => {
       </div>
       <p className="text-sm text-muted-foreground mb-4">{STEPS[step]}</p>
 
-      {/* Step 0: Report Type */}
+      {/* ── Step 0: Report Type ── */}
       {step === 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {availableTypes.map((type) => (
@@ -272,14 +349,17 @@ const NewReport = () => {
         </div>
       )}
 
-      {/* Step 1: Reporting Period */}
+      {/* ── Step 1: Reporting Period + CBS File Upload ── */}
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Reporting Period</CardTitle>
-            <CardDescription>Select the date range and data source for this report.</CardDescription>
+            <CardTitle>Reporting Period &amp; CBS File</CardTitle>
+            <CardDescription>
+              Select your reporting dates and upload the CBS export file.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            {/* Date pickers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Date</Label>
@@ -331,30 +411,52 @@ const NewReport = () => {
               </div>
             </div>
 
+            {/* CBS File upload */}
             <div className="space-y-2">
-              <Label>Data Source (CBS File)</Label>
-              {dataSources.length > 0 ? (
-                <Select value={dataSourceId} onValueChange={setDataSourceId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an uploaded CBS file" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {dataSources.map((ds) => (
-                      <SelectItem key={ds.id} value={ds.id}>
-                        {ds.file_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <Label>CBS Export File</Label>
+              {cbsFile ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-accent/40">
+                  <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{cbsFile.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(cbsFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCbsFile(null)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               ) : (
-                <div className="border border-dashed border-border rounded-lg p-4 text-center">
-                  <Upload className="w-6 h-6 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground mb-2">Upload your CBS file first</p>
-                  <Button asChild variant="outline" size="sm">
-                    <Link to="/dashboard/data-sources">Go to Data Sources</Link>
-                  </Button>
+                <div
+                  className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-accent/30 transition-colors"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={(e) => e.preventDefault()}
+                >
+                  <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm font-medium text-foreground">
+                    Click to upload or drag &amp; drop
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Excel (.xlsx, .xls), CSV, or any CBS export format
+                  </p>
                 </div>
               )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".xlsx,.xls,.csv,.txt,.pdf,.zip"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleFileSelect(f);
+                }}
+              />
             </div>
 
             <div className="flex justify-between">
@@ -369,7 +471,7 @@ const NewReport = () => {
         </Card>
       )}
 
-      {/* Step 2: Report Details */}
+      {/* ── Step 2: Report Details ── */}
       {step === 2 && (
         <Card>
           <CardHeader>
@@ -436,7 +538,7 @@ const NewReport = () => {
         </Card>
       )}
 
-      {/* Step 3: Review */}
+      {/* ── Step 3: Review ── */}
       {step === 3 && (
         <Card>
           <CardHeader>
@@ -465,14 +567,12 @@ const NewReport = () => {
                     : "—"}
                 </span>
               </div>
-              {dataSourceId && (
-                <div className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">Data Source</span>
-                  <span className="font-medium text-foreground">
-                    {dataSources.find((d) => d.id === dataSourceId)?.file_name || "—"}
-                  </span>
-                </div>
-              )}
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">CBS File</span>
+                <span className="font-medium text-foreground truncate max-w-[220px]">
+                  {cbsFile?.name || "—"}
+                </span>
+              </div>
               {fields.map((f) => (
                 <div key={f.name} className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">{f.label}</span>
@@ -486,34 +586,108 @@ const NewReport = () => {
                 Edit Type
               </Button>
               <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                Edit Period
+                Edit Period / File
               </Button>
               <Button variant="outline" size="sm" onClick={() => setStep(2)}>
                 Edit Details
               </Button>
               <div className="flex-1" />
               <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? "Submitting..." : "Confirm & Generate"}
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting…
+                  </>
+                ) : (
+                  "Confirm & Generate"
+                )}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Step 4: Confirmation */}
+      {/* ── Step 4: Processing / Result ── */}
       {step === 4 && (
         <Card>
-          <CardContent className="py-16 text-center">
-            <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-4 flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-success" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Your report is being generated
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              This usually takes 2 to 5 minutes. You can track the status in My Reports.
-              Redirecting there now…
-            </p>
+          <CardContent className="py-14 px-8">
+            {/* Processing */}
+            {processingStatus === "processing" && (
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto mb-5 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  Generating Your Report
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                  Your CBS file is being processed. This usually takes 2–5 minutes.
+                  You'll see the download button as soon as it's ready.
+                </p>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Checking for updates every 8 seconds…
+                </p>
+              </div>
+            )}
+
+            {/* Ready */}
+            {processingStatus === "ready" && (
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-5 flex items-center justify-center">
+                  <CheckCircle className="w-8 h-8 text-success" />
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  Your Report Is Ready
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
+                  Your CBN-ready compliance report has been generated successfully.
+                </p>
+                <div className="flex gap-3 justify-center flex-wrap">
+                  {downloadUrl ? (
+                    <Button asChild>
+                      <a href={downloadUrl} download target="_blank" rel="noreferrer">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Report
+                      </a>
+                    </Button>
+                  ) : (
+                    <Button onClick={() => navigate("/dashboard/reports")}>
+                      View in My Reports
+                    </Button>
+                  )}
+                  <Button variant="outline" onClick={() => navigate("/dashboard/reports")}>
+                    Go to My Reports
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Failed */}
+            {processingStatus === "failed" && (
+              <div className="space-y-5">
+                <div className="flex items-start gap-4 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
+                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-destructive mb-1">
+                      Report generation failed
+                    </p>
+                    <p className="text-sm text-destructive/80 break-words">
+                      {processingError ||
+                        "An unexpected error occurred. Our team has been notified."}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 flex-wrap">
+                  <Button onClick={resetAndStartOver}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/dashboard/reports")}>
+                    Go to My Reports
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
