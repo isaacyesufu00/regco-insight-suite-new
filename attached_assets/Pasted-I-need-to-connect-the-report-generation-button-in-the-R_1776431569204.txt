@@ -1,0 +1,52 @@
+I need to connect the report generation button in the RegCo dashboard to the Supabase edge function called notify-automation. Please implement the following complete flow:
+When a user clicks to generate a report in the dashboard:
+
+First fetch the user's profile from the profiles table: company_name, rc_number, cbn_license_category, compliance_lead_name, notification_email_report_ready
+Upload the CBS file the user selected to Supabase Storage in the bucket called "reports" under the path: {user_id}/{timestamp}_{filename}. Then create a signed URL valid for 7200 seconds for that file.
+Insert a new row into the reports table with these exact fields:
+
+user_id: current user ID
+status: "pending"
+file_url: the signed URL from step 2
+reporting_period_start: from the form
+reporting_period_end: from the form
+created_at: new Date().toISOString()
+
+Save the returned row ID as report_id.
+Call the Supabase edge function notify-automation using supabase.functions.invoke like this:
+
+javascriptawait supabase.functions.invoke('notify-automation', {
+  body: {
+    report_id: report_id,
+    user_id: user.id,
+    institution_name: profile.company_name,
+    cbn_license_number: profile.rc_number,
+    cbn_license_category: profile.cbn_license_category,
+    compliance_lead_name: profile.compliance_lead_name,
+    reporting_period_start: formValues.reporting_period_start,
+    reporting_period_end: formValues.reporting_period_end,
+    file_url: signedUrl,
+    client_email: profile.notification_email_report_ready || user.email
+  }
+})
+
+Immediately after calling the function show a full-width status card that says "Processing your report..." with an orange spinner. The report ID should be visible on screen.
+Start polling the reports table every 8 seconds with this query: supabase.from('reports').select('*').eq('id', report_id).single()
+When the status field changes to "ready":
+
+Stop polling
+Generate a public download URL using: supabase.storage.from('reports').getPublicUrl(report_url_field)
+Show a green success card with a Download Report button linking to that URL
+Show the validation metrics: CAR percentage, Liquidity percentage, NPL ratio
+
+
+When the status field changes to "failed":
+
+Stop polling
+Show a red error card with the error_message field from the reports table
+Show a "Try Again" button that resets the form
+
+
+Handle all errors gracefully — if anything fails in steps 1-4, update the report row status to "failed" with the error message and show the red error card.
+
+Please find the existing report generation component or page in this project and update it with all of this logic. After making all changes run: git add -A && git commit -m "Connect dashboard to n8n automation" && git push
