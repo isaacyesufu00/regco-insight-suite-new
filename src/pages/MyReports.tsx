@@ -16,6 +16,7 @@ import {
   ChevronDown,
   Loader2,
   AlertCircle,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -23,6 +24,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Report {
   id: string;
@@ -55,6 +66,8 @@ const MyReports = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [reportToDelete, setReportToDelete] = useState<Report | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Ref to latest reports — lets polling compare statuses without stale closures
   const reportsRef = useRef<Report[]>([]);
@@ -198,6 +211,20 @@ const MyReports = () => {
   const handleRetry = async (reportId: string) => {
     await supabase.from("reports").update({ status: "Processing" }).eq("id", reportId);
     toast({ title: "Retrying", description: "We're regenerating your report." });
+  };
+
+  const handleDelete = async () => {
+    if (!reportToDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("reports").delete().eq("id", reportToDelete.id);
+    setDeleting(false);
+    setReportToDelete(null);
+    if (error) {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    } else {
+      setReports((prev) => prev.filter((r) => r.id !== reportToDelete.id));
+      toast({ title: "Report deleted", description: "The report has been removed." });
+    }
   };
 
   const types = Array.from(new Set(reports.map((r) => r.report_type).filter(Boolean)));
@@ -367,6 +394,7 @@ const MyReports = () => {
                     <TableHead>Date Generated</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Action</TableHead>
+                    <TableHead className="w-10" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -382,6 +410,17 @@ const MyReports = () => {
                       <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>{statusBadge(r)}</TableCell>
                       <TableCell className="text-right">{actionCell(r)}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => setReportToDelete(r)}
+                          data-testid={`button-delete-${r.id}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -390,6 +429,30 @@ const MyReports = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!reportToDelete} onOpenChange={(open) => { if (!open) setReportToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this report?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">{reportToDelete?.report_name}</span> will
+              be permanently deleted. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
