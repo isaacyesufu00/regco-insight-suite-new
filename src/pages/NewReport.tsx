@@ -104,6 +104,11 @@ const NewReport = () => {
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("processing");
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [processingError, setProcessingError] = useState<string>("");
+  const [validationMetrics, setValidationMetrics] = useState<{
+    car_percentage: number | null;
+    liquidity_percentage: number | null;
+    npl_ratio: number | null;
+  } | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -134,7 +139,7 @@ const NewReport = () => {
     const interval = setInterval(async () => {
       const { data, error } = await supabase
         .from("reports")
-        .select("status, report_url, error_message")
+        .select("status, report_url, error_message, car_percentage, liquidity_percentage, npl_ratio")
         .eq("id", currentReportId)
         .single();
 
@@ -152,6 +157,11 @@ const NewReport = () => {
           url = publicData?.publicUrl || (data.report_url as string);
         }
         setDownloadUrl(url);
+        setValidationMetrics({
+          car_percentage: (data.car_percentage as number | null) ?? null,
+          liquidity_percentage: (data.liquidity_percentage as number | null) ?? null,
+          npl_ratio: (data.npl_ratio as number | null) ?? null,
+        });
         setProcessingStatus("ready");
       } else if (status === "failed") {
         setProcessingError(
@@ -190,6 +200,7 @@ const NewReport = () => {
     setProcessingStatus("processing");
     setDownloadUrl("");
     setProcessingError("");
+    setValidationMetrics(null);
   };
 
   const handleSubmit = async () => {
@@ -205,7 +216,7 @@ const NewReport = () => {
 
       // Step 1: Upload CBS file to "reports" bucket under the user's folder
       const safeFileName = cbsFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const storagePath = `${user.id}/${Date.now()}-${safeFileName}`;
+      const storagePath = `${user.id}/${Date.now()}_${safeFileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("reports")
@@ -213,10 +224,10 @@ const NewReport = () => {
 
       if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
 
-      // Step 2: Generate a signed URL valid for 3600 seconds
+      // Step 2: Generate a signed URL valid for 7200 seconds
       const { data: signedData, error: signedError } = await supabase.storage
         .from("reports")
-        .createSignedUrl(storagePath, 3600);
+        .createSignedUrl(storagePath, 7200);
 
       if (signedError || !signedData?.signedUrl) {
         throw new Error("Could not generate a signed URL for the uploaded file.");
@@ -234,6 +245,7 @@ const NewReport = () => {
           file_url: fileUrl,
           reporting_period_start: periodStartStr,
           reporting_period_end: periodEndStr,
+          created_at: new Date().toISOString(),
         })
         .select()
         .single();
@@ -611,26 +623,32 @@ const NewReport = () => {
       {step === 4 && (
         <Card>
           <CardContent className="py-14 px-8">
-            {/* Processing */}
+            {/* Processing — orange spinner */}
             {processingStatus === "processing" && (
               <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto mb-5 flex items-center justify-center">
-                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: "rgba(249,115,22,0.1)" }}>
+                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#f97316" }} />
                 </div>
                 <h2 className="text-xl font-bold text-foreground mb-2">
-                  Generating Your Report
+                  Processing your report…
                 </h2>
-                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                  Your CBS file is being processed. This usually takes 2–5 minutes.
-                  You'll see the download button as soon as it's ready.
+                <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+                  Your CBS file has been uploaded and is being processed by our automation.
+                  This usually takes 2–5 minutes.
                 </p>
-                <p className="text-xs text-muted-foreground mt-4">
+                {currentReportId && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground font-mono">
+                    <span className="text-foreground/50">Report ID:</span>
+                    <span className="font-semibold text-foreground select-all">{currentReportId}</span>
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground mt-5">
                   Checking for updates every 8 seconds…
                 </p>
               </div>
             )}
 
-            {/* Ready */}
+            {/* Ready — green success with download + validation metrics */}
             {processingStatus === "ready" && (
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-5 flex items-center justify-center">
@@ -642,7 +660,8 @@ const NewReport = () => {
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
                   Your CBN-ready compliance report has been generated successfully.
                 </p>
-                <div className="flex gap-3 justify-center flex-wrap">
+
+                <div className="flex gap-3 justify-center flex-wrap mb-8">
                   {downloadUrl ? (
                     <Button asChild>
                       <a href={downloadUrl} download target="_blank" rel="noreferrer">
@@ -659,10 +678,48 @@ const NewReport = () => {
                     Go to My Reports
                   </Button>
                 </div>
+
+                {/* Validation metrics — shown when automation populates them */}
+                {validationMetrics &&
+                  (validationMetrics.car_percentage !== null ||
+                    validationMetrics.liquidity_percentage !== null ||
+                    validationMetrics.npl_ratio !== null) && (
+                    <div className="border border-border rounded-xl p-5 bg-accent/30 text-left">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                        Validation Metrics
+                      </p>
+                      <div className="grid grid-cols-3 gap-4">
+                        {validationMetrics.car_percentage !== null && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">CAR</p>
+                            <p className="text-lg font-bold text-foreground">
+                              {validationMetrics.car_percentage.toFixed(2)}%
+                            </p>
+                          </div>
+                        )}
+                        {validationMetrics.liquidity_percentage !== null && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Liquidity Ratio</p>
+                            <p className="text-lg font-bold text-foreground">
+                              {validationMetrics.liquidity_percentage.toFixed(2)}%
+                            </p>
+                          </div>
+                        )}
+                        {validationMetrics.npl_ratio !== null && (
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">NPL Ratio</p>
+                            <p className="text-lg font-bold text-foreground">
+                              {validationMetrics.npl_ratio.toFixed(2)}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
               </div>
             )}
 
-            {/* Failed */}
+            {/* Failed — red error card */}
             {processingStatus === "failed" && (
               <div className="space-y-5">
                 <div className="flex items-start gap-4 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
