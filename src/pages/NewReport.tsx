@@ -274,7 +274,10 @@ const NewReport = () => {
         },
       });
 
-      if (fnError) throw new Error(`Automation trigger failed: ${fnError.message}`);
+      // Log but don't block — the automation may still process the report
+      if (fnError) {
+        console.warn("notify-automation returned an error:", fnError.message);
+      }
 
       // Step 5: Move to the processing step — polling takes over from here
       setCurrentReportId(newReport.id);
