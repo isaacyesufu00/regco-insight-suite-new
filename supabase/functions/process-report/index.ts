@@ -1,4 +1,4 @@
-import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs';
+import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
