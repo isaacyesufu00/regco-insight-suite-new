@@ -1,14 +1,13 @@
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
-// Model chain: tries each in order until one succeeds
-// For production reliability: add OpenRouter credits and remove ':free' suffixes
+// Lovable AI Gateway models — reliable, pre-funded, no rate-limit chaos
 const AI_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-3-27b-it:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
+  'google/gemini-3-flash-preview',
+  'google/gemini-2.5-flash',
+  'google/gemini-2.5-flash-lite',
 ];
 
 const CORS_HEADERS = {
@@ -219,7 +218,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
-  const openRouterKey = Deno.env.get('OPENROUTER_API_KEY') || '';
+  const lovableApiKey = Deno.env.get('LOVABLE_API_KEY') || '';
   const resendKey = Deno.env.get('RESEND_API_KEY') || '';
 
   let reportId: string | null = null;
@@ -275,7 +274,7 @@ Financial Data: ${JSON.stringify(financialData)}`;
     // Call OpenRouter — try primary model first, fall back to smaller model on rate limits
     let aiRaw: any;
 
-    const callOpenRouter = async (model: string): Promise<any | null> => {
+    const callAI = async (model: string): Promise<any | null> => {
       const body = JSON.stringify({
         model,
         max_tokens: 4000,
@@ -287,33 +286,36 @@ Financial Data: ${JSON.stringify(financialData)}`;
       });
 
       for (let attempt = 1; attempt <= 3; attempt++) {
-        const res = await fetch(OPENROUTER_URL, {
+        const res = await fetch(AI_GATEWAY_URL, {
           method: 'POST',
           headers: {
-            Authorization: `Bearer ${openRouterKey}`,
+            Authorization: `Bearer ${lovableApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'https://regco-insight-suite.vercel.app',
-            'X-Title': 'RegCo MFB Report Generator',
           },
           body,
         });
 
         if (res.status === 429) {
           if (attempt < 3) {
-            const delay = attempt * 8_000;
+            const delay = attempt * 5_000;
             console.warn(`Rate limited on ${model}. Waiting ${delay / 1000}s (attempt ${attempt}/3)`);
             await new Promise((r) => setTimeout(r, delay));
             continue;
           }
-          return null; // exhausted retries — try next model
+          return null;
+        }
+
+        if (res.status === 402) {
+          throw new Error('AI credits exhausted. Please add credits in Lovable workspace settings.');
         }
 
         if (res.status === 404 || res.status === 503) {
-          return null; // model unavailable — try next model
+          return null;
         }
 
         if (!res.ok) {
-          throw new Error(`OpenRouter API error: ${res.status} ${res.statusText}`);
+          const errText = await res.text();
+          throw new Error(`Lovable AI error: ${res.status} ${errText.substring(0, 200)}`);
         }
 
         return await res.json();
@@ -324,7 +326,7 @@ Financial Data: ${JSON.stringify(financialData)}`;
     // Try each model in order until one succeeds
     for (const model of AI_MODELS) {
       console.log(`Trying model: ${model}`);
-      aiRaw = await callOpenRouter(model);
+      aiRaw = await callAI(model);
       if (aiRaw) break;
       console.warn(`Model ${model} unavailable, trying next...`);
     }

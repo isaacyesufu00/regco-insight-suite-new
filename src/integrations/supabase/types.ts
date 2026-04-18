@@ -298,45 +298,72 @@ export type Database = {
       }
       reports: {
         Row: {
+          car_percentage: number | null
           created_at: string
           docx_url: string | null
+          error_message: string | null
+          error_type: string | null
           file_path: string | null
+          file_url: string | null
           id: string
+          liquidity_percentage: number | null
+          npl_ratio: number | null
           pdf_url: string | null
+          report_filename: string | null
           report_name: string
           report_type: string | null
+          report_url: string | null
           reporting_period_end: string | null
           reporting_period_start: string | null
           status: string
           user_id: string
+          validation_passed: boolean | null
           xlsx_url: string | null
         }
         Insert: {
+          car_percentage?: number | null
           created_at?: string
           docx_url?: string | null
+          error_message?: string | null
+          error_type?: string | null
           file_path?: string | null
+          file_url?: string | null
           id?: string
+          liquidity_percentage?: number | null
+          npl_ratio?: number | null
           pdf_url?: string | null
+          report_filename?: string | null
           report_name: string
           report_type?: string | null
+          report_url?: string | null
           reporting_period_end?: string | null
           reporting_period_start?: string | null
           status?: string
           user_id: string
+          validation_passed?: boolean | null
           xlsx_url?: string | null
         }
         Update: {
+          car_percentage?: number | null
           created_at?: string
           docx_url?: string | null
+          error_message?: string | null
+          error_type?: string | null
           file_path?: string | null
+          file_url?: string | null
           id?: string
+          liquidity_percentage?: number | null
+          npl_ratio?: number | null
           pdf_url?: string | null
+          report_filename?: string | null
           report_name?: string
           report_type?: string | null
+          report_url?: string | null
           reporting_period_end?: string | null
           reporting_period_start?: string | null
           status?: string
           user_id?: string
+          validation_passed?: boolean | null
           xlsx_url?: string | null
         }
         Relationships: []
