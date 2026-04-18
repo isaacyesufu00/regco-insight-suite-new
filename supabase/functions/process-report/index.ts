@@ -1,14 +1,13 @@
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
-// Model chain: tries each in order until one succeeds
-// For production reliability: add OpenRouter credits and remove ':free' suffixes
+// Lovable AI Gateway models — reliable, pre-funded, no rate-limit chaos
 const AI_MODELS = [
-  'meta-llama/llama-3.3-70b-instruct:free',
-  'google/gemma-3-27b-it:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
+  'google/gemini-3-flash-preview',
+  'google/gemini-2.5-flash',
+  'google/gemini-2.5-flash-lite',
 ];
 
 const CORS_HEADERS = {
