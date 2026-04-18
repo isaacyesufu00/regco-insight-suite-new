@@ -1,0 +1,51 @@
+I need to create a Supabase Edge Function that replaces my n8n automation entirely. Create a new file at supabase/functions/process-report/index.ts.
+This function receives a POST with report details, downloads a CBS Excel file, parses it, calls OpenRouter AI to generate a CBN MFB Regulatory Return, formats the report, uploads it to Supabase Storage, updates the database, and sends emails via Resend.
+Here are all my credentials to hardcode for now:
+
+Supabase URL: https://pdplkprcomjslilznbsl.supabase.co
+OpenRouter model: mistralai/mistral-small-3.1-24b-instruct:free
+Resend from address: onboarding@resend.dev
+
+The function must:
+
+Accept POST with: report_id, user_id, institution_name, cbn_license_number, cbn_license_category, compliance_lead_name, reporting_period_start, reporting_period_end, file_url, client_email
+Update Supabase reports table: set status to "processing"
+Download the Excel file from file_url using fetch
+Parse Excel using the xlsx package — convert to array of objects with Line Item and Amount columns
+Build a financial data object by matching row labels to these fields: total_assets, total_liabilities, total_shareholders_funds, total_deposits, savings_deposits, demand_deposits, time_deposits, gross_loans, performing_loans, non_performing_loans, loan_loss_provisions, cash_and_equivalents, balances_with_cbn, investment_securities, fixed_assets, paid_up_capital, retained_earnings, tier_1_capital, tier_2_capital, risk_weighted_assets, liquid_assets
+Call OpenRouter API:
+
+POST https://openrouter.ai/api/v1/chat/completions
+Authorization: Bearer OPENROUTER_API_KEY
+model: mistralai/mistral-small-3.1-24b-instruct:free
+System message: You are a Nigerian banking regulatory compliance engine. Validate CBS data and generate a CBN MFB Regulatory Return as JSON. Check: Total Assets equals Total Liabilities plus Shareholders Funds. Check: Gross Loans equals Performing plus Non-Performing Loans. If any check fails return: {"status":"ERROR","error_type":"[type]","description":"[what is wrong]","action_required":"[what to fix]","figures_involved":"[figures]","difference":"[amount]"}. If all pass return: {"status":"SUCCESS","validation_summary":{"car_percentage":"0.00","liquidity_percentage":"0.00","npl_ratio":"0.00","loan_to_deposit_ratio":"0.00"},"report":{"cover":{"institution_name":"","cbn_license_number":"","cbn_license_category":"","reporting_period":"","date_prepared":""},"section_a":{all balance sheet fields with 0 values},"section_b":{all loan fields with 0 values},"section_c":{all deposit fields with 0 values},"section_d":{capital adequacy fields},"section_e":{liquidity fields},"section_f":{kpi fields}}}. Return ONLY valid JSON.
+User message: Institution: [institution_name] License: [cbn_license_number] Category: [cbn_license_category] Period: [start] to [end] Financial Data: [JSON of financial data]
+
+Parse the AI response
+If ERROR: update reports table status=failed, error_message, error_type. Send email via Resend POST to https://api.resend.com/emails with Authorization Bearer RESEND_API_KEY, from: onboarding@resend.dev, to: client_email, subject: CBS Data Error, html: error details
+If SUCCESS:
+
+Build a formatted text report with all CBN sections
+Upload to Supabase Storage using the service role key at path reports/user_id/report_id/Institution_MFB_Return_date.txt
+Update reports table: status=ready, report_url=storage path, report_filename, car_percentage, liquidity_percentage, npl_ratio, validation_passed=true
+Send success email via Resend: from onboarding@resend.dev, to client_email, subject: Your Report is Ready, html: success message with download link to dashboard
+
+
+Return 200 on success, 500 on error. Handle CORS.
+
+Also update supabase/functions/notify-automation/index.ts to call process-report instead of n8n. Change the fetch URL from the AUTOMATION_WEBHOOK_URL secret to call the process-report function directly using:
+https://pdplkprcomjslilznbsl.supabase.co/functions/v1/process-report
+with the same Authorization header as the incoming request.
+Use Deno-compatible imports only. For xlsx parsing use: import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs'
+After creating both files, deploy them by running:
+bashnpx supabase functions deploy process-report
+npx supabase functions deploy notify-automation
+Then push everything to GitHub.
+
+AFTER DEPLOYMENT — ADD YOUR SECRETS
+Once the function is deployed go to Supabase → Edge Functions → Secrets and add:
+NameValueOPENROUTER_API_KEYYour sk-or-v1- key from openrouter.aiRESEND_API_KEYYour re_ key from resend.comSUPABASE_SERVICE_ROLE_KEYYour sb_secret_ key from Supabase Settings
+These are already available automatically in edge functions:
+
+SUPABASE_URL — auto-injected
+SUPABASE_ANON_KEY — auto-injected
