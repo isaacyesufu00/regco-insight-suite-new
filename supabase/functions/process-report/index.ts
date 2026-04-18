@@ -4,6 +4,7 @@ const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
 const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+const AI_MODEL_FALLBACK = 'meta-llama/llama-3.1-8b-instruct:free';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -266,49 +267,59 @@ Compliance Lead: ${compliance_lead_name}
 Period: ${reporting_period_start} to ${reporting_period_end}
 Financial Data: ${JSON.stringify(financialData)}`;
 
-    // Call OpenRouter with up to 3 retries on rate limit errors
+    // Call OpenRouter — try primary model first, fall back to smaller model on rate limits
     let aiRaw: any;
-    const aiRequestBody = JSON.stringify({
-      model: AI_MODEL,
-      max_tokens: 4000,
-      temperature: 0.1,
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-    });
 
-    const MAX_RETRIES = 3;
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      const aiResponse = await fetch(OPENROUTER_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${openRouterKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://regco-insight-suite.vercel.app',
-          'X-Title': 'RegCo MFB Report Generator',
-        },
-        body: aiRequestBody,
+    const callOpenRouter = async (model: string): Promise<any | null> => {
+      const body = JSON.stringify({
+        model,
+        max_tokens: 4000,
+        temperature: 0.1,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
       });
 
-      if (aiResponse.status === 429 && attempt < MAX_RETRIES) {
-        // Rate limited — wait before retrying (10s, 20s)
-        const delay = attempt * 10_000;
-        console.warn(`OpenRouter rate limited. Retrying in ${delay / 1000}s (attempt ${attempt}/${MAX_RETRIES})`);
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const res = await fetch(OPENROUTER_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${openRouterKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': 'https://regco-insight-suite.vercel.app',
+            'X-Title': 'RegCo MFB Report Generator',
+          },
+          body,
+        });
+
+        if (res.status === 429) {
+          if (attempt < 3) {
+            const delay = attempt * 8_000;
+            console.warn(`Rate limited on ${model}. Waiting ${delay / 1000}s (attempt ${attempt}/3)`);
+            await new Promise((r) => setTimeout(r, delay));
+            continue;
+          }
+          return null; // signal caller to try fallback
+        }
+
+        if (!res.ok) {
+          throw new Error(`OpenRouter API error: ${res.status} ${res.statusText}`);
+        }
+
+        return await res.json();
       }
+      return null;
+    };
 
-      if (!aiResponse.ok) {
-        throw new Error(`OpenRouter API error: ${aiResponse.status} ${aiResponse.statusText}`);
-      }
-
-      aiRaw = await aiResponse.json();
-      break;
-    }
-
+    // Try primary (70B), then fall back to 8B if rate limited
+    aiRaw = await callOpenRouter(AI_MODEL);
     if (!aiRaw) {
-      throw new Error('OpenRouter API rate limit exceeded after 3 attempts. Please try again in a few minutes.');
+      console.warn('Primary model rate limited. Switching to fallback model.');
+      aiRaw = await callOpenRouter(AI_MODEL_FALLBACK);
+    }
+    if (!aiRaw) {
+      throw new Error('AI service is temporarily busy. Please try again in a few minutes.');
     }
 
     const aiText = (aiRaw.choices?.[0]?.message?.content || '').trim();
