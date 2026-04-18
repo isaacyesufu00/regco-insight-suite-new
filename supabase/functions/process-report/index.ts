@@ -3,10 +3,13 @@ import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
-// Primary: Llama 3.3 70B (fast, accurate). Fallback: Llama 3.1 8B (higher rate limits).
-// For production: remove the ':free' suffix after adding OpenRouter credits.
-const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
-const AI_MODEL_FALLBACK = 'meta-llama/llama-3.1-8b-instruct:free';
+// Model chain: tries each in order until one succeeds
+// For production reliability: add OpenRouter credits and remove ':free' suffixes
+const AI_MODELS = [
+  'meta-llama/llama-3.3-70b-instruct:free',
+  'google/gemma-3-27b-it:free',
+  'meta-llama/llama-3.1-8b-instruct:free',
+];
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -302,7 +305,11 @@ Financial Data: ${JSON.stringify(financialData)}`;
             await new Promise((r) => setTimeout(r, delay));
             continue;
           }
-          return null; // signal caller to try fallback
+          return null; // exhausted retries — try next model
+        }
+
+        if (res.status === 404 || res.status === 503) {
+          return null; // model unavailable — try next model
         }
 
         if (!res.ok) {
@@ -314,11 +321,12 @@ Financial Data: ${JSON.stringify(financialData)}`;
       return null;
     };
 
-    // Try primary (70B), then fall back to 8B if rate limited
-    aiRaw = await callOpenRouter(AI_MODEL);
-    if (!aiRaw) {
-      console.warn('Primary model rate limited. Switching to fallback model.');
-      aiRaw = await callOpenRouter(AI_MODEL_FALLBACK);
+    // Try each model in order until one succeeds
+    for (const model of AI_MODELS) {
+      console.log(`Trying model: ${model}`);
+      aiRaw = await callOpenRouter(model);
+      if (aiRaw) break;
+      console.warn(`Model ${model} unavailable, trying next...`);
     }
     if (!aiRaw) {
       throw new Error('AI service is temporarily busy. Please try again in a few minutes.');
