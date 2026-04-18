@@ -266,30 +266,51 @@ Compliance Lead: ${compliance_lead_name}
 Period: ${reporting_period_start} to ${reporting_period_end}
 Financial Data: ${JSON.stringify(financialData)}`;
 
-    const aiResponse = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${openRouterKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://regco-insight-suite.vercel.app',
-        'X-Title': 'RegCo MFB Report Generator',
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        max_tokens: 4000,
-        temperature: 0.1,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userMessage },
-        ],
-      }),
+    // Call OpenRouter with up to 3 retries on rate limit errors
+    let aiRaw: any;
+    const aiRequestBody = JSON.stringify({
+      model: AI_MODEL,
+      max_tokens: 4000,
+      temperature: 0.1,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
     });
 
-    if (!aiResponse.ok) {
-      throw new Error(`OpenRouter API error: ${aiResponse.status} ${aiResponse.statusText}`);
+    const MAX_RETRIES = 3;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      const aiResponse = await fetch(OPENROUTER_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${openRouterKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://regco-insight-suite.vercel.app',
+          'X-Title': 'RegCo MFB Report Generator',
+        },
+        body: aiRequestBody,
+      });
+
+      if (aiResponse.status === 429 && attempt < MAX_RETRIES) {
+        // Rate limited — wait before retrying (10s, 20s)
+        const delay = attempt * 10_000;
+        console.warn(`OpenRouter rate limited. Retrying in ${delay / 1000}s (attempt ${attempt}/${MAX_RETRIES})`);
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      if (!aiResponse.ok) {
+        throw new Error(`OpenRouter API error: ${aiResponse.status} ${aiResponse.statusText}`);
+      }
+
+      aiRaw = await aiResponse.json();
+      break;
     }
 
-    const aiRaw = await aiResponse.json();
+    if (!aiRaw) {
+      throw new Error('OpenRouter API rate limit exceeded after 3 attempts. Please try again in a few minutes.');
+    }
+
     const aiText = (aiRaw.choices?.[0]?.message?.content || '').trim();
 
     // Step 6: Parse AI JSON response — strip markdown backticks if present
