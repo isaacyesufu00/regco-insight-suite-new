@@ -39,7 +39,7 @@ interface Profile {
   rc_number: string | null;
   cbn_license_category: string | null;
   compliance_lead_name: string | null;
-  notification_email_report_ready: string | null;
+  notification_email_report_ready: boolean;
 }
 
 // Fields per report type
