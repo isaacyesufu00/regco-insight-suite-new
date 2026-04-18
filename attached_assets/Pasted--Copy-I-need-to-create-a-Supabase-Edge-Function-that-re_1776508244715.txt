@@ -1,0 +1,118 @@
+
+Copy
+
+I need to create a Supabase Edge Function that replaces my n8n automation entirely. Create a new file at supabase/functions/process-report/index.ts.
+ 
+This function receives a POST with report details, downloads a CBS Excel file, parses it, calls OpenRouter AI to generate a CBN MFB Regulatory Return, formats the report, uploads it to Supabase Storage, updates the database, and sends emails via Resend.
+ 
+Here are all my credentials to hardcode for now:
+- Supabase URL: https://pdplkprcomjslilznbsl.supabase.co
+- OpenRouter model: meta-llama/llama-3.1-8b-instruct:free
+- Resend from address: onboarding@resend.dev
+ 
+The function must:
+ 
+1. Accept POST with: report_id, user_id, institution_name, cbn_license_number, cbn_license_category, compliance_lead_name, reporting_period_start, reporting_period_end, file_url, client_email
+ 
+2. Add CORS headers to every response:
+   Access-Control-Allow-Origin: *
+   Access-Control-Allow-Headers: authorization, x-client-info, apikey, content-type
+   Return 200 ok for OPTIONS requests immediately.
+ 
+3. Update Supabase reports table: set status to "processing" using a PATCH request to:
+   https://pdplkprcomjslilznbsl.supabase.co/rest/v1/reports?id=eq.REPORT_ID
+   with headers: apikey and Authorization using Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+ 
+4. Download the Excel file from file_url using fetch with no-cors mode
+ 
+5. Parse Excel using SheetJS — import like this exactly:
+   import * as XLSX from 'https://cdn.sheetjs.com/xlsx-0.20.1/package/xlsx.mjs'
+   Convert the first sheet to an array of arrays. The first column is the Line Item label and the second column is the Amount value.
+ 
+6. Build a financial data object by matching row labels (lowercased, spaces replaced with underscores) to these fields using includes() matching:
+   total_assets, total_liabilities, total_shareholders_funds, total_deposits,
+   savings_deposits, demand_deposits, time_deposits, gross_loans,
+   performing_loans, non_performing_loans, loan_loss_provisions,
+   cash_and_equivalents, balances_with_cbn, investment_securities,
+   fixed_assets, paid_up_capital, retained_earnings, tier_1_capital,
+   tier_2_capital, risk_weighted_assets, liquid_assets
+ 
+7. Call OpenRouter API:
+   URL: https://openrouter.ai/api/v1/chat/completions
+   Method: POST
+   Headers:
+     Authorization: Bearer + Deno.env.get('OPENROUTER_API_KEY')
+     Content-Type: application/json
+     HTTP-Referer: https://regco-insight-suite.vercel.app
+     X-Title: RegCo MFB Report Generator
+   Body:
+     model: meta-llama/llama-3.1-8b-instruct:free
+     max_tokens: 4000
+     temperature: 0.1
+     messages: [
+       { role: system, content: SYSTEM_PROMPT },
+       { role: user, content: USER_MESSAGE }
+     ]
+ 
+   SYSTEM PROMPT (use this exactly):
+   "You are a Nigerian banking regulatory compliance engine. Your job is to validate CBS financial data and generate a CBN-compliant MFB Regulatory Return as JSON. You must run these validation checks: Check 1 - Total Assets must equal Total Liabilities plus Shareholders Funds. Check 2 - Gross Loans must equal Performing Loans plus Non-Performing Loans. Check 3 - Total Deposits must equal Savings plus Demand plus Time plus Other Deposits. If any check fails return ONLY this JSON: {\"status\":\"ERROR\",\"error_type\":\"VALIDATION_FAILED\",\"description\":\"explain what is wrong\",\"action_required\":\"explain what to fix\",\"figures_involved\":\"list the figures\",\"difference\":\"the exact discrepancy in naira\",\"report\":null}. If all checks pass return ONLY this JSON: {\"status\":\"SUCCESS\",\"validation_summary\":{\"car_percentage\":\"0.00\",\"liquidity_percentage\":\"0.00\",\"npl_ratio\":\"0.00\",\"loan_to_deposit_ratio\":\"0.00\"},\"report\":{\"cover\":{\"institution_name\":\"\",\"cbn_license_number\":\"\",\"cbn_license_category\":\"\",\"reporting_period\":\"\",\"date_prepared\":\"\"},\"section_a\":{\"total_assets\":0,\"cash_and_equivalents\":0,\"balances_with_cbn\":0,\"gross_loans_and_advances\":0,\"less_loan_loss_provisions\":0,\"net_loans_and_advances\":0,\"investment_securities\":0,\"fixed_assets_net\":0,\"other_assets\":0,\"total_deposits\":0,\"savings_deposits\":0,\"demand_deposits\":0,\"time_deposits\":0,\"other_deposits\":0,\"cbn_refinancing_facilities\":0,\"other_borrowings\":0,\"other_liabilities\":0,\"tax_liabilities\":0,\"total_liabilities\":0,\"paid_up_capital\":0,\"share_premium\":0,\"statutory_reserve\":0,\"retained_earnings\":0,\"total_shareholders_funds\":0},\"section_b\":{\"gross_loans\":0,\"performing_loans\":0,\"non_performing_loans\":0,\"npl_ratio_percentage\":0,\"loan_loss_provisions\":0,\"loan_to_deposit_ratio\":0},\"section_c\":{\"savings_deposits\":0,\"demand_deposits\":0,\"time_deposits\":0,\"other_deposits\":0,\"total_deposits\":0},\"section_d\":{\"tier_1_capital\":0,\"tier_2_capital\":0,\"total_qualifying_capital\":0,\"total_risk_weighted_assets\":0,\"capital_adequacy_ratio\":0,\"compliance_status\":\"COMPLIANT\"},\"section_e\":{\"liquid_assets\":0,\"total_deposit_liabilities\":0,\"liquidity_ratio\":0,\"compliance_status\":\"COMPLIANT\"},\"section_f\":{\"capital_adequacy_ratio\":0,\"liquidity_ratio\":0,\"npl_ratio\":0,\"loan_to_deposit_ratio\":0,\"return_on_assets\":0,\"return_on_equity\":0}}}. Return ONLY valid JSON. No markdown. No backticks. No text before or after the JSON."
+ 
+   USER MESSAGE:
+   "Generate MFB Regulatory Return.
+   Institution: [institution_name]
+   CBN License: [cbn_license_number]
+   Category: [cbn_license_category]
+   Compliance Lead: [compliance_lead_name]
+   Period: [reporting_period_start] to [reporting_period_end]
+   Financial Data: [JSON.stringify(financialData)]"
+ 
+8. Parse the AI JSON response — strip any markdown backticks before parsing. If parsing fails set status to ERROR with description "AI returned invalid response".
+ 
+9. If status is ERROR:
+   - PATCH Supabase reports table: status=failed, error_message=description, error_type=error_type
+   - POST to https://api.resend.com/emails with:
+     Authorization: Bearer + Deno.env.get('RESEND_API_KEY')
+     from: RegCo <onboarding@resend.dev>
+     to: [client_email]
+     subject: Action Required — CBS Data Error for [institution_name]
+     html: A styled HTML email showing the error type, description, what to fix, and a link to https://regco-insight-suite.vercel.app/dashboard
+ 
+10. If status is SUCCESS:
+    - Build a formatted plain text CBN report document with all sections (cover page, Section A balance sheet, Section B loans, Section C deposits, Section D capital adequacy, Section E liquidity, Section F KPIs, Section G certification). Format numbers with Nigerian naira symbol and commas. Add compliance status for CAR (min 10%) and liquidity ratio (min 20%).
+    - Generate filename: [institution_name]_MFB_Return_[reporting_period_end].txt with spaces replaced by underscores
+    - Upload to Supabase Storage using POST to:
+      https://pdplkprcomjslilznbsl.supabase.co/storage/v1/object/reports/[user_id]/[report_id]/[filename]
+      with headers: apikey and Authorization using service role key, Content-Type: text/plain, x-upsert: true
+      body: the plain text report
+    - PATCH Supabase reports table: status=ready, report_url=reports/user_id/report_id/filename, report_filename=filename, car_percentage=validation_summary.car_percentage, liquidity_percentage=validation_summary.liquidity_percentage, npl_ratio=validation_summary.npl_ratio, validation_passed=true, error_message=null
+    - POST to https://api.resend.com/emails with:
+      Authorization: Bearer + Deno.env.get('RESEND_API_KEY')
+      from: RegCo <onboarding@resend.dev>
+      to: [client_email]
+      subject: Your MFB Regulatory Return is Ready — [institution_name]
+      html: A styled HTML email showing CAR, liquidity ratio, NPL ratio, reporting period, and a button linking to https://regco-insight-suite.vercel.app/dashboard to download
+ 
+11. Return JSON response: { success: true } with status 200 on success. On any unhandled error catch the error, PATCH reports table status=failed error_message=error.message, and return { error: error.message } with status 500.
+ 
+12. Also update supabase/functions/notify-automation/index.ts — remove all references to AUTOMATION_WEBHOOK_URL and n8n. Instead call the process-report function directly like this:
+    const response = await fetch(
+      'https://pdplkprcomjslilznbsl.supabase.co/functions/v1/process-report',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers.get('Authorization') || '',
+          'apikey': Deno.env.get('SUPABASE_ANON_KEY') || ''
+        },
+        body: JSON.stringify(body)
+      }
+    )
+    Return 200 immediately after triggering process-report without waiting for it to finish (fire and forget pattern using waitUntil if available or just not awaiting the response body).
+ 
+After creating both files run these commands:
+npx supabase login
+npx supabase functions deploy process-report --project-ref pdplkprcomjslilznbsl
+npx supabase functions deploy notify-automation --project-ref pdplkprcomjslilznbsl
+ 
+Then run:
+git add -A && git commit -m "Replace n8n with direct Supabase edge function using Llama AI" && git push
