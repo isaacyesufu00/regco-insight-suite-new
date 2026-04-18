@@ -3,6 +3,8 @@ import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
+// Primary: Llama 3.3 70B (fast, accurate). Fallback: Llama 3.1 8B (higher rate limits).
+// For production: remove the ':free' suffix after adding OpenRouter credits.
 const AI_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 const AI_MODEL_FALLBACK = 'meta-llama/llama-3.1-8b-instruct:free';
 
