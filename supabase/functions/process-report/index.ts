@@ -101,25 +101,227 @@ function getSystemPrompt(reportType: string): string {
   }
 }
 
-const FINANCIAL_FIELDS = [
-  'total_assets', 'total_liabilities', 'total_shareholders_funds', 'total_deposits',
-  'savings_deposits', 'demand_deposits', 'time_deposits', 'other_deposits',
-  'gross_loans', 'performing_loans', 'non_performing_loans', 'loan_loss_provisions',
-  'cash_and_equivalents', 'balances_with_cbn', 'balances_with_other_banks',
-  'investment_securities', 'fixed_assets', 'other_assets',
-  'paid_up_capital', 'statutory_reserve', 'retained_earnings',
-  'tier_1_capital', 'tier_2_capital', 'risk_weighted_assets', 'liquid_assets',
-  // Forex
-  'total_fx_inflows', 'total_fx_outflows', 'net_open_position',
-  'usd_inflows', 'usd_outflows', 'gbp_inflows', 'gbp_outflows', 'eur_inflows', 'eur_outflows',
-  // AML/NFIU
-  'total_transactions', 'str_filed', 'ctr_filed', 'flagged_transactions',
-  'total_customers', 'kyc_compliant', 'pep_customers', 'high_risk_customers',
-  'staff_trained', 'total_staff',
-  // Rates & earnings
-  'prime_lending_rate', 'savings_rate', 'interest_income', 'non_interest_income',
-  'total_income', 'profit_before_tax', 'profit_after_tax',
-];
+// ─── CBS ACCOUNT MAPPING ──────────────────────────────────────────────────────
+// Each canonical field maps to an array of synonym keywords commonly found in
+// Nigerian core banking system exports (Flexcube, Finacle, T24, Bankone, Rubies, etc.).
+// Matching is done on normalized labels — lowercase, alphanumeric only.
+
+const FIELD_SYNONYMS: Record<string, string[]> = {
+  // ── Balance Sheet — Assets ──
+  cash_and_equivalents: ['cash and cash equivalent', 'cash on hand', 'vault cash', 'cash equivalent', 'cash and bank'],
+  balances_with_cbn: ['balance with cbn', 'balances with central bank', 'cbn balance', 'cash reserve cbn', 'crr', 'cash reserve requirement'],
+  balances_with_other_banks: ['balances with other bank', 'due from other bank', 'placement with bank', 'interbank placement', 'nostro'],
+  investment_securities: ['investment securit', 'treasury bill', 'government securit', 'fgn bond', 'investment in securit'],
+  gross_loans: ['gross loan', 'total loan', 'loans and advance', 'gross loan and advance', 'loan portfolio gross'],
+  performing_loans: ['performing loan', 'standard loan', 'current loan'],
+  non_performing_loans: ['non performing loan', 'npl', 'non-performing', 'doubtful loan', 'loss loan', 'substandard loan'],
+  loan_loss_provisions: ['loan loss provision', 'provision for loan loss', 'allowance for loan loss', 'impairment'],
+  fixed_assets: ['fixed asset', 'property plant equipment', 'ppe', 'land and building', 'tangible asset'],
+  other_assets: ['other asset', 'sundry asset', 'prepayment'],
+  total_assets: ['total asset', 'sum of asset', 'grand total asset'],
+  liquid_assets: ['liquid asset', 'liquidity asset', 'cash and near cash'],
+
+  // ── Balance Sheet — Liabilities ──
+  savings_deposits: ['saving deposit', 'savings account'],
+  demand_deposits: ['demand deposit', 'current account deposit', 'current deposit'],
+  time_deposits: ['time deposit', 'term deposit', 'fixed deposit'],
+  other_deposits: ['other deposit', 'sundry deposit', 'domiciliary deposit'],
+  total_deposits: ['total deposit', 'customer deposit', 'sum of deposit', 'aggregate deposit'],
+  total_liabilities: ['total liabilit', 'sum of liabilit', 'grand total liabilit'],
+  cbn_refinancing: ['cbn refinanc', 'cbn intervention', 'cbn facility'],
+  other_borrowings: ['other borrowing', 'borrowed fund', 'long term borrowing'],
+  other_liabilities: ['other liabilit', 'sundry liabilit', 'accrued expense'],
+
+  // ── Equity ──
+  paid_up_capital: ['paid up capital', 'paid-up capital', 'share capital', 'ordinary share'],
+  statutory_reserve: ['statutory reserve'],
+  retained_earnings: ['retained earning', 'retained profit', 'accumulated profit'],
+  total_shareholders_funds: ['shareholders fund', "shareholder's fund", "shareholders' fund", 'total equity', 'net worth', 'owners equity'],
+
+  // ── Capital Adequacy ──
+  tier_1_capital: ['tier 1 capital', 'tier i capital', 'tier1 capital', 'core capital'],
+  tier_2_capital: ['tier 2 capital', 'tier ii capital', 'tier2 capital', 'supplementary capital'],
+  risk_weighted_assets: ['risk weighted asset', 'rwa'],
+
+  // ── Forex ──
+  total_fx_inflows: ['fx inflow', 'foreign currency inflow', 'forex inflow', 'fcy inflow'],
+  total_fx_outflows: ['fx outflow', 'foreign currency outflow', 'forex outflow', 'fcy outflow'],
+  net_open_position: ['net open position', 'nop'],
+  usd_inflows: ['usd inflow', 'dollar inflow'],
+  usd_outflows: ['usd outflow', 'dollar outflow'],
+  gbp_inflows: ['gbp inflow', 'pound inflow'],
+  gbp_outflows: ['gbp outflow', 'pound outflow'],
+  eur_inflows: ['eur inflow', 'euro inflow'],
+  eur_outflows: ['eur outflow', 'euro outflow'],
+
+  // ── AML / NFIU / SCUML ──
+  total_transactions: ['total transaction', 'number of transaction', 'transaction count'],
+  str_filed: ['str', 'suspicious transaction report'],
+  ctr_filed: ['ctr', 'currency transaction report', 'cash transaction report'],
+  flagged_transactions: ['flagged transaction', 'suspicious flag'],
+  total_customers: ['total customer', 'number of customer', 'customer count'],
+  kyc_compliant: ['kyc compliant', 'kyc complete'],
+  pep_customers: ['pep', 'politically exposed'],
+  high_risk_customers: ['high risk customer', 'high-risk customer'],
+  staff_trained: ['staff trained', 'training compliant'],
+  total_staff: ['total staff', 'number of staff', 'headcount'],
+
+  // ── Rates & Earnings ──
+  prime_lending_rate: ['prime lending rate', 'prime rate'],
+  savings_rate: ['savings rate', 'savings deposit rate'],
+  interest_income: ['interest income'],
+  non_interest_income: ['non interest income', 'non-interest income', 'fee and commission'],
+  total_income: ['total income', 'gross income', 'gross revenue'],
+  profit_before_tax: ['profit before tax', 'pbt'],
+  profit_after_tax: ['profit after tax', 'pat', 'net profit'],
+};
+
+const FINANCIAL_FIELDS = Object.keys(FIELD_SYNONYMS);
+
+/** Normalize a string for fuzzy matching: lowercase, collapse non-alphanumerics to single spaces. */
+function normalizeLabel(s: string): string {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+/** Try to coerce any cell value (number, string with currency/commas, etc.) to a number. */
+function coerceNumber(v: any): number | null {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number' && isFinite(v)) return v;
+  const cleaned = String(v).replace(/[,\u20a6$£€\s]/g, '').replace(/[()]/g, (m) => (m === '(' ? '-' : ''));
+  const n = parseFloat(cleaned);
+  return isFinite(n) ? n : null;
+}
+
+/**
+ * Parse a raw CBS export (Excel or CSV) and extract financial figures.
+ *
+ * Walks every sheet, every row. For each row it:
+ *  1. Concatenates all non-numeric cells to form a "label" (catches "Account Code | Description" formats).
+ *  2. Picks the rightmost numeric cell on the row as the value (CBS exports usually have prior-period
+ *     and period-end columns side by side; the last non-zero number is typically the closing balance).
+ *  3. Matches the label against FIELD_SYNONYMS — first match wins per field, longer synonyms preferred.
+ */
+function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
+  const data: Record<string, number> = {};
+  // Pre-sort synonyms by length desc so longer phrases match before shorter ones
+  const fieldEntries: Array<[string, string[]]> = Object.entries(FIELD_SYNONYMS).map(([f, syns]) => [
+    f,
+    [...syns].sort((a, b) => b.length - a.length),
+  ]);
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+
+    for (const row of rows) {
+      if (!Array.isArray(row) || row.length === 0) continue;
+
+      // Build label from all non-numeric cells
+      const textParts: string[] = [];
+      const numericCells: number[] = [];
+      for (const cell of row) {
+        const asNum = coerceNumber(cell);
+        if (asNum !== null && typeof cell !== 'string') {
+          numericCells.push(asNum);
+        } else if (typeof cell === 'string' && cell.trim() && coerceNumber(cell) === null) {
+          textParts.push(cell);
+        } else if (asNum !== null) {
+          numericCells.push(asNum);
+        }
+      }
+      if (textParts.length === 0 || numericCells.length === 0) continue;
+
+      const label = normalizeLabel(textParts.join(' '));
+      if (!label) continue;
+
+      // Pick the last non-zero numeric value as the closing balance; fall back to last number
+      let value = 0;
+      for (let i = numericCells.length - 1; i >= 0; i--) {
+        if (numericCells[i] !== 0) {
+          value = numericCells[i];
+          break;
+        }
+      }
+      if (value === 0) value = numericCells[numericCells.length - 1];
+
+      // Match against synonyms — first field whose synonym appears in label wins,
+      // but don't overwrite a previously-found field
+      for (const [field, synonyms] of fieldEntries) {
+        if (field in data) continue;
+        for (const syn of synonyms) {
+          if (label.includes(syn)) {
+            data[field] = value;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  return data;
+}
+
+/** Compute derived fields and run deterministic balance-sheet validation. */
+function deriveAndValidate(d: Record<string, number>): {
+  derived: Record<string, number>;
+  metrics: { car_percentage: number; liquidity_percentage: number; npl_ratio: number; loan_to_deposit_ratio: number };
+  validationError: string | null;
+} {
+  const derived = { ...d };
+
+  // Derive total_deposits if missing but components exist
+  if (!derived.total_deposits) {
+    const sum = (derived.savings_deposits || 0) + (derived.demand_deposits || 0) + (derived.time_deposits || 0) + (derived.other_deposits || 0);
+    if (sum > 0) derived.total_deposits = sum;
+  }
+
+  // Derive gross_loans if missing
+  if (!derived.gross_loans) {
+    const sum = (derived.performing_loans || 0) + (derived.non_performing_loans || 0);
+    if (sum > 0) derived.gross_loans = sum;
+  }
+
+  // Derive shareholders funds if missing
+  if (!derived.total_shareholders_funds) {
+    const sum = (derived.paid_up_capital || 0) + (derived.statutory_reserve || 0) + (derived.retained_earnings || 0);
+    if (sum > 0) derived.total_shareholders_funds = sum;
+  }
+
+  // Derive liquid_assets if missing (cash + CBN balances + investment securities)
+  if (!derived.liquid_assets) {
+    const sum = (derived.cash_and_equivalents || 0) + (derived.balances_with_cbn || 0) + (derived.balances_with_other_banks || 0) + (derived.investment_securities || 0);
+    if (sum > 0) derived.liquid_assets = sum;
+  }
+
+  // Compute ratios
+  const totalCapital = (derived.tier_1_capital || 0) + (derived.tier_2_capital || 0);
+  const car = derived.risk_weighted_assets > 0 ? (totalCapital / derived.risk_weighted_assets) * 100 : 0;
+  const liq = derived.total_deposits > 0 ? ((derived.liquid_assets || 0) / derived.total_deposits) * 100 : 0;
+  const npl = derived.gross_loans > 0 ? ((derived.non_performing_loans || 0) / derived.gross_loans) * 100 : 0;
+  const ltd = derived.total_deposits > 0 ? ((derived.gross_loans || 0) / derived.total_deposits) * 100 : 0;
+
+  // Deterministic validation — only run if we have enough data to validate
+  let validationError: string | null = null;
+  const hasBalanceSheet = derived.total_assets > 0 && derived.total_liabilities > 0;
+  if (hasBalanceSheet && derived.total_shareholders_funds > 0) {
+    const expected = derived.total_liabilities + derived.total_shareholders_funds;
+    const diff = Math.abs(derived.total_assets - expected);
+    const tolerance = Math.max(1000, derived.total_assets * 0.005); // 0.5% or NGN 1,000
+    if (diff > tolerance) {
+      validationError = `Balance sheet does not reconcile. Total Assets (${derived.total_assets.toLocaleString()}) ≠ Total Liabilities + Equity (${expected.toLocaleString()}). Difference: ₦${diff.toLocaleString()}.`;
+    }
+  }
+
+  return {
+    derived,
+    metrics: { car_percentage: car, liquidity_percentage: liq, npl_ratio: npl, loan_to_deposit_ratio: ltd },
+    validationError,
+  };
+}
 
 async function patchReport(reportId: string, data: Record<string, any>, serviceRoleKey: string) {
   await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${reportId}`, {
@@ -480,27 +682,35 @@ Deno.serve(async (req: Request) => {
     }
     const arrayBuffer = await fileResponse.arrayBuffer();
 
-    // Step 3: Parse Excel with SheetJS
+    // Step 3: Parse the entire raw CBS workbook (all sheets, all rows) with synonym matching
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+    const rawData = parseCBSWorkbook(workbook);
 
-    // Step 4: Build financial data object by matching row labels
-    const financialData: Record<string, number> = {};
-    for (const row of rows) {
-      if (!row[0]) continue;
-      const label = String(row[0]).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      const value = parseFloat(String(row[1] || '0').replace(/[,\u20a6$£€]/g, '')) || 0;
-      for (const field of FINANCIAL_FIELDS) {
-        if (label.includes(field) && !(field in financialData)) {
-          financialData[field] = value;
-          break;
-        }
-      }
+    if (Object.keys(rawData).length === 0) {
+      throw new Error(
+        'We could not identify any recognized account labels in your CBS export. ' +
+        'Please ensure the file contains the trial balance, general ledger, or summary balance sheet from your core banking system.'
+      );
     }
 
-    // Step 5: Pick the right system prompt for this report type
+    // Step 4: Derive missing fields and run deterministic balance-sheet validation
+    const { derived: financialData, metrics, validationError } = deriveAndValidate(rawData);
+
+    if (validationError) {
+      await patchReport(report_id, {
+        status: 'failed',
+        error_message: validationError,
+        error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
+      }, serviceRoleKey);
+      return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Parsed ${Object.keys(financialData).length} fields. Computed CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
+
+    // Step 5: Pick the right system prompt — AI is a sanity check, NOT the source of truth
     const systemPrompt = getSystemPrompt(reportType);
     const userMessage = `Generate ${reportType}.
 Institution: ${institution_name}
@@ -508,6 +718,7 @@ CBN License: ${cbn_license_number}
 Category: ${cbn_license_category}
 Compliance Lead: ${compliance_lead_name}
 Period: ${reporting_period_start} to ${reporting_period_end}
+Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%, LDR=${metrics.loan_to_deposit_ratio.toFixed(2)}%
 Financial Data: ${JSON.stringify(financialData)}`;
 
     // Call Lovable AI Gateway with model fallback chain
@@ -630,7 +841,15 @@ Financial Data: ${JSON.stringify(financialData)}`;
     }
 
     // Step 7b: Handle SUCCESS — build report, upload, notify
-    const validationSummary = aiData.validation_summary || {};
+    // IMPORTANT: deterministic metrics override AI's. AI is a sanity check, not the source of truth.
+    const aiSummary = aiData.validation_summary || {};
+    const validationSummary = {
+      ...aiSummary,
+      car_percentage: metrics.car_percentage || Number(aiSummary.car_percentage || 0),
+      liquidity_percentage: metrics.liquidity_percentage || Number(aiSummary.liquidity_percentage || 0),
+      npl_ratio: metrics.npl_ratio || Number(aiSummary.npl_ratio || 0),
+      loan_to_deposit_ratio: metrics.loan_to_deposit_ratio || Number(aiSummary.loan_to_deposit_ratio || 0),
+    };
 
     const meta: Meta = {
       institution_name, cbn_license_number, cbn_license_category,
@@ -663,22 +882,22 @@ Financial Data: ${JSON.stringify(financialData)}`;
       throw new Error(`Storage upload failed: ${errText}`);
     }
 
-    // Update report record to ready
+    // Update report record to ready — use deterministic metrics
     await patchReport(report_id, {
       status: 'ready',
       report_url: storagePath,
       report_filename: filename,
-      car_percentage: Number(validationSummary.car_percentage || 0),
-      liquidity_percentage: Number(validationSummary.liquidity_percentage || 0),
-      npl_ratio: Number(validationSummary.npl_ratio || 0),
+      car_percentage: validationSummary.car_percentage,
+      liquidity_percentage: validationSummary.liquidity_percentage,
+      npl_ratio: validationSummary.npl_ratio,
       validation_passed: true,
       error_message: null,
     }, serviceRoleKey);
 
     // Send success email — show CAR/Liquidity/NPL only when relevant
-    const car = Number(validationSummary.car_percentage || 0);
-    const liq = Number(validationSummary.liquidity_percentage || 0);
-    const npl = Number(validationSummary.npl_ratio || 0);
+    const car = validationSummary.car_percentage;
+    const liq = validationSummary.liquidity_percentage;
+    const npl = validationSummary.npl_ratio;
     const showFinancialMetrics = car > 0 || liq > 0 || npl > 0;
     const carStatus = car >= 10 ? '\u2705 Compliant' : '\u26a0\ufe0f Below Minimum (10%)';
     const liqStatus = liq >= 20 ? '\u2705 Compliant' : '\u26a0\ufe0f Below Minimum (20%)';
