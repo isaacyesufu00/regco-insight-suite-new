@@ -841,7 +841,15 @@ Financial Data: ${JSON.stringify(financialData)}`;
     }
 
     // Step 7b: Handle SUCCESS — build report, upload, notify
-    const validationSummary = aiData.validation_summary || {};
+    // IMPORTANT: deterministic metrics override AI's. AI is a sanity check, not the source of truth.
+    const aiSummary = aiData.validation_summary || {};
+    const validationSummary = {
+      ...aiSummary,
+      car_percentage: metrics.car_percentage || Number(aiSummary.car_percentage || 0),
+      liquidity_percentage: metrics.liquidity_percentage || Number(aiSummary.liquidity_percentage || 0),
+      npl_ratio: metrics.npl_ratio || Number(aiSummary.npl_ratio || 0),
+      loan_to_deposit_ratio: metrics.loan_to_deposit_ratio || Number(aiSummary.loan_to_deposit_ratio || 0),
+    };
 
     const meta: Meta = {
       institution_name, cbn_license_number, cbn_license_category,
@@ -874,22 +882,22 @@ Financial Data: ${JSON.stringify(financialData)}`;
       throw new Error(`Storage upload failed: ${errText}`);
     }
 
-    // Update report record to ready
+    // Update report record to ready — use deterministic metrics
     await patchReport(report_id, {
       status: 'ready',
       report_url: storagePath,
       report_filename: filename,
-      car_percentage: Number(validationSummary.car_percentage || 0),
-      liquidity_percentage: Number(validationSummary.liquidity_percentage || 0),
-      npl_ratio: Number(validationSummary.npl_ratio || 0),
+      car_percentage: validationSummary.car_percentage,
+      liquidity_percentage: validationSummary.liquidity_percentage,
+      npl_ratio: validationSummary.npl_ratio,
       validation_passed: true,
       error_message: null,
     }, serviceRoleKey);
 
     // Send success email — show CAR/Liquidity/NPL only when relevant
-    const car = Number(validationSummary.car_percentage || 0);
-    const liq = Number(validationSummary.liquidity_percentage || 0);
-    const npl = Number(validationSummary.npl_ratio || 0);
+    const car = validationSummary.car_percentage;
+    const liq = validationSummary.liquidity_percentage;
+    const npl = validationSummary.npl_ratio;
     const showFinancialMetrics = car > 0 || liq > 0 || npl > 0;
     const carStatus = car >= 10 ? '\u2705 Compliant' : '\u26a0\ufe0f Below Minimum (10%)';
     const liqStatus = liq >= 20 ? '\u2705 Compliant' : '\u26a0\ufe0f Below Minimum (20%)';
