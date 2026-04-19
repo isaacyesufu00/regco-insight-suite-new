@@ -682,27 +682,35 @@ Deno.serve(async (req: Request) => {
     }
     const arrayBuffer = await fileResponse.arrayBuffer();
 
-    // Step 3: Parse Excel with SheetJS
+    // Step 3: Parse the entire raw CBS workbook (all sheets, all rows) with synonym matching
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
+    const rawData = parseCBSWorkbook(workbook);
 
-    // Step 4: Build financial data object by matching row labels
-    const financialData: Record<string, number> = {};
-    for (const row of rows) {
-      if (!row[0]) continue;
-      const label = String(row[0]).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
-      const value = parseFloat(String(row[1] || '0').replace(/[,\u20a6$£€]/g, '')) || 0;
-      for (const field of FINANCIAL_FIELDS) {
-        if (label.includes(field) && !(field in financialData)) {
-          financialData[field] = value;
-          break;
-        }
-      }
+    if (Object.keys(rawData).length === 0) {
+      throw new Error(
+        'We could not identify any recognized account labels in your CBS export. ' +
+        'Please ensure the file contains the trial balance, general ledger, or summary balance sheet from your core banking system.'
+      );
     }
 
-    // Step 5: Pick the right system prompt for this report type
+    // Step 4: Derive missing fields and run deterministic balance-sheet validation
+    const { derived: financialData, metrics, validationError } = deriveAndValidate(rawData);
+
+    if (validationError) {
+      await patchReport(report_id, {
+        status: 'failed',
+        error_message: validationError,
+        error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
+      }, serviceRoleKey);
+      return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`Parsed ${Object.keys(financialData).length} fields. Computed CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
+
+    // Step 5: Pick the right system prompt — AI is a sanity check, NOT the source of truth
     const systemPrompt = getSystemPrompt(reportType);
     const userMessage = `Generate ${reportType}.
 Institution: ${institution_name}
@@ -710,6 +718,7 @@ CBN License: ${cbn_license_number}
 Category: ${cbn_license_category}
 Compliance Lead: ${compliance_lead_name}
 Period: ${reporting_period_start} to ${reporting_period_end}
+Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%, LDR=${metrics.loan_to_deposit_ratio.toFixed(2)}%
 Financial Data: ${JSON.stringify(financialData)}`;
 
     // Call Lovable AI Gateway with model fallback chain
