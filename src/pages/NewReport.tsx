@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
@@ -18,6 +17,7 @@ import {
   AlertCircle,
   Loader2,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -42,42 +42,7 @@ interface Profile {
   notification_email_report_ready: boolean;
 }
 
-// Fields per report type
-const reportFields: Record<string, { name: string; label: string; placeholder: string }[]> = {
-  "CBN Monetary Policy Return": [
-    { name: "total_deposit_liabilities", label: "Total Deposit Liabilities (₦)", placeholder: "e.g. 5,000,000,000" },
-    { name: "total_loan_portfolio", label: "Total Loan Portfolio (₦)", placeholder: "e.g. 3,200,000,000" },
-    { name: "capital_base", label: "Capital Base (₦)", placeholder: "e.g. 1,000,000,000" },
-    { name: "liquidity_ratio", label: "Liquidity Ratio (%)", placeholder: "e.g. 35.5" },
-    { name: "capital_adequacy_ratio", label: "Capital Adequacy Ratio (%)", placeholder: "e.g. 15.2" },
-  ],
-  "CBN Forex Return": [
-    { name: "total_fx_inflows", label: "Total FX Inflows (USD)", placeholder: "e.g. 12,000,000" },
-    { name: "total_fx_outflows", label: "Total FX Outflows (USD)", placeholder: "e.g. 9,500,000" },
-    { name: "net_open_position", label: "Net Open Position (USD)", placeholder: "e.g. 2,500,000" },
-    { name: "currency_breakdown", label: "Currency Breakdown", placeholder: "e.g. USD: 60%, GBP: 25%, EUR: 15%" },
-  ],
-  "AML/CFT Report": [
-    { name: "strs_filed", label: "Suspicious Transaction Reports Filed", placeholder: "e.g. 12" },
-    { name: "flagged_value", label: "Total Value of Flagged Transactions (₦)", placeholder: "e.g. 450,000,000" },
-    { name: "compliance_officer", label: "Compliance Officer Name", placeholder: "e.g. John Adeyemi" },
-    { name: "scuml_number", label: "SCUML Registration Number", placeholder: "e.g. SCUML/2024/001" },
-  ],
-  "NFIU Regulatory Return": [
-    { name: "cash_transaction_reports", label: "Number of Cash Transaction Reports", placeholder: "e.g. 150" },
-    { name: "international_transfer_reports", label: "Number of International Transfer Reports", placeholder: "e.g. 45" },
-    { name: "high_value_total", label: "Total Value of High-Value Transactions (₦)", placeholder: "e.g. 2,000,000,000" },
-  ],
-  "MFB Regulatory Return": [
-    { name: "total_deposits", label: "Total Deposits (₦)", placeholder: "e.g. 800,000,000" },
-    { name: "total_loans", label: "Total Loans Outstanding (₦)", placeholder: "e.g. 600,000,000" },
-    { name: "par_ratio", label: "Portfolio at Risk Ratio (%)", placeholder: "e.g. 5.2" },
-    { name: "oss_ratio", label: "Operational Self-Sufficiency Ratio (%)", placeholder: "e.g. 120" },
-    { name: "active_borrowers", label: "Number of Active Borrowers", placeholder: "e.g. 2,500" },
-  ],
-};
-
-const STEPS = ["Report Type", "Reporting Period", "Report Details", "Review", "Processing"];
+const STEPS = ["Report Type", "Period & CBS Upload", "Review", "Processing"];
 
 type ProcessingStatus = "processing" | "ready" | "failed";
 
@@ -96,10 +61,9 @@ const NewReport = () => {
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
   const [cbsFile, setCbsFile] = useState<File | null>(null);
-  const [formData, setFormData] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
-  // Step 4 processing state
+  // Processing step state
   const [currentReportId, setCurrentReportId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("processing");
   const [downloadUrl, setDownloadUrl] = useState<string>("");
@@ -133,7 +97,7 @@ const NewReport = () => {
 
   // Poll reports table every 8 seconds while on the processing step
   useEffect(() => {
-    if (step !== 4 || !currentReportId) return;
+    if (step !== 3 || !currentReportId) return;
     if (processingStatus === "ready" || processingStatus === "failed") return;
 
     const interval = setInterval(async () => {
@@ -148,7 +112,6 @@ const NewReport = () => {
       const status = (data.status as string).toLowerCase();
 
       if (status === "ready") {
-        // Generate public URL from the report_url storage path
         let url = "";
         if (data.report_url) {
           const { data: publicData } = supabase.storage
@@ -176,6 +139,23 @@ const NewReport = () => {
   }, [step, currentReportId, processingStatus]);
 
   const handleFileSelect = (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["xlsx", "xls", "csv"].includes(ext || "")) {
+      toast({
+        title: "Unsupported file format",
+        description: "Please upload your CBS export as .xlsx, .xls, or .csv",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Maximum file size is 50MB.",
+        variant: "destructive",
+      });
+      return;
+    }
     setCbsFile(file);
   };
 
@@ -185,17 +165,12 @@ const NewReport = () => {
     if (file) handleFileSelect(file);
   };
 
-  const handleFieldChange = (name: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
   const resetAndStartOver = () => {
     setStep(0);
     setReportType("");
     setPeriodStart(undefined);
     setPeriodEnd(undefined);
     setCbsFile(null);
-    setFormData({});
     setCurrentReportId(null);
     setProcessingStatus("processing");
     setDownloadUrl("");
@@ -214,7 +189,7 @@ const NewReport = () => {
       const periodEndStr = periodEnd!.toISOString().split("T")[0];
       const reportName = `${reportType} — ${profile.company_name || "Report"}`;
 
-      // Step 1: Upload CBS file to "reports" bucket under the user's folder
+      // 1. Upload raw CBS file to "reports" bucket under the user's folder
       const safeFileName = cbsFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const storagePath = `${user.id}/${Date.now()}_${safeFileName}`;
 
@@ -224,7 +199,7 @@ const NewReport = () => {
 
       if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
 
-      // Step 2: Generate a signed URL valid for 7200 seconds
+      // 2. Generate a signed URL valid for 7200 seconds
       const { data: signedData, error: signedError } = await supabase.storage
         .from("reports")
         .createSignedUrl(storagePath, 7200);
@@ -234,7 +209,7 @@ const NewReport = () => {
       }
       const fileUrl = signedData.signedUrl;
 
-      // Step 3: Create the report row in the reports table with status "pending"
+      // 3. Create the report row with status "pending"
       const { data: newReport, error: reportError } = await supabase
         .from("reports")
         .insert({
@@ -243,6 +218,7 @@ const NewReport = () => {
           report_type: reportType,
           status: "pending",
           file_url: fileUrl,
+          file_path: storagePath,
           reporting_period_start: periodStartStr,
           reporting_period_end: periodEndStr,
           created_at: new Date().toISOString(),
@@ -255,7 +231,7 @@ const NewReport = () => {
       }
       createdReportId = newReport.id;
 
-      // Step 4: Call the notify-automation edge function
+      // 4. Trigger automation
       const clientEmail =
         profile.notification_email_report_ready || user.email || "";
 
@@ -267,6 +243,7 @@ const NewReport = () => {
           cbn_license_number: profile.rc_number,
           cbn_license_category: profile.cbn_license_category,
           compliance_lead_name: profile.compliance_lead_name,
+          report_type: reportType,
           reporting_period_start: periodStartStr,
           reporting_period_end: periodEndStr,
           file_url: fileUrl,
@@ -274,20 +251,18 @@ const NewReport = () => {
         },
       });
 
-      // Log but don't block — the automation may still process the report
       if (fnError) {
         console.warn("notify-automation returned an error:", fnError.message);
       }
 
-      // Step 5: Move to the processing step — polling takes over from here
+      // 5. Move to processing — polling takes over
       setCurrentReportId(newReport.id);
       setProcessingStatus("processing");
-      setStep(4);
+      setStep(3);
     } catch (err) {
       const errMsg =
         err instanceof Error ? err.message : "An unexpected error occurred.";
 
-      // If we managed to create the report row, mark it as failed
       if (createdReportId) {
         await supabase
           .from("reports")
@@ -305,10 +280,8 @@ const NewReport = () => {
     }
   };
 
-  const fields = reportFields[reportType] || [];
   const canProceedStep0 = !!reportType;
   const canProceedStep1 = !!periodStart && !!periodEnd && !!cbsFile;
-  const canProceedStep2 = fields.every((f) => formData[f.name]?.trim());
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -364,20 +337,33 @@ const NewReport = () => {
         </div>
       )}
 
-      {/* ── Step 1: Reporting Period + CBS File Upload ── */}
+      {/* ── Step 1: Reporting Period + Raw CBS File Upload ── */}
       {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle>Reporting Period &amp; CBS File</CardTitle>
+            <CardTitle>Reporting Period &amp; CBS Export</CardTitle>
             <CardDescription>
-              Select your reporting dates and upload the CBS export file.
+              Upload the raw monthly CBS export from your core banking system. No manual extraction required.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
+            {/* Helper banner */}
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
+              <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-foreground">
+                <p className="font-medium mb-1">Fully automated processing</p>
+                <p className="text-muted-foreground">
+                  Upload the raw trial balance, general ledger, or full CBS export — exactly as it comes from
+                  Flexcube, Finacle, T24, Bankone, Rubies, or any other core banking system. RegCo will parse all sheets,
+                  identify the relevant accounts, validate totals, and generate the CBN-ready return automatically.
+                </p>
+              </div>
+            </div>
+
             {/* Date pickers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date</Label>
+                <Label>Reporting Period Start</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -401,7 +387,7 @@ const NewReport = () => {
                 </Popover>
               </div>
               <div className="space-y-2">
-                <Label>End Date</Label>
+                <Label>Reporting Period End</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -428,7 +414,7 @@ const NewReport = () => {
 
             {/* CBS File upload */}
             <div className="space-y-2">
-              <Label>CBS Export File</Label>
+              <Label>Raw CBS Export File</Label>
               {cbsFile ? (
                 <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-accent/40">
                   <FileText className="w-5 h-5 text-primary flex-shrink-0" />
@@ -455,10 +441,10 @@ const NewReport = () => {
                 >
                   <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                   <p className="text-sm font-medium text-foreground">
-                    Click to upload or drag &amp; drop
+                    Click to upload or drag &amp; drop your CBS export
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Excel (.xlsx, .xls), CSV, or any CBS export format
+                    Accepted: .xlsx, .xls, .csv (max 50MB) — trial balance, GL, or full CBS export
                   </p>
                 </div>
               )}
@@ -466,7 +452,7 @@ const NewReport = () => {
                 ref={fileInputRef}
                 type="file"
                 className="hidden"
-                accept=".xlsx,.xls,.csv,.txt,.pdf,.zip"
+                accept=".xlsx,.xls,.csv"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
                   if (f) handleFileSelect(f);
@@ -486,79 +472,14 @@ const NewReport = () => {
         </Card>
       )}
 
-      {/* ── Step 2: Report Details ── */}
+      {/* ── Step 2: Review ── */}
       {step === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Report Details — {reportType}</CardTitle>
-            <CardDescription>Fill in the required financial data for this return.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Pre-filled fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-accent/50 rounded-lg">
-              <div>
-                <Label className="text-xs text-muted-foreground">Institution Name</Label>
-                <p className="text-sm font-medium text-foreground">{profile?.company_name || "—"}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">RC Number</Label>
-                <p className="text-sm font-medium text-foreground">{profile?.rc_number || "—"}</p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">CBN License Category</Label>
-                <p className="text-sm font-medium text-foreground">
-                  {profile?.cbn_license_category || "—"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Reporting Period</Label>
-                <p className="text-sm font-medium text-foreground">
-                  {periodStart && periodEnd
-                    ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}`
-                    : "—"}
-                </p>
-              </div>
-            </div>
-
-            {fields.map((f) => (
-              <div key={f.name} className="space-y-2">
-                <Label htmlFor={f.name}>{f.label}</Label>
-                <Input
-                  id={f.name}
-                  placeholder={f.placeholder}
-                  value={formData[f.name] || ""}
-                  onChange={(e) => handleFieldChange(f.name, e.target.value)}
-                />
-              </div>
-            ))}
-
-            {fields.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No additional fields required for this report type.
-              </p>
-            )}
-
-            <div className="flex justify-between pt-2">
-              <Button variant="outline" onClick={() => setStep(1)}>
-                Back
-              </Button>
-              <Button
-                onClick={() => setStep(3)}
-                disabled={fields.length > 0 && !canProceedStep2}
-              >
-                Next <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* ── Step 3: Review ── */}
-      {step === 3 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Review Your Report</CardTitle>
-            <CardDescription>Please review all details before submitting.</CardDescription>
+            <CardTitle>Review &amp; Submit</CardTitle>
+            <CardDescription>
+              Confirm the details below. RegCo will parse your raw CBS export and generate the report automatically.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3 text-sm">
@@ -575,7 +496,15 @@ const NewReport = () => {
                 <span className="font-medium text-foreground">{profile?.rc_number || "—"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Period</span>
+                <span className="text-muted-foreground">CBN License Category</span>
+                <span className="font-medium text-foreground">{profile?.cbn_license_category || "—"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">Compliance Lead</span>
+                <span className="font-medium text-foreground">{profile?.compliance_lead_name || "—"}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-border">
+                <span className="text-muted-foreground">Reporting Period</span>
                 <span className="font-medium text-foreground">
                   {periodStart && periodEnd
                     ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}`
@@ -584,16 +513,10 @@ const NewReport = () => {
               </div>
               <div className="flex justify-between py-2 border-b border-border">
                 <span className="text-muted-foreground">CBS File</span>
-                <span className="font-medium text-foreground truncate max-w-[220px]">
+                <span className="font-medium text-foreground truncate max-w-[260px]">
                   {cbsFile?.name || "—"}
                 </span>
               </div>
-              {fields.map((f) => (
-                <div key={f.name} className="flex justify-between py-2 border-b border-border">
-                  <span className="text-muted-foreground">{f.label}</span>
-                  <span className="font-medium text-foreground">{formData[f.name] || "—"}</span>
-                </div>
-              ))}
             </div>
 
             <div className="flex items-center gap-2 pt-2 flex-wrap">
@@ -603,9 +526,6 @@ const NewReport = () => {
               <Button variant="outline" size="sm" onClick={() => setStep(1)}>
                 Edit Period / File
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setStep(2)}>
-                Edit Details
-              </Button>
               <div className="flex-1" />
               <Button onClick={handleSubmit} disabled={submitting}>
                 {submitting ? (
@@ -614,7 +534,7 @@ const NewReport = () => {
                     Submitting…
                   </>
                 ) : (
-                  "Confirm & Generate"
+                  "Confirm & Generate Report"
                 )}
               </Button>
             </div>
@@ -622,22 +542,21 @@ const NewReport = () => {
         </Card>
       )}
 
-      {/* ── Step 4: Processing / Result ── */}
-      {step === 4 && (
+      {/* ── Step 3: Processing / Result ── */}
+      {step === 3 && (
         <Card>
           <CardContent className="py-14 px-8">
-            {/* Processing — orange spinner */}
             {processingStatus === "processing" && (
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: "rgba(249,115,22,0.1)" }}>
                   <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#f97316" }} />
                 </div>
                 <h2 className="text-xl font-bold text-foreground mb-2">
-                  Processing your report…
+                  Processing your CBS export…
                 </h2>
-                <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
-                  Your CBS file has been uploaded and is being processed by our automation.
-                  This usually takes 2–5 minutes.
+                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+                  RegCo is parsing your raw CBS file, mapping account codes to the CBN return template,
+                  validating totals, and generating your final report. This usually takes 2–5 minutes.
                 </p>
                 {currentReportId && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground font-mono">
@@ -651,7 +570,6 @@ const NewReport = () => {
               </div>
             )}
 
-            {/* Ready — green success with download + validation metrics */}
             {processingStatus === "ready" && (
               <div className="text-center">
                 <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-5 flex items-center justify-center">
@@ -682,7 +600,6 @@ const NewReport = () => {
                   </Button>
                 </div>
 
-                {/* Validation metrics — shown when automation populates them */}
                 {validationMetrics &&
                   (validationMetrics.car_percentage !== null ||
                     validationMetrics.liquidity_percentage !== null ||
@@ -696,7 +613,7 @@ const NewReport = () => {
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">CAR</p>
                             <p className="text-lg font-bold text-foreground">
-                              {validationMetrics.car_percentage.toFixed(2)}%
+                              {Number(validationMetrics.car_percentage).toFixed(2)}%
                             </p>
                           </div>
                         )}
@@ -704,7 +621,7 @@ const NewReport = () => {
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">Liquidity Ratio</p>
                             <p className="text-lg font-bold text-foreground">
-                              {validationMetrics.liquidity_percentage.toFixed(2)}%
+                              {Number(validationMetrics.liquidity_percentage).toFixed(2)}%
                             </p>
                           </div>
                         )}
@@ -712,7 +629,7 @@ const NewReport = () => {
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">NPL Ratio</p>
                             <p className="text-lg font-bold text-foreground">
-                              {validationMetrics.npl_ratio.toFixed(2)}%
+                              {Number(validationMetrics.npl_ratio).toFixed(2)}%
                             </p>
                           </div>
                         )}
@@ -722,7 +639,6 @@ const NewReport = () => {
               </div>
             )}
 
-            {/* Failed — red error card */}
             {processingStatus === "failed" && (
               <div className="space-y-5">
                 <div className="flex items-start gap-4 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
