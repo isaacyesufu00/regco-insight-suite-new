@@ -14,7 +14,6 @@ const useCasesDropdown = [
 const featuresDropdown = [
   { label: "Report Generation", href: "/features/report-generation" },
   { label: "Monitoring", href: "/features/monitoring" },
-  { label: "Transcription", href: "/features/transcription" },
   { label: "Dashboard", href: "/features/dashboard" },
   { label: "Data Sources", href: "/features/data-sources" },
 ];
