@@ -34,7 +34,7 @@ import UseCaseCommercial from "./pages/UseCaseCommercial";
 import UseCaseFinance from "./pages/UseCaseFinance";
 import UseCaseCompliance from "./pages/UseCaseCompliance";
 import FeatureReportGeneration from "./pages/FeatureReportGeneration";
-import FeatureTranscription from "./pages/FeatureTranscription";
+
 import FeatureDashboard from "./pages/FeatureDashboard";
 import FeatureDataSources from "./pages/FeatureDataSources";
 import FeatureMonitoring from "./pages/FeatureMonitoring";
@@ -72,7 +72,7 @@ const App = () => (
             <Route path="/use-cases/finance" element={<UseCaseFinance />} />
             <Route path="/use-cases/compliance" element={<UseCaseCompliance />} />
             <Route path="/features/report-generation" element={<FeatureReportGeneration />} />
-            <Route path="/features/transcription" element={<FeatureTranscription />} />
+            
             <Route path="/features/dashboard" element={<FeatureDashboard />} />
             <Route path="/features/data-sources" element={<FeatureDataSources />} />
             <Route path="/features/monitoring" element={<FeatureMonitoring />} />
