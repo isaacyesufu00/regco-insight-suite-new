@@ -17,14 +17,14 @@ const howItWorks = [
   {
     icon: Upload,
     step: "Step 1",
-    title: "Upload your CBS export",
-    desc: "Drop your core banking system export file — CSV or Excel. No reformatting needed.",
+    title: "Upload your raw CBS export",
+    desc: "Drop the raw trial balance or general ledger export from your core banking system. No manual extraction, no summary sheet, no reformatting.",
   },
   {
     icon: ListChecks,
     step: "Step 2",
     title: "Select your return type",
-    desc: "Choose the CBN return you need to file. RegCo handles formatting and calculations.",
+    desc: "Choose your CBN, NFIU or SCUML return. RegCo parses every sheet, maps account codes, validates balances, and calculates the ratios automatically.",
   },
   {
     icon: Download,

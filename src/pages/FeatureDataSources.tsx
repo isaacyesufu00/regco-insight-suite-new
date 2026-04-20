@@ -10,7 +10,7 @@ const fadeUp = {
 };
 
 const connections = [
-  { icon: Upload, title: "Manual Upload", text: "Drag and drop your Excel or CSV export from any core banking system. No reformatting required.", available: true },
+  { icon: Upload, title: "Raw CBS Upload", text: "Upload the raw monthly export straight from your core banking system in Excel or CSV. RegCo parses every sheet and maps account codes automatically — no manual extraction required.", available: true },
   { icon: RefreshCw, title: "Automated Export", text: "Work with your IT team to configure a scheduled export from your CBS that sends data to RegCo automatically.", available: true },
   { icon: Server, title: "SFTP Connection", text: "For institutions with IT capability, connect via secure SFTP for seamless automated data transfer.", available: true },
   { icon: Code, title: "API Connection", text: "Direct API integration for institutions with open banking capability. Coming Q3 2025.", available: false },
@@ -35,7 +35,7 @@ const FeatureDataSources = () => (
             Connect Your Core Banking System. However It Works.
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            RegCo works with how your institution actually operates today — whether that is automated CBS exports, manual Excel files, or anything in between.
+            Upload the raw monthly export from your core banking system and RegCo handles parsing, mapping and validation automatically. No manual extraction. No summary sheets.
           </p>
         </motion.div>
       </div>
