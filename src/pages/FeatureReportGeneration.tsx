@@ -13,9 +13,9 @@ const fadeUp = {
 };
 
 const steps = [
-  { icon: Upload, title: "Upload", desc: "Upload your core banking export in Excel or CSV format. Supported systems include Flexcube, Finacle, T24, Rubies, Bankone, and standard Excel files." },
-  { icon: Settings, title: "Process", desc: "RegCo validates your data, structures it to CBN requirements, and generates your formatted return automatically." },
-  { icon: Download, title: "Download", desc: "Download your finished report in PDF for direct submission, Word for editing, or Excel for internal verification." },
+  { icon: Upload, title: "Upload Raw CBS Export", desc: "Upload the raw monthly export straight from your core banking system — Excel or CSV. No manual extraction of figures, no summary sheet, no reformatting required." },
+  { icon: Settings, title: "Automatic Processing", desc: "RegCo parses every sheet, identifies account codes, maps them into the CBN return structure, validates balances and calculates CAR, liquidity and NPL ratios automatically." },
+  { icon: Download, title: "Download Submission-Ready Report", desc: "Download your finished, validated report in PDF for submission, Word for editing, or Excel for your internal audit trail." },
 ];
 
 const reportTypes = [
@@ -99,7 +99,7 @@ const FeatureReportGeneration = () => (
             Regulatory Reports That Write Themselves.
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Upload your data. Select your return type. Download a submission-ready CBN report in minutes — formatted exactly to current CBN standards.
+            Upload the raw CBS export from your core banking system. RegCo handles parsing, mapping, validation and formatting — and returns a submission-ready CBN report in minutes. No manual extraction required.
           </p>
         </motion.div>
         <ReportMockup />
