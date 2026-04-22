@@ -129,12 +129,19 @@ const PricingSection = () => {
                 viewport={{ once: true, margin: "-40px" }}
                 variants={fadeUp}
                 custom={i + 1}
-                className={`rounded-2xl p-7 border flex flex-col ${
+                className={`relative rounded-2xl p-7 border flex flex-col overflow-hidden ${
                   tier.highlight
-                    ? "border-primary card-elevated-lg ring-2 ring-primary/20"
+                    ? "border-transparent card-elevated-lg bg-gradient-to-b from-accent/40 to-background"
                     : "border-border/60 card-elevated"
                 }`}
               >
+                {tier.highlight && (
+                  <span
+                    aria-hidden
+                    className="absolute top-0 left-0 right-0 h-[3px]"
+                    style={{ backgroundImage: "var(--gradient-primary)" }}
+                  />
+                )}
                 {tier.highlight && (
                   <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full self-start mb-4">
                     Most Popular
@@ -145,14 +152,17 @@ const PricingSection = () => {
                 <ul className="flex-1 space-y-3 mb-8">
                   {tier.features.map((f) => (
                     <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                      <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
+                      <Check className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                       {f}
                     </li>
                   ))}
                 </ul>
                 <Button
-                  variant={tier.highlight ? "default" : "outline"}
-                  className="rounded-full w-full hover:scale-[1.02] transition-transform"
+                  className={`rounded-none w-full font-semibold hover:opacity-90 transition-opacity ${
+                    tier.highlight
+                      ? "bg-gradient-brand text-white border-0"
+                      : "bg-foreground text-background hover:bg-foreground/90"
+                  }`}
                   onClick={() => openModal(tier.message)}
                 >
                   {tier.cta}
