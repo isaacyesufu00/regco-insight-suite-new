@@ -22,13 +22,13 @@ const fadeUp = {
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: i * 0.15 },
+    transition: { duration: 0.6, ease: "easeOut" as const, delay: i * 0.15 },
   }),
 };
 
 const slideInLeft = {
   hidden: { opacity: 0, x: -60 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6, ease: "easeOut" as const } },
 };
 
 const steps = [
