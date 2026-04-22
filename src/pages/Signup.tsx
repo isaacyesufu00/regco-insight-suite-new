@@ -1,3 +1,4 @@
+import { BrandLogo } from "@/components/BrandLogo";
 import { useState, useMemo } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -130,13 +131,7 @@ const Signup = () => {
     <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: "#eef2ff" }}>
       <div className="w-full max-w-md rounded-2xl p-8 shadow-lg" style={{ background: "#ffffff" }}>
         <div className="text-center mb-8">
-          <Link to="/" className="flex items-center justify-center gap-2 mb-2">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ color: "#3b6ef8" }}>
-              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2"/>
-              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo</span>
-          </Link>
+          <BrandLogo to="/" size={28} variant="dark" textClassName="text-2xl" className="justify-center mb-2" />
           <p className="text-sm" style={{ color: "#8a8a9a" }}>
             Create your compliance account
           </p>
