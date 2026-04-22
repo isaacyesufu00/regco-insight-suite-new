@@ -46,15 +46,9 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
         {/* Brand */}
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <span
-              aria-hidden="true"
-              className="flex-shrink-0"
-              style={{
-                width: 32,
-                height: 32,
-                background: "linear-gradient(160deg, #FF3D00 0%, #FF9A00 100%)",
-              }}
-            />
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-4 h-4 text-primary-foreground" />
+            </div>
             {!collapsed && (
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-sidebar-foreground truncate">
