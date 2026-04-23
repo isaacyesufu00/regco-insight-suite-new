@@ -12,7 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { RegCoLogo } from "@/components/RegCoLogo";
 
 type PasswordStrength = "weak" | "fair" | "strong";
 
@@ -99,14 +98,16 @@ const Signup = () => {
 
   if (showConfirmation) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#F8F8F8]">
-        <div className="w-full max-w-md rounded-2xl p-12 border border-border bg-background text-center">
-          <div className="flex justify-center mb-4"><RegCoLogo size={26} /></div>
-          <h2 className="text-xl font-bold mb-2 text-foreground">Check your email</h2>
-          <p className="text-[14px] text-[#666] mb-6">
-            We've sent a confirmation link to your email. Click it to verify your account, then come back and log in.
+      <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: "#eef2ff" }}>
+        <div className="w-full max-w-md rounded-2xl p-8 shadow-lg text-center" style={{ background: "#ffffff" }}>
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#f0fdf4" }}>
+            <CheckCircle className="w-8 h-8" style={{ color: "#22c55e" }} />
+          </div>
+          <h2 className="text-xl font-bold mb-2" style={{ color: "#1a1a2e" }}>Check your email</h2>
+          <p className="text-sm mb-6" style={{ color: "#8a8a9a" }}>
+            We've sent a confirmation link to your email. Please click it to verify your account, then come back and log in.
           </p>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="rounded-full px-6">
             <Link to="/login">Go to Login</Link>
           </Button>
         </div>
@@ -126,15 +127,21 @@ const Signup = () => {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#F8F8F8]">
-      <div className="w-full max-w-md rounded-2xl p-12 border border-border bg-background">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12" style={{ background: "#eef2ff" }}>
+      <div className="w-full max-w-md rounded-2xl p-8 shadow-lg" style={{ background: "#ffffff" }}>
         <div className="text-center mb-8">
-          <Link to="/" className="inline-flex justify-center mb-4">
-            <RegCoLogo size={26} />
+          <Link to="/" className="flex items-center justify-center gap-2 mb-2">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ color: "#3b6ef8" }}>
+              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2"/>
+              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo</span>
           </Link>
-          <p className="text-[14px] text-[#666]">Create your compliance account</p>
+          <p className="text-sm" style={{ color: "#8a8a9a" }}>
+            Create your compliance account
+          </p>
           {planName && (
-            <div className="mt-3 inline-block rounded-full px-4 py-1.5 text-sm font-semibold bg-[#F8F8F8] text-foreground border border-border">
+            <div className="mt-3 inline-block rounded-full px-4 py-1.5 text-sm font-semibold" style={{ background: "#eef2ff", color: "#3b6ef8" }}>
               You are signing up for the {planName} Plan
             </div>
           )}

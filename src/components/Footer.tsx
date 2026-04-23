@@ -1,58 +1,75 @@
 import { Link } from "react-router-dom";
-import { RegCoLogo } from "@/components/RegCoLogo";
 
-const footerLinks: { label: string; to: string | null }[] = [
-  { label: "Platform", to: "/#platform" },
-  { label: "Reports", to: "/features/report-generation" },
-  { label: "Pricing", to: "/#pricing" },
-  { label: "Security", to: "/security" },
-  { label: "About", to: "/about" },
-  { label: "Contact", to: "/contact" },
-  { label: "Privacy", to: "/privacy-policy" },
-  { label: "Terms", to: "/terms" },
-  { label: "Careers", to: null },
+type FooterLink = { label: string; to: string | null };
+
+const columns: { title: string; links: FooterLink[] }[] = [
+  {
+    title: "Product",
+    links: [
+      { label: "Reports", to: "/features/report-generation" },
+      { label: "Monitoring", to: "/features/monitoring" },
+      { label: "Dashboard", to: "/features/dashboard" },
+      { label: "Pricing", to: "/#pricing" },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "About", to: "/about" },
+      { label: "Careers", to: null },
+      { label: "Contact", to: "/contact" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy Policy", to: "/privacy-policy" },
+      { label: "Terms", to: "/terms" },
+      { label: "Security Policy", to: "/security" },
+    ],
+  },
 ];
 
 const Footer = () => (
-  <footer className="bg-background border-t border-border">
-    <div className="container mx-auto px-4 lg:px-8 py-10">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-        <Link to="/" aria-label="RegCo home">
-          <RegCoLogo size={22} />
-        </Link>
-
-        <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-          {footerLinks.map((l) =>
-            l.to ? (
-              <Link
-                key={l.label}
-                to={l.to}
-                className="text-[14px] text-[#666] hover:text-foreground transition-colors"
-              >
-                {l.label}
-              </Link>
-            ) : (
-              <span key={l.label} className="text-[14px] text-[#999] cursor-default">
-                {l.label}
-              </span>
-            ),
-          )}
-        </nav>
-
-        <span className="text-[14px] text-[#666]">Abuja, Nigeria</span>
+  <footer className="border-t border-border bg-muted/30 py-14">
+    <div className="container mx-auto px-4 lg:px-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="col-span-2 md:col-span-1">
+          <span className="text-lg font-bold font-display text-foreground">RegCo</span>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
+            AI-powered regulatory reporting and compliance infrastructure for financial institutions.
+          </p>
+        </div>
+        {columns.map((col) => (
+          <div key={col.title}>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{col.title}</h4>
+            <ul className="space-y-2">
+              {col.links.map((link) => (
+                <li key={link.label}>
+                  {link.to ? (
+                    <Link
+                      to={link.to}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {link.label}
+                    </Link>
+                  ) : (
+                    <span className="text-sm text-muted-foreground cursor-default">
+                      {link.label}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </div>
-    </div>
-
-    {/* Brand gradient hairline */}
-    <div className="h-px w-full bg-brand-gradient opacity-80" />
-
-    <div className="container mx-auto px-4 lg:px-8 py-5 text-center space-y-1">
-      <p className="text-[13px] text-[#999]">
-        © {new Date().getFullYear()} RegCo Technologies Limited. All rights reserved.
-      </p>
-      <p className="text-[12px] text-[#AAA]">
-        RegCo is not affiliated with the Central Bank of Nigeria. All regulatory return formats are based on publicly available CBN guidelines.
-      </p>
+      <div className="mt-12 pt-6 border-t border-border text-center space-y-2">
+        <p className="text-sm text-muted-foreground">© 2026 RegCo. All rights reserved.</p>
+        <p className="text-xs text-muted-foreground/70">
+          RegCo is not affiliated with the Central Bank of Nigeria. All regulatory return formats are based on publicly available CBN guidelines.
+        </p>
+      </div>
     </div>
   </footer>
 );

@@ -91,33 +91,11 @@ const DashboardHome = () => {
   const processing = reports.filter((r) => r.status === "Processing").length;
   const ready = reports.filter((r) => r.status === "Ready").length;
 
-  const statusBadge = (s: string) => {
-    if (s === "Ready") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F0F0F0] text-foreground">
-          Ready
-        </span>
-      );
-    }
-    if (s === "Processing") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-gradient text-white">
-          Processing
-        </span>
-      );
-    }
-    if (s === "Failed") {
-      return (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FAFAFA] text-[#999] border border-border">
-          Failed
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-        {s}
-      </span>
-    );
+  const statusColor = (s: string) => {
+    if (s === "Ready") return "bg-success/10 text-success border-success/20";
+    if (s === "Processing") return "bg-warning/10 text-warning border-warning/20";
+    if (s === "Failed") return "bg-destructive/10 text-destructive border-destructive/20";
+    return "bg-muted text-muted-foreground";
   };
 
   const recentReports = reports.slice(0, 10);
@@ -156,23 +134,20 @@ const DashboardHome = () => {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Reports", value: totalReports, primary: true },
-          { label: "Processing", value: processing },
-          { label: "Ready for Download", value: ready },
-          { label: "Reports This Month", value: thisMonth },
+          { label: "Total Reports", value: totalReports, icon: FileText, iconClass: "text-primary" },
+          { label: "Processing", value: processing, icon: Clock, iconClass: "text-warning" },
+          { label: "Ready for Download", value: ready, icon: CheckCircle, iconClass: "text-success" },
+          { label: "Reports This Month", value: thisMonth, icon: CalendarDays, iconClass: "text-info" },
         ].map((c) => (
-          <Card
-            key={c.label}
-            className={`relative bg-background border-border rounded-xl card-lift overflow-hidden ${
-              c.primary ? "" : ""
-            }`}
-          >
-            {c.primary && (
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand-gradient" />
-            )}
-            <CardContent className="p-6">
-              <p className="text-[32px] font-black text-foreground leading-none">{c.value}</p>
-              <p className="mt-2 text-[13px] text-[#888]">{c.label}</p>
+          <Card key={c.label}>
+            <CardContent className="p-5 flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center">
+                <c.icon className={`w-5 h-5 ${c.iconClass}`} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{c.value}</p>
+                <p className="text-sm text-muted-foreground">{c.label}</p>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -226,7 +201,9 @@ const DashboardHome = () => {
                       </TableCell>
                       <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
                       <TableCell>
-                        {statusBadge(r.status)}
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor(r.status)}`}>
+                          {r.status}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right">
                         {r.status === "Ready" && r.file_path && (

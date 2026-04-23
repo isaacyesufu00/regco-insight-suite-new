@@ -1,11 +1,10 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import TrustBar from "@/components/TrustBar";
-import HowItWorks from "@/components/HowItWorks";
 import FeaturesSection from "@/components/FeaturesSection";
-import ReportTypesTicker from "@/components/ReportTypesTicker";
+import DashboardPositioning from "@/components/DashboardPositioning";
+import InstitutionsSection from "@/components/InstitutionsSection";
 import PricingSection from "@/components/PricingSection";
-import FinalCTA from "@/components/FinalCTA";
+import SecuritySection from "@/components/SecuritySection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -13,12 +12,11 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <HeroSection />
-      <TrustBar />
-      <HowItWorks />
       <FeaturesSection />
-      <ReportTypesTicker />
+      <DashboardPositioning />
+      <InstitutionsSection />
       <PricingSection />
-      <FinalCTA />
+      <SecuritySection />
       <Footer />
     </div>
   );
