@@ -85,25 +85,8 @@ const PricingSection = () => {
 
   return (
     <>
-      <section id="pricing" className="py-20 md:py-28 bg-background">
+      <section id="pricing" className="py-24 md:py-[100px] bg-background">
         <div className="container mx-auto px-4 lg:px-8">
-          {/* Penalty Highlight Banner */}
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-80px" }}
-            variants={fadeUp}
-            custom={0}
-            className="rounded-2xl bg-foreground text-background p-8 md:p-10 text-center mb-14 max-w-4xl mx-auto"
-          >
-            <p className="text-lg md:text-xl font-bold font-display leading-relaxed">
-              One CBN regulatory sanction starts at{" "}
-              <span className="text-warning">₦2,000,000</span>.<br />
-              RegCo starts at way less.{" "}
-              <span className="text-warning">It is not a cost — it is insurance.</span>
-            </p>
-          </motion.div>
-
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -112,10 +95,13 @@ const PricingSection = () => {
             custom={0}
             className="text-center max-w-2xl mx-auto mb-14"
           >
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">
+            <p className="text-[11px] font-medium uppercase tracking-[0.15em] text-[#AAA] mb-4">
+              Pricing
+            </p>
+            <h2 className="text-3xl md:text-[40px] font-bold text-foreground leading-tight">
               Simple, transparent pricing
             </h2>
-            <p className="mt-4 text-muted-foreground text-lg">
+            <p className="mt-4 text-[#666] text-base">
               Plans that grow with your compliance needs.
             </p>
           </motion.div>
@@ -129,60 +115,75 @@ const PricingSection = () => {
                 viewport={{ once: true, margin: "-40px" }}
                 variants={fadeUp}
                 custom={i + 1}
-                className={`rounded-2xl p-7 border flex flex-col ${
-                  tier.highlight
-                    ? "border-primary card-elevated-lg ring-2 ring-primary/20"
-                    : "border-border/60 card-elevated"
+                className={`relative rounded-2xl p-9 border border-border bg-background flex flex-col card-lift overflow-hidden ${
+                  tier.highlight ? "shadow-[0_8px_32px_rgba(0,0,0,0.06)]" : ""
                 }`}
               >
                 {tier.highlight && (
-                  <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full self-start mb-4">
-                    Most Popular
-                  </span>
+                  <>
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-brand-gradient" />
+                    <div
+                      className="absolute inset-0 pointer-events-none"
+                      style={{
+                        background:
+                          "linear-gradient(to bottom, rgba(255,154,0,0.04), transparent 60%)",
+                      }}
+                    />
+                  </>
                 )}
-                <h3 className="text-xl font-bold text-foreground">{tier.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1 mb-6">{tier.audience}</p>
-                <ul className="flex-1 space-y-3 mb-8">
-                  {tier.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-foreground">
-                      <Check className="w-4 h-4 text-success mt-0.5 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  variant={tier.highlight ? "default" : "outline"}
-                  className="rounded-full w-full hover:scale-[1.02] transition-transform"
-                  onClick={() => openModal(tier.message)}
-                >
-                  {tier.cta}
-                </Button>
+                <div className="relative">
+                  {tier.highlight && (
+                    <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-gradient">
+                      Most Popular
+                    </span>
+                  )}
+                  <h3 className="mt-2 text-xl font-bold text-foreground">{tier.name}</h3>
+                  <p className="text-[14px] text-[#666] mt-1 mb-6">{tier.audience}</p>
+                  <ul className="space-y-3 mb-8">
+                    {tier.features.map((f) => (
+                      <li
+                        key={f}
+                        className="flex items-start gap-2 text-[14px] text-foreground"
+                      >
+                        <Check className="w-4 h-4 mt-0.5 shrink-0 text-brand-gradient" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant={tier.highlight ? "default" : "outline"}
+                    className="w-full"
+                    onClick={() => openModal(tier.message)}
+                  >
+                    {tier.cta}
+                  </Button>
+                </div>
               </motion.div>
             ))}
           </div>
 
           <div className="text-center mt-10">
-            <Button
-              variant="ghost"
-              className="text-primary font-semibold hover:scale-[1.02] transition-transform"
-              onClick={() => openModal(CUSTOM_QUOTE_MESSAGE)}
-            >
+            <Button variant="ghost" onClick={() => openModal(CUSTOM_QUOTE_MESSAGE)}>
               Request Custom Quote
             </Button>
           </div>
 
           {/* FAQ Section */}
           <div className="max-w-3xl mx-auto mt-20">
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground text-center mb-10">
+            <h2 className="text-3xl md:text-[40px] font-bold text-foreground text-center mb-10">
               Frequently Asked Questions
             </h2>
             <Accordion type="single" collapsible className="space-y-3">
               {faqs.map((faq, i) => (
-                <AccordionItem key={i} value={`faq-${i}`} className="card-elevated rounded-xl border border-border/50 px-6">
-                  <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-5">
+                <AccordionItem
+                  key={i}
+                  value={`faq-${i}`}
+                  className="rounded-xl border border-border px-6 bg-background"
+                >
+                  <AccordionTrigger className="text-[15px] font-semibold text-foreground hover:no-underline py-5">
                     {faq.q}
                   </AccordionTrigger>
-                  <AccordionContent className="text-sm text-muted-foreground pb-5 leading-relaxed">
+                  <AccordionContent className="text-[14px] text-[#666] pb-5 leading-relaxed">
                     {faq.a}
                   </AccordionContent>
                 </AccordionItem>
