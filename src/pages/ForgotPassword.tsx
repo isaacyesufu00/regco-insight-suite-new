@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RegCoLogo } from "@/components/RegCoLogo";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -56,16 +57,12 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-secondary">
-      <div className="w-full max-w-md rounded-2xl p-8 shadow-lg bg-card">
+      <div className="w-full max-w-md rounded-2xl p-12 shadow-sm border border-border bg-card">
         <div className="text-center mb-8">
-          <Link to="/" className="flex items-center justify-center gap-2 mb-2">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary">
-              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
-              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            <span className="text-2xl font-bold text-foreground">RegCo</span>
+          <Link to="/" className="inline-flex justify-center mb-4">
+            <RegCoLogo size={26} />
           </Link>
-          <p className="text-sm text-muted-foreground">Reset your password</p>
+          <p className="text-[14px] text-[#666]">Reset your password</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
