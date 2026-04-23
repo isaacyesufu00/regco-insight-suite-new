@@ -133,22 +133,15 @@ const Login = () => {
 
   if (isLocked) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#eef2ff" }}>
-        <div className="w-full max-w-md rounded-2xl p-8 shadow-lg text-center" style={{ background: "#ffffff" }}>
-          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "#fef2f2" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-bold mb-2" style={{ color: "#1a1a2e" }}>Account Temporarily Locked</h2>
-          <p className="text-sm mb-4" style={{ color: "#8a8a9a" }}>
-            Your account has been temporarily locked for security reasons. Please try again in 15 minutes or click Forgot Password to reset your credentials.
+      <div className="min-h-screen flex items-center justify-center px-4 bg-[#F8F8F8]">
+        <div className="w-full max-w-md rounded-2xl p-12 border border-border bg-background text-center">
+          <div className="flex justify-center mb-6"><RegCoLogo size={26} /></div>
+          <h2 className="text-xl font-bold mb-2 text-foreground">Account Temporarily Locked</h2>
+          <p className="text-[14px] text-[#666] mb-4">
+            Try again in 15 minutes or reset your password.
           </p>
-          <div className="text-3xl font-mono font-bold mb-6" style={{ color: "#ef4444" }}>
-            {countdown}
-          </div>
-          <Button asChild variant="outline" className="rounded-full px-6">
+          <div className="text-3xl font-mono font-bold mb-6 text-foreground">{countdown}</div>
+          <Button asChild variant="outline">
             <Link to="/forgot-password">Forgot Password</Link>
           </Button>
         </div>
@@ -157,72 +150,40 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#eef2ff" }}>
-      <div className="w-full max-w-md rounded-2xl p-8 shadow-lg" style={{ background: "#ffffff" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-[#F8F8F8]">
+      <div className="w-full max-w-md rounded-2xl p-12 border border-border bg-background">
         <div className="text-center mb-8">
-          <Link to="/" className="flex items-center justify-center gap-2 mb-2">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ color: "#3b6ef8" }}>
-              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2"/>
-              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-            <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo</span>
+          <Link to="/" className="inline-flex justify-center mb-4">
+            <RegCoLogo size={26} />
           </Link>
-          <p className="text-sm" style={{ color: "#8a8a9a" }}>
-            Sign in to your compliance dashboard
-          </p>
+          <p className="text-[14px] text-[#666]">Sign in to your compliance dashboard</p>
         </div>
         <form onSubmit={handleLogin} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="email" style={{ color: "#1a1a2e" }}>Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@company.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{ borderRadius: 12 }}
-            />
+            <Label htmlFor="email" className="text-[13px] font-medium text-[#333]">Email</Label>
+            <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password" style={{ color: "#1a1a2e" }}>Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={{ borderRadius: 12 }}
-            />
+            <Label htmlFor="password" className="text-[13px] font-medium text-[#333]">Password</Label>
+            <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
-          {error && (
-            <p className="text-sm font-medium" style={{ color: "#ef4444" }}>{error}</p>
-          )}
+          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
           {attemptCount >= 3 && attemptCount < 5 && (
-            <div className="rounded-lg px-4 py-3 text-sm font-medium" style={{ background: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" }}>
-              ⚠️ Warning — you have made {attemptCount} failed login attempts. Your account will be locked after 5 attempts.
+            <div className="rounded-lg px-4 py-3 text-sm font-medium bg-[#F8F8F8] text-foreground border border-border">
+              Warning — {attemptCount} failed attempts. Account locks after 5.
             </div>
           )}
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full text-white font-semibold h-11"
-            style={{ background: "#3b6ef8", borderRadius: 12 }}
-          >
+          <Button type="submit" disabled={loading} className="w-full h-12 rounded-lg">
             {loading ? "Signing in..." : "Login"}
           </Button>
         </form>
-        <div className="mt-6 text-center text-sm" style={{ color: "#8a8a9a" }}>
-          <Link to="/forgot-password" className="font-semibold" style={{ color: "#3b6ef8" }}>
+        <div className="mt-6 text-center text-[14px] text-[#666]">
+          <Link to="/forgot-password" className="font-semibold text-foreground hover:text-brand-gradient">
             Forgot your password?
           </Link>
           <p className="mt-2">
             Access is by invitation only.{" "}
-            <Link to="/contact" className="font-semibold" style={{ color: "#3b6ef8" }}>
-              Book a demo
-            </Link>{" "}
-            to get started.
+            <Link to="/contact" className="font-semibold text-foreground">Book a demo</Link>{" "}to get started.
           </p>
         </div>
       </div>
