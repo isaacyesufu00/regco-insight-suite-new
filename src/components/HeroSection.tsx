@@ -1,194 +1,109 @@
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Upload, ListChecks, Download, Landmark, ShieldCheck, FileText, Scale, Users, BadgeCheck } from "lucide-react";
-import DashboardMock from "./DashboardMock";
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, delay: i * 0.1 },
-  }),
-};
-
-const howItWorks = [
-  {
-    icon: Upload,
-    step: "Step 1",
-    title: "Upload your raw CBS export",
-    desc: "Drop the raw trial balance or general ledger export from your core banking system. No manual extraction, no summary sheet, no reformatting.",
-  },
-  {
-    icon: ListChecks,
-    step: "Step 2",
-    title: "Select your return type",
-    desc: "Choose your CBN, NFIU or SCUML return. RegCo parses every sheet, maps account codes, validates balances, and calculates the ratios automatically.",
-  },
-  {
-    icon: Download,
-    step: "Step 3",
-    title: "Download your submission-ready report",
-    desc: "Get a fully compliant report in PDF, Word, or Excel — ready to submit to the CBN.",
-  },
-];
-
-const stats = [
-  { value: "Under 5 minutes", label: "Average report generation time" },
-  { value: "8+ hours saved", label: "Per compliance officer per month" },
-  { value: "₦2,000,000+", label: "Average CBN penalty avoided" },
-];
-
-const institutionBadges = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank"];
-
-const regulatoryItems = [
-  { icon: Landmark, label: "CBN Returns" },
-  { icon: Users, label: "NFIU Reporting" },
-  { icon: ShieldCheck, label: "AML/CFT Compliance" },
-  { icon: Scale, label: "NDPC Data Protection" },
-  { icon: BadgeCheck, label: "SCUML Reporting" },
-];
+import { motion, useScroll, useTransform } from "framer-motion";
+import { useRef } from "react";
+import worldMap from "@/assets/world-map-dots.png";
 
 const HeroSection = () => {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"],
+  });
+  // Parallax: map moves up slower than content (0.6x scroll)
+  const mapY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
+  const mapOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+
   return (
-    <>
-      {/* Hero */}
-      <section className="hero-gradient pt-28 pb-0 md:pt-36 overflow-hidden">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+    <section
+      ref={heroRef}
+      className="relative min-h-screen w-full overflow-hidden bg-surface-black"
+    >
+      {/* Subtle radial vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at 50% 35%, rgba(255,98,0,0.08) 0%, transparent 60%)",
+        }}
+      />
+
+      {/* World map with parallax */}
+      <motion.div
+        style={{ y: mapY, opacity: mapOpacity }}
+        className="absolute left-0 right-0 bottom-0 w-full h-[65vh] pointer-events-none"
+      >
+        <img
+          src={worldMap}
+          alt=""
+          aria-hidden="true"
+          className="w-full h-full object-cover object-center select-none"
+          draggable={false}
+        />
+        {/* Bottom fade into black */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-32"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, hsl(var(--surface-black)))",
+          }}
+        />
+      </motion.div>
+
+      {/* Hero content */}
+      <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-32 md:pt-40 pb-20">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
+            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1]"
+            style={{ letterSpacing: "-0.02em" }}
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold font-display text-foreground tracking-tight leading-[1.1]">
-              Stop Filing CBN Returns Manually.
-            </h1>
-            <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Get submission-ready regulatory reports in under 5 minutes. Built exclusively for Nigerian banks and microfinance banks.
-            </p>
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
-              <Button asChild size="lg" className="rounded-full px-8 text-base font-semibold">
-                <Link to="/book-demo">Book a Free Demo</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="rounded-full px-8 text-base font-semibold border-foreground/20"
-              >
-                <Link to="/login">Login</Link>
-              </Button>
-            </div>
-          </motion.div>
+            Automating Nigerian
+            <br />
+            Regulatory Compliance.
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="mt-5 text-base md:text-lg text-white/55 max-w-md mx-auto leading-relaxed"
+          >
+            RegCo turns 5 days of manual CBN reporting into 5 minutes of AI-powered accuracy.
+          </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-16 md:mt-20 max-w-4xl mx-auto relative"
+            transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
           >
-            <DashboardMock />
+            <Link
+              to="/book-demo"
+              className="px-6 py-2.5 rounded-full text-sm font-medium text-white border transition-all ease-apple hover:scale-[1.03]"
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                borderColor: "rgba(255,255,255,0.15)",
+              }}
+            >
+              Get Started
+            </Link>
+            <Link
+              to="/book-demo"
+              className="px-6 py-2.5 rounded-full text-sm font-medium text-white border inline-flex items-center gap-2 transition-all ease-apple hover:scale-[1.03]"
+              style={{
+                background: "rgba(255,255,255,0.1)",
+                borderColor: "rgba(255,255,255,0.15)",
+              }}
+            >
+              <span className="w-3 h-3 bg-brand-gradient" aria-hidden="true" />
+              Watch a Demo
+            </Link>
           </motion.div>
         </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-20 md:py-28 bg-background">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="text-center max-w-2xl mx-auto mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">How It Works</h2>
-            <p className="mt-4 text-muted-foreground text-lg">Three steps to audit-ready regulatory reports.</p>
-          </motion.div>
-
-          <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {howItWorks.map((item, i) => (
-              <motion.div
-                key={item.step}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i + 1}
-                className="card-elevated rounded-xl p-6 border border-border/50 text-center"
-              >
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <item.icon className="w-6 h-6 text-primary" />
-                </div>
-                <span className="text-xs font-semibold text-primary uppercase tracking-wide">{item.step}</span>
-                <h3 className="mt-2 text-base font-semibold text-foreground">{item.title}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stat Bar */}
-      <section className="py-14 hero-gradient">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid sm:grid-cols-3 gap-6 max-w-4xl mx-auto text-center">
-            {stats.map((s, i) => (
-              <motion.div key={s.label} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}>
-                <p className="text-2xl md:text-3xl font-extrabold font-display text-foreground">{s.value}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{s.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Trusted By */}
-      <section className="py-20 md:py-28 bg-background">
-        <div className="container mx-auto px-4 lg:px-8 text-center">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground mb-10">
-              Built for Nigerian Financial Institutions
-            </h2>
-          </motion.div>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {institutionBadges.map((badge) => (
-              <span
-                key={badge}
-                className="inline-flex items-center rounded-full border border-border px-5 py-2.5 text-sm font-medium text-muted-foreground"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Regulatory Alignment */}
-      <section className="py-20 md:py-28 hero-gradient">
-        <div className="container mx-auto px-4 lg:px-8 text-center">
-          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0} className="mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold font-display text-foreground">
-              Aligned With Nigerian Regulatory Requirements
-            </h2>
-          </motion.div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 max-w-4xl mx-auto">
-            {regulatoryItems.map((item, i) => (
-              <motion.div
-                key={item.label}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-                variants={fadeUp}
-                custom={i + 1}
-                className="card-elevated rounded-xl p-5 border border-border/50 flex flex-col items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-primary" />
-                </div>
-                <span className="text-sm font-medium text-foreground text-center">{item.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 };
 

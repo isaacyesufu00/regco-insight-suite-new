@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import RegCoLogo from "@/components/RegCoLogo";
 
 type FooterLink = { label: string; to: string | null };
 
@@ -31,30 +32,30 @@ const columns: { title: string; links: FooterLink[] }[] = [
 ];
 
 const Footer = () => (
-  <footer className="border-t border-border bg-muted/30 py-14">
+  <footer className="border-t border-dark-soft bg-surface-black py-16">
     <div className="container mx-auto px-4 lg:px-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
         <div className="col-span-2 md:col-span-1">
-          <span className="text-lg font-bold font-display text-foreground">RegCo</span>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-            AI-powered regulatory reporting and compliance infrastructure for financial institutions.
+          <RegCoLogo dark size="md" />
+          <p className="mt-4 text-sm text-white/55 leading-relaxed max-w-xs">
+            AI-powered regulatory reporting and compliance infrastructure for Nigerian financial institutions.
           </p>
         </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <h4 className="text-sm font-semibold text-foreground mb-3">{col.title}</h4>
-            <ul className="space-y-2">
+            <h4 className="text-sm font-semibold text-white mb-4">{col.title}</h4>
+            <ul className="space-y-2.5">
               {col.links.map((link) => (
                 <li key={link.label}>
                   {link.to ? (
                     <Link
                       to={link.to}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      className="text-sm text-white/55 hover:text-white transition-colors"
                     >
                       {link.label}
                     </Link>
                   ) : (
-                    <span className="text-sm text-muted-foreground cursor-default">
+                    <span className="text-sm text-white/40 cursor-default">
                       {link.label}
                     </span>
                   )}
@@ -64,9 +65,9 @@ const Footer = () => (
           </div>
         ))}
       </div>
-      <div className="mt-12 pt-6 border-t border-border text-center space-y-2">
-        <p className="text-sm text-muted-foreground">© 2026 RegCo. All rights reserved.</p>
-        <p className="text-xs text-muted-foreground/70">
+      <div className="mt-14 pt-6 border-t border-dark-soft text-center space-y-2">
+        <p className="text-sm text-white/55">© 2026 RegCo. All rights reserved.</p>
+        <p className="text-xs text-white/35">
           RegCo is not affiliated with the Central Bank of Nigeria. All regulatory return formats are based on publicly available CBN guidelines.
         </p>
       </div>
