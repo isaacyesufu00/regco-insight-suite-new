@@ -2,19 +2,10 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { FileText, Clock, CheckCircle, CalendarDays, FilePlus, Download } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { ComplianceGauge } from "@/components/ComplianceGauge";
 
 interface Profile {
-  full_name: string | null;
   company_name: string | null;
-  rc_number: string | null;
-  account_status: string;
 }
 
 interface Report {
@@ -27,7 +18,42 @@ interface Report {
   reporting_period_start: string | null;
   reporting_period_end: string | null;
   pdf_url: string | null;
+  report_url: string | null;
 }
+
+/* ----------------------------- Status helpers ----------------------------- */
+
+const STATUS_STYLE: Record<
+  string,
+  { label: string; bg: string; border: string; color: string }
+> = {
+  Pending: { label: "Pending", bg: "#F5F5F5", border: "#E0E0E0", color: "#555555" },
+  Processing: { label: "Processing", bg: "#FFFBEB", border: "#FDE68A", color: "#92400E" },
+  Ready: { label: "Ready", bg: "#ECFDF5", border: "#A7F3D0", color: "#047857" },
+  Failed: { label: "Failed", bg: "#FEF2F2", border: "#FECACA", color: "#B91C1C" },
+};
+
+const StatusPill = ({ status }: { status: string }) => {
+  const s = STATUS_STYLE[status] || STATUS_STYLE.Pending;
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        background: s.bg,
+        border: `1px solid ${s.border}`,
+        color: s.color,
+        borderRadius: 999,
+        padding: "4px 12px",
+        fontSize: 12,
+        fontWeight: 500,
+      }}
+    >
+      {s.label}
+    </span>
+  );
+};
+
+/* ----------------------------- Page ----------------------------- */
 
 const DashboardHome = () => {
   const { user } = useAuth();
@@ -38,188 +64,261 @@ const DashboardHome = () => {
 
   useEffect(() => {
     if (!user) return;
-
-    const fetchData = async () => {
-      const [profileRes, reportsRes] = await Promise.all([
-        supabase.from("profiles").select("full_name, company_name, rc_number, account_status").eq("id", user.id).maybeSingle(),
-        supabase.from("reports").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      ]);
-      if (profileRes.data) setProfile(profileRes.data);
-      if (reportsRes.data) setReports(reportsRes.data);
+    Promise.all([
+      supabase.from("profiles").select("company_name").eq("id", user.id).maybeSingle(),
+      supabase.from("reports").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+    ]).then(([p, r]) => {
+      if (p.data) setProfile(p.data);
+      if (r.data) setReports(r.data as Report[]);
       setLoading(false);
-    };
-
-    fetchData();
+    });
 
     const channel = supabase
-      .channel("reports-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "reports", filter: `user_id=eq.${user.id}` }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          setReports((prev) => [payload.new as Report, ...prev]);
-        } else if (payload.eventType === "UPDATE") {
-          const updated = payload.new as Report;
-          setReports((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-          if (updated.status === "Ready") {
-            toast({ title: "Report ready", description: `"${updated.report_name}" is ready to download.` });
+      .channel("dashboard-home")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "reports", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          if (payload.eventType === "INSERT") setReports((p) => [payload.new as Report, ...p]);
+          else if (payload.eventType === "UPDATE") {
+            const u = payload.new as Report;
+            setReports((p) => p.map((r) => (r.id === u.id ? u : r)));
+            if (u.status === "Ready")
+              toast({ title: "Report ready", description: `"${u.report_name}" is ready to download.` });
+          } else if (payload.eventType === "DELETE") {
+            setReports((p) => p.filter((r) => r.id !== (payload.old as { id: string }).id));
           }
-        } else if (payload.eventType === "DELETE") {
-          setReports((prev) => prev.filter((r) => r.id !== (payload.old as { id: string }).id));
         }
-      })
+      )
       .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user, toast]);
 
-  const handleDownload = async (filePath: string, reportName: string) => {
-    const { data } = await supabase.storage.from("reports").createSignedUrl(filePath, 3600);
-    if (data?.signedUrl) {
-      const a = document.createElement("a");
-      a.href = data.signedUrl;
-      a.download = reportName;
-      a.click();
+  const handleDownload = async (r: Report) => {
+    let url: string | null = null;
+    if (r.report_url) {
+      const { data } = supabase.storage.from("reports").getPublicUrl(r.report_url);
+      url = data?.publicUrl || null;
+    } else if (r.pdf_url) {
+      url = r.pdf_url;
+    } else if (r.file_path) {
+      const { data } = await supabase.storage.from("reports").createSignedUrl(r.file_path, 3600);
+      url = data?.signedUrl || null;
     }
+    if (!url) {
+      toast({ title: "Download unavailable", description: "Try again shortly.", variant: "destructive" });
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = r.report_name;
+    a.click();
   };
 
-  const now = new Date();
-  const thisMonth = reports.filter((r) => {
-    const d = new Date(r.created_at);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).length;
-
-  const totalReports = reports.length;
-  const processing = reports.filter((r) => r.status === "Processing").length;
-  const ready = reports.filter((r) => r.status === "Ready").length;
-
-  const statusColor = (s: string) => {
-    if (s === "Ready") return "bg-success/10 text-success border-success/20";
-    if (s === "Processing") return "bg-warning/10 text-warning border-warning/20";
-    if (s === "Failed") return "bg-destructive/10 text-destructive border-destructive/20";
-    return "bg-muted text-muted-foreground";
+  const counts = {
+    Pending: reports.filter((r) => r.status === "Pending").length,
+    Processing: reports.filter((r) => r.status === "Processing").length,
+    Ready: reports.filter((r) => r.status === "Ready").length,
+    Failed: reports.filter((r) => r.status === "Failed").length,
   };
 
-  const recentReports = reports.slice(0, 10);
+  const recentReports = reports.slice(0, 8);
+  const latestReportName = reports[0]?.report_name || "No reports yet";
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: "#FF6200" }} />
       </div>
     );
   }
 
+  const cardStyle: React.CSSProperties = {
+    background: "#FFFFFF",
+    border: "1px solid #EEEEEE",
+    borderRadius: 14,
+  };
+
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-3">
+      {/* Header card */}
+      <div
+        style={{ ...cardStyle, padding: "20px 24px" }}
+        className="flex items-center justify-between"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {profile?.company_name || "User"}
-          </h1>
-          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-            {profile?.rc_number && <span>RC: {profile.rc_number}</span>}
-            <Badge variant={profile?.account_status === "Active" ? "default" : "secondary"}>
-              {profile?.account_status || "Active"}
-            </Badge>
+          <div className="flex items-center gap-2">
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#22C55E",
+                display: "inline-block",
+              }}
+            />
+            <span style={{ fontSize: 14, color: "#888888" }}>
+              {profile?.company_name || "Your Institution"}
+            </span>
           </div>
+          <h2
+            style={{
+              fontSize: 20,
+              fontWeight: 700,
+              color: "#0A0A0A",
+              marginTop: 4,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            {latestReportName}
+          </h2>
         </div>
-        <Button asChild>
-          <Link to="/dashboard/new-report">
-            <FilePlus className="mr-2 h-4 w-4" />
-            Create New Report
-          </Link>
-        </Button>
+        <span
+          style={{
+            background: "#0A0A0A",
+            color: "#FFFFFF",
+            borderRadius: "50%",
+            width: 32,
+            height: 32,
+            fontSize: 14,
+            fontWeight: 600,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {reports.length}
+        </span>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Status summary cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Reports", value: totalReports, icon: FileText, iconClass: "text-primary" },
-          { label: "Processing", value: processing, icon: Clock, iconClass: "text-warning" },
-          { label: "Ready for Download", value: ready, icon: CheckCircle, iconClass: "text-success" },
-          { label: "Reports This Month", value: thisMonth, icon: CalendarDays, iconClass: "text-info" },
+          { status: "Pending", subtitle: "Awaiting upload" },
+          { status: "Processing", subtitle: "Validating CBS data" },
+          { status: "Ready", subtitle: "Available to download" },
+          { status: "Failed", subtitle: "Needs attention" },
         ].map((c) => (
-          <Card key={c.label}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center">
-                <c.icon className={`w-5 h-5 ${c.iconClass}`} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{c.value}</p>
-                <p className="text-sm text-muted-foreground">{c.label}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div key={c.status} style={{ ...cardStyle, padding: 24 }}>
+            <StatusPill status={c.status} />
+            <p
+              style={{
+                fontSize: 48,
+                fontWeight: 900,
+                color: "#0A0A0A",
+                marginTop: 16,
+                lineHeight: 1,
+                letterSpacing: "-0.03em",
+              }}
+            >
+              {counts[c.status as keyof typeof counts]}
+            </p>
+            <p style={{ fontSize: 16, color: "#0A0A0A", marginTop: 4 }}>reports</p>
+            <p style={{ fontSize: 13, color: "#AAAAAA", marginTop: 2 }}>{c.subtitle}</p>
+          </div>
         ))}
       </div>
 
-      {/* Compliance Score Gauge */}
-      <ComplianceGauge />
+      {/* Recent reports table */}
+      <div style={{ ...cardStyle, padding: 0, overflow: "hidden" }}>
+        <div
+          className="flex items-center justify-between"
+          style={{
+            background: "#FAFAFA",
+            padding: "14px 20px",
+            borderBottom: "1px solid #F0F0F0",
+          }}
+        >
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: "#0A0A0A" }}>Recent Reports</h3>
+          <Link
+            to="/dashboard/reports"
+            style={{ fontSize: 13, fontWeight: 500, color: "#FF6200" }}
+          >
+            View all →
+          </Link>
+        </div>
 
-      {/* Recent Reports */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">Recent Reports</CardTitle>
-          {reports.length > 0 && (
-            <Button asChild variant="outline" size="sm">
-              <Link to="/dashboard/reports">View All</Link>
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent>
-          {reports.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-1">No reports yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">Click Create New Report to get started.</p>
-              <Button asChild variant="outline">
-                <Link to="/dashboard/new-report"><FilePlus className="mr-2 h-4 w-4" />Create New Report</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Report Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Reporting Period</TableHead>
-                    <TableHead>Date Created</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Download</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentReports.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.report_name}</TableCell>
-                      <TableCell>{r.report_type || "—"}</TableCell>
-                      <TableCell>
-                        {r.reporting_period_start && r.reporting_period_end
-                          ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor(r.status)}`}>
-                          {r.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {r.status === "Ready" && r.file_path && (
-                          <Button size="sm" variant="outline" onClick={() => handleDownload(r.file_path!, r.report_name)}>
-                            <Download className="mr-1 h-3 w-3" />Download
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
+        {recentReports.length === 0 ? (
+          <div className="text-center py-12 px-6">
+            <p style={{ color: "#888888", fontSize: 14 }}>
+              No reports yet. <Link to="/dashboard/new-report" style={{ color: "#FF6200", fontWeight: 600 }}>Create your first report</Link>.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "#FAFAFA", borderBottom: "1px solid #F0F0F0" }}>
+                  {["REPORT", "TYPE", "PERIOD", "STATUS", "DATE", "ACTION"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        textAlign: "left",
+                        padding: "12px 20px",
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: "#AAAAAA",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      {h}
+                    </th>
                   ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </tr>
+              </thead>
+              <tbody>
+                {recentReports.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="hover:bg-[#FAFAFA] transition-colors"
+                    style={{ borderBottom: "1px solid #F8F8F8" }}
+                  >
+                    <td style={{ padding: "14px 20px", fontSize: 14, fontWeight: 500, color: "#0A0A0A" }}>
+                      {r.report_name}
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#888888" }}>
+                      {r.report_type || "—"}
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#888888" }}>
+                      {r.reporting_period_start && r.reporting_period_end
+                        ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
+                        : "—"}
+                    </td>
+                    <td style={{ padding: "14px 20px" }}>
+                      <StatusPill status={r.status} />
+                    </td>
+                    <td style={{ padding: "14px 20px", fontSize: 13, color: "#AAAAAA" }}>
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: "14px 20px" }}>
+                      {r.status === "Ready" ? (
+                        <button
+                          onClick={() => handleDownload(r)}
+                          style={{ fontSize: 13, fontWeight: 500, color: "#FF6200" }}
+                          className="hover:underline"
+                        >
+                          Download
+                        </button>
+                      ) : (
+                        <Link
+                          to="/dashboard/reports"
+                          style={{ fontSize: 13, fontWeight: 500, color: "#888888" }}
+                          className="hover:underline"
+                        >
+                          View
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
