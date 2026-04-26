@@ -16,36 +16,21 @@ const HeroSection = () => {
   return (
     <section
       ref={heroRef}
-      className="relative min-h-screen w-full overflow-hidden bg-surface-black"
+      className="relative min-h-screen w-full overflow-hidden"
+      style={{ backgroundColor: "#0A0A0A" }}
     >
-      {/* Subtle radial vignette */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 35%, rgba(255,98,0,0.08) 0%, transparent 60%)",
-        }}
-      />
-
-      {/* World map with parallax */}
+      {/* World map with parallax — moved up to ~40% from top */}
       <motion.div
-        style={{ y: mapY, opacity: mapOpacity }}
-        className="absolute left-0 right-0 bottom-0 w-full h-[65vh] pointer-events-none"
+        style={{ y: mapY, opacity: mapOpacity, top: "40%" }}
+        className="absolute left-0 right-0 w-full h-[65vh] pointer-events-none"
       >
         <img
           src={worldMap}
           alt=""
           aria-hidden="true"
-          className="w-full h-full object-cover object-center select-none"
+          className="w-full h-full object-contain object-center select-none"
           draggable={false}
-        />
-        {/* Bottom fade into black */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-32"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent, hsl(var(--surface-black)))",
-          }}
+          style={{ mixBlendMode: "screen" }}
         />
       </motion.div>
 

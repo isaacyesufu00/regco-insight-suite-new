@@ -1,13 +1,10 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import AuthSplitLayout from "@/components/auth/AuthSplitLayout";
+import RegCoLogo from "@/components/RegCoLogo";
 
 const institutionTypes = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank", "Other"];
 
@@ -27,6 +24,46 @@ const timeOptions = [
   "8 to 16 hours",
   "More than 16 hours",
 ];
+
+const inputStyle: React.CSSProperties = {
+  background: "#FAFAFA",
+  border: "1.5px solid #E0E0E0",
+  borderRadius: 10,
+  padding: "12px 14px",
+  color: "#0A0A0A",
+  fontSize: 14,
+  width: "100%",
+  outline: "none",
+  transition: "all 0.2s",
+};
+
+const focusStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  e.currentTarget.style.borderColor = "#0A0A0A";
+  e.currentTarget.style.background = "#FFFFFF";
+  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(255,98,0,0.1)";
+};
+const blurStyle = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  e.currentTarget.style.borderColor = "#E0E0E0";
+  e.currentTarget.style.background = "#FAFAFA";
+  e.currentTarget.style.boxShadow = "none";
+};
+
+const Field = ({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div>
+    <label className="block text-[13px] font-medium mb-1.5" style={{ color: "#333" }}>
+      {label} {required && <span style={{ color: "#FF6200" }}>*</span>}
+    </label>
+    {children}
+  </div>
+);
 
 const BookDemo = () => {
   const [fullName, setFullName] = useState("");
@@ -104,125 +141,194 @@ const BookDemo = () => {
     setSubmitted(true);
   };
 
+  const stats = [
+    { value: "20 min", label: "Demo duration" },
+    { value: "Live", label: "Real CBS data" },
+    { value: "Free", label: "No commitment" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-20">
-        <div className="container mx-auto px-4 lg:px-8 max-w-lg">
-          <div className="rounded-2xl p-8 card-elevated border border-border/50">
-            <div className="text-center mb-6">
-              <Link to="/" className="inline-flex items-center gap-2 mb-4">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary">
-                  <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
-                  <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span className="text-2xl font-bold font-display text-foreground">RegCo</span>
-              </Link>
-            </div>
-
-            {submitted ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-primary/10">
-                  <CheckCircle className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">Thank you</h2>
-                <p className="text-sm text-muted-foreground">
-                  A member of our team will reach out within 1 business day to schedule your demo.
-                </p>
-                <Button asChild variant="outline" className="mt-6 rounded-full px-6">
-                  <Link to="/">Back to home</Link>
-                </Button>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-2xl font-bold text-center text-foreground mb-1">Book a Free Demo</h2>
-                <p className="text-sm text-center text-muted-foreground mb-8">
-                  See how RegCo can simplify your regulatory reporting. Fill in your details and our team will be in touch.
-                </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Full Name *</Label>
-                    <Input placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Institution Name *</Label>
-                    <Input placeholder="Acme MFB Ltd" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Institution Type *</Label>
-                    <select
-                      value={institutionType}
-                      onChange={(e) => setInstitutionType(e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select type</option>
-                      {institutionTypes.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Job Title *</Label>
-                    <Input placeholder="Head of Compliance" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Phone Number *</Label>
-                    <Input type="tel" placeholder="+234 800 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={30} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Email Address *</Label>
-                    <Input type="email" placeholder="you@institution.com" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} className="rounded-xl" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-foreground">Which returns do you currently file manually?</Label>
-                    <div className="space-y-2">
-                      {returnOptions.map((r) => (
-                        <label key={r} className="flex items-center gap-2.5 cursor-pointer">
-                          <Checkbox
-                            checked={selectedReturns.includes(r)}
-                            onCheckedChange={() => toggleReturn(r)}
-                          />
-                          <span className="text-sm text-foreground">{r}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-foreground">How long does your team spend on reporting per month?</Label>
-                    <select
-                      value={timeSpent}
-                      onChange={(e) => setTimeSpent(e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select an option</option>
-                      {timeOptions.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-
-                  <Button type="submit" disabled={loading} className="w-full rounded-full font-semibold h-11">
-                    {loading ? "Submitting..." : "Request a Demo"}
-                  </Button>
-                </form>
-
-                <p className="text-xs text-muted-foreground text-center mt-6 leading-relaxed">
-                  We will contact you within 1 business day to confirm your demo time. Prefer WhatsApp? Message us directly at{" "}
-                  <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">
-                    +234 800 000 0000
-                  </a>.
-                </p>
-              </>
-            )}
-          </div>
-        </div>
+    <AuthSplitLayout
+      headline="See RegCo in Action."
+      tagline="Watch a live report generate in 5 minutes."
+      stats={stats}
+    >
+      <div className="flex justify-center mb-6">
+        <RegCoLogo size="md" />
       </div>
-      <Footer />
-    </div>
+
+      {submitted ? (
+        <div className="text-center py-8">
+          <div
+            className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center"
+            style={{ background: "rgba(255,98,0,0.12)" }}
+          >
+            <CheckCircle className="w-9 h-9" style={{ color: "#FF6200" }} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2" style={{ color: "#0A0A0A" }}>
+            Demo Booked!
+          </h2>
+          <p className="text-sm" style={{ color: "#888" }}>
+            We will email you a confirmation within 24 hours.
+          </p>
+          <Link
+            to="/"
+            className="inline-block mt-6 px-5 py-2.5 rounded-[10px] text-sm font-semibold border-2"
+            style={{ borderColor: "#0A0A0A", color: "#0A0A0A" }}
+          >
+            Back to home
+          </Link>
+        </div>
+      ) : (
+        <>
+          <h2
+            className="text-3xl font-bold text-center mb-2"
+            style={{ color: "#0A0A0A", letterSpacing: "-0.02em" }}
+          >
+            Book a Demo
+          </h2>
+          <p className="text-[15px] text-center mb-6" style={{ color: "#888" }}>
+            Schedule a live walkthrough with our team.
+          </p>
+
+          <form onSubmit={handleSubmit} className="space-y-3.5">
+            <Field label="Full Name" required>
+              <input
+                style={inputStyle}
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                maxLength={100}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              />
+            </Field>
+            <Field label="Institution Name" required>
+              <input
+                style={inputStyle}
+                placeholder="Acme MFB Ltd"
+                value={institutionName}
+                onChange={(e) => setInstitutionName(e.target.value)}
+                maxLength={100}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              />
+            </Field>
+            <Field label="Institution Type" required>
+              <select
+                style={inputStyle}
+                value={institutionType}
+                onChange={(e) => setInstitutionType(e.target.value)}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              >
+                <option value="">Select type</option>
+                {institutionTypes.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Job Title" required>
+              <input
+                style={inputStyle}
+                placeholder="Head of Compliance"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+                maxLength={100}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              />
+            </Field>
+            <Field label="Phone Number" required>
+              <input
+                style={inputStyle}
+                type="tel"
+                placeholder="+234 800 000 0000"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                maxLength={30}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              />
+            </Field>
+            <Field label="Email Address" required>
+              <input
+                style={inputStyle}
+                type="email"
+                placeholder="you@institution.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={255}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              />
+            </Field>
+
+            <Field label="Returns currently filed manually">
+              <div className="space-y-1.5 mt-1">
+                {returnOptions.map((r) => (
+                  <label key={r} className="flex items-center gap-2.5 cursor-pointer">
+                    <Checkbox
+                      checked={selectedReturns.includes(r)}
+                      onCheckedChange={() => toggleReturn(r)}
+                    />
+                    <span className="text-sm" style={{ color: "#333" }}>{r}</span>
+                  </label>
+                ))}
+              </div>
+            </Field>
+
+            <Field label="Monthly time spent on reporting">
+              <select
+                style={inputStyle}
+                value={timeSpent}
+                onChange={(e) => setTimeSpent(e.target.value)}
+                onFocus={focusStyle}
+                onBlur={blurStyle}
+              >
+                <option value="">Select an option</option>
+                {timeOptions.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </Field>
+
+            {error && (
+              <p className="text-sm font-medium" style={{ color: "#ef4444" }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full font-semibold text-white text-base transition-all hover:brightness-110 hover:-translate-y-0.5 disabled:opacity-60"
+              style={{
+                background: "linear-gradient(135deg, #FF9A00 0%, #FF3D00 100%)",
+                borderRadius: 10,
+                height: 52,
+                boxShadow: "0 4px 16px rgba(255,98,0,0.25)",
+              }}
+            >
+              {loading ? "Submitting…" : "Book My Demo"}
+            </button>
+
+            <p className="text-xs text-center mt-3 leading-relaxed" style={{ color: "#888" }}>
+              Prefer WhatsApp?{" "}
+              <a
+                href="https://wa.me/2348000000000"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold"
+                style={{ color: "#FF6200" }}
+              >
+                Message us
+              </a>
+            </p>
+          </form>
+        </>
+      )}
+    </AuthSplitLayout>
   );
 };
 
