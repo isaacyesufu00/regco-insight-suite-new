@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 interface RegCoLogoProps {
-  /** When true, renders for dark backgrounds (white wordmark). */
+  /** When true, renders for dark backgrounds (light wordmark). */
   dark?: boolean;
   /** Visual size. Defaults to 'md' (navbar-sized). */
   size?: "sm" | "md" | "lg" | "xl";
@@ -15,10 +15,6 @@ const SIZE_MAP = {
   xl: { font: "text-4xl", mark: "w-5 h-5 -top-1.5 -right-4" },
 };
 
-/**
- * RegCo wordmark with a sharp gradient square mark anchored at the top-right
- * of the last letter. Use `dark` prop on dark surfaces.
- */
 export const RegCoLogo = ({
   dark = false,
   size = "md",
@@ -28,21 +24,18 @@ export const RegCoLogo = ({
   return (
     <span
       className={cn(
-        "relative inline-flex items-center select-none font-black tracking-tight leading-none",
+        "relative inline-flex items-center select-none tracking-tight leading-none font-semibold",
         s.font,
-        dark ? "text-white" : "text-[#0A0A0A]",
+        dark ? "text-[#F5F5F7]" : "text-[#1D1D1F]",
         className,
       )}
-      style={{ fontFamily: "Inter, system-ui, sans-serif" }}
+      style={{
+        fontFamily:
+          '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif',
+      }}
       aria-label="RegCo"
     >
-      <span className="relative">
-        RegCo
-        <span
-          aria-hidden="true"
-          className={cn("absolute bg-brand-gradient", s.mark)}
-        />
-      </span>
+      RegCo
     </span>
   );
 };

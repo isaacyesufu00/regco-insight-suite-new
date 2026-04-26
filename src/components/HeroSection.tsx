@@ -1,90 +1,104 @@
-import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import worldMap from "@/assets/world-map-dots.png";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const HeroSection = () => {
-  const heroRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
-    target: heroRef,
-    offset: ["start start", "end start"],
+    target: previewRef,
+    offset: ["start end", "center center"],
   });
-  // Parallax: map moves up slower than content (0.6x scroll)
-  const mapY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const mapOpacity = useTransform(scrollYProgress, [0, 1], [1, 0.3]);
+  const previewY = useTransform(scrollYProgress, [0, 1], [40, 0]);
+  const previewRot = useTransform(scrollYProgress, [0, 1], [8, 3]);
+  const previewOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const headline = useMemo(() => "Automated.", []);
 
   return (
     <section
       ref={heroRef}
-      className="relative min-h-screen w-full overflow-hidden"
-      style={{ backgroundColor: "#0A0A0A" }}
+      className="relative w-full overflow-hidden"
+      style={{
+        background: "linear-gradient(180deg, #F0F0F2 0%, #E8E8ED 100%)",
+      }}
     >
-      {/* World map with parallax — moved up to ~40% from top */}
-      <motion.div
-        style={{ y: mapY, opacity: mapOpacity, top: "40%" }}
-        className="absolute left-0 right-0 w-full h-[65vh] pointer-events-none"
-      >
-        <img
-          src={worldMap}
-          alt=""
-          aria-hidden="true"
-          className="w-full h-full object-contain object-center select-none"
-          draggable={false}
-          style={{ mixBlendMode: "screen" }}
-        />
-      </motion.div>
+      {/* First viewport */}
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="container mx-auto px-[22px] pt-24 pb-20">
+          <div className="max-w-[980px] mx-auto text-center">
+            <div className="text-[19px] text-[#1D1D1F]">
+              <span className="font-normal">RegCo</span>{" "}
+              <span className="italic font-light">Compliance</span>
+            </div>
 
-      {/* Hero content */}
-      <div className="relative z-10 container mx-auto px-4 lg:px-8 pt-32 md:pt-40 pb-20">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-[1.1]"
-            style={{ letterSpacing: "-0.02em" }}
-          >
-            Automating Nigerian
-            <br />
-            Regulatory Compliance.
-          </motion.h1>
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={mounted ? { opacity: 1, scale: 1 } : undefined}
+              transition={{ duration: 0.9, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-5 font-black text-[#1D1D1F] leading-[1] tracking-[-3px]"
+              style={{
+                fontSize: "clamp(72px, 10vw, 120px)",
+              }}
+            >
+              {headline}
+            </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-5 text-base md:text-lg text-white/55 max-w-md mx-auto leading-relaxed"
-          >
-            RegCo turns 5 days of manual CBN reporting into 5 minutes of AI-powered accuracy.
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={mounted ? { opacity: 1, y: 0 } : undefined}
+              transition={{ duration: 0.7, delay: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="mt-3 mx-auto max-w-[500px] text-[21px] text-[#6E6E73]"
+              style={{ lineHeight: 1.6 }}
+            >
+              CBN compliance in minutes. Not days.
+            </motion.p>
+          </div>
+        </div>
+      </div>
 
+      {/* Dashboard preview (scroll reveal) */}
+      <div ref={previewRef} className="pb-28">
+        <div className="container mx-auto px-[22px]">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3"
+            style={{
+              opacity: previewOpacity,
+              y: previewY,
+              transformPerspective: 2000,
+              rotateX: previewRot,
+            }}
+            className="mx-auto max-w-[1200px]"
           >
-            <Link
-              to="/book-demo"
-              className="px-6 py-2.5 rounded-full text-sm font-medium text-white border transition-all ease-apple hover:scale-[1.03]"
+            <div
+              className="bg-white overflow-hidden"
               style={{
-                background: "rgba(255,255,255,0.1)",
-                borderColor: "rgba(255,255,255,0.15)",
+                borderRadius: 18,
+                boxShadow: "0 30px 80px rgba(0,0,0,0.12)",
               }}
             >
-              Get Started
-            </Link>
-            <Link
-              to="/book-demo"
-              className="px-6 py-2.5 rounded-full text-sm font-medium text-white border inline-flex items-center gap-2 transition-all ease-apple hover:scale-[1.03]"
-              style={{
-                background: "rgba(255,255,255,0.1)",
-                borderColor: "rgba(255,255,255,0.15)",
-              }}
-            >
-              <span className="w-3 h-3 bg-brand-gradient" aria-hidden="true" />
-              Watch a Demo
-            </Link>
+              <div className="p-10">
+                <div className="text-[12px] text-[#6E6E73]">Dashboard preview</div>
+                <div className="mt-2 text-[28px] font-semibold text-[#1D1D1F] tracking-[-0.02em]">
+                  Reports, monitoring, and compliance — in one place.
+                </div>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {["Upload CBS data", "Validate ratios", "Download return"].map((t) => (
+                    <div
+                      key={t}
+                      className="bg-[#F5F5F7]"
+                      style={{ borderRadius: 18, padding: 18 }}
+                    >
+                      <div className="text-[15px] font-medium text-[#1D1D1F]">{t}</div>
+                      <div className="mt-1 text-[13px] text-[#6E6E73]" style={{ lineHeight: 1.5 }}>
+                        A clean, Apple-like UI mock that will be replaced with the real screenshot panel next.
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </div>
