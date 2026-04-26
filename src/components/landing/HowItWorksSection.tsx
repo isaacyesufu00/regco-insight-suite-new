@@ -49,6 +49,50 @@ const validations = [
   { label: "Liquidity Ratio", detail: "27.8% — above 20% minimum" },
 ];
 
+const ValidationRow = ({
+  label,
+  detail,
+  progress,
+  threshold,
+}: {
+  label: string;
+  detail: string;
+  progress: MotionValue<number>;
+  threshold: number;
+}) => {
+  const opacity = useTransform(progress, [threshold - 0.05, threshold], [0, 1]);
+  const x = useTransform(progress, [threshold - 0.05, threshold], [-12, 0]);
+  return (
+    <motion.div
+      style={{ opacity, x, background: "rgba(255,255,255,0.04)", borderLeft: "3px solid #22c55e" }}
+      className="flex items-center justify-between rounded-[10px] py-3 px-4"
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className="w-7 h-7 rounded-full inline-flex items-center justify-center"
+          style={{ background: "rgba(34,197,94,0.18)" }}
+        >
+          <Check className="w-4 h-4 text-emerald-400" />
+        </span>
+        <div>
+          <p className="text-white text-sm font-semibold">{label}</p>
+          <p className="text-white/45 text-xs mt-0.5">{detail}</p>
+        </div>
+      </div>
+      <span
+        className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
+        style={{
+          background: "rgba(34,197,94,0.15)",
+          color: "#22c55e",
+          border: "1px solid rgba(34,197,94,0.3)",
+        }}
+      >
+        PASSED
+      </span>
+    </motion.div>
+  );
+};
+
 const ValidationMockup = ({ progress }: { progress: MotionValue<number> }) => (
   <div
     className="rounded-[20px] p-6"
@@ -59,42 +103,15 @@ const ValidationMockup = ({ progress }: { progress: MotionValue<number> }) => (
     }}
   >
     <div className="space-y-2.5">
-      {validations.map((v, i) => {
-        // Stagger: each row reveals as progress crosses (i+1)/(n+1)
-        const threshold = (i + 1) / (validations.length + 1);
-        const opacity = useTransform(progress, [threshold - 0.05, threshold], [0, 1]);
-        const x = useTransform(progress, [threshold - 0.05, threshold], [-12, 0]);
-        return (
-          <motion.div
-            key={v.label}
-            style={{ opacity, x, background: "rgba(255,255,255,0.04)", borderLeft: "3px solid #22c55e" }}
-            className="flex items-center justify-between rounded-[10px] py-3 px-4"
-          >
-            <div className="flex items-center gap-3">
-              <span
-                className="w-7 h-7 rounded-full inline-flex items-center justify-center"
-                style={{ background: "rgba(34,197,94,0.18)" }}
-              >
-                <Check className="w-4 h-4 text-emerald-400" />
-              </span>
-              <div>
-                <p className="text-white text-sm font-semibold">{v.label}</p>
-                <p className="text-white/45 text-xs mt-0.5">{v.detail}</p>
-              </div>
-            </div>
-            <span
-              className="text-[10px] font-semibold px-2.5 py-1 rounded-full"
-              style={{
-                background: "rgba(34,197,94,0.15)",
-                color: "#22c55e",
-                border: "1px solid rgba(34,197,94,0.3)",
-              }}
-            >
-              PASSED
-            </span>
-          </motion.div>
-        );
-      })}
+      {validations.map((v, i) => (
+        <ValidationRow
+          key={v.label}
+          label={v.label}
+          detail={v.detail}
+          progress={progress}
+          threshold={(i + 1) / (validations.length + 1)}
+        />
+      ))}
     </div>
   </div>
 );
