@@ -1,137 +1,136 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 
 const tiers = [
   {
-    name: "Starter",
+    category: "UNIT MFB",
+    headline: "Single branch compliance.",
+    body: "For unit microfinance banks filing core CBN returns with a single compliance officer.",
     price: "₦150,000",
-    cadence: "/month",
-    description: "For unit MFBs filing core CBN returns.",
-    features: ["Up to 3 report types", "1 compliance officer seat", "Email support"],
-    cta: "Book a demo",
+    setup: "₦50,000 one-time setup",
+    features: ["Up to 3 report types", "1 officer seat", "Email support", "Monthly reports", "Data validation"],
     href: "/book-demo",
-    featured: false,
   },
   {
-    name: "Growth",
+    category: "STATE MFB",
+    headline: "Multi-branch automation.",
+    body: "For state and national MFBs scaling compliance across multiple branches and return types.",
     price: "₦450,000",
-    cadence: "/month",
-    description: "For state and national MFBs scaling reporting.",
-    features: [
-      "All 7 report types",
-      "5 officer seats",
-      "Calendar reminders",
-      "Priority support",
-    ],
-    cta: "Book a demo",
+    setup: "₦100,000 one-time setup",
+    features: ["All 7 report types", "5 officer seats", "Calendar reminders", "Priority support", "Dedicated onboarding"],
     href: "/book-demo",
-    featured: true,
   },
   {
-    name: "Enterprise",
+    category: "NATIONAL MFB",
+    headline: "Enterprise-grade reporting.",
+    body: "For commercial banks and finance houses requiring unlimited reports and custom integrations.",
     price: "Custom",
-    cadence: "",
-    description: "For commercial banks and finance houses.",
-    features: [
-      "Unlimited reports",
-      "Dedicated success manager",
-      "SLA + on-prem option",
-      "Custom integrations",
-    ],
-    cta: "Talk to sales",
+    setup: "Contact for pricing",
+    features: ["Unlimited reports", "Dedicated success manager", "SLA + on-prem option", "Custom integrations", "API access"],
     href: "/contact",
-    featured: false,
   },
 ];
 
-const PricingSection = () => {
-  return (
-    <section id="pricing" className="bg-white py-24 md:py-32">
-      <div className="container mx-auto px-4 lg:px-8">
-        <motion.h2
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="text-4xl md:text-5xl lg:text-6xl font-black text-[#0A0A0A] text-center tracking-tight"
-          style={{ letterSpacing: "-0.02em" }}
-        >
-          Simple, predictable pricing.
-        </motion.h2>
-        <p className="mt-4 text-center text-[#555] text-base md:text-lg max-w-xl mx-auto">
-          One platform. Every CBN return. Pay for the institution size you serve.
-        </p>
+const PricingCard = ({ tier }: { tier: typeof tiers[number] }) => {
+  const [expanded, setExpanded] = useState(false);
 
-        <div className="mt-16 grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {tiers.map((t, i) => (
-            <motion.div
-              key={t.name}
-              initial={{ opacity: 0, y: 50, scale: 0.97 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{
-                duration: 0.7,
-                delay: i * 0.1,
-                ease: [0.25, 0.46, 0.45, 0.94],
-              }}
-              className={`relative rounded-[20px] p-8 lift-on-hover ${
-                t.featured
-                  ? "bg-white border-2 border-transparent"
-                  : "bg-white border border-[#E8E8E8]"
-              }`}
-              style={
-                t.featured
-                  ? {
-                      backgroundImage:
-                        "linear-gradient(white, white), linear-gradient(135deg, #FF9A00, #FF3D00)",
-                      backgroundOrigin: "border-box",
-                      backgroundClip: "padding-box, border-box",
-                    }
-                  : undefined
-              }
-            >
-              {t.featured && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-brand-gradient text-white text-[11px] font-bold uppercase tracking-wider">
-                  Most popular
-                </div>
-              )}
-              <div className="text-sm font-semibold text-[#888] uppercase tracking-wider">
-                {t.name}
-              </div>
-              <div className="mt-3 flex items-baseline gap-1">
-                <span className="text-4xl md:text-5xl font-black text-[#0A0A0A] tracking-tight">
-                  {t.price}
-                </span>
-                {t.cadence && (
-                  <span className="text-sm text-[#888] font-medium">{t.cadence}</span>
-                )}
-              </div>
-              <p className="mt-2 text-[13px] text-[#555]">{t.description}</p>
-              <ul className="mt-7 space-y-3">
-                {t.features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-[14px] text-[#0A0A0A]">
-                    <Check className="w-4 h-4 text-brand-gradient flex-shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link
-                to={t.href}
-                className={`mt-8 block w-full text-center px-5 py-3 rounded-full text-sm font-semibold transition-all ease-apple hover:scale-[1.02] ${
-                  t.featured
-                    ? "bg-brand-gradient text-white"
-                    : "bg-[#0A0A0A] text-white"
-                }`}
-              >
-                {t.cta}
-              </Link>
-            </motion.div>
-          ))}
+  return (
+    <div
+      className="bg-white flex-shrink-0 w-full md:w-auto flex flex-col cursor-pointer"
+      style={{
+        borderRadius: 18,
+        padding: 32,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        transition: "box-shadow 0.25s, transform 0.25s",
+      }}
+      onMouseEnter={() => setExpanded(true)}
+      onMouseLeave={() => setExpanded(false)}
+    >
+      <p className="text-[12px] text-[#6E6E73] uppercase font-normal" style={{ letterSpacing: "0.1em" }}>
+        {tier.category}
+      </p>
+      <h3 className="text-[28px] font-bold text-[#1D1D1F] mt-3" style={{ letterSpacing: "-0.3px", lineHeight: 1.15 }}>
+        {tier.headline}
+      </h3>
+      <p className="text-[15px] text-[#6E6E73] mt-3" style={{ lineHeight: 1.5 }}>
+        {tier.body}
+      </p>
+
+      <div className="flex-1" />
+
+      {/* Expand zone */}
+      <div
+        style={{
+          maxHeight: expanded ? 400 : 0,
+          opacity: expanded ? 1 : 0,
+          overflow: "hidden",
+          transition: "max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease",
+        }}
+      >
+        <div className="pt-5 mt-5" style={{ borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+          <div className="text-[36px] font-bold text-[#1D1D1F]" style={{ letterSpacing: -1 }}>
+            {tier.price}
+          </div>
+          <p className="text-[13px] text-[#6E6E73] mt-1">{tier.setup}</p>
+          <ul className="mt-4 space-y-2">
+            {tier.features.map((f) => (
+              <li key={f} className="flex items-center gap-2 text-[14px] text-[#1D1D1F]">
+                <Check size={14} className="text-[#6E6E73] flex-shrink-0" />
+                {f}
+              </li>
+            ))}
+          </ul>
+          <Link
+            to={tier.href}
+            className="mt-5 block w-full text-center py-3 rounded-full text-[15px] font-medium text-white"
+            style={{ background: "#0066CC", backgroundImage: "none", transition: "filter 0.15s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.filter = "brightness(1.06)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.filter = "brightness(1)"; }}
+          >
+            Get started
+          </Link>
         </div>
       </div>
-    </section>
+
+      {/* + button */}
+      <div className="flex justify-end mt-5">
+        <span
+          className="w-9 h-9 rounded-full flex items-center justify-center text-white text-[18px] font-light"
+          style={{
+            background: "#1D1D1F",
+            transition: "transform 0.3s",
+            transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
+          }}
+        >
+          +
+        </span>
+      </div>
+    </div>
   );
 };
+
+const PricingSection = () => (
+  <section id="pricing" className="py-[120px]" style={{ background: "#F5F5F7" }}>
+    <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 22px" }}>
+      <div className="flex items-baseline justify-between mb-12">
+        <h2 className="text-[48px] font-bold text-[#1D1D1F]" style={{ letterSpacing: "-0.5px" }}>
+          Simple pricing.
+        </h2>
+        <Link to="/contact" className="text-[17px] text-[#0066CC] font-normal hidden md:block" style={{ backgroundImage: "none" }}>
+          Compare all plans ›
+        </Link>
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-5 overflow-x-auto" style={{ scrollSnapType: "x mandatory" }}>
+        {tiers.map((t) => (
+          <div key={t.category} className="flex-1 min-w-[280px]" style={{ scrollSnapAlign: "start" }}>
+            <PricingCard tier={t} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+);
 
 export default PricingSection;
