@@ -1,51 +1,99 @@
-import { Home, FileText, PlusSquare, Mail, Calendar, Database, Settings, LogOut } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, FileText, FilePlus, Settings, LogOut, Building2, Database, CalendarDays, LifeBuoy } from "lucide-react";
+import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarFooter,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
-interface DashboardSidebarProps { companyName?: string | null; pendingCount?: number; unreadMail?: number; }
-interface NavItem { label: string; to: string; icon: typeof Home; badgeKey?: "pending" | "unread"; end?: boolean; }
-
-const NAV: NavItem[] = [
-  { label: "Dashboard", to: "/dashboard", icon: Home, end: true },
-  { label: "My Reports", to: "/dashboard/reports", icon: FileText, badgeKey: "pending" },
-  { label: "Create Report", to: "/dashboard/new-report", icon: PlusSquare },
-  { label: "Compliance Mail", to: "/dashboard/mail", icon: Mail, badgeKey: "unread" },
-  { label: "Calendar", to: "/dashboard/calendar", icon: Calendar },
-  { label: "Data Sources", to: "/dashboard/data-sources", icon: Database },
-  { label: "Settings", to: "/dashboard/settings", icon: Settings },
+const navItems = [
+  { title: "Home", url: "/dashboard", icon: Home },
+  { title: "My Reports", url: "/dashboard/reports", icon: FileText },
+  { title: "Create New Report", url: "/dashboard/new-report", icon: FilePlus },
+  { title: "Data Sources", url: "/dashboard/data-sources", icon: Database },
+  { title: "Calendar", url: "/dashboard/calendar", icon: CalendarDays },
+  { title: "Settings", url: "/dashboard/settings", icon: Settings },
+  { title: "Support", url: "/dashboard/support", icon: LifeBuoy },
 ];
 
-export function DashboardSidebar({ companyName, pendingCount = 0, unreadMail = 0 }: DashboardSidebarProps) {
-  const location = useLocation();
+interface DashboardSidebarProps {
+  companyName?: string | null;
+}
+
+export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
   const { signOut } = useAuth();
   const navigate = useNavigate();
-  const handleSignOut = async () => { await signOut(); navigate("/login"); };
-  const isActive = (item: NavItem) => item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
-  const getBadge = (item: NavItem): number => { if (item.badgeKey === "pending") return pendingCount; if (item.badgeKey === "unread") return unreadMail; return 0; };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
 
   return (
-    <aside className="hidden lg:flex flex-col flex-shrink-0" style={{ width: 260, background: "#FFFFFF", borderRight: "1px solid rgba(0,0,0,0.08)", padding: "20px 16px" }}>
-      <Link to="/dashboard" className="text-[18px] font-semibold text-[#1D1D1F] mb-1 px-3" style={{ backgroundImage: "none" }}>RegCo</Link>
-      <p className="text-[13px] text-[#6E6E73] px-3 mb-6 truncate">{companyName || "Your Institution"}</p>
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        {/* Brand */}
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+              <Building2 className="w-4 h-4 text-primary-foreground" />
+            </div>
+            {!collapsed && (
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-sidebar-foreground truncate">
+                  {companyName || "RegCo"}
+                </p>
+                <p className="text-xs text-muted-foreground">Dashboard</p>
+              </div>
+            )}
+          </div>
+        </div>
 
-      <nav className="flex flex-col gap-0.5 flex-1">
-        {NAV.map((item) => {
-          const active = isActive(item);
-          const badge = getBadge(item);
-          const Icon = item.icon;
-          return (
-            <Link key={item.to} to={item.to} className="flex items-center gap-3 h-[40px] px-3 rounded-lg transition-colors" style={{ background: active ? "#F5F5F7" : "transparent", fontWeight: active ? 600 : 400, color: active ? "#1D1D1F" : "#6E6E73", fontSize: 15, backgroundImage: "none" }}>
-              <Icon size={18} strokeWidth={1.5} />
-              <span className="flex-1">{item.label}</span>
-              {badge > 0 && <span className="text-[12px] font-medium text-white bg-[#0066CC] rounded-full min-w-[20px] h-[20px] flex items-center justify-center px-1.5">{badge}</span>}
-            </Link>
-          );
-        })}
-      </nav>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.url}
+                      end={item.url === "/dashboard"}
+                      className="hover:bg-sidebar-accent"
+                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                    >
+                      <item.icon className="mr-2 h-4 w-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-      <button onClick={handleSignOut} className="flex items-center gap-3 h-[40px] px-3 rounded-lg text-[15px] text-[#6E6E73] hover:text-[#FF3B30] hover:bg-[rgba(255,59,48,0.06)] transition-colors mt-2">
-        <LogOut size={18} strokeWidth={1.5} /><span>Sign out</span>
-      </button>
-    </aside>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut} className="hover:bg-destructive/10 text-muted-foreground hover:text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              {!collapsed && <span>Sign Out</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
   );
 }

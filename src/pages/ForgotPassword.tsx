@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -9,56 +12,90 @@ const ForgotPassword = () => {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); setError("");
+    e.preventDefault();
+    setError("");
     const trimmed = email.trim().toLowerCase();
-    if (!trimmed) { setError("Please enter your email address."); return; }
-    setLoading(true);
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, { redirectTo: `${window.location.origin}/reset-password` });
-    setLoading(false);
-    if (resetError) setError(resetError.message);
-    else setSent(true);
-  };
+    if (!trimmed) {
+      setError("Please enter your email address.");
+      return;
+    }
 
-  const inputStyle: React.CSSProperties = {
-    background: "rgba(0,0,0,0.04)", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8,
-    padding: "12px 16px", width: "100%", fontSize: 17, color: "#1D1D1F", outline: "none",
-    transition: "border-color 0.2s, box-shadow 0.2s",
+    setLoading(true);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setSent(true);
+    }
   };
 
   if (sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F5F7" }}>
-        <div className="w-full text-center" style={{ maxWidth: 400, background: "#FFFFFF", borderRadius: 18, padding: 48, boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
-          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "rgba(0,102,204,0.1)" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0066CC" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>
+      <div className="min-h-screen flex items-center justify-center px-4 bg-secondary">
+        <div className="w-full max-w-md rounded-2xl p-8 shadow-lg bg-card text-center">
+          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-accent">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="hsl(var(--primary))" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+            </svg>
           </div>
-          <h2 className="text-[24px] font-bold text-[#1D1D1F] mb-2">Check your email</h2>
-          <p className="text-[15px] text-[#6E6E73] mb-6">If an account exists for <strong className="text-[#1D1D1F]">{email}</strong>, we've sent a password reset link.</p>
-          <Link to="/login" className="text-[14px] text-[#0066CC] font-medium" style={{ backgroundImage: "none" }}>Back to Sign in</Link>
+          <h2 className="text-xl font-bold mb-2 text-foreground">Check your email</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            If an account exists for <strong className="text-foreground">{email}</strong>, we've sent a password reset link. Check your inbox and spam folder.
+          </p>
+          <Button asChild variant="outline" className="rounded-full px-6">
+            <Link to="/login">Back to Login</Link>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F5F7" }}>
-      <div className="w-full" style={{ maxWidth: 400, background: "#FFFFFF", borderRadius: 18, padding: 48, boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
-        <div className="text-center mb-8"><span className="text-[20px] font-semibold text-[#1D1D1F]">RegCo</span></div>
-        <h2 className="text-[28px] font-bold text-[#1D1D1F] text-center mb-1">Reset password</h2>
-        <p className="text-[15px] text-[#6E6E73] text-center mb-8">Enter your email to receive a reset link</p>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            style={inputStyle} type="email" placeholder="you@company.com" value={email} onChange={(e) => setEmail(e.target.value)} required
-            onFocus={(e) => { e.currentTarget.style.borderColor = "#0066CC"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.2)"; }}
-            onBlur={(e) => { e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
-          />
-          {error && <p className="text-[14px] font-medium text-[#FF3B30]">{error}</p>}
-          <button type="submit" disabled={loading} className="w-full text-[17px] font-normal text-white disabled:opacity-60" style={{ background: "#0066CC", borderRadius: 980, padding: "13px 24px", border: "none", cursor: "pointer" }}>
+    <div className="min-h-screen flex items-center justify-center px-4 bg-secondary">
+      <div className="w-full max-w-md rounded-2xl p-8 shadow-lg bg-card">
+        <div className="text-center mb-8">
+          <Link to="/" className="flex items-center justify-center gap-2 mb-2">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary">
+              <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
+              <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <span className="text-2xl font-bold text-foreground">RegCo</span>
+          </Link>
+          <p className="text-sm text-muted-foreground">Reset your password</p>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-foreground">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="rounded-xl"
+            />
+          </div>
+          {error && (
+            <p className="text-sm font-medium text-destructive">{error}</p>
+          )}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full font-semibold h-11 rounded-xl"
+          >
             {loading ? "Sending..." : "Send Reset Link"}
-          </button>
+          </Button>
         </form>
-        <p className="mt-6 text-center text-[14px] text-[#6E6E73]">
-          Remember your password? <Link to="/login" className="text-[#0066CC] font-medium" style={{ backgroundImage: "none" }}>Back to Sign in</Link>
+        <p className="mt-6 text-center text-sm text-muted-foreground">
+          Remember your password?{" "}
+          <Link to="/login" className="font-semibold text-primary">
+            Back to Login
+          </Link>
         </p>
       </div>
     </div>

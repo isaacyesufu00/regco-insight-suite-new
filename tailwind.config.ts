@@ -14,26 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"SF Pro Text"',
-          '"SF Pro Display"',
-          '"Helvetica Neue"',
-          "Helvetica",
-          "Arial",
-          "sans-serif",
-        ],
-        display: [
-          "-apple-system",
-          "BlinkMacSystemFont",
-          '"SF Pro Display"',
-          '"SF Pro Text"',
-          '"Helvetica Neue"',
-          "Helvetica",
-          "Arial",
-          "sans-serif",
-        ],
+        sans: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

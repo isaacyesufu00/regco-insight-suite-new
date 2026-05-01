@@ -1,8 +1,19 @@
 import { Link } from "react-router-dom";
 
-const columns = [
+type FooterLink = { label: string; to: string | null };
+
+const columns: { title: string; links: FooterLink[] }[] = [
   {
-    title: "About RegCo",
+    title: "Product",
+    links: [
+      { label: "Reports", to: "/features/report-generation" },
+      { label: "Monitoring", to: "/features/monitoring" },
+      { label: "Dashboard", to: "/features/dashboard" },
+      { label: "Pricing", to: "/#pricing" },
+    ],
+  },
+  {
+    title: "Company",
     links: [
       { label: "About", to: "/about" },
       { label: "Careers", to: null },
@@ -10,59 +21,42 @@ const columns = [
     ],
   },
   {
-    title: "Platform",
-    links: [
-      { label: "Report Generation", to: "/features/report-generation" },
-      { label: "Monitoring", to: "/features/monitoring" },
-      { label: "Dashboard", to: "/features/dashboard" },
-      { label: "Data Sources", to: "/features/data-sources" },
-      { label: "Pricing", to: "/#pricing" },
-    ],
-  },
-  {
-    title: "Reports",
-    links: [
-      { label: "MFB Return", to: null },
-      { label: "CBN Forex", to: null },
-      { label: "AML/CFT", to: null },
-      { label: "NFIU", to: null },
-      { label: "Prudential", to: null },
-    ],
-  },
-  {
     title: "Legal",
     links: [
       { label: "Privacy Policy", to: "/privacy-policy" },
-      { label: "Terms of Service", to: "/terms" },
-      { label: "Security", to: "/security" },
+      { label: "Terms", to: "/terms" },
+      { label: "Security Policy", to: "/security" },
     ],
   },
 ];
 
 const Footer = () => (
-  <footer style={{ background: "#F5F5F7", borderTop: "1px solid rgba(0,0,0,0.12)" }}>
-    <div style={{ maxWidth: 980, margin: "0 auto", padding: "48px 22px" }}>
-      <p className="text-[12px] text-[#6E6E73]">
-        Copyright © 2026 RegCo Technologies Limited. All rights reserved.
-      </p>
-
-      <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+  <footer className="border-t border-border bg-muted/30 py-14">
+    <div className="container mx-auto px-4 lg:px-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="col-span-2 md:col-span-1">
+          <span className="text-lg font-bold font-display text-foreground">RegCo</span>
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
+            AI-powered regulatory reporting and compliance infrastructure for financial institutions.
+          </p>
+        </div>
         {columns.map((col) => (
           <div key={col.title}>
-            <h4 className="text-[12px] font-semibold text-[#1D1D1F] mb-3">{col.title}</h4>
+            <h4 className="text-sm font-semibold text-foreground mb-3">{col.title}</h4>
             <ul className="space-y-2">
               {col.links.map((link) => (
                 <li key={link.label}>
                   {link.to ? (
                     <Link
                       to={link.to}
-                      className="text-[12px] text-[#6E6E73] hover:text-[#1D1D1F] transition-colors"
-                      style={{ backgroundImage: "none" }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.label}
                     </Link>
                   ) : (
-                    <span className="text-[12px] text-[#6E6E73] opacity-70 cursor-default">{link.label}</span>
+                    <span className="text-sm text-muted-foreground cursor-default">
+                      {link.label}
+                    </span>
                   )}
                 </li>
               ))}
@@ -70,19 +64,11 @@ const Footer = () => (
           </div>
         ))}
       </div>
-
-      <div
-        className="mt-10 pt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-[12px] text-[#6E6E73]"
-        style={{ borderTop: "1px solid rgba(0,0,0,0.12)" }}
-      >
-        <div>Nigeria</div>
-        <div className="flex flex-wrap gap-x-2 gap-y-1">
-          <Link to="/privacy-policy" className="hover:text-[#1D1D1F] transition-colors" style={{ backgroundImage: "none" }}>Privacy Policy</Link>
-          <span aria-hidden="true">|</span>
-          <Link to="/terms" className="hover:text-[#1D1D1F] transition-colors" style={{ backgroundImage: "none" }}>Terms</Link>
-          <span aria-hidden="true">|</span>
-          <Link to="/contact" className="hover:text-[#1D1D1F] transition-colors" style={{ backgroundImage: "none" }}>Site Map</Link>
-        </div>
+      <div className="mt-12 pt-6 border-t border-border text-center space-y-2">
+        <p className="text-sm text-muted-foreground">© 2026 RegCo. All rights reserved.</p>
+        <p className="text-xs text-muted-foreground/70">
+          RegCo is not affiliated with the Central Bank of Nigeria. All regulatory return formats are based on publicly available CBN guidelines.
+        </p>
       </div>
     </div>
   </footer>

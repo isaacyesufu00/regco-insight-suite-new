@@ -19,7 +19,6 @@ import MyReports from "./pages/MyReports";
 import DataSources from "./pages/DataSources";
 import DashboardSettings from "./pages/DashboardSettings";
 import ComplianceCalendar from "./pages/ComplianceCalendar";
-import ComplianceMail from "./pages/ComplianceMail";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
@@ -90,7 +89,6 @@ const App = () => (
               <Route path="new-report" element={<NewReport />} />
               <Route path="data-sources" element={<DataSources />} />
               <Route path="calendar" element={<ComplianceCalendar />} />
-              <Route path="mail" element={<ComplianceMail />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="support" element={<SupportTickets />} />
             </Route>

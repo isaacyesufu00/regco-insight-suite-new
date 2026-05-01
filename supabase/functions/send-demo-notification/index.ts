@@ -88,8 +88,7 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Edge function error:", error);
-    const message = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: message }), {
+    return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
