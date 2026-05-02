@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      compliance_messages: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          is_pinned: boolean
+          is_read: boolean
+          sender_name: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          is_read?: boolean
+          sender_name?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean
+          is_read?: boolean
+          sender_name?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_scores: {
         Row: {
           calculated_at: string | null
