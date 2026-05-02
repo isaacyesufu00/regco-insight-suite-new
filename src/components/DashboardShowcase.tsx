@@ -43,7 +43,7 @@ const DashboardShowcase = () => {
     <section ref={containerRef} id="platform" style={{ height: "600vh", position: "relative", background: "#000" }}>
       <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
         {/* Nav arrows */}
-        <div className="fixed left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
+        <div className="absolute left-6 top-1/2 -translate-y-1/2 z-50 flex flex-col items-center gap-3">
           <button onClick={() => jumpTo(-1)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
             <ChevronUp className="w-4 h-4 text-white/60" />
           </button>
