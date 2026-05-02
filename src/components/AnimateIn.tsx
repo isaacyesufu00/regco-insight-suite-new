@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, ReactNode } from "react";
+import { useRef, useState, useEffect, ReactNode } from "react";
 
 interface AnimateInProps {
   children: ReactNode;
@@ -30,33 +30,6 @@ export const AnimateIn = ({ children, delay = 0, direction = "up", className }: 
   );
 };
 
-interface WordRevealProps {
-  text: string;
-  className?: string;
-}
-
-export const WordReveal = ({ text, className }: WordRevealProps) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
-  const words = text.split(" ");
-
-  return (
-    <span ref={ref} className={className}>
-      {words.map((word, i) => (
-        <motion.span
-          key={i}
-          className="inline-block mr-[0.25em]"
-          initial={{ opacity: 0, y: 16 }}
-          animate={isInView ? { opacity: 1, y: 0 } : undefined}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94], delay: i * 0.06 }}
-        >
-          {word}
-        </motion.span>
-      ))}
-    </span>
-  );
-};
-
 interface CountUpProps {
   value: number;
   prefix?: string;
@@ -71,7 +44,6 @@ export const CountUp = ({ value, prefix = "", suffix = "", className }: CountUpP
 
   useEffect(() => {
     if (!isInView) return;
-    let start = 0;
     const duration = 1500;
     const startTime = performance.now();
     const animate = (now: number) => {
@@ -86,7 +58,5 @@ export const CountUp = ({ value, prefix = "", suffix = "", className }: CountUpP
 
   return <span ref={ref} className={className}>{prefix}{count}{suffix}</span>;
 };
-
-import { useState, useEffect } from "react";
 
 export default AnimateIn;
