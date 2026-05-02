@@ -25,19 +25,9 @@ import AdminClientDetail from "./pages/AdminClientDetail";
 import AdminOnboard from "./pages/AdminOnboard";
 import AdminDemos from "./pages/AdminDemos";
 import NotFound from "./pages/NotFound";
-import About from "./pages/About";
-import Security from "./pages/Security";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
-import UseCaseMFB from "./pages/UseCaseMFB";
-import UseCaseCommercial from "./pages/UseCaseCommercial";
-import UseCaseFinance from "./pages/UseCaseFinance";
-import UseCaseCompliance from "./pages/UseCaseCompliance";
-import FeatureReportGeneration from "./pages/FeatureReportGeneration";
-
-import FeatureDashboard from "./pages/FeatureDashboard";
-import FeatureDataSources from "./pages/FeatureDataSources";
-import FeatureMonitoring from "./pages/FeatureMonitoring";
+import Security from "./pages/Security";
 import SupportTickets from "./pages/SupportTickets";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -63,19 +53,13 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/confirm" element={<AuthConfirm />} />
             <Route path="/auth/callback" element={<AuthConfirm />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/security" element={<Security />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/use-cases/mfb" element={<UseCaseMFB />} />
-            <Route path="/use-cases/commercial" element={<UseCaseCommercial />} />
-            <Route path="/use-cases/finance" element={<UseCaseFinance />} />
-            <Route path="/use-cases/compliance" element={<UseCaseCompliance />} />
-            <Route path="/features/report-generation" element={<FeatureReportGeneration />} />
-            
-            <Route path="/features/dashboard" element={<FeatureDashboard />} />
-            <Route path="/features/data-sources" element={<FeatureDataSources />} />
-            <Route path="/features/monitoring" element={<FeatureMonitoring />} />
+            <Route path="/security" element={<Security />} />
+            {/* Redirect old public pages to homepage */}
+            <Route path="/about" element={<Navigate to="/#about" replace />} />
+            <Route path="/features/*" element={<Navigate to="/#features" replace />} />
+            <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
             <Route
               path="/dashboard"
               element={

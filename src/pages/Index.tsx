@@ -1,22 +1,26 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import DashboardShowcase from "@/components/DashboardShowcase";
+import HowItWorks from "@/components/HowItWorks";
+import StatsSection from "@/components/StatsSection";
 import FeaturesSection from "@/components/FeaturesSection";
-import DashboardPositioning from "@/components/DashboardPositioning";
-import InstitutionsSection from "@/components/InstitutionsSection";
+import ReportTypesTicker from "@/components/ReportTypesTicker";
 import PricingSection from "@/components/PricingSection";
-import SecuritySection from "@/components/SecuritySection";
+import AboutSection from "@/components/AboutSection";
 import Footer from "@/components/Footer";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ background: "#F5F5F7" }}>
       <Navbar />
       <HeroSection />
+      <DashboardShowcase />
+      <HowItWorks />
+      <StatsSection />
       <FeaturesSection />
-      <DashboardPositioning />
-      <InstitutionsSection />
+      <ReportTypesTicker />
       <PricingSection />
-      <SecuritySection />
+      <AboutSection />
       <Footer />
     </div>
   );
