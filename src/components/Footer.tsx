@@ -1,74 +1,85 @@
 import { Link } from "react-router-dom";
 
-type FooterLink = { label: string; to: string | null };
-
-const columns: { title: string; links: FooterLink[] }[] = [
+const columns = [
   {
-    title: "Product",
+    title: "Platform",
     links: [
-      { label: "Reports", to: "/features/report-generation" },
-      { label: "Monitoring", to: "/features/monitoring" },
-      { label: "Dashboard", to: "/features/dashboard" },
-      { label: "Pricing", to: "/#pricing" },
+      { label: "Dashboard", href: "#platform" },
+      { label: "How It Works", href: "#how-it-works" },
+      { label: "Features", href: "#features" },
+      { label: "Pricing", href: "#pricing" },
     ],
   },
   {
-    title: "Company",
+    title: "Reports",
     links: [
-      { label: "About", to: "/about" },
-      { label: "Careers", to: null },
-      { label: "Contact", to: "/contact" },
+      { label: "MFB Returns", href: "#features" },
+      { label: "CBN Forex", href: "#features" },
+      { label: "AML/CFT", href: "#features" },
+      { label: "Prudential", href: "#features" },
     ],
   },
   {
     title: "Legal",
     links: [
-      { label: "Privacy Policy", to: "/privacy-policy" },
-      { label: "Terms", to: "/terms" },
-      { label: "Security Policy", to: "/security" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms", href: "/terms" },
+      { label: "Security", href: "/security" },
+      { label: "Compliance", href: "#features" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { label: "Contact", href: "/contact" },
+      { label: "Book Demo", href: "/book-demo" },
+      { label: "Help Centre", href: "/contact" },
+      { label: "Status", href: "#" },
     ],
   },
 ];
 
 const Footer = () => (
-  <footer className="border-t border-border bg-muted/30 py-14">
-    <div className="container mx-auto px-4 lg:px-8">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-        <div className="col-span-2 md:col-span-1">
-          <span className="text-lg font-bold font-display text-foreground">RegCo</span>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-xs">
-            AI-powered regulatory reporting and compliance infrastructure for financial institutions.
-          </p>
-        </div>
+  <footer style={{ background: "#F5F5F7", borderTop: "1px solid rgba(0,0,0,0.1)", padding: "40px 0" }}>
+    <div className="max-w-[1200px] mx-auto px-6">
+      <p style={{ fontSize: 12, color: "#6E6E73" }}>
+        Copyright © 2026 RegCo Technologies Limited. All rights reserved.
+      </p>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-8">
         {columns.map((col) => (
           <div key={col.title}>
-            <h4 className="text-sm font-semibold text-foreground mb-3">{col.title}</h4>
-            <ul className="space-y-2">
-              {col.links.map((link) => (
-                <li key={link.label}>
-                  {link.to ? (
-                    <Link
-                      to={link.to}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  ) : (
-                    <span className="text-sm text-muted-foreground cursor-default">
-                      {link.label}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <p style={{ fontSize: 12, color: "#1D1D1F", fontWeight: 600, marginBottom: 8 }}>{col.title}</p>
+            {col.links.map((link) => (
+              <div key={link.label} className="mb-1">
+                {link.href.startsWith("/") ? (
+                  <Link to={link.href} style={{ fontSize: 12, color: "#6E6E73", textDecoration: "none" }}>
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a href={link.href} style={{ fontSize: 12, color: "#6E6E73", textDecoration: "none" }}>
+                    {link.label}
+                  </a>
+                )}
+              </div>
+            ))}
           </div>
         ))}
       </div>
-      <div className="mt-12 pt-6 border-t border-border text-center space-y-2">
-        <p className="text-sm text-muted-foreground">© 2026 RegCo. All rights reserved.</p>
-        <p className="text-xs text-muted-foreground/70">
-          RegCo is not affiliated with the Central Bank of Nigeria. All regulatory return formats are based on publicly available CBN guidelines.
-        </p>
+
+      <div className="flex items-center justify-between mt-8 pt-4" style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <span style={{ fontSize: 12, color: "#6E6E73" }}>Nigeria</span>
+        <div className="flex gap-4">
+          {[
+            { label: "Privacy", to: "/privacy-policy" },
+            { label: "Terms", to: "/terms" },
+            { label: "Contact", to: "/contact" },
+          ].map((l) => (
+            <Link key={l.label} to={l.to} style={{ fontSize: 12, color: "#6E6E73", textDecoration: "none" }}>
+              {l.label}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   </footer>

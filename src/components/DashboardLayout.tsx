@@ -29,16 +29,40 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar companyName={companyName} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center border-b border-border px-4 bg-card">
-            <SidebarTrigger className="mr-4" />
-            <span className="text-sm font-semibold text-foreground">RegCo Dashboard</span>
-          </header>
-          <main className="flex-1 p-6 overflow-auto">
-            {children}
-          </main>
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "#F5F5F7",
+          padding: 32,
+          display: "flex",
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            background: "white",
+            borderRadius: 20,
+            overflow: "hidden",
+            boxShadow: "0 4px 32px rgba(0,0,0,0.08)",
+            display: "flex",
+          }}
+        >
+          <DashboardSidebar companyName={companyName} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <header
+              className="flex items-center px-5"
+              style={{
+                height: 52,
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
+              }}
+            >
+              <SidebarTrigger className="mr-4" />
+              <span style={{ fontSize: 14, fontWeight: 600, color: "#1D1D1F" }}>RegCo</span>
+            </header>
+            <main style={{ flex: 1, padding: 20, background: "#F5F5F7", overflowY: "auto" }}>
+              {children}
+            </main>
+          </div>
         </div>
       </div>
       <HelpPanel />

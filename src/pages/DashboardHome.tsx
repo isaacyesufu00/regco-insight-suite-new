@@ -3,10 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { FileText, Clock, CheckCircle, CalendarDays, FilePlus, Download } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { ComplianceGauge } from "@/components/ComplianceGauge";
 
@@ -28,6 +25,13 @@ interface Report {
   reporting_period_end: string | null;
   pdf_url: string | null;
 }
+
+const statusColors: Record<string, { bg: string; color: string }> = {
+  Ready: { bg: "rgba(52,199,89,0.12)", color: "#34C759" },
+  Processing: { bg: "rgba(255,159,10,0.12)", color: "#FF9F0A" },
+  Failed: { bg: "rgba(255,59,48,0.12)", color: "#FF3B30" },
+  Pending: { bg: "rgba(142,142,147,0.12)", color: "#8E8E93" },
+};
 
 const DashboardHome = () => {
   const { user } = useAuth();
@@ -90,136 +94,214 @@ const DashboardHome = () => {
   const totalReports = reports.length;
   const processing = reports.filter((r) => r.status === "Processing").length;
   const ready = reports.filter((r) => r.status === "Ready").length;
-
-  const statusColor = (s: string) => {
-    if (s === "Ready") return "bg-success/10 text-success border-success/20";
-    if (s === "Processing") return "bg-warning/10 text-warning border-warning/20";
-    if (s === "Failed") return "bg-destructive/10 text-destructive border-destructive/20";
-    return "bg-muted text-muted-foreground";
-  };
-
   const recentReports = reports.slice(0, 10);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <svg className="w-8 h-8 animate-spin" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="#0066CC" strokeWidth="2" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+        </svg>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      {/* Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-5 max-w-6xl">
+      {/* Institution header card */}
+      <div
+        style={{
+          background: "white",
+          borderRadius: 14,
+          border: "1px solid rgba(0,0,0,0.06)",
+          padding: "18px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {profile?.company_name || "User"}
-          </h1>
-          <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
-            {profile?.rc_number && <span>RC: {profile.rc_number}</span>}
-            <Badge variant={profile?.account_status === "Active" ? "default" : "secondary"}>
-              {profile?.account_status || "Active"}
-            </Badge>
+          <div className="flex items-center gap-2">
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#34C759" }} />
+            <span style={{ fontSize: 14, color: "#6E6E73" }}>{profile?.company_name || "Institution"}</span>
           </div>
+          <p style={{ fontWeight: 700, fontSize: 20, color: "#1D1D1F", marginTop: 4 }}>
+            Welcome back{profile?.company_name ? `, ${profile.company_name}` : ""}
+          </p>
         </div>
-        <Button asChild>
-          <Link to="/dashboard/new-report">
-            <FilePlus className="mr-2 h-4 w-4" />
-            Create New Report
-          </Link>
-        </Button>
+        <Link
+          to="/dashboard/new-report"
+          style={{
+            background: "#0066CC",
+            color: "white",
+            borderRadius: 980,
+            padding: "10px 20px",
+            fontSize: 14,
+            fontWeight: 500,
+            textDecoration: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <FilePlus size={16} strokeWidth={1.5} />
+          Create Report
+        </Link>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Status summary */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Reports", value: totalReports, icon: FileText, iconClass: "text-primary" },
-          { label: "Processing", value: processing, icon: Clock, iconClass: "text-warning" },
-          { label: "Ready for Download", value: ready, icon: CheckCircle, iconClass: "text-success" },
-          { label: "Reports This Month", value: thisMonth, icon: CalendarDays, iconClass: "text-info" },
-        ].map((c) => (
-          <Card key={c.label}>
-            <CardContent className="p-5 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-xl bg-accent flex items-center justify-center">
-                <c.icon className={`w-5 h-5 ${c.iconClass}`} />
+          { label: "Total Reports", value: totalReports, status: "Ready", icon: FileText },
+          { label: "Processing", value: processing, status: "Processing", icon: Clock },
+          { label: "Ready", value: ready, status: "Ready", icon: CheckCircle },
+          { label: "This Month", value: thisMonth, status: "Pending", icon: CalendarDays },
+        ].map((c) => {
+          const sc = statusColors[c.status] || statusColors.Pending;
+          return (
+            <div
+              key={c.label}
+              style={{
+                background: "white",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.06)",
+                padding: 24,
+              }}
+            >
+              <div
+                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full mb-3"
+                style={{ background: sc.bg, color: sc.color, fontSize: 11, fontWeight: 500 }}
+              >
+                <c.icon size={12} strokeWidth={1.5} />
+                {c.label}
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{c.value}</p>
-                <p className="text-sm text-muted-foreground">{c.label}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              <p style={{ fontWeight: 900, fontSize: 48, color: "#1D1D1F", lineHeight: 1 }}>{c.value}</p>
+              <p style={{ fontSize: 16, color: "#1D1D1F", marginTop: 4 }}>reports</p>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Compliance Score Gauge */}
+      {/* Compliance Score */}
       <ComplianceGauge />
 
-      {/* Recent Reports */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">Recent Reports</CardTitle>
+      {/* Recent Reports Table */}
+      <div
+        style={{
+          background: "white",
+          borderRadius: 14,
+          border: "1px solid rgba(0,0,0,0.06)",
+          overflow: "hidden",
+        }}
+      >
+        <div className="flex items-center justify-between p-5">
+          <h2 style={{ fontWeight: 700, fontSize: 18, color: "#1D1D1F" }}>Recent Reports</h2>
           {reports.length > 0 && (
-            <Button asChild variant="outline" size="sm">
-              <Link to="/dashboard/reports">View All</Link>
-            </Button>
+            <Link to="/dashboard/reports" style={{ fontSize: 14, color: "#0066CC", textDecoration: "none" }}>
+              View All
+            </Link>
           )}
-        </CardHeader>
-        <CardContent>
-          {reports.length === 0 ? (
-            <div className="text-center py-12">
-              <FileText className="w-12 h-12 text-muted-foreground/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-1">No reports yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">Click Create New Report to get started.</p>
-              <Button asChild variant="outline">
-                <Link to="/dashboard/new-report"><FilePlus className="mr-2 h-4 w-4" />Create New Report</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Report Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Reporting Period</TableHead>
-                    <TableHead>Date Created</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Download</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {recentReports.map((r) => (
-                    <TableRow key={r.id}>
-                      <TableCell className="font-medium">{r.report_name}</TableCell>
-                      <TableCell>{r.report_type || "—"}</TableCell>
-                      <TableCell>
-                        {r.reporting_period_start && r.reporting_period_end
-                          ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
-                          : "—"}
-                      </TableCell>
-                      <TableCell>{new Date(r.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusColor(r.status)}`}>
-                          {r.status}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {r.status === "Ready" && r.file_path && (
-                          <Button size="sm" variant="outline" onClick={() => handleDownload(r.file_path!, r.report_name)}>
-                            <Download className="mr-1 h-3 w-3" />Download
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+
+        {reports.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <FileText size={40} strokeWidth={1} style={{ color: "#AAAAAA", margin: "0 auto 16px" }} />
+            <h3 style={{ fontWeight: 600, fontSize: 18, color: "#1D1D1F" }}>No reports yet</h3>
+            <p style={{ fontSize: 14, color: "#6E6E73", marginTop: 4 }}>Create your first CBN return to get started.</p>
+            <Link
+              to="/dashboard/new-report"
+              className="inline-flex items-center gap-2 mt-6"
+              style={{
+                background: "#0066CC",
+                color: "white",
+                borderRadius: 980,
+                padding: "10px 20px",
+                fontSize: 14,
+                textDecoration: "none",
+              }}
+            >
+              <FilePlus size={16} strokeWidth={1.5} />
+              Create Report
+            </Link>
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr style={{ background: "#FAFAFA" }}>
+                {["Report Name", "Type", "Period", "Created", "Status", ""].map((h) => (
+                  <th
+                    key={h}
+                    style={{
+                      fontSize: 12,
+                      color: "#AAAAAA",
+                      textTransform: "uppercase",
+                      fontWeight: 500,
+                      padding: "10px 16px",
+                      textAlign: h === "" ? "right" : "left",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {recentReports.map((r) => {
+                const sc = statusColors[r.status] || statusColors.Pending;
+                return (
+                  <tr
+                    key={r.id}
+                    style={{ borderTop: "1px solid rgba(0,0,0,0.04)" }}
+                    className="hover:bg-black/[0.02] transition-colors"
+                  >
+                    <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500, color: "#1D1D1F" }}>
+                      {r.report_name}
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>{r.report_type || "—"}</td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>
+                      {r.reporting_period_start && r.reporting_period_end
+                        ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
+                        : "—"}
+                    </td>
+                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>
+                      {new Date(r.created_at).toLocaleDateString()}
+                    </td>
+                    <td style={{ padding: "12px 16px" }}>
+                      <span
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full"
+                        style={{ fontSize: 12, fontWeight: 500, background: sc.bg, color: sc.color }}
+                      >
+                        {r.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      {r.status === "Ready" && r.file_path && (
+                        <button
+                          onClick={() => handleDownload(r.file_path!, r.report_name)}
+                          className="inline-flex items-center gap-1.5"
+                          style={{
+                            background: "rgba(0,0,0,0.06)",
+                            color: "#1D1D1F",
+                            borderRadius: 980,
+                            padding: "6px 14px",
+                            fontSize: 13,
+                            fontWeight: 500,
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Download size={14} strokeWidth={1.5} />
+                          Download
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 };
