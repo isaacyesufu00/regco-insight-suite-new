@@ -1,92 +1,75 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 33% 99%;
-    --foreground: 220 30% 12%;
+    --background: 0 0% 96.1%;
+    --foreground: 0 0% 11.4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 12%;
+    --card-foreground: 0 0% 11.4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 12%;
+    --popover-foreground: 0 0% 11.4%;
 
-    --primary: 217 72% 52%;
+    --primary: 211 100% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 214 60% 96%;
-    --secondary-foreground: 217 72% 42%;
+    --secondary: 0 0% 96.1%;
+    --secondary-foreground: 0 0% 11.4%;
 
-    --muted: 214 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
 
-    --accent: 217 72% 95%;
-    --accent-foreground: 217 72% 35%;
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 11.4%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 79% 56%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 25% 91%;
-    --input: 214 25% 91%;
-    --ring: 217 72% 52%;
+    --border: 0 0% 0% / 0.08;
+    --input: 0 0% 0% / 0.1;
+    --ring: 211 100% 40%;
 
     --radius: 0.75rem;
 
-    /* RegCo custom tokens */
-    --hero-gradient-start: 213 80% 96%;
-    --hero-gradient-mid: 217 75% 93%;
-    --hero-gradient-end: 220 60% 98%;
-    --card-shadow: 217 50% 80%;
-    --surface-elevated: 0 0% 100%;
-    --success: 152 60% 45%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 36 100% 52%;
     --warning-foreground: 0 0% 100%;
-    --info: 217 72% 52%;
+    --info: 211 100% 40%;
     --info-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 72% 56%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217 32% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 32% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 32% 17%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 32% 17%;
-    --input: 217 32% 17%;
-    --ring: 213 27% 84%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 11.4%;
+    --sidebar-primary: 0 0% 11.4%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 0 0% 96.1%;
+    --sidebar-accent-foreground: 0 0% 11.4%;
+    --sidebar-border: 0 0% 0% / 0.06;
+    --sidebar-ring: 211 100% 40%;
+
+    /* Apple design tokens */
+    --apple-bg: #F5F5F7;
+    --apple-white: #FFFFFF;
+    --apple-dark: #1D1D1F;
+    --apple-black: #000000;
+    --apple-text: #1D1D1F;
+    --apple-text-secondary: #6E6E73;
+    --apple-text-tertiary: #86868B;
+    --apple-link: #0066CC;
+    --apple-border: rgba(0,0,0,0.08);
+    --apple-radius-card: 18px;
+    --apple-radius-large: 28px;
+    --apple-radius-pill: 980px;
+    --apple-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    --apple-shadow-hover: 0 12px 48px rgba(0,0,0,0.14);
+    --apple-transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --apple-green: #34C759;
+    --apple-orange: #FF9F0A;
+    --apple-red: #FF3B30;
+    --apple-grey: #8E8E93;
   }
 }
 
@@ -95,32 +78,29 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+    @apply bg-background text-foreground antialiased;
   }
 }
 
 @layer utilities {
-  .hero-gradient {
-    background: linear-gradient(
-      180deg,
-      hsl(210 60% 95%) 0%,
-      hsl(213 70% 92%) 30%,
-      hsl(210 40% 97%) 65%,
-      hsl(var(--background)) 100%
-    );
+  .apple-font {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   }
-  .card-elevated {
-    background: hsl(var(--surface-elevated));
-    box-shadow: 0 1px 3px hsl(var(--card-shadow) / 0.12),
-                0 8px 24px hsl(var(--card-shadow) / 0.08);
-  }
-  .card-elevated-lg {
-    background: hsl(var(--surface-elevated));
-    box-shadow: 0 4px 12px hsl(var(--card-shadow) / 0.1),
-                0 16px 40px hsl(var(--card-shadow) / 0.12);
-  }
-  .text-gradient {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(217 72% 42%), hsl(217 72% 58%));
-  }
+}
+
+/* Marquee animation */
+@keyframes marquee-left {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-marquee-left {
+  animation: marquee-left 40s linear infinite;
+}
+.animate-marquee-right {
+  animation: marquee-right 40s linear infinite;
 }
