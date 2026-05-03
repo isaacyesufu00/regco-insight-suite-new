@@ -99,8 +99,14 @@
   100% { transform: translateX(0); }
 }
 .animate-marquee-left {
-  animation: marquee-left 40s linear infinite;
+  animation: marquee-left 45s linear infinite;
 }
 .animate-marquee-right {
   animation: marquee-right 40s linear infinite;
+}
+
+/* CTA pulse */
+@keyframes ctaPulse {
+  0%, 100% { box-shadow: 0 0 80px rgba(0,102,204,0.08); }
+  50% { box-shadow: 0 0 200px rgba(0,102,204,0.18); }
 }

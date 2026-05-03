@@ -1,51 +1,20 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import { motion } from "framer-motion";
 
-const institutionTypes = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank", "Other"];
-
-const returnOptions = [
-  "CBN Monetary Policy Return",
-  "CBN Forex Return",
-  "AML/CFT Report",
-  "NFIU Return",
-  "MFB Regulatory Return",
-  "Prudential Return",
-  "SCUML Report",
-];
-
-const timeOptions = [
-  "Less than 4 hours",
-  "4 to 8 hours",
-  "8 to 16 hours",
-  "More than 16 hours",
-];
+const institutionTypes = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank", "Finance Company", "Primary Mortgage Bank", "Fintech"];
 
 const BookDemo = () => {
   const [fullName, setFullName] = useState("");
   const [institutionName, setInstitutionName] = useState("");
   const [institutionType, setInstitutionType] = useState("");
-  const [jobTitle, setJobTitle] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [selectedReturns, setSelectedReturns] = useState<string[]>([]);
-  const [timeSpent, setTimeSpent] = useState("");
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
-
-  const toggleReturn = (r: string) => {
-    setSelectedReturns((prev) =>
-      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]
-    );
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,12 +23,11 @@ const BookDemo = () => {
     const trimmed = {
       fullName: fullName.trim(),
       institutionName: institutionName.trim(),
-      jobTitle: jobTitle.trim(),
       phone: phone.trim(),
       email: email.trim(),
     };
 
-    if (!trimmed.fullName || !trimmed.institutionName || !institutionType || !trimmed.jobTitle || !trimmed.phone || !trimmed.email) {
+    if (!trimmed.fullName || !trimmed.institutionName || !institutionType || !trimmed.phone || !trimmed.email) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -71,20 +39,13 @@ const BookDemo = () => {
 
     setLoading(true);
 
-    const messageLines = [
-      `Institution Type: ${institutionType}`,
-      `Job Title: ${trimmed.jobTitle}`,
-      selectedReturns.length > 0 ? `Returns filed manually: ${selectedReturns.join(", ")}` : "",
-      timeSpent ? `Time spent on reporting: ${timeSpent}` : "",
-    ].filter(Boolean).join("\n");
-
     const payload = {
       full_name: trimmed.fullName.slice(0, 100),
       company_name: trimmed.institutionName.slice(0, 100),
       email: trimmed.email.slice(0, 255),
       phone: trimmed.phone.slice(0, 30),
       report_type: institutionType,
-      message: messageLines.slice(0, 2000) || null,
+      message: message.trim().slice(0, 2000) || null,
     };
 
     const { error: dbError } = await supabase.from("demo_requests").insert(payload);
@@ -104,124 +65,135 @@ const BookDemo = () => {
     setSubmitted(true);
   };
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    background: "rgba(0,0,0,0.04)",
+    border: "1.5px solid rgba(0,0,0,0.12)",
+    borderRadius: 10,
+    padding: "13px 16px",
+    fontSize: 17,
+    color: "#1D1D1F",
+    outline: "none",
+    transition: "all 0.2s",
+  };
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "#0066CC";
+    e.target.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
+    e.target.style.background = "white";
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.target.style.borderColor = "rgba(0,0,0,0.12)";
+    e.target.style.boxShadow = "none";
+    e.target.style.background = "rgba(0,0,0,0.04)";
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="pt-24 pb-20">
-        <div className="container mx-auto px-4 lg:px-8 max-w-lg">
-          <div className="rounded-2xl p-8 card-elevated border border-border/50">
-            <div className="text-center mb-6">
-              <Link to="/" className="inline-flex items-center gap-2 mb-4">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary">
-                  <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
-                  <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span className="text-2xl font-bold font-display text-foreground">RegCo</span>
-              </Link>
-            </div>
-
-            {submitted ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center bg-primary/10">
-                  <CheckCircle className="w-8 h-8 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">Thank you</h2>
-                <p className="text-sm text-muted-foreground">
-                  A member of our team will reach out within 1 business day to schedule your demo.
-                </p>
-                <Button asChild variant="outline" className="mt-6 rounded-full px-6">
-                  <Link to="/">Back to home</Link>
-                </Button>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-2xl font-bold text-center text-foreground mb-1">Book a Free Demo</h2>
-                <p className="text-sm text-center text-muted-foreground mb-8">
-                  See how RegCo can simplify your regulatory reporting. Fill in your details and our team will be in touch.
-                </p>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Full Name *</Label>
-                    <Input placeholder="John Doe" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Institution Name *</Label>
-                    <Input placeholder="Acme MFB Ltd" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Institution Type *</Label>
-                    <select
-                      value={institutionType}
-                      onChange={(e) => setInstitutionType(e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select type</option>
-                      {institutionTypes.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Job Title *</Label>
-                    <Input placeholder="Head of Compliance" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} required maxLength={100} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Phone Number *</Label>
-                    <Input type="tel" placeholder="+234 800 000 0000" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={30} className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Email Address *</Label>
-                    <Input type="email" placeholder="you@institution.com" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} className="rounded-xl" />
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="text-foreground">Which returns do you currently file manually?</Label>
-                    <div className="space-y-2">
-                      {returnOptions.map((r) => (
-                        <label key={r} className="flex items-center gap-2.5 cursor-pointer">
-                          <Checkbox
-                            checked={selectedReturns.includes(r)}
-                            onCheckedChange={() => toggleReturn(r)}
-                          />
-                          <span className="text-sm text-foreground">{r}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-foreground">How long does your team spend on reporting per month?</Label>
-                    <select
-                      value={timeSpent}
-                      onChange={(e) => setTimeSpent(e.target.value)}
-                      className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="">Select an option</option>
-                      {timeOptions.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-
-                  <Button type="submit" disabled={loading} className="w-full rounded-full font-semibold h-11">
-                    {loading ? "Submitting..." : "Request a Demo"}
-                  </Button>
-                </form>
-
-                <p className="text-xs text-muted-foreground text-center mt-6 leading-relaxed">
-                  We will contact you within 1 business day to confirm your demo time. Prefer WhatsApp? Message us directly at{" "}
-                  <a href="https://wa.me/2348000000000" target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline">
-                    +234 800 000 0000
-                  </a>.
-                </p>
-              </>
-            )}
-          </div>
+    <div className="min-h-screen flex items-center justify-center px-4 py-16" style={{ background: "#F5F5F7" }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+        className="w-full max-w-[480px]"
+        style={{ background: "white", borderRadius: 18, padding: 52, boxShadow: "0 4px 32px rgba(0,0,0,0.1)" }}
+      >
+        <div className="text-center mb-6">
+          <Link to="/" style={{ fontWeight: 600, fontSize: 20, color: "#1D1D1F", textDecoration: "none" }}>
+            RegCo
+          </Link>
         </div>
-      </div>
-      <Footer />
+
+        {submitted ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            className="text-center py-8"
+          >
+            <svg className="mx-auto mb-6" width="80" height="80" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="38" fill="none" stroke="#34C759" strokeWidth="3" />
+              <motion.path
+                d="M24 42 L34 52 L56 30"
+                fill="none"
+                stroke="#34C759"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              />
+            </svg>
+            <h2 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", marginBottom: 8 }}>Demo Booked.</h2>
+            <p style={{ fontSize: 17, color: "#6E6E73" }}>We will confirm your time within 24 hours.</p>
+            <p style={{ fontSize: 15, color: "#0066CC", marginTop: 8 }}>isaacyesufu00@gmail.com</p>
+            <Link
+              to="/"
+              className="inline-block mt-8"
+              style={{
+                background: "rgba(0,0,0,0.06)",
+                color: "#1D1D1F",
+                borderRadius: 980,
+                padding: "10px 24px",
+                fontSize: 14,
+                textDecoration: "none",
+              }}
+            >
+              Back to home
+            </Link>
+          </motion.div>
+        ) : (
+          <>
+            <h1 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", textAlign: "center", marginBottom: 8 }}>
+              Book a Demo
+            </h1>
+            <p style={{ fontSize: 15, color: "#6E6E73", textAlign: "center", marginBottom: 28 }}>
+              Schedule a 20-minute live walkthrough.
+            </p>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input placeholder="Full Name *" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
+              <input placeholder="Institution Name *" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} required maxLength={100} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
+              <select value={institutionType} onChange={(e) => setInstitutionType(e.target.value)} style={{ ...inputStyle, appearance: "none" }} onFocus={handleFocus as any} onBlur={handleBlur as any}>
+                <option value="">Institution Type *</option>
+                {institutionTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+              </select>
+              <input type="email" placeholder="Email Address *" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
+              <input type="tel" placeholder="Phone Number *" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={30} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
+              <textarea
+                placeholder="What would you like to see?"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                maxLength={2000}
+                style={{ ...inputStyle, height: 90, resize: "none" as const }}
+                onFocus={handleFocus as any}
+                onBlur={handleBlur as any}
+              />
+
+              {error && <p style={{ fontSize: 14, color: "#FF3B30", fontWeight: 500 }}>{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  height: 52,
+                  background: "#0066CC",
+                  color: "white",
+                  borderRadius: 10,
+                  fontSize: 17,
+                  fontWeight: 500,
+                  border: "none",
+                  cursor: loading ? "wait" : "pointer",
+                }}
+              >
+                {loading ? "Submitting..." : "Book My Demo"}
+              </button>
+            </form>
+          </>
+        )}
+      </motion.div>
     </div>
   );
 };
