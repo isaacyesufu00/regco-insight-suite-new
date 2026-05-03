@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
   { label: "Platform", href: "#platform" },
-  { label: "Features", href: "#features" },
+  { label: "Reports", href: "#reports" },
+  { label: "Who We Serve", href: "#who-we-serve" },
   { label: "Pricing", href: "#pricing" },
   { label: "About", href: "#about" },
 ];
@@ -13,11 +14,16 @@ const navLinks = [
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
 
+  useEffect(() => { setMobileOpen(false); }, [location]);
+
   useEffect(() => {
-    setMobileOpen(false);
-  }, [location]);
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (location.pathname !== "/") return;
@@ -29,7 +35,7 @@ const Navbar = () => {
       },
       { threshold: 0.3 }
     );
-    const ids = ["platform", "features", "pricing", "about"];
+    const ids = ["platform", "reports", "who-we-serve", "pricing", "about"];
     ids.forEach((id) => {
       const el = document.getElementById(id);
       if (el) observer.observe(el);
@@ -45,34 +51,46 @@ const Navbar = () => {
     }
   };
 
+  // Determine if we're in the hero zone (dark-transparent nav)
+  const isHome = location.pathname === "/";
+  const inHero = isHome && !scrolled;
+
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50"
+      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
         height: 44,
-        background: "rgba(255,255,255,0.72)",
-        backdropFilter: "saturate(180%) blur(20px)",
-        WebkitBackdropFilter: "saturate(180%) blur(20px)",
-        borderBottom: "1px solid rgba(0,0,0,0.1)",
+        padding: "0 22px",
+        background: inHero
+          ? "rgba(0,0,0,0)"
+          : "rgba(255,255,255,0.72)",
+        backdropFilter: inHero ? "none" : "saturate(180%) blur(20px)",
+        WebkitBackdropFilter: inHero ? "none" : "saturate(180%) blur(20px)",
+        borderBottom: inHero ? "none" : "1px solid rgba(0,0,0,0.1)",
       }}
     >
-      <div className="max-w-[1200px] mx-auto flex items-center justify-between h-full px-6">
-        {/* Logo */}
+      <div className="max-w-[1200px] mx-auto flex items-center justify-between h-full">
         <Link
           to="/"
           style={{
-            fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
             fontWeight: 600,
             fontSize: 18,
-            color: "#1D1D1F",
+            color: inHero ? "#1D1D1F" : "#1D1D1F",
             textDecoration: "none",
           }}
         >
           RegCo
         </Link>
 
-        {/* Center links */}
-        <div className="hidden md:flex items-center gap-7 relative">
+        {/* Center pill */}
+        <div
+          className="hidden md:flex items-center gap-6 relative"
+          style={{
+            background: inHero ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.06)",
+            borderRadius: 980,
+            padding: "5px 20px",
+          }}
+        >
           {navLinks.map((link) => (
             <a
               key={link.label}
@@ -80,20 +98,20 @@ const Navbar = () => {
               onClick={(e) => handleAnchor(e, link.href)}
               className="relative"
               style={{
-                fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
                 fontWeight: 400,
-                fontSize: 12,
-                color: "#1D1D1F",
+                fontSize: 13,
+                color: inHero ? "#1D1D1F" : "#1D1D1F",
                 textDecoration: "none",
-                padding: "12px 0",
+                padding: "4px 0",
+                zIndex: 1,
               }}
             >
               {link.label}
               {activeSection === link.href && (
                 <motion.div
-                  layoutId="nav-underline"
-                  className="absolute bottom-0 left-0 right-0 h-[2px]"
-                  style={{ background: "#1D1D1F" }}
+                  layoutId="nav-pill-indicator"
+                  className="absolute -inset-x-2 -inset-y-0.5 rounded-full"
+                  style={{ background: "rgba(255,255,255,0.85)", zIndex: -1 }}
                   transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
                 />
               )}
@@ -106,9 +124,8 @@ const Navbar = () => {
           <Link
             to="/login"
             style={{
-              fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
               fontWeight: 400,
-              fontSize: 12,
+              fontSize: 13,
               color: "#0066CC",
               textDecoration: "none",
             }}
@@ -117,13 +134,11 @@ const Navbar = () => {
           </Link>
         </div>
 
-        {/* Mobile toggle */}
         <button className="md:hidden" onClick={() => setMobileOpen(!mobileOpen)}>
           {mobileOpen ? <X size={20} color="#1D1D1F" /> : <Menu size={20} color="#1D1D1F" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
