@@ -15,7 +15,7 @@ const HeroSection = () => {
         background: "linear-gradient(to bottom, #C8E6F5 0%, #D4EDF5 20%, #DDF0F4 40%, #E8F2F0 60%, #EFF4F2 80%, #F2F2F7 100%)",
       }}
     >
-      <div className="flex flex-col items-center" style={{ marginTop: "35%" }}>
+      <div className="flex flex-col items-center" style={{ paddingTop: "25vh" }}>
         {/* Product label — iPad air style */}
         <motion.div
           initial={{ opacity: 0 }}
