@@ -679,6 +679,18 @@ function buildReportText(reportType: string, financialData: Record<string, numbe
     case 'NFIU Regulatory Return':
     case 'SCUML Compliance Report':
       return buildAMLReport(financialData, vs, meta, reportType);
+    case 'NDIC Premium Return':
+      return buildGenericReport(financialData, vs, meta, 'NDIC Deposit Insurance Premium Return');
+    case 'PAYE Remittance':
+      return buildGenericReport(financialData, vs, meta, 'FIRS PAYE Remittance Return');
+    case 'Withholding Tax Return':
+      return buildGenericReport(financialData, vs, meta, 'FIRS Withholding Tax Return');
+    case 'Single Obligor Report':
+      return buildGenericReport(financialData, vs, meta, 'CBN Single Obligor Limit Report');
+    case 'CBN Consumer Protection Return':
+      return buildGenericReport(financialData, vs, meta, 'CBN Consumer Protection Regulatory Return');
+    case 'Board Governance Return':
+      return buildGenericReport(financialData, vs, meta, 'CBN Board and Governance Return');
     default:
       return buildGenericReport(financialData, vs, meta, reportType);
   }
