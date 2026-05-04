@@ -1,4 +1,4 @@
-import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, LifeBuoy } from "lucide-react";
+import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, Mail } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -15,13 +15,13 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "My Reports", url: "/dashboard/reports", icon: FileText },
-  { title: "Create New Report", url: "/dashboard/new-report", icon: FilePlus },
-  { title: "Data Sources", url: "/dashboard/data-sources", icon: Database },
+  { title: "Create Report", url: "/dashboard/new-report", icon: FilePlus },
+  { title: "Compliance Mail", url: "/dashboard/support", icon: Mail },
   { title: "Calendar", url: "/dashboard/calendar", icon: CalendarDays },
+  { title: "Data Sources", url: "/dashboard/data-sources", icon: Database },
   { title: "Settings", url: "/dashboard/settings", icon: Settings },
-  { title: "Support", url: "/dashboard/support", icon: LifeBuoy },
 ];
 
 interface DashboardSidebarProps {
@@ -31,7 +31,7 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -45,22 +45,25 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
     return location.pathname.startsWith(url);
   };
 
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : "RC";
+
   return (
     <Sidebar collapsible="icon">
       <SidebarContent
         style={{
-          background: "white",
-          borderRight: "1px solid rgba(0,0,0,0.06)",
-          width: collapsed ? undefined : 260,
+          background: "#FAFAFA",
+          borderRight: "1px solid rgba(0,0,0,0.07)",
+          width: collapsed ? undefined : 252,
         }}
       >
-        {/* Institution card */}
-        <div style={{ padding: 16 }}>
+        {/* Institution switcher card */}
+        <div style={{ padding: "14px 14px 0" }}>
           <div
+            className="hover:bg-[#2D2D2F] transition-colors cursor-pointer"
             style={{
               background: "#1D1D1F",
-              borderRadius: 14,
-              padding: "14px 18px",
+              borderRadius: 12,
+              padding: "13px 16px",
               display: "flex",
               alignItems: "center",
               gap: 12,
@@ -68,33 +71,30 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
           >
             <div
               className="flex items-center justify-center shrink-0"
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: "50%",
-                background: "#2D2D2F",
-                color: "white",
-                fontSize: 16,
-              }}
+              style={{ width: 34, height: 34, borderRadius: "50%", background: "#2D2D2F", color: "white", fontSize: 15 }}
             >
               ✦
             </div>
             {!collapsed && (
               <div className="min-w-0 flex-1">
-                <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)" }}>Team</p>
-                <p
-                  className="truncate"
-                  style={{ fontSize: 15, fontWeight: 600, color: "white" }}
-                >
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>Institution</p>
+                <p className="truncate" style={{ fontSize: 14, fontWeight: 600, color: "white" }}>
                   {companyName || "RegCo"}
                 </p>
               </div>
             )}
             {!collapsed && (
-              <span style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>›</span>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: 14 }}>⇅</span>
             )}
           </div>
         </div>
+
+        {/* Menu label */}
+        {!collapsed && (
+          <p style={{ fontSize: 10, color: "#BBBBBB", textTransform: "uppercase", letterSpacing: "0.08em", padding: "20px 18px 6px" }}>
+            MENU
+          </p>
+        )}
 
         {/* Nav items */}
         <SidebarGroup>
@@ -111,29 +111,32 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 10,
-                          padding: "10px 16px",
-                          borderRadius: 10,
+                          gap: 11,
+                          padding: "9px 12px",
+                          borderRadius: 9,
                           margin: "2px 8px",
-                          background: active ? "#F5F5F7" : "transparent",
-                          border: active ? "1px solid rgba(0,0,0,0.08)" : "1px solid transparent",
+                          background: active ? "#FFFFFF" : "transparent",
+                          border: active ? "1px solid rgba(0,0,0,0.09)" : "1px solid transparent",
+                          boxShadow: active ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
                           textDecoration: "none",
-                          transition: "all 0.2s",
+                          transition: "all 0.15s",
                         }}
-                        className="hover:!bg-[#F5F5F7]"
+                        className={active ? "" : "hover:!bg-[rgba(0,0,0,0.04)]"}
                         activeClassName=""
                       >
                         <item.icon
-                          size={18}
+                          size={17}
                           strokeWidth={1.5}
-                          style={{ color: active ? "#1D1D1F" : "#AAAAAA" }}
+                          style={{ color: active ? "#1D1D1F" : "#AAAAAA", transition: "color 0.15s" }}
                         />
                         {!collapsed && (
                           <span
+                            className="flex-1"
                             style={{
-                              fontSize: 14,
+                              fontSize: 13,
                               fontWeight: active ? 600 : 400,
-                              color: active ? "#1D1D1F" : "#888888",
+                              color: active ? "#1D1D1F" : "#777777",
+                              transition: "color 0.15s",
                             }}
                           >
                             {item.title}
@@ -149,29 +152,28 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter style={{ background: "white", borderRight: "1px solid rgba(0,0,0,0.06)" }}>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleSignOut}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "10px 16px",
-                margin: "2px 8px",
-                borderRadius: 10,
-                color: "#888888",
-                fontSize: 14,
-                cursor: "pointer",
-              }}
-              className="hover:!bg-red-50 hover:!text-red-500"
-            >
-              <LogOut size={18} strokeWidth={1.5} />
-              {!collapsed && <span>Sign Out</span>}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter style={{ background: "#FAFAFA", borderRight: "1px solid rgba(0,0,0,0.07)", borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+        <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{ width: 32, height: 32, borderRadius: "50%", background: "#1D1D1F", color: "white", fontSize: 12, fontWeight: 600 }}
+          >
+            {initials}
+          </div>
+          {!collapsed && (
+            <div className="flex-1 min-w-0">
+              <p className="truncate" style={{ fontSize: 12, fontWeight: 600, color: "#333333" }}>{user?.email || "User"}</p>
+              <p style={{ fontSize: 11, color: "#AAAAAA" }}>Compliance Officer</p>
+            </div>
+          )}
+          <SidebarMenuButton
+            onClick={handleSignOut}
+            style={{ padding: 6, borderRadius: 8, cursor: "pointer", color: "#AAAAAA", flexShrink: 0 }}
+            className="hover:!bg-red-50 hover:!text-red-500"
+          >
+            <LogOut size={16} strokeWidth={1.5} />
+          </SidebarMenuButton>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

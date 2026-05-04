@@ -16,7 +16,6 @@ const HeroSection = () => {
       }}
     >
       <div className="flex flex-col items-center" style={{ paddingTop: "25vh" }}>
-        {/* Product label — iPad air style */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={mounted ? { opacity: 1 } : undefined}
@@ -26,7 +25,6 @@ const HeroSection = () => {
           <span style={{ fontStyle: "italic", fontWeight: 300, fontSize: 19, color: "#1D1D1F" }}>Compliance</span>
         </motion.div>
 
-        {/* Giant headline */}
         <motion.h1
           initial={{ opacity: 0, scale: 0.92, y: 20 }}
           animate={mounted ? { opacity: 1, scale: 1, y: 0 } : undefined}
@@ -44,24 +42,15 @@ const HeroSection = () => {
           Everywhere.
         </motion.h1>
 
-        {/* Subtitle */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={mounted ? { opacity: 1 } : undefined}
           transition={{ duration: 0.8, delay: 0.65, ease: [0.25, 0.46, 0.45, 0.94] }}
-          style={{
-            fontWeight: 400,
-            fontSize: 21,
-            color: "#6E6E73",
-            textAlign: "center",
-            maxWidth: 520,
-            marginTop: 20,
-          }}
+          style={{ fontWeight: 400, fontSize: 21, color: "#6E6E73", textAlign: "center", maxWidth: 520, marginTop: 20 }}
         >
           CBN. NFIU. SCUML. NDIC. AML/CFT. All of it. Automated.
         </motion.p>
 
-        {/* Buttons */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={mounted ? { opacity: 1 } : undefined}
@@ -70,32 +59,14 @@ const HeroSection = () => {
           style={{ marginTop: 32 }}
         >
           <Link
-            to="/book-demo"
-            style={{
-              fontWeight: 400,
-              fontSize: 17,
-              background: "#0066CC",
-              color: "white",
-              borderRadius: 980,
-              padding: "13px 26px",
-              textDecoration: "none",
-              display: "inline-block",
-            }}
+            to="/login"
+            style={{ fontWeight: 400, fontSize: 17, background: "#0066CC", color: "white", borderRadius: 980, padding: "13px 26px", textDecoration: "none", display: "inline-block" }}
           >
-            Get Started
+            Sign In
           </Link>
           <Link
             to="/book-demo"
-            style={{
-              fontWeight: 400,
-              fontSize: 17,
-              background: "rgba(0,0,0,0.07)",
-              color: "#1D1D1F",
-              borderRadius: 980,
-              padding: "13px 26px",
-              textDecoration: "none",
-              display: "inline-block",
-            }}
+            style={{ fontWeight: 400, fontSize: 17, background: "rgba(0,0,0,0.07)", color: "#1D1D1F", borderRadius: 980, padding: "13px 26px", textDecoration: "none", display: "inline-block" }}
           >
             Book a Demo
           </Link>

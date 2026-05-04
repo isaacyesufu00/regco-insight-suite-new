@@ -32,8 +32,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <div
         style={{
           minHeight: "100vh",
-          background: "#F5F5F7",
-          padding: 32,
+          background: "#F0F0F2",
+          padding: 28,
           display: "flex",
         }}
       >
@@ -43,7 +43,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             background: "white",
             borderRadius: 20,
             overflow: "hidden",
-            boxShadow: "0 4px 32px rgba(0,0,0,0.08)",
+            boxShadow: "0 2px 24px rgba(0,0,0,0.08)",
             display: "flex",
           }}
         >
@@ -52,7 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <header
               className="flex items-center px-5"
               style={{
-                height: 52,
+                height: 48,
                 borderBottom: "1px solid rgba(0,0,0,0.06)",
               }}
             >
