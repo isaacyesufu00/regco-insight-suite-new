@@ -85,11 +85,11 @@ const PricingCard = ({ category, title, desc, price, setup, features }: typeof p
           ))}
         </div>
         <Link
-          to="/book-demo"
+          to="/login"
           className="block mt-6 text-center py-3"
           style={{ background: "#0066CC", color: "white", borderRadius: 10, fontSize: 17, textDecoration: "none" }}
         >
-          Get Started
+          Sign In
         </Link>
       </div>
 
