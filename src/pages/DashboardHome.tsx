@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
-import { FileText, Clock, CheckCircle, CalendarDays, FilePlus, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FileText, Clock, CheckCircle, CalendarDays, FilePlus, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ComplianceGauge } from "@/components/ComplianceGauge";
 
@@ -94,7 +93,9 @@ const DashboardHome = () => {
   const totalReports = reports.length;
   const processing = reports.filter((r) => r.status === "Processing").length;
   const ready = reports.filter((r) => r.status === "Ready").length;
+  const failed = reports.filter((r) => r.status === "Failed").length;
   const recentReports = reports.slice(0, 10);
+  const latestType = reports[0]?.report_type || "No reports yet";
 
   if (loading) {
     return (
@@ -107,55 +108,40 @@ const DashboardHome = () => {
   }
 
   return (
-    <div className="space-y-5 max-w-6xl">
+    <div className="space-y-3 max-w-6xl">
       {/* Institution header card */}
       <div
         style={{
           background: "white",
-          borderRadius: 14,
+          borderRadius: 13,
           border: "1px solid rgba(0,0,0,0.06)",
-          padding: "18px 24px",
+          padding: "18px 22px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
-        <div>
-          <div className="flex items-center gap-2">
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#34C759" }} />
-            <span style={{ fontSize: 14, color: "#6E6E73" }}>{profile?.company_name || "Institution"}</span>
-          </div>
-          <p style={{ fontWeight: 700, fontSize: 20, color: "#1D1D1F", marginTop: 4 }}>
-            Welcome back{profile?.company_name ? `, ${profile.company_name}` : ""}
-          </p>
+        <div className="flex items-center gap-3">
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#34C759" }} />
+          <span style={{ fontSize: 13, color: "#6E6E73" }}>{profile?.company_name || "Institution"}</span>
+          <span style={{ color: "#6E6E73" }}>—</span>
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#1D1D1F" }}>{latestType}</span>
         </div>
-        <Link
-          to="/dashboard/new-report"
-          style={{
-            background: "#0066CC",
-            color: "white",
-            borderRadius: 980,
-            padding: "10px 20px",
-            fontSize: 14,
-            fontWeight: 500,
-            textDecoration: "none",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-          }}
+        <div
+          className="flex items-center justify-center"
+          style={{ width: 30, height: 30, borderRadius: "50%", background: "#1D1D1F", color: "white", fontSize: 12, fontWeight: 700 }}
         >
-          <FilePlus size={16} strokeWidth={1.5} />
-          Create Report
-        </Link>
+          {totalReports}
+        </div>
       </div>
 
-      {/* Status summary */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Status cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Reports", value: totalReports, status: "Ready", icon: FileText },
+          { label: "Pending", value: reports.filter((r) => r.status === "Pending").length, status: "Pending", icon: Clock },
           { label: "Processing", value: processing, status: "Processing", icon: Clock },
           { label: "Ready", value: ready, status: "Ready", icon: CheckCircle },
-          { label: "This Month", value: thisMonth, status: "Pending", icon: CalendarDays },
+          { label: "Failed", value: failed, status: "Failed", icon: AlertTriangle },
         ].map((c) => {
           const sc = statusColors[c.status] || statusColors.Pending;
           return (
@@ -163,9 +149,9 @@ const DashboardHome = () => {
               key={c.label}
               style={{
                 background: "white",
-                borderRadius: 14,
+                borderRadius: 13,
                 border: "1px solid rgba(0,0,0,0.06)",
-                padding: 24,
+                padding: 22,
               }}
             >
               <div
@@ -175,8 +161,9 @@ const DashboardHome = () => {
                 <c.icon size={12} strokeWidth={1.5} />
                 {c.label}
               </div>
-              <p style={{ fontWeight: 900, fontSize: 48, color: "#1D1D1F", lineHeight: 1 }}>{c.value}</p>
-              <p style={{ fontSize: 16, color: "#1D1D1F", marginTop: 4 }}>reports</p>
+              <p style={{ fontWeight: 900, fontSize: 44, color: "#1D1D1F", lineHeight: 1 }}>{c.value}</p>
+              <p style={{ fontSize: 14, color: "#1D1D1F", marginTop: 4 }}>reports</p>
+              <p style={{ fontSize: 12, color: "#AAAAAA", marginTop: 2 }}>All time</p>
             </div>
           );
         })}
@@ -189,7 +176,7 @@ const DashboardHome = () => {
       <div
         style={{
           background: "white",
-          borderRadius: 14,
+          borderRadius: 13,
           border: "1px solid rgba(0,0,0,0.06)",
           overflow: "hidden",
         }}
@@ -211,14 +198,7 @@ const DashboardHome = () => {
             <Link
               to="/dashboard/new-report"
               className="inline-flex items-center gap-2 mt-6"
-              style={{
-                background: "#0066CC",
-                color: "white",
-                borderRadius: 980,
-                padding: "10px 20px",
-                fontSize: 14,
-                textDecoration: "none",
-              }}
+              style={{ background: "#0066CC", color: "white", borderRadius: 980, padding: "10px 20px", fontSize: 14, textDecoration: "none" }}
             >
               <FilePlus size={16} strokeWidth={1.5} />
               Create Report
@@ -227,16 +207,17 @@ const DashboardHome = () => {
         ) : (
           <table className="w-full">
             <thead>
-              <tr style={{ background: "#FAFAFA" }}>
+              <tr style={{ background: "#FAFAFA", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
                 {["Report Name", "Type", "Period", "Created", "Status", ""].map((h) => (
                   <th
                     key={h}
                     style={{
-                      fontSize: 12,
+                      fontSize: 11,
                       color: "#AAAAAA",
                       textTransform: "uppercase",
+                      letterSpacing: "0.04em",
                       fontWeight: 500,
-                      padding: "10px 16px",
+                      padding: "11px 18px",
                       textAlign: h === "" ? "right" : "left",
                     }}
                   >
@@ -254,19 +235,19 @@ const DashboardHome = () => {
                     style={{ borderTop: "1px solid rgba(0,0,0,0.04)" }}
                     className="hover:bg-black/[0.02] transition-colors"
                   >
-                    <td style={{ padding: "12px 16px", fontSize: 14, fontWeight: 500, color: "#1D1D1F" }}>
+                    <td style={{ padding: "12px 18px", fontSize: 13, fontWeight: 500, color: "#1D1D1F" }}>
                       {r.report_name}
                     </td>
-                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>{r.report_type || "—"}</td>
-                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>
+                    <td style={{ padding: "12px 18px", fontSize: 13, color: "#6E6E73" }}>{r.report_type || "—"}</td>
+                    <td style={{ padding: "12px 18px", fontSize: 13, color: "#6E6E73" }}>
                       {r.reporting_period_start && r.reporting_period_end
                         ? `${new Date(r.reporting_period_start).toLocaleDateString()} – ${new Date(r.reporting_period_end).toLocaleDateString()}`
                         : "—"}
                     </td>
-                    <td style={{ padding: "12px 16px", fontSize: 13, color: "#6E6E73" }}>
+                    <td style={{ padding: "12px 18px", fontSize: 13, color: "#6E6E73" }}>
                       {new Date(r.created_at).toLocaleDateString()}
                     </td>
-                    <td style={{ padding: "12px 16px" }}>
+                    <td style={{ padding: "12px 18px" }}>
                       <span
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full"
                         style={{ fontSize: 12, fontWeight: 500, background: sc.bg, color: sc.color }}
@@ -274,23 +255,18 @@ const DashboardHome = () => {
                         {r.status}
                       </span>
                     </td>
-                    <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                    <td style={{ padding: "12px 18px", textAlign: "right" }}>
                       {r.status === "Ready" && r.file_path && (
                         <button
                           onClick={() => handleDownload(r.file_path!, r.report_name)}
-                          className="inline-flex items-center gap-1.5"
                           style={{
-                            background: "rgba(0,0,0,0.06)",
-                            color: "#1D1D1F",
-                            borderRadius: 980,
-                            padding: "6px 14px",
-                            fontSize: 13,
-                            fontWeight: 500,
+                            background: "none",
                             border: "none",
+                            color: "#0066CC",
+                            fontSize: 13,
                             cursor: "pointer",
                           }}
                         >
-                          <Download size={14} strokeWidth={1.5} />
                           Download
                         </button>
                       )}

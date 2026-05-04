@@ -32,6 +32,12 @@ const ALL_REPORT_TYPES = [
   "Prudential Return",
   "MFB Regulatory Return",
   "SCUML Compliance Report",
+  "NDIC Premium Return",
+  "PAYE Remittance",
+  "Withholding Tax Return",
+  "Single Obligor Report",
+  "CBN Consumer Protection Return",
+  "Board Governance Return",
 ];
 
 interface Profile {
