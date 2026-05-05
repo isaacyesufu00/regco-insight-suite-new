@@ -4,7 +4,6 @@ const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const RESEND_URL = 'https://api.resend.com/emails';
 
-// Lovable AI Gateway models — reliable, pre-funded, no rate-limit chaos
 const AI_MODELS = [
   'google/gemini-3-flash-preview',
   'google/gemini-2.5-flash',
@@ -117,30 +116,97 @@ If non-compliant return ONLY: {"status":"ERROR","error_type":"GOVERNANCE_NON_COM
 If compliant return ONLY: {"status":"SUCCESS","validation_summary":{"total_directors":"0","executive_directors":"0","non_executive_directors":"0","independent_directors":"0","board_meetings_held":"0","compliance_status":"COMPLIANT"},"approved":true}
 Return ONLY valid JSON. No markdown. No backticks.`;
 
+const INTERNATIONAL_TRANSFERS_PROMPT = `You are a Nigerian banking regulatory compliance engine specialising in International Transfers Reports filed quarterly with the NFIU. This return captures all cross-border wire transfers — inbound and outbound — to identify potential money laundering through international channels.
+
+Validate: Total inbound wires must equal sum of all inbound transactions by corridor. Total outbound wires must equal sum of all outbound transactions by corridor. All USD amounts must have corresponding naira equivalents calculated at the CBN official rate provided. Any single transaction above USD 10,000 must be individually listed.
+
+If validation fails return ONLY this JSON:
+{"status":"ERROR","error_type":"INTERNATIONAL_TRANSFER_ERROR","description":"plain English explanation of what is wrong","action_required":"exactly what to fix","figures_involved":"the specific figures","difference":"exact discrepancy","report":null}
+
+If valid return ONLY this JSON:
+{"status":"SUCCESS","validation_summary":{"total_inbound_transactions":"0","total_outbound_transactions":"0","total_inbound_usd":"0.00","total_outbound_usd":"0.00","high_risk_jurisdictions_count":"0","compliance_status":"COMPLIANT"},"report":{"cover":{"institution_name":"","cbn_license_number":"","reporting_quarter":"","date_prepared":""},"section_a_inbound_transfers":{"total_transactions":0,"total_value_usd":0,"total_value_ngn":0,"transactions_above_10k_usd":0,"top_source_countries":[],"correspondent_banks_used":0},"section_b_outbound_transfers":{"total_transactions":0,"total_value_usd":0,"total_value_ngn":0,"transactions_above_10k_usd":0,"top_destination_countries":[],"purpose_of_transfers":{"trade_finance":0,"personal_remittance":0,"business_payment":0,"other":0}},"section_c_high_risk_jurisdictions":{"transactions_to_fatf_blacklist":0,"transactions_to_fatf_greylist":0,"enhanced_due_diligence_applied":0},"section_d_str_related":{"transfers_flagged_suspicious":0,"str_filed_count":0,"transfers_blocked":0}}}
+
+Replace every field value with the actual figures from the input data. Return ONLY valid JSON. No markdown. No backticks. No text outside the JSON.`;
+
+const VAT_PROMPT = `You are a Nigerian tax compliance engine specialising in Value Added Tax returns filed monthly with the Federal Inland Revenue Service. Nigerian VAT rate is 7.5% on qualifying goods and services. Financial services are largely VAT-exempt under the VAT Act but certain non-core banking services attract VAT including safe deposit box rentals, processing fees for non-banking services, and rental income.
+
+Validate: Output VAT must equal taxable turnover multiplied by 7.5%. Input VAT must have supporting purchase invoices. Net VAT payable must equal output VAT minus allowable input VAT. If input VAT exceeds output VAT the institution has a VAT credit balance.
+
+If validation fails return ONLY this JSON:
+{"status":"ERROR","error_type":"VAT_VALIDATION_ERROR","description":"plain English explanation","action_required":"what to fix","figures_involved":"the figures","difference":"exact discrepancy","report":null}
+
+If valid return ONLY this JSON:
+{"status":"SUCCESS","validation_summary":{"taxable_turnover":"0","output_vat":"0","input_vat_claimable":"0","net_vat_payable":"0","compliance_status":"COMPLIANT"},"report":{"cover":{"company_name":"","tin":"","vat_registration_number":"","period":"","date_prepared":""},"section_a_output_vat":{"total_vatable_sales_ngn":0,"vat_rate_percentage":7.5,"output_vat_ngn":0,"exempt_supplies_ngn":0,"zero_rated_supplies_ngn":0},"section_b_input_vat":{"total_vatable_purchases_ngn":0,"input_vat_on_purchases_ngn":0,"input_vat_allowable_ngn":0,"input_vat_disallowed_ngn":0},"section_c_vat_computation":{"output_vat_ngn":0,"less_input_vat_ngn":0,"net_vat_payable_ngn":0,"prior_period_credit_ngn":0,"final_vat_due_ngn":0},"section_d_remittance":{"amount_remitted_ngn":0,"remittance_date":"","bank_name":"","receipt_number":"","outstanding_balance_ngn":0}}}
+
+Return ONLY valid JSON. No markdown. No backticks.`;
+
+const CIT_PROMPT = `You are a Nigerian tax compliance engine specialising in Company Income Tax returns filed annually with the Federal Inland Revenue Service. The CIT rate for companies with turnover above NGN 100 million is 30%. For medium companies with turnover between NGN 25 million and NGN 100 million the rate is 20%. For small companies below NGN 25 million the rate is 0%.
+
+Validate: Chargeable profit must equal gross income minus allowable deductions minus capital allowances. Tax payable must equal chargeable profit multiplied by the applicable rate. Minimum tax provisions apply if the company has been in business for more than 4 years — minimum tax is the higher of 0.5% of gross turnover or 0.5% of net assets. Education tax is 2.5% of assessable profit.
+
+If validation fails return ONLY this JSON:
+{"status":"ERROR","error_type":"CIT_VALIDATION_ERROR","description":"explanation","action_required":"what to fix","figures_involved":"figures","difference":"discrepancy","report":null}
+
+If valid return ONLY this JSON:
+{"status":"SUCCESS","validation_summary":{"gross_income":"0","chargeable_profit":"0","applicable_rate_percentage":"0","cit_payable":"0","education_tax":"0","total_tax_payable":"0","compliance_status":"COMPLIANT"},"report":{"cover":{"company_name":"","tin":"","rc_number":"","assessment_year":"","date_prepared":""},"section_a_income_statement":{"gross_income_ngn":0,"cost_of_sales_ngn":0,"gross_profit_ngn":0,"operating_expenses_ngn":0,"profit_before_tax_ngn":0,"add_back_disallowable_expenses_ngn":0,"less_allowable_deductions_ngn":0,"less_capital_allowances_ngn":0,"assessable_profit_ngn":0},"section_b_tax_computation":{"assessable_profit_ngn":0,"applicable_cit_rate":0,"cit_payable_ngn":0,"education_tax_at_2_5_percent_ngn":0,"total_taxes_due_ngn":0,"less_withholding_tax_credit_ngn":0,"net_tax_payable_ngn":0},"section_c_minimum_tax":{"gross_turnover_ngn":0,"half_percent_of_turnover_ngn":0,"net_assets_ngn":0,"half_percent_of_net_assets_ngn":0,"minimum_tax_applicable_ngn":0,"standard_tax_vs_minimum_tax":"STANDARD"},"section_d_payment_history":{"first_instalment_paid_ngn":0,"second_instalment_paid_ngn":0,"balance_outstanding_ngn":0}}}
+
+Return ONLY valid JSON. No markdown. No backticks.`;
+
 function getSystemPrompt(reportType: string): string {
   switch (reportType) {
     case 'CBN Forex Return': return FOREX_PROMPT;
     case 'AML/CFT Report':
     case 'AML/CFT Compliance Report': return AML_PROMPT;
-    case 'SCUML Compliance Report': return SCUML_PROMPT;
-    case 'CBN Monetary Policy Return': return MONETARY_POLICY_PROMPT;
+    case 'SCUML Compliance Report':
+    case 'SCUML Annual Compliance': return SCUML_PROMPT;
+    case 'CBN Monetary Policy Return':
+    case 'Monetary Policy Return': return MONETARY_POLICY_PROMPT;
     case 'NFIU Regulatory Return': return NFIU_PROMPT;
     case 'Prudential Return': return PRUDENTIAL_PROMPT;
     case 'NDIC Premium Return': return NDIC_PROMPT;
     case 'PAYE Remittance': return PAYE_PROMPT;
     case 'Withholding Tax Return': return WHT_PROMPT;
     case 'Single Obligor Report': return SOL_PROMPT;
-    case 'CBN Consumer Protection Return': return CONSUMER_PROTECTION_PROMPT;
+    case 'CBN Consumer Protection Return':
+    case 'Consumer Protection Return': return CONSUMER_PROTECTION_PROMPT;
     case 'Board Governance Return': return GOVERNANCE_PROMPT;
+    case 'International Transfers Report': return INTERNATIONAL_TRANSFERS_PROMPT;
+    case 'VAT Return': return VAT_PROMPT;
+    case 'Company Income Tax Return': return CIT_PROMPT;
     case 'MFB Regulatory Return':
     default: return MFB_PROMPT;
   }
 }
 
+// ─── REPORT-SPECIFIC ERROR GUIDANCE ──────────────────────────────────────────
+
+function getReportSpecificGuidance(reportType: string, _errorType: string): string {
+  const guidance: Record<string, string> = {
+    'MFB Regulatory Return': 'Check that your CBS trial balance is fully reconciled. Total Assets must equal Total Liabilities plus Shareholders Funds exactly. Export a fresh trial balance from your core banking system and verify the figures manually before re-uploading.',
+    'CBN Forex Return': 'Check that your FX inflow and outflow figures are in USD not naira. Verify that the net open position does not exceed your regulatory limit. Contact your treasury team to confirm the daily FX position figures.',
+    'AML/CFT Compliance Report': 'Verify your STR and CTR counts against your transaction monitoring records. Check that the total transactions monitored figure matches your CBS transaction count for the quarter.',
+    'AML/CFT Report': 'Verify your STR and CTR counts against your transaction monitoring records. Check that the total transactions monitored figure matches your CBS transaction count for the quarter.',
+    'PAYE Remittance': 'Check that the sum of all individual employee PAYE deductions equals the total PAYE figure. Verify pension and NHF deductions are correctly excluded from taxable income before computing PAYE.',
+    'Withholding Tax Return': 'Check that the WHT rate applied matches the FIRS schedule — 5% for individuals and 10% for companies on most payment types. Verify all vendor TINs are populated.',
+    'VAT Return': 'Check that output VAT equals your vatable sales multiplied by 7.5%. Verify that financial services income is correctly classified as VAT-exempt. Only fee income on non-banking services should attract output VAT.',
+    'Company Income Tax Return': 'Check that all disallowable expenses have been added back to profit before tax. Verify capital allowances are computed at the correct initial and annual allowance rates per the Companies Income Tax Act.',
+    'Single Obligor Report': 'Check that total shareholders funds is correctly stated. The SOL limit is calculated as shareholders funds multiplied by the applicable percentage for your license category. Review all large exposures against this limit.',
+    'NDIC Premium Return': 'Check that total insured deposits are correctly classified. Apply 0.3% for MFBs or 0.4% for commercial banks. Deposits above the insured limit per depositor should be excluded from the premium base.',
+    'International Transfers Report': 'Check that all wire transfers are captured and amounts are in USD. Verify the naira equivalent using the CBN official rate for the relevant transaction date. All transfers above USD 10,000 must be individually listed.',
+    'Board Governance Return': 'Check board composition meets minimum requirements — at least 5 directors for State MFBs with majority non-executive. Verify all three mandatory committees are constituted with correct membership.',
+    'Consumer Protection Return': 'Verify complaint counts are reconciled with your complaints register. Resolution rate must be calculated correctly. Any rate below 80% must be accompanied by an explanation of remediation steps.',
+    'CBN Consumer Protection Return': 'Verify complaint counts are reconciled with your complaints register. Resolution rate must be calculated correctly. Any rate below 80% must be accompanied by an explanation of remediation steps.',
+    'Prudential Return': 'Verify CAMEL framework data. Capital adequacy ratio must be at least 10%. Check asset quality classifications match CBN guidelines for performing, watch-list, substandard, doubtful and loss categories.',
+    'CBN Monetary Policy Return': 'Check that interest rate data matches your core banking system. Verify cash reserve ratio and liquidity ratio against CBN requirements.',
+    'Monetary Policy Return': 'Check that interest rate data matches your core banking system. Verify cash reserve ratio and liquidity ratio against CBN requirements.',
+    'NFIU Regulatory Return': 'Verify STR and CTR filing counts against your compliance records. Ensure all customer screening results are accurate and PEP matches are documented.',
+    'SCUML Compliance Report': 'Verify SCUML registration status and renewal date. Ensure AML policy review date is current and all staff training records are up to date.',
+    'SCUML Annual Compliance': 'Verify SCUML registration status and renewal date. Ensure AML policy review date is current and all staff training records are up to date.',
+  };
+  return guidance[reportType] || 'Please review your uploaded data carefully, correct the identified discrepancy, and resubmit your CBS export.';
+}
+
 // ─── CBS ACCOUNT MAPPING ──────────────────────────────────────────────────────
-// Each canonical field maps to an array of synonym keywords commonly found in
-// Nigerian core banking system exports (Flexcube, Finacle, T24, Bankone, Rubies, etc.).
-// Matching is done on normalized labels — lowercase, alphanumeric only.
 
 const FIELD_SYNONYMS: Record<string, string[]> = {
   // ── Balance Sheet — Assets ──
@@ -210,11 +276,29 @@ const FIELD_SYNONYMS: Record<string, string[]> = {
   total_income: ['total income', 'gross income', 'gross revenue'],
   profit_before_tax: ['profit before tax', 'pbt'],
   profit_after_tax: ['profit after tax', 'pat', 'net profit'],
+
+  // ── International Transfers ──
+  total_inbound_usd: ['inbound usd', 'inbound transfer', 'wire inbound', 'total inbound wire'],
+  total_outbound_usd: ['outbound usd', 'outbound transfer', 'wire outbound', 'total outbound wire'],
+  inbound_ngn: ['inbound ngn', 'inbound naira'],
+  outbound_ngn: ['outbound ngn', 'outbound naira'],
+  transactions_above_10k: ['above 10k', 'large transfer', 'above 10000'],
+
+  // ── VAT ──
+  vatable_sales: ['vatable sale', 'vat sales', 'taxable turnover', 'vatable turnover'],
+  output_vat: ['output vat', 'vat output'],
+  input_vat: ['input vat', 'vat input', 'vat on purchase'],
+  vat_payable: ['vat payable', 'net vat'],
+
+  // ── CIT ──
+  gross_income_cit: ['gross income', 'total income', 'gross revenue'],
+  capital_allowances: ['capital allowance', 'wear tear', 'wear and tear'],
+  assessable_profit: ['assessable profit', 'chargeable profit'],
+  education_tax: ['education tax', 'edu tax', 'tertiary education tax'],
 };
 
 const FINANCIAL_FIELDS = Object.keys(FIELD_SYNONYMS);
 
-/** Normalize a string for fuzzy matching: lowercase, collapse non-alphanumerics to single spaces. */
 function normalizeLabel(s: string): string {
   return String(s || '')
     .toLowerCase()
@@ -222,7 +306,6 @@ function normalizeLabel(s: string): string {
     .trim();
 }
 
-/** Try to coerce any cell value (number, string with currency/commas, etc.) to a number. */
 function coerceNumber(v: any): number | null {
   if (v === null || v === undefined || v === '') return null;
   if (typeof v === 'number' && isFinite(v)) return v;
@@ -231,18 +314,8 @@ function coerceNumber(v: any): number | null {
   return isFinite(n) ? n : null;
 }
 
-/**
- * Parse a raw CBS export (Excel or CSV) and extract financial figures.
- *
- * Walks every sheet, every row. For each row it:
- *  1. Concatenates all non-numeric cells to form a "label" (catches "Account Code | Description" formats).
- *  2. Picks the rightmost numeric cell on the row as the value (CBS exports usually have prior-period
- *     and period-end columns side by side; the last non-zero number is typically the closing balance).
- *  3. Matches the label against FIELD_SYNONYMS — first match wins per field, longer synonyms preferred.
- */
 function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
   const data: Record<string, number> = {};
-  // Pre-sort synonyms by length desc so longer phrases match before shorter ones
   const fieldEntries: Array<[string, string[]]> = Object.entries(FIELD_SYNONYMS).map(([f, syns]) => [
     f,
     [...syns].sort((a, b) => b.length - a.length),
@@ -256,7 +329,6 @@ function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
     for (const row of rows) {
       if (!Array.isArray(row) || row.length === 0) continue;
 
-      // Build label from all non-numeric cells
       const textParts: string[] = [];
       const numericCells: number[] = [];
       for (const cell of row) {
@@ -274,7 +346,6 @@ function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
       const label = normalizeLabel(textParts.join(' '));
       if (!label) continue;
 
-      // Pick the last non-zero numeric value as the closing balance; fall back to last number
       let value = 0;
       for (let i = numericCells.length - 1; i >= 0; i--) {
         if (numericCells[i] !== 0) {
@@ -284,8 +355,6 @@ function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
       }
       if (value === 0) value = numericCells[numericCells.length - 1];
 
-      // Match against synonyms — first field whose synonym appears in label wins,
-      // but don't overwrite a previously-found field
       for (const [field, synonyms] of fieldEntries) {
         if (field in data) continue;
         for (const syn of synonyms) {
@@ -301,7 +370,6 @@ function parseCBSWorkbook(workbook: XLSX.WorkBook): Record<string, number> {
   return data;
 }
 
-/** Compute derived fields and run deterministic balance-sheet validation. */
 function deriveAndValidate(d: Record<string, number>): {
   derived: Record<string, number>;
   metrics: { car_percentage: number; liquidity_percentage: number; npl_ratio: number; loan_to_deposit_ratio: number };
@@ -309,44 +377,38 @@ function deriveAndValidate(d: Record<string, number>): {
 } {
   const derived = { ...d };
 
-  // Derive total_deposits if missing but components exist
   if (!derived.total_deposits) {
     const sum = (derived.savings_deposits || 0) + (derived.demand_deposits || 0) + (derived.time_deposits || 0) + (derived.other_deposits || 0);
     if (sum > 0) derived.total_deposits = sum;
   }
 
-  // Derive gross_loans if missing
   if (!derived.gross_loans) {
     const sum = (derived.performing_loans || 0) + (derived.non_performing_loans || 0);
     if (sum > 0) derived.gross_loans = sum;
   }
 
-  // Derive shareholders funds if missing
   if (!derived.total_shareholders_funds) {
     const sum = (derived.paid_up_capital || 0) + (derived.statutory_reserve || 0) + (derived.retained_earnings || 0);
     if (sum > 0) derived.total_shareholders_funds = sum;
   }
 
-  // Derive liquid_assets if missing (cash + CBN balances + investment securities)
   if (!derived.liquid_assets) {
     const sum = (derived.cash_and_equivalents || 0) + (derived.balances_with_cbn || 0) + (derived.balances_with_other_banks || 0) + (derived.investment_securities || 0);
     if (sum > 0) derived.liquid_assets = sum;
   }
 
-  // Compute ratios
   const totalCapital = (derived.tier_1_capital || 0) + (derived.tier_2_capital || 0);
   const car = derived.risk_weighted_assets > 0 ? (totalCapital / derived.risk_weighted_assets) * 100 : 0;
   const liq = derived.total_deposits > 0 ? ((derived.liquid_assets || 0) / derived.total_deposits) * 100 : 0;
   const npl = derived.gross_loans > 0 ? ((derived.non_performing_loans || 0) / derived.gross_loans) * 100 : 0;
   const ltd = derived.total_deposits > 0 ? ((derived.gross_loans || 0) / derived.total_deposits) * 100 : 0;
 
-  // Deterministic validation — only run if we have enough data to validate
   let validationError: string | null = null;
   const hasBalanceSheet = derived.total_assets > 0 && derived.total_liabilities > 0;
   if (hasBalanceSheet && derived.total_shareholders_funds > 0) {
     const expected = derived.total_liabilities + derived.total_shareholders_funds;
     const diff = Math.abs(derived.total_assets - expected);
-    const tolerance = Math.max(1000, derived.total_assets * 0.005); // 0.5% or NGN 1,000
+    const tolerance = Math.max(1000, derived.total_assets * 0.005);
     if (diff > tolerance) {
       validationError = `Balance sheet does not reconcile. Total Assets (${derived.total_assets.toLocaleString()}) ≠ Total Liabilities + Equity (${expected.toLocaleString()}). Difference: ₦${diff.toLocaleString()}.`;
     }
@@ -635,9 +697,24 @@ ${sep}
 function buildGenericReport(d: Record<string, number>, vs: any, meta: Meta, reportType: string): string {
   const now = new Date().toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' });
   const sep = '='.repeat(80);
+
+  const regulatorMap: Record<string, string> = {
+    'NDIC Deposit Insurance Premium Return': 'NIGERIA DEPOSIT INSURANCE CORPORATION (NDIC)',
+    'FIRS PAYE Remittance Return': 'FEDERAL INLAND REVENUE SERVICE (FIRS)',
+    'FIRS Withholding Tax Return': 'FEDERAL INLAND REVENUE SERVICE (FIRS)',
+    'FIRS VAT Return': 'FEDERAL INLAND REVENUE SERVICE (FIRS)',
+    'FIRS Company Income Tax Return': 'FEDERAL INLAND REVENUE SERVICE (FIRS)',
+    'CBN Single Obligor Limit Report': 'CENTRAL BANK OF NIGERIA (CBN)',
+    'CBN Consumer Protection Regulatory Return': 'CENTRAL BANK OF NIGERIA (CBN)',
+    'CBN Board and Governance Return': 'CENTRAL BANK OF NIGERIA (CBN)',
+    'NFIU International Transfers Report': 'NIGERIAN FINANCIAL INTELLIGENCE UNIT (NFIU)',
+  };
+
+  const regulator = regulatorMap[reportType] || 'REGULATORY AUTHORITY';
+
   return `${sep}
-                   CENTRAL BANK OF NIGERIA / NFIU / SCUML
-                        ${reportType.toUpperCase()}
+                    ${regulator}
+                         ${reportType.toUpperCase()}
 ${sep}
 
 Institution Name    : ${meta.institution_name}
@@ -678,6 +755,7 @@ function buildReportText(reportType: string, financialData: Record<string, numbe
     case 'AML/CFT Compliance Report':
     case 'NFIU Regulatory Return':
     case 'SCUML Compliance Report':
+    case 'SCUML Annual Compliance':
       return buildAMLReport(financialData, vs, meta, reportType);
     case 'NDIC Premium Return':
       return buildGenericReport(financialData, vs, meta, 'NDIC Deposit Insurance Premium Return');
@@ -688,9 +766,19 @@ function buildReportText(reportType: string, financialData: Record<string, numbe
     case 'Single Obligor Report':
       return buildGenericReport(financialData, vs, meta, 'CBN Single Obligor Limit Report');
     case 'CBN Consumer Protection Return':
+    case 'Consumer Protection Return':
       return buildGenericReport(financialData, vs, meta, 'CBN Consumer Protection Regulatory Return');
     case 'Board Governance Return':
       return buildGenericReport(financialData, vs, meta, 'CBN Board and Governance Return');
+    case 'International Transfers Report':
+      return buildGenericReport(financialData, vs, meta, 'NFIU International Transfers Report');
+    case 'VAT Return':
+      return buildGenericReport(financialData, vs, meta, 'FIRS VAT Return');
+    case 'Company Income Tax Return':
+      return buildGenericReport(financialData, vs, meta, 'FIRS Company Income Tax Return');
+    case 'CBN Monetary Policy Return':
+    case 'Monetary Policy Return':
+      return buildGenericReport(financialData, vs, meta, reportType);
     default:
       return buildGenericReport(financialData, vs, meta, reportType);
   }
@@ -720,17 +808,14 @@ Deno.serve(async (req: Request) => {
     reportId = report_id;
     const reportType: string = report_type || 'MFB Regulatory Return';
 
-    // Step 1: Mark report as processing
     await patchReport(report_id, { status: 'processing' }, serviceRoleKey);
 
-    // Step 2: Download CBS Excel file
     const fileResponse = await fetch(file_url);
     if (!fileResponse.ok) {
       throw new Error(`Failed to download CBS file: ${fileResponse.status} ${fileResponse.statusText}`);
     }
     const arrayBuffer = await fileResponse.arrayBuffer();
 
-    // Step 3: Parse the entire raw CBS workbook (all sheets, all rows) with synonym matching
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
     const rawData = parseCBSWorkbook(workbook);
 
@@ -741,7 +826,6 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Step 4: Derive missing fields and run deterministic balance-sheet validation
     const { derived: financialData, metrics, validationError } = deriveAndValidate(rawData);
 
     if (validationError) {
@@ -758,7 +842,6 @@ Deno.serve(async (req: Request) => {
 
     console.log(`Parsed ${Object.keys(financialData).length} fields. Computed CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
 
-    // Step 5: Pick the right system prompt — AI is a sanity check, NOT the source of truth
     const systemPrompt = getSystemPrompt(reportType);
     const userMessage = `Generate ${reportType}.
 Institution: ${institution_name}
@@ -769,7 +852,6 @@ Period: ${reporting_period_start} to ${reporting_period_end}
 Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%, LDR=${metrics.loan_to_deposit_ratio.toFixed(2)}%
 Financial Data: ${JSON.stringify(financialData)}`;
 
-    // Call Lovable AI Gateway with model fallback chain
     let aiRaw: any;
     const callAI = async (model: string): Promise<any | null> => {
       const reqBody = JSON.stringify({
@@ -832,7 +914,6 @@ Financial Data: ${JSON.stringify(financialData)}`;
 
     const aiText = (aiRaw.choices?.[0]?.message?.content || '').trim();
 
-    // Step 6: Parse AI JSON response — strip markdown backticks if present
     const cleanedText = aiText.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
     let aiData: any;
     try {
@@ -848,8 +929,9 @@ Financial Data: ${JSON.stringify(financialData)}`;
       }
     }
 
-    // Step 7a: Handle AI validation ERROR
     if (aiData.status === 'ERROR') {
+      const guidance = getReportSpecificGuidance(reportType, aiData.error_type || '');
+
       await patchReport(report_id, {
         status: 'failed',
         error_message: aiData.description,
@@ -874,6 +956,10 @@ Financial Data: ${JSON.stringify(financialData)}`;
           ${aiData.action_required ? `<p><strong>What to fix:</strong> ${aiData.action_required}</p>` : ''}
           ${aiData.figures_involved ? `<p><strong>Figures involved:</strong> ${aiData.figures_involved}</p>` : ''}
           ${aiData.difference ? `<p><strong>Discrepancy:</strong> ${aiData.difference}</p>` : ''}
+          <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:16px;margin:20px 0;">
+            <p style="color:#92400e;font-weight:bold;margin:0 0 8px;">Guidance for ${reportType}</p>
+            <p style="color:#78350f;margin:0;">${guidance}</p>
+          </div>
           <div style="text-align:center;margin:30px 0;">
             <a href="https://regco-insight-suite.vercel.app/dashboard" style="background:#3b6ef8;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;">Go to Dashboard</a>
           </div>
@@ -888,8 +974,6 @@ Financial Data: ${JSON.stringify(financialData)}`;
       });
     }
 
-    // Step 7b: Handle SUCCESS — build report, upload, notify
-    // IMPORTANT: deterministic metrics override AI's. AI is a sanity check, not the source of truth.
     const aiSummary = aiData.validation_summary || {};
     const validationSummary = {
       ...aiSummary,
@@ -910,7 +994,6 @@ Financial Data: ${JSON.stringify(financialData)}`;
     const filename = `${institution_name.replace(/\s+/g, '_')}_${safeType}_${reporting_period_end}.txt`;
     const storagePath = `${user_id}/${report_id}/${filename}`;
 
-    // Upload report to Supabase Storage
     const uploadResponse = await fetch(
       `${SUPABASE_URL}/storage/v1/object/reports/${storagePath}`,
       {
@@ -930,7 +1013,6 @@ Financial Data: ${JSON.stringify(financialData)}`;
       throw new Error(`Storage upload failed: ${errText}`);
     }
 
-    // Update report record to ready — use deterministic metrics
     await patchReport(report_id, {
       status: 'ready',
       report_url: storagePath,
@@ -942,7 +1024,6 @@ Financial Data: ${JSON.stringify(financialData)}`;
       error_message: null,
     }, serviceRoleKey);
 
-    // Send success email — show CAR/Liquidity/NPL only when relevant
     const car = validationSummary.car_percentage;
     const liq = validationSummary.liquidity_percentage;
     const npl = validationSummary.npl_ratio;
