@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -24,21 +24,136 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-const ALL_REPORT_TYPES = [
-  "CBN Monetary Policy Return",
-  "CBN Forex Return",
-  "AML/CFT Report",
-  "NFIU Regulatory Return",
-  "Prudential Return",
-  "MFB Regulatory Return",
-  "SCUML Compliance Report",
-  "NDIC Premium Return",
-  "PAYE Remittance",
-  "Withholding Tax Return",
-  "Single Obligor Report",
-  "CBN Consumer Protection Return",
-  "Board Governance Return",
-];
+// ─── All 16 report types grouped by regulator ───
+
+interface ReportTypeInfo {
+  name: string;
+  freq: string;
+  desc: string;
+}
+
+const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
+  CBN: [
+    { name: "MFB Regulatory Return", freq: "Monthly", desc: "Balance sheet, loans, deposits, CAR, liquidity" },
+    { name: "Monetary Policy Return", freq: "Monthly", desc: "Interest rates, credit data, monetary compliance" },
+    { name: "Prudential Return", freq: "Monthly", desc: "CAMEL framework — capital, asset quality, earnings" },
+    { name: "CBN Forex Return", freq: "Weekly/Monthly", desc: "Foreign currency positions and transactions" },
+    { name: "Board Governance Return", freq: "Bi-annual", desc: "Corporate governance and board matters" },
+    { name: "Consumer Protection Return", freq: "Quarterly", desc: "Customer complaints and resolution data" },
+  ],
+  NFIU: [
+    { name: "AML/CFT Compliance Report", freq: "Quarterly", desc: "Anti-money laundering and counter-terrorism" },
+    { name: "NFIU Regulatory Return", freq: "Quarterly", desc: "STR filings, CTR reports, financial intelligence" },
+    { name: "International Transfers Report", freq: "Quarterly", desc: "Cross-border transaction monitoring" },
+  ],
+  SCUML: [
+    { name: "SCUML Annual Compliance", freq: "Annual", desc: "Designated non-financial business compliance" },
+  ],
+  NDIC: [
+    { name: "NDIC Premium Return", freq: "Annual", desc: "Deposit insurance premium calculation" },
+    { name: "Single Obligor Report", freq: "Quarterly", desc: "Large exposure and concentration risk" },
+  ],
+  FIRS: [
+    { name: "Company Income Tax Return", freq: "Annual", desc: "Corporate tax filing and compliance" },
+    { name: "PAYE Remittance", freq: "Monthly", desc: "Employee income tax remittance" },
+    { name: "Withholding Tax Return", freq: "Monthly", desc: "WHT on vendor payments and dividends" },
+    { name: "VAT Return", freq: "Monthly", desc: "Value added tax on qualifying services" },
+  ],
+};
+
+const REGULATORS = Object.keys(REPORT_TYPES_BY_REGULATOR);
+
+const ALL_REPORT_TYPE_NAMES = Object.values(REPORT_TYPES_BY_REGULATOR).flat().map(r => r.name);
+
+// ─── CBS Templates ───
+
+function getTemplateForReportType(reportType: string): { headers: string[]; rows: string[][] } | null {
+  const templates: Record<string, { headers: string[]; rows: string[][] }> = {
+    "MFB Regulatory Return": {
+      headers: ["Line Item", "Amount"],
+      rows: [["Cash and Cash Equivalents",""],["Balances with CBN",""],["Investment Securities",""],["Gross Loans and Advances",""],["Loan Loss Provisions",""],["Fixed Assets Net",""],["Other Assets",""],["Total Assets",""],["Savings Deposits",""],["Demand Deposits",""],["Time Deposits",""],["Other Deposits",""],["Total Deposits",""],["Total Liabilities",""],["Paid Up Capital",""],["Retained Earnings",""],["Total Shareholders Funds",""],["Performing Loans",""],["Non Performing Loans",""],["Tier 1 Capital",""],["Risk Weighted Assets",""],["Liquid Assets",""]],
+    },
+    "CBN Forex Return": {
+      headers: ["Line Item", "Amount (USD)", "Amount (NGN)"],
+      rows: [["Total FX Inflows","",""],["Total FX Outflows","",""],["Net Open Position","",""],["USD Inflows","",""],["USD Outflows","",""],["GBP Inflows","",""],["GBP Outflows","",""],["EUR Inflows","",""],["EUR Outflows","",""],["Number of FX Transactions","",""],["Largest Single Transaction USD","",""]],
+    },
+    "AML/CFT Compliance Report": {
+      headers: ["Line Item", "Value"],
+      rows: [["Total Transactions Monitored",""],["Total Transaction Value NGN",""],["Flagged Transactions",""],["STR Filed",""],["CTR Filed",""],["False Positives",""],["Total Customers",""],["KYC Compliant Customers",""],["PEP Customers",""],["High Risk Customers",""],["Accounts Frozen",""],["Staff Trained AML",""],["Total Staff",""],["Last Training Date",""]],
+    },
+    "PAYE Remittance": {
+      headers: ["Employee ID", "Employee Name", "Gross Salary", "Taxable Income", "PAYE Deducted", "Pension Deduction", "NHF Deduction"],
+      rows: [["","","","","","",""]],
+    },
+    "Withholding Tax Return": {
+      headers: ["Vendor Name", "Vendor TIN", "Payment Type", "Payment Amount", "WHT Rate Percent", "WHT Amount", "Payment Date"],
+      rows: [["","","","","","",""]],
+    },
+    "VAT Return": {
+      headers: ["Line Item", "Amount NGN"],
+      rows: [["Vatable Sales",""],["Exempt Sales",""],["Total Turnover",""],["Input VAT on Purchases",""],["Output VAT",""],["Net VAT Payable",""],["Prior Period VAT Credit",""]],
+    },
+    "Company Income Tax Return": {
+      headers: ["Line Item", "Amount NGN"],
+      rows: [["Gross Income",""],["Cost of Sales",""],["Operating Expenses",""],["Profit Before Tax",""],["Add Back Disallowable Expenses",""],["Less Capital Allowances",""],["Assessable Profit",""],["CIT Rate Percent",""],["CIT Payable",""],["Education Tax",""],["WHT Credits Available",""]],
+    },
+    "International Transfers Report": {
+      headers: ["Transfer Reference", "Direction (In/Out)", "Amount USD", "Amount NGN", "Source Country", "Destination Country", "Bank Name", "Transfer Date", "Purpose", "Above 10K USD (Yes/No)"],
+      rows: [["","","","","","","","","",""]],
+    },
+    "NDIC Premium Return": {
+      headers: ["Line Item", "Amount NGN"],
+      rows: [["Savings Deposits Insured",""],["Demand Deposits Insured",""],["Time Deposits Insured",""],["Total Insured Deposits",""],["Deposits Exceeding Insured Limit",""],["NDIC License Number",""],["Institution Type",""],["Premium Rate Percent",""]],
+    },
+    "Single Obligor Report": {
+      headers: ["Borrower Name", "Borrower TIN", "Total Exposure NGN", "Percentage of Shareholders Funds", "Exposure Type", "Within Limit Yes/No"],
+      rows: [["","","","","",""]],
+    },
+    "Board Governance Return": {
+      headers: ["Line Item", "Value"],
+      rows: [["Total Directors",""],["Executive Directors",""],["Non-Executive Directors",""],["Independent Non-Executive Directors",""],["Female Directors",""],["Board Meetings Scheduled",""],["Board Meetings Held",""],["Audit Committee Members",""],["Risk Committee Members",""],["Credit Committee Members",""],["Total Directors Fees NGN",""],["Total Executive Remuneration NGN",""]],
+    },
+    "Consumer Protection Return": {
+      headers: ["Line Item", "Count"],
+      rows: [["Total Complaints Received",""],["Complaints Resolved",""],["Complaints Pending",""],["Complaints Escalated to CBN",""],["Average Resolution Days",""],["Credit Related Complaints",""],["Deposit Account Complaints",""],["Electronic Banking Complaints",""],["Fees and Charges Complaints",""],["Total Compensation Paid NGN",""],["Financial Literacy Programmes Held",""],["Customers Reached",""]],
+    },
+    "Monetary Policy Return": {
+      headers: ["Line Item", "Value"],
+      rows: [["Prime Lending Rate Percent",""],["Maximum Lending Rate Percent",""],["Minimum Deposit Rate Percent",""],["Savings Deposit Rate Percent",""],["MPR Current Percent",""],["Cash Reserve Ratio Required Percent",""],["Cash Reserve Ratio Actual Percent",""],["Liquidity Ratio Required Percent",""],["Liquidity Ratio Actual Percent",""],["Total Loans Disbursed Month NGN",""],["MSME Loans NGN",""],["Agricultural Loans NGN",""]],
+    },
+    "Prudential Return": {
+      headers: ["Line Item", "Amount NGN"],
+      rows: [["Tier 1 Capital",""],["Tier 2 Capital",""],["Total Capital",""],["Risk Weighted Assets",""],["Capital Adequacy Ratio Percent",""],["Total Loans",""],["Performing Loans",""],["Watch List Loans",""],["Substandard Loans",""],["Doubtful Loans",""],["Loss Loans",""],["NPL Ratio Percent",""],["Loan Loss Provisions",""],["Interest Income",""],["Non Interest Income",""],["Total Income",""],["Total Expenses",""],["Profit Before Tax",""],["Return on Assets Percent",""],["Return on Equity Percent",""],["Liquid Assets",""],["Total Liabilities",""],["Liquidity Ratio Percent",""]],
+    },
+    "SCUML Annual Compliance": {
+      headers: ["Line Item", "Value"],
+      rows: [["SCUML Registration Number",""],["Registration Date",""],["Registration Status",""],["Last Renewal Date",""],["AML Policy Last Reviewed Date",""],["Risk Assessment Last Conducted Date",""],["Compliance Officer Name",""],["Staff Trained Count",""],["Total Staff Count",""],["Training Provider",""],["Training Date",""],["STR Filed to NFIU Count",""],["CTR Filed to NFIU Count",""],["Total Customers Registered",""],["KYC Completed Count",""],["PEP Identified Count",""],["Accounts Blocked Count",""]],
+    },
+    "NFIU Regulatory Return": {
+      headers: ["Line Item", "Count or Amount"],
+      rows: [["Total STR Filed",""],["STR Value NGN",""],["STR With Law Enforcement",""],["STR Pending",""],["Total CTR Filed",""],["CTR Value NGN",""],["CTR Cash Deposits",""],["CTR Cash Withdrawals",""],["CTR Transfers",""],["Total Customers Screened",""],["PEP Matches",""],["Sanctions Matches",""],["Adverse Media Matches",""],["Total Inbound Wires",""],["Inbound Wire Value USD",""],["Total Outbound Wires",""],["Outbound Wire Value USD",""],["High Risk Jurisdictions Count",""]],
+    },
+  };
+  return templates[reportType] || null;
+}
+
+function downloadTemplate(reportType: string) {
+  const template = getTemplateForReportType(reportType);
+  if (!template) return;
+
+  const csvContent = [
+    template.headers.join(","),
+    ...template.rows.map(r => r.map(c => `"${c}"`).join(",")),
+  ].join("\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${reportType.replace(/[^a-zA-Z0-9]/g, "_")}_Template.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 interface Profile {
   company_name: string | null;
@@ -57,19 +172,19 @@ const NewReport = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [searchParams] = useSearchParams();
 
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [availableTypes, setAvailableTypes] = useState<string[]>([]);
+  const [activeRegulator, setActiveRegulator] = useState("CBN");
 
-  // Form state
   const [reportType, setReportType] = useState("");
   const [periodStart, setPeriodStart] = useState<Date>();
   const [periodEnd, setPeriodEnd] = useState<Date>();
   const [cbsFile, setCbsFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Processing step state
   const [currentReportId, setCurrentReportId] = useState<string | null>(null);
   const [processingStatus, setProcessingStatus] = useState<ProcessingStatus>("processing");
   const [downloadUrl, setDownloadUrl] = useState<string>("");
@@ -81,13 +196,25 @@ const NewReport = () => {
   } | null>(null);
 
   useEffect(() => {
+    const preselected = searchParams.get("type");
+    if (preselected) {
+      setReportType(preselected);
+      // Find the regulator for this type
+      for (const [reg, types] of Object.entries(REPORT_TYPES_BY_REGULATOR)) {
+        if (types.some(t => t.name === preselected)) {
+          setActiveRegulator(reg);
+          break;
+        }
+      }
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
     if (!user) return;
     Promise.all([
       supabase
         .from("profiles")
-        .select(
-          "company_name, rc_number, cbn_license_category, compliance_lead_name, notification_email_report_ready"
-        )
+        .select("company_name, rc_number, cbn_license_category, compliance_lead_name, notification_email_report_ready")
         .eq("id", user.id)
         .maybeSingle(),
       supabase.from("institution_report_types").select("report_type").eq("user_id", user.id),
@@ -96,12 +223,11 @@ const NewReport = () => {
       if (typesRes.data && typesRes.data.length > 0) {
         setAvailableTypes(typesRes.data.map((t) => t.report_type));
       } else {
-        setAvailableTypes(ALL_REPORT_TYPES);
+        setAvailableTypes(ALL_REPORT_TYPE_NAMES);
       }
     });
   }, [user]);
 
-  // Poll reports table every 8 seconds while on the processing step
   useEffect(() => {
     if (step !== 3 || !currentReportId) return;
     if (processingStatus === "ready" || processingStatus === "failed") return;
@@ -147,19 +273,11 @@ const NewReport = () => {
   const handleFileSelect = (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!["xlsx", "xls", "csv"].includes(ext || "")) {
-      toast({
-        title: "Unsupported file format",
-        description: "Please upload your CBS export as .xlsx, .xls, or .csv",
-        variant: "destructive",
-      });
+      toast({ title: "Unsupported file format", description: "Please upload your CBS export as .xlsx, .xls, or .csv", variant: "destructive" });
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Maximum file size is 50MB.",
-        variant: "destructive",
-      });
+      toast({ title: "File too large", description: "Maximum file size is 50MB.", variant: "destructive" });
       return;
     }
     setCbsFile(file);
@@ -195,7 +313,6 @@ const NewReport = () => {
       const periodEndStr = periodEnd!.toISOString().split("T")[0];
       const reportName = `${reportType} — ${profile.company_name || "Report"}`;
 
-      // 1. Upload raw CBS file to "reports" bucket under the user's folder
       const safeFileName = cbsFile.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const storagePath = `${user.id}/${Date.now()}_${safeFileName}`;
 
@@ -205,7 +322,6 @@ const NewReport = () => {
 
       if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
 
-      // 2. Generate a signed URL valid for 7200 seconds
       const { data: signedData, error: signedError } = await supabase.storage
         .from("reports")
         .createSignedUrl(storagePath, 7200);
@@ -215,7 +331,6 @@ const NewReport = () => {
       }
       const fileUrl = signedData.signedUrl;
 
-      // 3. Create the report row with status "pending"
       const { data: newReport, error: reportError } = await supabase
         .from("reports")
         .insert({
@@ -237,9 +352,7 @@ const NewReport = () => {
       }
       createdReportId = newReport.id;
 
-      // 4. Trigger automation
-      const clientEmail =
-        profile.notification_email_report_ready || user.email || "";
+      const clientEmail = profile.notification_email_report_ready || user.email || "";
 
       const { error: fnError } = await supabase.functions.invoke("notify-automation", {
         body: {
@@ -261,26 +374,17 @@ const NewReport = () => {
         console.warn("notify-automation returned an error:", fnError.message);
       }
 
-      // 5. Move to processing — polling takes over
       setCurrentReportId(newReport.id);
       setProcessingStatus("processing");
       setStep(3);
     } catch (err) {
-      const errMsg =
-        err instanceof Error ? err.message : "An unexpected error occurred.";
+      const errMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
 
       if (createdReportId) {
-        await supabase
-          .from("reports")
-          .update({ status: "failed", error_message: errMsg })
-          .eq("id", createdReportId);
+        await supabase.from("reports").update({ status: "failed", error_message: errMsg }).eq("id", createdReportId);
       }
 
-      toast({
-        title: "Submission failed",
-        description: errMsg,
-        variant: "destructive",
-      });
+      toast({ title: "Submission failed", description: errMsg, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -288,6 +392,12 @@ const NewReport = () => {
 
   const canProceedStep0 = !!reportType;
   const canProceedStep1 = !!periodStart && !!periodEnd && !!cbsFile;
+
+  const filteredTypes = useMemo(() => {
+    const regTypes = REPORT_TYPES_BY_REGULATOR[activeRegulator] || [];
+    if (availableTypes.length === ALL_REPORT_TYPE_NAMES.length) return regTypes;
+    return regTypes.filter(t => availableTypes.includes(t.name));
+  }, [activeRegulator, availableTypes]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -317,25 +427,94 @@ const NewReport = () => {
       </div>
       <p className="text-sm text-muted-foreground mb-4">{STEPS[step]}</p>
 
-      {/* ── Step 0: Report Type ── */}
+      {/* ── Step 0: Report Type with Regulator Tabs ── */}
       {step === 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {availableTypes.map((type) => (
-            <Card
-              key={type}
-              className={cn(
-                "cursor-pointer transition-all hover:border-primary/50",
-                reportType === type && "border-primary ring-2 ring-primary/20"
-              )}
-              onClick={() => setReportType(type)}
+        <div className="space-y-4">
+          {/* Regulator tabs */}
+          <div className="flex flex-wrap gap-2">
+            {REGULATORS.map((reg) => (
+              <button
+                key={reg}
+                onClick={() => setActiveRegulator(reg)}
+                style={{
+                  borderRadius: 980,
+                  padding: "8px 18px",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  background: activeRegulator === reg ? "#1D1D1F" : "transparent",
+                  color: activeRegulator === reg ? "white" : "#6E6E73",
+                }}
+                onMouseEnter={(e) => {
+                  if (activeRegulator !== reg) (e.target as HTMLElement).style.background = "rgba(0,0,0,0.05)";
+                }}
+                onMouseLeave={(e) => {
+                  if (activeRegulator !== reg) (e.target as HTMLElement).style.background = "transparent";
+                }}
+              >
+                {reg}
+              </button>
+            ))}
+          </div>
+
+          {/* Report type cards grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {filteredTypes.map((type) => (
+              <div
+                key={type.name}
+                onClick={() => setReportType(type.name)}
+                style={{
+                  background: reportType === type.name ? "white" : "#F5F5F7",
+                  borderRadius: 12,
+                  padding: "16px 18px",
+                  cursor: "pointer",
+                  border: `1.5px solid ${reportType === type.name ? "#1D1D1F" : "transparent"}`,
+                  boxShadow: reportType === type.name ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+                  transition: "all 0.2s",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span style={{
+                    background: "rgba(0,0,0,0.06)",
+                    color: "#6E6E73",
+                    borderRadius: 980,
+                    padding: "2px 10px",
+                    fontSize: 11,
+                    fontWeight: 500,
+                  }}>
+                    {activeRegulator}
+                  </span>
+                  <span style={{
+                    background: "rgba(0,102,204,0.1)",
+                    color: "#0066CC",
+                    borderRadius: 980,
+                    padding: "2px 10px",
+                    fontSize: 11,
+                  }}>
+                    {type.freq}
+                  </span>
+                </div>
+                <h4 style={{ fontWeight: 600, fontSize: 15, color: "#1D1D1F", margin: "6px 0 4px" }}>{type.name}</h4>
+                <p style={{ fontSize: 12, color: "#6E6E73", margin: 0 }}>{type.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Download template link */}
+          {reportType && (
+            <button
+              onClick={() => downloadTemplate(reportType)}
+              className="flex items-center gap-2 text-sm font-medium hover:underline"
+              style={{ color: "#0066CC", background: "none", border: "none", cursor: "pointer", padding: "4px 0" }}
             >
-              <CardContent className="p-4 flex items-center gap-3">
-                <FileText className="w-5 h-5 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium text-foreground">{type}</span>
-              </CardContent>
-            </Card>
-          ))}
-          <div className="col-span-full flex justify-end mt-4">
+              <Download className="w-4 h-4" />
+              Download CBS template for {reportType}
+            </button>
+          )}
+
+          <div className="flex justify-end mt-4">
             <Button onClick={() => setStep(1)} disabled={!canProceedStep0}>
               Next <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
@@ -353,7 +532,6 @@ const NewReport = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
-            {/* Helper banner */}
             <div className="flex items-start gap-3 p-4 rounded-lg border border-primary/20 bg-primary/5">
               <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
               <div className="text-sm text-foreground">
@@ -361,34 +539,22 @@ const NewReport = () => {
                 <p className="text-muted-foreground">
                   Upload the raw trial balance, general ledger, or full CBS export — exactly as it comes from
                   Flexcube, Finacle, T24, Bankone, Rubies, or any other core banking system. RegCo will parse all sheets,
-                  identify the relevant accounts, validate totals, and generate the CBN-ready return automatically.
+                  identify the relevant accounts, validate totals, and generate the return automatically.
                 </p>
               </div>
             </div>
 
-            {/* Date pickers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Reporting Period Start</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !periodStart && "text-muted-foreground"
-                      )}
-                    >
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodStart && "text-muted-foreground")}>
                       {periodStart ? format(periodStart, "PPP") : "Pick start date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={periodStart}
-                      onSelect={setPeriodStart}
-                      className="p-3 pointer-events-auto"
-                    />
+                    <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
@@ -396,29 +562,17 @@ const NewReport = () => {
                 <Label>Reporting Period End</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal",
-                        !periodEnd && "text-muted-foreground"
-                      )}
-                    >
+                    <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !periodEnd && "text-muted-foreground")}>
                       {periodEnd ? format(periodEnd, "PPP") : "Pick end date"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={periodEnd}
-                      onSelect={setPeriodEnd}
-                      className="p-3 pointer-events-auto"
-                    />
+                    <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} className="p-3 pointer-events-auto" />
                   </PopoverContent>
                 </Popover>
               </div>
             </div>
 
-            {/* CBS File upload */}
             <div className="space-y-2">
               <Label>Raw CBS Export File</Label>
               {cbsFile ? (
@@ -426,15 +580,9 @@ const NewReport = () => {
                   <FileText className="w-5 h-5 text-primary flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{cbsFile.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(cbsFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
+                    <p className="text-xs text-muted-foreground">{(cbsFile.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setCbsFile(null)}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
-                  >
+                  <button type="button" onClick={() => setCbsFile(null)} className="text-muted-foreground hover:text-destructive transition-colors">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -446,30 +594,15 @@ const NewReport = () => {
                   onDragOver={(e) => e.preventDefault()}
                 >
                   <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm font-medium text-foreground">
-                    Click to upload or drag &amp; drop your CBS export
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Accepted: .xlsx, .xls, .csv (max 50MB) — trial balance, GL, or full CBS export
-                  </p>
+                  <p className="text-sm font-medium text-foreground">Click to upload or drag &amp; drop your CBS export</p>
+                  <p className="text-xs text-muted-foreground mt-1">Accepted: .xlsx, .xls, .csv (max 50MB)</p>
                 </div>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept=".xlsx,.xls,.csv"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleFileSelect(f);
-                }}
-              />
+              <input ref={fileInputRef} type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />
             </div>
 
             <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setStep(0)}>
-                Back
-              </Button>
+              <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
               <Button onClick={() => setStep(2)} disabled={!canProceedStep1}>
                 Next <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
@@ -482,193 +615,123 @@ const NewReport = () => {
       {step === 2 && (
         <Card>
           <CardHeader>
-            <CardTitle>Review &amp; Submit</CardTitle>
-            <CardDescription>
-              Confirm the details below. RegCo will parse your raw CBS export and generate the report automatically.
-            </CardDescription>
+            <CardTitle>Review &amp; Generate</CardTitle>
+            <CardDescription>Confirm the details below before generating your report.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Report Type</span>
-                <span className="font-medium text-foreground">{reportType}</span>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Report Type</p>
+                <p className="font-medium">{reportType}</p>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Institution</span>
-                <span className="font-medium text-foreground">{profile?.company_name}</span>
+              <div>
+                <p className="text-muted-foreground">Institution</p>
+                <p className="font-medium">{profile?.company_name || "—"}</p>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">RC Number</span>
-                <span className="font-medium text-foreground">{profile?.rc_number || "—"}</span>
+              <div>
+                <p className="text-muted-foreground">Reporting Period</p>
+                <p className="font-medium">
+                  {periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}
+                </p>
               </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">CBN License Category</span>
-                <span className="font-medium text-foreground">{profile?.cbn_license_category || "—"}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Compliance Lead</span>
-                <span className="font-medium text-foreground">{profile?.compliance_lead_name || "—"}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">Reporting Period</span>
-                <span className="font-medium text-foreground">
-                  {periodStart && periodEnd
-                    ? `${format(periodStart, "PP")} – ${format(periodEnd, "PP")}`
-                    : "—"}
-                </span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">CBS File</span>
-                <span className="font-medium text-foreground truncate max-w-[260px]">
-                  {cbsFile?.name || "—"}
-                </span>
+              <div>
+                <p className="text-muted-foreground">CBS File</p>
+                <p className="font-medium">{cbsFile?.name}</p>
               </div>
             </div>
-
-            <div className="flex items-center gap-2 pt-2 flex-wrap">
-              <Button variant="outline" size="sm" onClick={() => setStep(0)}>
-                Edit Type
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                Edit Period / File
-              </Button>
-              <div className="flex-1" />
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
               <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting…
-                  </>
-                ) : (
-                  "Confirm & Generate Report"
-                )}
+                {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : <>Generate Report <Sparkles className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
           </CardContent>
         </Card>
       )}
 
-      {/* ── Step 3: Processing / Result ── */}
+      {/* ── Step 3: Processing ── */}
       {step === 3 && (
         <Card>
-          <CardContent className="py-14 px-8">
+          <CardContent className="py-12 text-center space-y-6">
             {processingStatus === "processing" && (
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: "rgba(249,115,22,0.1)" }}>
-                  <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#f97316" }} />
+              <>
+                <div className="relative mx-auto w-16 h-16">
+                  <div className="absolute inset-0 rounded-full border-4 border-primary/20" />
+                  <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  Processing your CBS export…
-                </h2>
-                <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
-                  RegCo is parsing your raw CBS file, mapping account codes to the CBN return template,
-                  validating totals, and generating your final report. This usually takes 2–5 minutes.
-                </p>
-                {currentReportId && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted text-xs text-muted-foreground font-mono">
-                    <span className="text-foreground/50">Report ID:</span>
-                    <span className="font-semibold text-foreground select-all">{currentReportId}</span>
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground mt-5">
-                  Checking for updates every 8 seconds…
-                </p>
-              </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Generating your report</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Parsing CBS data, running compliance checks, and building your regulatory return. This typically takes 30–90 seconds.
+                  </p>
+                </div>
+              </>
             )}
 
             {processingStatus === "ready" && (
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-success/10 mx-auto mb-5 flex items-center justify-center">
+              <>
+                <div className="mx-auto w-16 h-16 rounded-full bg-success/10 flex items-center justify-center">
                   <CheckCircle className="w-8 h-8 text-success" />
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  Your Report Is Ready
-                </h2>
-                <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
-                  Your CBN-ready compliance report has been generated successfully.
-                </p>
-
-                <div className="flex gap-3 justify-center flex-wrap mb-8">
-                  {downloadUrl ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Report ready</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Your {reportType} has been generated and validated.
+                  </p>
+                </div>
+                {validationMetrics && (validationMetrics.car_percentage || validationMetrics.liquidity_percentage || validationMetrics.npl_ratio) && (
+                  <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
+                    {validationMetrics.car_percentage != null && (
+                      <div className="p-3 rounded-lg bg-accent text-center">
+                        <p className="text-xs text-muted-foreground">CAR</p>
+                        <p className="text-lg font-bold text-foreground">{validationMetrics.car_percentage.toFixed(1)}%</p>
+                      </div>
+                    )}
+                    {validationMetrics.liquidity_percentage != null && (
+                      <div className="p-3 rounded-lg bg-accent text-center">
+                        <p className="text-xs text-muted-foreground">Liquidity</p>
+                        <p className="text-lg font-bold text-foreground">{validationMetrics.liquidity_percentage.toFixed(1)}%</p>
+                      </div>
+                    )}
+                    {validationMetrics.npl_ratio != null && (
+                      <div className="p-3 rounded-lg bg-accent text-center">
+                        <p className="text-xs text-muted-foreground">NPL</p>
+                        <p className="text-lg font-bold text-foreground">{validationMetrics.npl_ratio.toFixed(1)}%</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="flex gap-3 justify-center">
+                  {downloadUrl && (
                     <Button asChild>
-                      <a href={downloadUrl} download target="_blank" rel="noreferrer">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download Report
+                      <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
+                        <Download className="mr-2 h-4 w-4" />Download Report
                       </a>
                     </Button>
-                  ) : (
-                    <Button onClick={() => navigate("/dashboard/reports")}>
-                      View in My Reports
-                    </Button>
                   )}
-                  <Button variant="outline" onClick={() => navigate("/dashboard/reports")}>
-                    Go to My Reports
-                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/dashboard/my-reports")}>View All Reports</Button>
                 </div>
-
-                {validationMetrics &&
-                  (validationMetrics.car_percentage !== null ||
-                    validationMetrics.liquidity_percentage !== null ||
-                    validationMetrics.npl_ratio !== null) && (
-                    <div className="border border-border rounded-xl p-5 bg-accent/30 text-left">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-                        Validation Metrics
-                      </p>
-                      <div className="grid grid-cols-3 gap-4">
-                        {validationMetrics.car_percentage !== null && (
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">CAR</p>
-                            <p className="text-lg font-bold text-foreground">
-                              {Number(validationMetrics.car_percentage).toFixed(2)}%
-                            </p>
-                          </div>
-                        )}
-                        {validationMetrics.liquidity_percentage !== null && (
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">Liquidity Ratio</p>
-                            <p className="text-lg font-bold text-foreground">
-                              {Number(validationMetrics.liquidity_percentage).toFixed(2)}%
-                            </p>
-                          </div>
-                        )}
-                        {validationMetrics.npl_ratio !== null && (
-                          <div>
-                            <p className="text-xs text-muted-foreground mb-1">NPL Ratio</p>
-                            <p className="text-lg font-bold text-foreground">
-                              {Number(validationMetrics.npl_ratio).toFixed(2)}%
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-              </div>
+              </>
             )}
 
             {processingStatus === "failed" && (
-              <div className="space-y-5">
-                <div className="flex items-start gap-4 p-4 rounded-lg border border-destructive/30 bg-destructive/5">
-                  <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-destructive mb-1">
-                      Report generation failed
-                    </p>
-                    <p className="text-sm text-destructive/80 break-words">
-                      {processingError ||
-                        "An unexpected error occurred. Our team has been notified."}
-                    </p>
+              <>
+                <div className="mx-auto w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertCircle className="w-8 h-8 text-destructive" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Validation failed</h3>
+                  <div className="mt-3 p-4 rounded-lg border border-destructive/30 bg-destructive/5 text-left max-w-md mx-auto">
+                    <p className="text-sm text-destructive">{processingError}</p>
                   </div>
                 </div>
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-3 justify-center">
                   <Button onClick={resetAndStartOver}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
-                    Try Again
+                    <RotateCcw className="mr-2 h-4 w-4" />Try Again
                   </Button>
-                  <Button variant="outline" onClick={() => navigate("/dashboard/reports")}>
-                    Go to My Reports
-                  </Button>
+                  <Button variant="outline" onClick={() => navigate("/dashboard")}>Dashboard</Button>
                 </div>
-              </div>
+              </>
             )}
           </CardContent>
         </Card>

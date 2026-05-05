@@ -5,43 +5,91 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, AlertTriangle, CheckCircle, FilePlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, FilePlus, CheckCircle, Clock, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface DeadlineItem {
   reportType: string;
+  regulator: string;
   deadline: Date;
   status: "ready" | "upcoming" | "due-soon" | "overdue";
   daysRemaining: number;
 }
 
-// Standard CBN deadlines
+const REGULATOR_MAP: Record<string, string> = {
+  'MFB Regulatory Return': 'CBN',
+  'Monetary Policy Return': 'CBN',
+  'CBN Monetary Policy Return': 'CBN',
+  'Prudential Return': 'CBN',
+  'CBN Forex Return': 'CBN',
+  'Board Governance Return': 'CBN',
+  'Consumer Protection Return': 'CBN',
+  'CBN Consumer Protection Return': 'CBN',
+  'AML/CFT Compliance Report': 'NFIU',
+  'AML/CFT Report': 'NFIU',
+  'NFIU Regulatory Return': 'NFIU',
+  'International Transfers Report': 'NFIU',
+  'SCUML Annual Compliance': 'SCUML',
+  'SCUML Compliance Report': 'SCUML',
+  'NDIC Premium Return': 'NDIC',
+  'Single Obligor Report': 'NDIC',
+  'Company Income Tax Return': 'FIRS',
+  'PAYE Remittance': 'FIRS',
+  'Withholding Tax Return': 'FIRS',
+  'VAT Return': 'FIRS',
+};
+
 function getDeadlinesForYear(year: number): Array<{ reportType: string; date: Date }> {
   const deadlines: Array<{ reportType: string; date: Date }> = [];
 
+  // CBN Monthly — 10th of every month
   for (let m = 0; m < 12; m++) {
     deadlines.push({ reportType: "MFB Regulatory Return", date: new Date(year, m, 10) });
-    deadlines.push({ reportType: "CBN Monetary Policy Return", date: new Date(year, m, 15) });
-    deadlines.push({ reportType: "Prudential Return", date: new Date(year, m, 15) });
+    deadlines.push({ reportType: "Monetary Policy Return", date: new Date(year, m, 10) });
+    deadlines.push({ reportType: "Prudential Return", date: new Date(year, m, 10) });
+  }
+
+  // CBN Forex Return — 15th monthly
+  for (let m = 0; m < 12; m++) {
     deadlines.push({ reportType: "CBN Forex Return", date: new Date(year, m, 15) });
   }
 
-  // Weekly Forex Mondays
-  const start = new Date(year, 0, 1);
-  const end = new Date(year, 11, 31);
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    if (d.getDay() === 1) {
-      deadlines.push({ reportType: "CBN Forex Return", date: new Date(d) });
+  // PAYE — 10th of every month
+  for (let m = 0; m < 12; m++) {
+    deadlines.push({ reportType: "PAYE Remittance", date: new Date(year, m, 10) });
+  }
+
+  // WHT & VAT — 21st of every month
+  for (let m = 0; m < 12; m++) {
+    deadlines.push({ reportType: "Withholding Tax Return", date: new Date(year, m, 21) });
+    deadlines.push({ reportType: "VAT Return", date: new Date(year, m, 21) });
+  }
+
+  // Quarterly — 15th of April, July, October, January
+  const quarterlyMonths = [0, 3, 6, 9]; // Jan, Apr, Jul, Oct
+  const quarterlyTypes = [
+    "AML/CFT Compliance Report",
+    "NFIU Regulatory Return",
+    "International Transfers Report",
+    "Single Obligor Report",
+    "Consumer Protection Return",
+  ];
+  for (const m of quarterlyMonths) {
+    for (const rt of quarterlyTypes) {
+      deadlines.push({ reportType: rt, date: new Date(year, m, 15) });
     }
   }
 
-  // Quarterly
-  [new Date(year, 3, 30), new Date(year, 6, 31), new Date(year, 9, 31), new Date(year + 1, 0, 31)].forEach((date) => {
-    deadlines.push({ reportType: "AML/CFT Report", date });
-    deadlines.push({ reportType: "NFIU Regulatory Return", date });
-  });
+  // Board Governance — January 31 and July 31
+  deadlines.push({ reportType: "Board Governance Return", date: new Date(year, 0, 31) });
+  deadlines.push({ reportType: "Board Governance Return", date: new Date(year, 6, 31) });
 
-  deadlines.push({ reportType: "SCUML Compliance Report", date: new Date(year, 2, 31) });
+  // Annual — March 31
+  deadlines.push({ reportType: "SCUML Annual Compliance", date: new Date(year, 2, 31) });
+  deadlines.push({ reportType: "NDIC Premium Return", date: new Date(year, 2, 31) });
+
+  // CIT — June 30
+  deadlines.push({ reportType: "Company Income Tax Return", date: new Date(year, 5, 30) });
 
   return deadlines;
 }
@@ -72,7 +120,7 @@ const ComplianceCalendar = () => {
     const now = new Date();
 
     return raw
-      .filter((d) => assignedTypes.includes(d.reportType))
+      .filter((d) => assignedTypes.length === 0 || assignedTypes.includes(d.reportType))
       .map((d) => {
         const diffMs = d.date.getTime() - now.getTime();
         const daysRemaining = Math.ceil(diffMs / 86400000);
@@ -84,13 +132,23 @@ const ComplianceCalendar = () => {
         else if (daysRemaining < 0) status = "overdue";
         else if (daysRemaining <= 7) status = "due-soon";
 
-        return { reportType: d.reportType, deadline: d.date, status, daysRemaining };
+        return { reportType: d.reportType, regulator: REGULATOR_MAP[d.reportType] || "OTHER", deadline: d.date, status, daysRemaining };
       });
   }, [year, assignedTypes, readyReports]);
 
   const monthDeadlines = allDeadlines.filter(
     (d) => d.deadline.getMonth() === month && d.deadline.getFullYear() === year
   );
+
+  // Compliance score for current month
+  const monthScore = useMemo(() => {
+    const total = monthDeadlines.length;
+    if (total === 0) return { percentage: 100, filed: 0, pending: 0, overdue: 0 };
+    const filed = monthDeadlines.filter(d => d.status === "ready").length;
+    const overdue = monthDeadlines.filter(d => d.status === "overdue").length;
+    const pending = total - filed - overdue;
+    return { percentage: Math.round((filed / total) * 100), filed, pending, overdue };
+  }, [monthDeadlines]);
 
   const upcoming90 = allDeadlines
     .filter((d) => {
@@ -100,15 +158,13 @@ const ComplianceCalendar = () => {
     })
     .sort((a, b) => a.deadline.getTime() - b.deadline.getTime());
 
-  // Build calendar grid
   const firstDayOfMonth = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const calendarDays: (number | null)[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(null);
   for (let i = 1; i <= daysInMonth; i++) calendarDays.push(i);
 
-  const getDotsForDay = (day: number) =>
-    monthDeadlines.filter((d) => d.deadline.getDate() === day);
+  const getDotsForDay = (day: number) => monthDeadlines.filter((d) => d.deadline.getDate() === day);
 
   const dotColor = (status: DeadlineItem["status"]) => {
     if (status === "ready") return "bg-success";
@@ -128,16 +184,63 @@ const ComplianceCalendar = () => {
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
   const monthName = currentDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
+  const scoreColor = monthScore.percentage >= 80 ? "#34C759" : monthScore.percentage >= 50 ? "#FF9F0A" : "#FF3B30";
+
   return (
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Compliance Calendar</h1>
-          <p className="text-sm text-muted-foreground">Track CBN submission deadlines</p>
+          <p className="text-sm text-muted-foreground">Track all regulatory submission deadlines</p>
         </div>
         <Button asChild>
           <Link to="/dashboard/new-report"><FilePlus className="mr-2 h-4 w-4" />Create Report</Link>
         </Button>
+      </div>
+
+      {/* Compliance Score Card */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="md:col-span-1">
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <div className="relative w-24 h-24 mb-3">
+              <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="8" />
+                <circle
+                  cx="50" cy="50" r="42" fill="none"
+                  stroke={scoreColor}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={`${monthScore.percentage * 2.64} 264`}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-2xl font-bold" style={{ color: scoreColor }}>{monthScore.percentage}%</span>
+              </div>
+            </div>
+            <p className="text-sm font-medium text-foreground">Monthly Compliance</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-success mb-2" />
+            <p className="text-2xl font-bold text-foreground">{monthScore.filed}</p>
+            <p className="text-xs text-muted-foreground">Filed</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <Clock className="w-8 h-8 text-warning mb-2" />
+            <p className="text-2xl font-bold text-foreground">{monthScore.pending}</p>
+            <p className="text-xs text-muted-foreground">Pending</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6 flex flex-col items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-destructive mb-2" />
+            <p className="text-2xl font-bold text-foreground">{monthScore.overdue}</p>
+            <p className="text-xs text-muted-foreground">Overdue</p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Calendar */}
@@ -154,15 +257,12 @@ const ComplianceCalendar = () => {
             ))}
             {calendarDays.map((day, i) => {
               const dots = day ? getDotsForDay(day) : [];
-              const isToday =
-                day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+              const isToday = day === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
               return (
                 <div
                   key={i}
                   className={`min-h-[60px] p-1 border border-border/50 rounded-md ${day ? "cursor-pointer hover:bg-accent/50" : ""} ${isToday ? "bg-accent" : ""}`}
-                  onClick={() => {
-                    if (dots.length > 0) setSelectedDeadline(dots[0]);
-                  }}
+                  onClick={() => { if (dots.length > 0) setSelectedDeadline(dots[0]); }}
                 >
                   {day && (
                     <>
@@ -192,6 +292,10 @@ const ComplianceCalendar = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
+                  <p className="text-muted-foreground">Regulator</p>
+                  <p className="font-medium">{selectedDeadline.regulator}</p>
+                </div>
+                <div>
                   <p className="text-muted-foreground">Deadline</p>
                   <p className="font-medium">{selectedDeadline.deadline.toLocaleDateString("en-NG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
                 </div>
@@ -207,7 +311,7 @@ const ComplianceCalendar = () => {
               {selectedDeadline.status !== "ready" && (
                 <Button asChild className="w-full">
                   <Link to={`/dashboard/new-report?type=${encodeURIComponent(selectedDeadline.reportType)}`}>
-                    <FilePlus className="mr-2 h-4 w-4" />Generate Report
+                    <FilePlus className="mr-2 h-4 w-4" />Generate Now
                   </Link>
                 </Button>
               )}
@@ -223,16 +327,16 @@ const ComplianceCalendar = () => {
         </CardHeader>
         <CardContent>
           {upcoming90.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No upcoming deadlines for your assigned report types.</p>
+            <p className="text-sm text-muted-foreground text-center py-8">No upcoming deadlines.</p>
           ) : (
             <div className="space-y-2">
-              {upcoming90.slice(0, 20).map((d, i) => (
+              {upcoming90.slice(0, 25).map((d, i) => (
                 <div key={i} className="flex items-center justify-between py-3 px-4 rounded-lg border border-border/50 hover:bg-accent/30 transition-colors">
                   <div className="flex items-center gap-3">
                     <div className={`w-2.5 h-2.5 rounded-full ${dotColor(d.status)}`} />
                     <div>
                       <p className="text-sm font-medium text-foreground">{d.reportType}</p>
-                      <p className="text-xs text-muted-foreground">{d.deadline.toLocaleDateString("en-NG", { year: "numeric", month: "short", day: "numeric" })}</p>
+                      <p className="text-xs text-muted-foreground">{d.regulator} · {d.deadline.toLocaleDateString("en-NG", { year: "numeric", month: "short", day: "numeric" })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
