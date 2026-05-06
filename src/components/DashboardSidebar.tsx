@@ -1,4 +1,4 @@
-import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, Mail } from "lucide-react";
+import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, Mail, GraduationCap } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -153,6 +153,25 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter style={{ background: "#FAFAFA", borderRight: "1px solid rgba(0,0,0,0.07)", borderTop: "1px solid rgba(0,0,0,0.07)" }}>
+        {/* Tutorial link */}
+        <NavLink
+          to="/dashboard/tutorial"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "9px 14px",
+            textDecoration: "none",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
+          }}
+          className="hover:!bg-[rgba(0,0,0,0.04)]"
+          activeClassName=""
+        >
+          <GraduationCap size={16} strokeWidth={1.5} style={{ color: "#0066CC" }} />
+          {!collapsed && (
+            <span style={{ fontSize: 13, fontWeight: 500, color: "#0066CC" }}>How to Use RegCo</span>
+          )}
+        </NavLink>
         <div style={{ padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
           <div
             className="flex items-center justify-center shrink-0"
