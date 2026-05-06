@@ -2,6 +2,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { HelpPanel } from "@/components/HelpPanel";
 import { useEffect, useState } from "react";
+import { WelcomeTutorialModal } from "@/components/WelcomeTutorialModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
@@ -66,6 +67,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
       </div>
       <HelpPanel />
+      <WelcomeTutorialModal />
     </SidebarProvider>
   );
 }
