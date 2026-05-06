@@ -1,4 +1,4 @@
-import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, Mail } from "lucide-react";
+import { Home, FileText, FilePlus, Settings, LogOut, Database, CalendarDays, Mail, GraduationCap } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
