@@ -236,6 +236,7 @@ export type Database = {
           notification_email_report_ready: boolean
           phone: string | null
           rc_number: string | null
+          tutorial_completed: boolean
         }
         Insert: {
           account_status?: string
@@ -248,6 +249,7 @@ export type Database = {
           notification_email_report_ready?: boolean
           phone?: string | null
           rc_number?: string | null
+          tutorial_completed?: boolean
         }
         Update: {
           account_status?: string
@@ -260,6 +262,7 @@ export type Database = {
           notification_email_report_ready?: boolean
           phone?: string | null
           rc_number?: string | null
+          tutorial_completed?: boolean
         }
         Relationships: []
       }
