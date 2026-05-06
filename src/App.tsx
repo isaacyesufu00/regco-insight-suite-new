@@ -76,6 +76,7 @@ const App = () => (
               <Route path="calendar" element={<ComplianceCalendar />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="support" element={<SupportTickets />} />
+              <Route path="tutorial" element={<DashboardTutorial />} />
             </Route>
             <Route
               path="/admin"
