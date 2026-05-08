@@ -1,0 +1,94 @@
+CRITICAL DATABASE FIX — Missing Columns in Reports Table
+The edge function process-report is failing with this exact error:
+"Could not find the 'generated_at' column of 'reports' in the schema cache"
+This means the reports table in Supabase is missing columns that the edge function is trying to write to. The report is being generated correctly — the only thing failing is saving it to the database. Fix this completely.
+Step 1 — Add ALL missing columns to the reports table
+Create a new migration file at supabase/migrations/[timestamp]_add_missing_report_columns.sql with this exact content:
+sql-- Add all columns that process-report edge function writes to
+-- Using IF NOT EXISTS so this is safe to run even if some columns already exist
+
+ALTER TABLE reports
+  ADD COLUMN IF NOT EXISTS generated_at        TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS report_url          TEXT,
+  ADD COLUMN IF NOT EXISTS report_filename     TEXT,
+  ADD COLUMN IF NOT EXISTS validation_passed   BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS car_percentage      NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS liquidity_percentage NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS npl_ratio           NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS error_message       TEXT,
+  ADD COLUMN IF NOT EXISTS error_type          TEXT,
+  ADD COLUMN IF NOT EXISTS file_url            TEXT,
+  ADD COLUMN IF NOT EXISTS regulator           TEXT;
+
+-- Refresh Supabase schema cache so it recognises the new columns immediately
+NOTIFY pgrst, 'reload schema';
+Step 2 — Fix the edge function update statement
+In supabase/functions/process-report/index.ts, find the section that updates the report status to ready. Replace it with this exact block — only update columns that are confirmed to exist:
+typescriptconst { error: updateError } = await supabaseAdmin
+  .from('reports')
+  .update({
+    status: 'ready',
+    report_url: publicUrl,
+    report_filename: fileName,
+    file_url: publicUrl,
+    generated_at: new Date().toISOString(),
+    validation_passed: true,
+    car_percentage: carPercent ?? null,
+    liquidity_percentage: liquidityPercent ?? null,
+    npl_ratio: nplRatio ?? null,
+    error_message: null,
+    error_type: null,
+  })
+  .eq('id', reportId);
+
+if (updateError) {
+  console.error('Status update failed:', updateError);
+  throw new Error(
+    `Report generated but status update failed: ${updateError.message}`
+  );
+}
+Step 3 — Also fix the error handler
+Find the catch block where the function sets status to failed. Make sure it also only writes to columns that exist:
+typescriptawait supabaseAdmin
+  .from('reports')
+  .update({
+    status: 'failed',
+    error_message: error.message,
+    error_type: 'processing_error',
+    validation_passed: false,
+    generated_at: new Date().toISOString(),
+  })
+  .eq('id', reportId);
+Step 4 — Verify the reports table has RLS policies
+Add to the same migration file:
+sql-- Ensure RLS is enabled
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+
+-- Users can read their own reports
+CREATE POLICY IF NOT EXISTS "users_read_own_reports"
+  ON reports FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Users can insert their own reports
+CREATE POLICY IF NOT EXISTS "users_insert_own_reports"
+  ON reports FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Service role can update any report (edge function uses service role)
+CREATE POLICY IF NOT EXISTS "service_role_update_reports"
+  ON reports FOR UPDATE
+  USING (true);
+Step 5 — Push the migration and redeploy
+Run these commands in the Shell:
+bashsupabase db push
+supabase functions deploy process-report
+Step 6 — Refresh the schema cache manually if the error persists
+If after pushing you still see schema cache errors, run this in the Supabase SQL editor (go to supabase.com → your project → SQL Editor):
+sqlNOTIFY pgrst, 'reload schema';
+Step 7 — Confirm the fix
+Show me the current columns in the reports table by running:
+sqlSELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'reports'
+ORDER BY ordinal_position;
+Paste the output so I can confirm all required columns are present.
