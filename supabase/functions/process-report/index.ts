@@ -475,6 +475,10 @@ interface Meta {
   compliance_lead_name: string;
   reporting_period_start: string;
   reporting_period_end: string;
+  rc_number?: string;
+  address?: string;
+  state_of_operation?: string;
+  reporting_period?: string;
 }
 
 function buildMFBReport(financialData: Record<string, number>, vs: any, meta: Meta): string {
@@ -482,127 +486,116 @@ function buildMFBReport(financialData: Record<string, number>, vs: any, meta: Me
   const liq = Number(vs.liquidity_percentage || 0);
   const npl = Number(vs.npl_ratio || 0);
   const now = new Date().toLocaleDateString('en-NG', { year: 'numeric', month: 'long', day: 'numeric' });
-  const carStatus = car >= 10 ? 'COMPLIANT' : 'NON-COMPLIANT (min: 10%)';
-  const liqStatus = liq >= 20 ? 'COMPLIANT' : 'NON-COMPLIANT (min: 20%)';
+  const carStatus = car >= 10 ? 'COMPLIANT' : 'NON-COMPLIANT';
+  const liqStatus = liq >= 20 ? 'COMPLIANT' : 'NON-COMPLIANT';
+  const nplStatus = npl <= 5 ? 'COMPLIANT' : 'NON-COMPLIANT';
   const sep = '='.repeat(80);
-  const line = '-'.repeat(80);
+  const line = '-'.repeat(55);
+  const d = financialData;
+  const period = meta.reporting_period || `${meta.reporting_period_start} to ${meta.reporting_period_end}`;
+
+  const fmt = (v: number) => Math.round((v || 0) / 1000).toLocaleString('en-NG');
+  const totalLiabAndEquity = (d.total_liabilities || 0) + (d.total_shareholders_funds || 0);
+  const totalQualifyingCapital = (d.tier_1_capital || 0) + (d.tier_2_capital || 0);
+  const netLoans = (d.gross_loans || 0) - (d.loan_loss_provisions || 0);
 
   return `${sep}
-                     CENTRAL BANK OF NIGERIA (CBN)
-               MICROFINANCE BANK REGULATORY RETURN
+                        CENTRAL BANK OF NIGERIA
+                  MICROFINANCE BANK REGULATORY RETURN
+                       MONTHLY REPORT — ${period}
 ${sep}
 
-COVER PAGE
+SECTION A: INSTITUTION IDENTIFICATION
+======================================
+1. Name of Institution:          ${meta.institution_name}
+2. CBN License Number:           ${meta.cbn_license_number}
+3. License Category:             ${meta.cbn_license_category}
+4. RC Number:                    ${meta.rc_number || '—'}
+5. Head Office Address:          ${meta.address || '—'}
+6. State of Operation:           ${meta.state_of_operation || '—'}
+7. Reporting Date:               ${period}
+
+SECTION B: BALANCE SHEET
+=========================
+ASSETS                                         ₦'000
 ${line}
-Institution Name    : ${meta.institution_name}
-CBN License Number  : ${meta.cbn_license_number}
-License Category    : ${meta.cbn_license_category}
-Compliance Lead     : ${meta.compliance_lead_name}
-Reporting Period    : ${meta.reporting_period_start} to ${meta.reporting_period_end}
-Date Generated      : ${now}
-Reference           : CBN MFB RETURN / ${meta.reporting_period_end}
-
-${sep}
-SECTION A — BALANCE SHEET
-${sep}
-
-ASSETS
-  Cash and Cash Equivalents          : ${formatNaira(financialData.cash_and_equivalents || 0)}
-  Balances with CBN                  : ${formatNaira(financialData.balances_with_cbn || 0)}
-  Investment Securities              : ${formatNaira(financialData.investment_securities || 0)}
-  Gross Loans and Advances           : ${formatNaira(financialData.gross_loans || 0)}
-  Fixed Assets                       : ${formatNaira(financialData.fixed_assets || 0)}
-                                       ${line.slice(0, 40)}
-  TOTAL ASSETS                       : ${formatNaira(financialData.total_assets || 0)}
+B1.  Cash and Cash Equivalents:                ${fmt(d.cash_and_equivalents)}
+B2.  Balances with CBN:                        ${fmt(d.balances_with_cbn)}
+B3.  Balances with Other Banks:                ${fmt(d.balances_with_other_banks)}
+B4.  Investment Securities:                    ${fmt(d.investment_securities)}
+B5.  Gross Loans and Advances:                 ${fmt(d.gross_loans)}
+B6.  Fixed Assets (Net):                       ${fmt(d.fixed_assets)}
+B7.  Other Assets:                             ${fmt(d.other_assets)}
+     Less: Loan Loss Provisions:               (${fmt(d.loan_loss_provisions)})
+${line}
+TOTAL ASSETS (NET):                            ${fmt(d.total_assets)}
 
 LIABILITIES
-  Total Deposits                     : ${formatNaira(financialData.total_deposits || 0)}
-  Other Liabilities                  : ${formatNaira(Math.max(0, (financialData.total_liabilities || 0) - (financialData.total_deposits || 0)))}
-                                       ${line.slice(0, 40)}
-  TOTAL LIABILITIES                  : ${formatNaira(financialData.total_liabilities || 0)}
+${line}
+B8.  Savings Deposits:                         ${fmt(d.savings_deposits)}
+B9.  Current and Demand Deposits:              ${fmt(d.demand_deposits)}
+B10. Fixed and Time Deposits:                  ${fmt(d.time_deposits)}
+B11. Other Special Deposits:                   ${fmt(d.other_deposits)}
+B12. CBN Refinancing/Borrowings:               ${fmt(d.cbn_refinancing)}
+B13. Other Liabilities:                        ${fmt(d.other_liabilities)}
+${line}
+TOTAL LIABILITIES:                             ${fmt(d.total_liabilities)}
 
 SHAREHOLDERS' FUNDS
-  Paid-up Capital                    : ${formatNaira(financialData.paid_up_capital || 0)}
-  Retained Earnings                  : ${formatNaira(financialData.retained_earnings || 0)}
-                                       ${line.slice(0, 40)}
-  TOTAL SHAREHOLDERS' FUNDS          : ${formatNaira(financialData.total_shareholders_funds || 0)}
+${line}
+B14. Shareholders' Funds (Capital & Reserves): ${fmt(d.total_shareholders_funds)}
+${line}
+TOTAL LIABILITIES AND EQUITY:                  ${fmt(totalLiabAndEquity)}
 
-  TOTAL LIABILITIES & EQUITY         : ${formatNaira((financialData.total_liabilities || 0) + (financialData.total_shareholders_funds || 0))}
+SECTION C: CAPITAL ADEQUACY
+============================
+C1.  Tier 1 Capital (₦'000):                  ${fmt(d.tier_1_capital)}
+C2.  Tier 2 Capital (₦'000):                  ${fmt(d.tier_2_capital)}
+C3.  Total Qualifying Capital (₦'000):         ${fmt(totalQualifyingCapital)}
+C4.  Total Risk Weighted Assets (₦'000):       ${fmt(d.risk_weighted_assets)}
+C5.  Capital Adequacy Ratio (CAR):             ${car.toFixed(2)}%
+     CBN Minimum Requirement:                  10%
+     Status:                                   ${carStatus}
 
-${sep}
-SECTION B — LOANS AND ADVANCES
-${sep}
+SECTION D: LIQUIDITY
+=====================
+D1.  Liquidity Ratio:                          ${liq.toFixed(2)}%
+     CBN Minimum Requirement:                  20%
+     Status:                                   ${liqStatus}
 
-  Gross Loans                        : ${formatNaira(financialData.gross_loans || 0)}
-  Performing Loans                   : ${formatNaira(financialData.performing_loans || 0)}
-  Non-Performing Loans (NPL)         : ${formatNaira(financialData.non_performing_loans || 0)}
-  Loan Loss Provisions               : ${formatNaira(financialData.loan_loss_provisions || 0)}
-                                       ${line.slice(0, 40)}
-  Net Loans                          : ${formatNaira((financialData.gross_loans || 0) - (financialData.loan_loss_provisions || 0))}
-  NPL Ratio                          : ${npl.toFixed(2)}%
+SECTION E: DEPOSIT ANALYSIS
+============================
+E1.  Total Customer Deposits (₦'000):          ${fmt(d.total_deposits)}
+E2.  Savings Deposits:                         ${fmt(d.savings_deposits)}
+E3.  Current and Demand Deposits:              ${fmt(d.demand_deposits)}
+E4.  Fixed/Time Deposits:                      ${fmt(d.time_deposits)}
+E5.  Other Special Deposits:                   ${fmt(d.other_deposits)}
 
-${sep}
-SECTION C — DEPOSITS
-${sep}
+SECTION F: LOAN PORTFOLIO
+==========================
+F1.  Gross Loans and Advances (₦'000):         ${fmt(d.gross_loans)}
+F2.  Loan Loss Provisions (₦'000):             ${fmt(d.loan_loss_provisions)}
+F3.  Net Loans and Advances (₦'000):           ${fmt(netLoans)}
+F4.  NPL Ratio:                                ${npl.toFixed(2)}%
+     CBN Maximum Threshold:                    5%
+     Status:                                   ${nplStatus}
 
-  Savings Deposits                   : ${formatNaira(financialData.savings_deposits || 0)}
-  Demand Deposits                    : ${formatNaira(financialData.demand_deposits || 0)}
-  Time Deposits                      : ${formatNaira(financialData.time_deposits || 0)}
-                                       ${line.slice(0, 40)}
-  TOTAL DEPOSITS                     : ${formatNaira(financialData.total_deposits || 0)}
+SECTION G: CERTIFICATION
+=========================
+I certify that the information provided in this return is true, accurate and complete
+to the best of my knowledge and in accordance with the CBN guidelines for Microfinance
+Banks as contained in the Revised Regulatory and Supervisory Guidelines for MFBs in
+Nigeria (2012) and subsequent circulars.
 
-${sep}
-SECTION D — CAPITAL ADEQUACY
-${sep}
+Name of Authorized Signatory: _______________________________
+Designation:                   _______________________________
+Date:                          _______________________________
+Signature:                     _______________________________
 
-  Tier 1 Capital                     : ${formatNaira(financialData.tier_1_capital || 0)}
-  Tier 2 Capital                     : ${formatNaira(financialData.tier_2_capital || 0)}
-                                       ${line.slice(0, 40)}
-  Total Regulatory Capital           : ${formatNaira((financialData.tier_1_capital || 0) + (financialData.tier_2_capital || 0))}
-  Risk Weighted Assets               : ${formatNaira(financialData.risk_weighted_assets || 0)}
-  Capital Adequacy Ratio (CAR)       : ${car.toFixed(2)}%
-  CBN Minimum Requirement            : 10.00%
-  Compliance Status                  : ${carStatus}
-
-${sep}
-SECTION E — LIQUIDITY
-${sep}
-
-  Liquid Assets                      : ${formatNaira(financialData.liquid_assets || 0)}
-  Total Deposits                     : ${formatNaira(financialData.total_deposits || 0)}
-  Liquidity Ratio                    : ${liq.toFixed(2)}%
-  CBN Minimum Requirement            : 20.00%
-  Compliance Status                  : ${liqStatus}
-
-${sep}
-SECTION F — KEY PERFORMANCE INDICATORS
-${sep}
-
-  Capital Adequacy Ratio             : ${car.toFixed(2)}% (${carStatus})
-  Liquidity Ratio                    : ${liq.toFixed(2)}% (${liqStatus})
-  Non-Performing Loan Ratio          : ${npl.toFixed(2)}%
-  Total Assets                       : ${formatNaira(financialData.total_assets || 0)}
-  Total Deposits                     : ${formatNaira(financialData.total_deposits || 0)}
-  Gross Loan Portfolio               : ${formatNaira(financialData.gross_loans || 0)}
-
-${sep}
-SECTION G — CERTIFICATION
-${sep}
-
-I, ${meta.compliance_lead_name}, hereby certify that the information contained
-in this Regulatory Return is true and accurate to the best of my knowledge and
-belief, and has been prepared in accordance with the guidelines issued by the
-Central Bank of Nigeria.
-
-Signed: ____________________________    Date: ___________________
-Name  : ${meta.compliance_lead_name}
-Title : Chief Compliance Officer
-Institution: ${meta.institution_name}
-
-${sep}
-                    END OF MFB REGULATORY RETURN
 ${sep}
 Generated by RegCo Compliance Suite | Report Date: ${now}
+Compliance Lead: ${meta.compliance_lead_name}
+${sep}
 `;
 }
 
@@ -844,6 +837,10 @@ Deno.serve(async (req: Request) => {
     let institutionNameParsed = institution_name;
     let licenseNumberParsed = cbn_license_number;
     let licenseCategoryParsed = cbn_license_category;
+    let rcNumberParsed = '';
+    let addressParsed = '';
+    let stateFieldParsed = '';
+    let reportingPeriodParsed = '';
 
     if (hasRegCoTemplate) {
       // ── Sheet 1: Institution Details ──────────────────────────
@@ -855,10 +852,15 @@ Deno.serve(async (req: Request) => {
       institutionNameParsed = instData['INSTITUTION NAME'] || institution_name;
       licenseCategoryParsed = instData['LICENSE CATEGORY'] || cbn_license_category;
       licenseNumberParsed = instData['LICENSE NUMBER'] || cbn_license_number;
-      const rcNumber = instData['RC NUMBER'] || '';
-      const reportingPeriod = instData['REPORTING PERIOD'] || `${reporting_period_start} to ${reporting_period_end}`;
-      const stateField = instData['STATE'] || '';
-      const address = instData['HEAD OFFICE ADDRESS'] || '';
+      rcNumberParsed = instData['RC NUMBER'] || '';
+      reportingPeriodParsed = instData['REPORTING PERIOD'] || `${reporting_period_start} to ${reporting_period_end}`;
+      stateFieldParsed = instData['STATE'] || '';
+      addressParsed = instData['HEAD OFFICE ADDRESS'] || '';
+      // local aliases for use within this block
+      const rcNumber = rcNumberParsed;
+      const reportingPeriod = reportingPeriodParsed;
+      const stateField = stateFieldParsed;
+      const address = addressParsed;
 
       // ── Sheet 2: GL Summary ───────────────────────────────────
       const glRows = XLSX.utils.sheet_to_json(glSheet, { header: 1 }) as any[][];
@@ -998,6 +1000,8 @@ Deno.serve(async (req: Request) => {
         tier_2_capital: tier2Capital,
         risk_weighted_assets: rwa,
         liquid_assets: cashAndEquivalents + cbnBalance + interbankBalance + investments,
+        cbn_refinancing: borrowings,
+        other_liabilities: otherLiabilities,
       };
 
       dataPayload = `
@@ -1224,6 +1228,10 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
       compliance_lead_name,
       reporting_period_start,
       reporting_period_end,
+      rc_number: rcNumberParsed,
+      address: addressParsed,
+      state_of_operation: stateFieldParsed,
+      reporting_period: reportingPeriodParsed,
     };
 
     const reportText = buildReportText(reportType, financialData, validationSummary, meta);
