@@ -18,17 +18,20 @@ const CORS_HEADERS = {
 // ─── SYSTEM PROMPTS PER REPORT TYPE ───────────────────────────────────────────
 
 const MFB_PROMPT = `You are a Nigerian banking regulatory compliance engine specialising in CBN MFB Regulatory Returns.
-Validate the CBS financial data provided. Run these checks:
-1. Total Assets must equal Total Liabilities plus Shareholders Funds
-2. Gross Loans must equal Performing Loans plus Non-Performing Loans
-3. Total Deposits must equal Savings plus Demand plus Time plus Other Deposits
-4. CAR = (Tier 1 + Tier 2) / Risk Weighted Assets * 100 (flag if below 10%)
-5. Liquidity Ratio = Liquid Assets / Total Deposits * 100 (flag if below 20%)
-6. NPL Ratio = Non-Performing Loans / Gross Loans * 100
 
-If any critical check fails return ONLY: {"status":"ERROR","error_type":"VALIDATION_FAILED","description":"plain english explanation","action_required":"exactly what to fix","figures_involved":"the specific figures","difference":"exact naira discrepancy"}
+You will receive pre-parsed financial data from a RegCo CBS template. Validate the data and return ONLY valid JSON — no markdown, no backticks, no text outside the JSON.
 
-If all checks pass return ONLY: {"status":"SUCCESS","validation_summary":{"car_percentage":12.5,"liquidity_percentage":35.2,"npl_ratio":4.1,"loan_to_deposit_ratio":65.0},"approved":true}
+Validation checks:
+1. Total Assets (Net) = Total Liabilities + Shareholders Funds (tolerance: 0.1%)
+2. CAR = (Tier 1 + Tier 2) / Risk Weighted Assets * 100 — flag if below 10%
+3. Liquidity Ratio — flag if below 20%
+4. NPL Ratio = Provisions / Gross Loans * 100 — flag if above 5%
+
+If any critical check fails return ONLY:
+{"status":"ERROR","error_type":"VALIDATION_FAILED","description":"plain english explanation","action_required":"exactly what to fix","figures_involved":"the specific figures","difference":"exact naira discrepancy"}
+
+If all checks pass return ONLY:
+{"status":"SUCCESS","validation_summary":{"car_percentage":0,"liquidity_percentage":0,"npl_ratio":0,"loan_to_deposit_ratio":0},"approved":true}
 
 Return ONLY valid JSON. No markdown. No backticks.`;
 
@@ -421,8 +424,8 @@ function deriveAndValidate(d: Record<string, number>): {
   };
 }
 
-async function patchReport(reportId: string, data: Record<string, any>, serviceRoleKey: string) {
-  await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${reportId}`, {
+async function patchReport(reportId: string, data: Record<string, any>, serviceRoleKey: string): Promise<string | null> {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${reportId}`, {
     method: 'PATCH',
     headers: {
       apikey: serviceRoleKey,
@@ -432,6 +435,11 @@ async function patchReport(reportId: string, data: Record<string, any>, serviceR
     },
     body: JSON.stringify(data),
   });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => 'unknown');
+    return `DB patch failed (${res.status}): ${errText}`;
+  }
+  return null;
 }
 
 async function sendEmail(to: string, subject: string, html: string, resendKey: string) {
@@ -817,40 +825,266 @@ Deno.serve(async (req: Request) => {
     const arrayBuffer = await fileResponse.arrayBuffer();
 
     const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
-    const rawData = parseCBSWorkbook(workbook);
 
-    if (Object.keys(rawData).length === 0) {
-      throw new Error(
-        'We could not identify any recognized account labels in your CBS export. ' +
-        'Please ensure the file contains the trial balance, general ledger, or summary balance sheet from your core banking system.'
-      );
+    // ============================================================
+    // SHEET PARSER — RegCo CBS Template
+    // Handles: Institution Details, GL Summary, RegCo Upload Format
+    // Falls back to generic fuzzy parser for non-template uploads
+    // ============================================================
+    const norm = (s: string) => String(s ?? '').toUpperCase().trim();
+
+    const institutionSheet = workbook.Sheets['Institution Details'];
+    const glSheet = workbook.Sheets['GL Summary'];
+    const uploadSheet = workbook.Sheets['RegCo Upload Format'];
+    const hasRegCoTemplate = !!(institutionSheet && glSheet && uploadSheet);
+
+    let financialData: Record<string, number>;
+    let metrics: { car_percentage: number; liquidity_percentage: number; npl_ratio: number; loan_to_deposit_ratio: number };
+    let dataPayload: string;
+    let institutionNameParsed = institution_name;
+    let licenseNumberParsed = cbn_license_number;
+    let licenseCategoryParsed = cbn_license_category;
+
+    if (hasRegCoTemplate) {
+      // ── Sheet 1: Institution Details ──────────────────────────
+      const institutionRows = XLSX.utils.sheet_to_json(institutionSheet, { header: 1 }) as any[][];
+      const instData: Record<string, string> = {};
+      for (const row of institutionRows) {
+        if (row[0] && row[1]) instData[norm(String(row[0]))] = String(row[1]).trim();
+      }
+      institutionNameParsed = instData['INSTITUTION NAME'] || institution_name;
+      licenseCategoryParsed = instData['LICENSE CATEGORY'] || cbn_license_category;
+      licenseNumberParsed = instData['LICENSE NUMBER'] || cbn_license_number;
+      const rcNumber = instData['RC NUMBER'] || '';
+      const reportingPeriod = instData['REPORTING PERIOD'] || `${reporting_period_start} to ${reporting_period_end}`;
+      const stateField = instData['STATE'] || '';
+      const address = instData['HEAD OFFICE ADDRESS'] || '';
+
+      // ── Sheet 2: GL Summary ───────────────────────────────────
+      const glRows = XLSX.utils.sheet_to_json(glSheet, { header: 1 }) as any[][];
+      const glData: Record<string, { debit: number; credit: number }> = {};
+      let glTotalDebit = 0, glTotalCredit = 0;
+      for (const row of glRows) {
+        const label = norm(String(row[0] ?? ''));
+        const debit = Number(row[1]) || 0;
+        const credit = Number(row[2]) || 0;
+        if (label === 'TOTAL') { glTotalDebit = debit; glTotalCredit = credit; }
+        else if (label) glData[label] = { debit, credit };
+      }
+
+      const glFind = (keys: string[]) => {
+        for (const k of keys) {
+          if (glData[k]) return glData[k];
+          const match = Object.keys(glData).find(l => l.includes(k));
+          if (match) return glData[match];
+        }
+        return { debit: 0, credit: 0 };
+      };
+
+      const cashAndEquivalents  = glFind(['CASH AND CASH EQUIVALENTS', 'CASH']).debit;
+      const cbnBalance          = glFind(['BALANCES WITH CENTRAL BANK OF NIGERIA', 'CBN BALANCE']).debit;
+      const interbankBalance    = glFind(['BALANCES WITH OTHER BANKS', 'INTERBANK']).debit;
+      const investments         = glFind(['INVESTMENT SECURITIES', 'INVESTMENTS']).debit;
+      const grossLoans          = glFind(['GROSS LOANS AND ADVANCES', 'GROSS LOANS', 'LOANS AND ADVANCES']).debit;
+      const fixedAssets         = glFind(['FIXED ASSETS (NET)', 'FIXED ASSETS']).debit;
+      const otherAssets         = glFind(['OTHER ASSETS']).debit;
+      const provisionsFromGL    = glFind(['LOAN LOSS PROVISIONS (CONTRA-ASSET)', 'LOAN LOSS PROVISIONS', 'PROVISIONS', 'CONTRA']).credit;
+      const savingsDeposits     = glFind(['SAVINGS DEPOSITS', 'SAVINGS']).credit;
+      const currentDeposits     = glFind(['CURRENT AND DEMAND DEPOSITS', 'CURRENT DEPOSITS']).credit;
+      const fixedDeposits       = glFind(['FIXED AND TIME DEPOSITS', 'TERM DEPOSITS', 'FIXED DEPOSITS']).credit;
+      const specialDeposits     = glFind(['OTHER SPECIAL DEPOSITS', 'SPECIAL DEPOSITS']).credit;
+      const borrowings          = glFind(['CBN REFINANCING/BORROWINGS', 'BORROWINGS', 'CBN REFINANCING']).credit;
+      const otherLiabilities    = glFind(['OTHER LIABILITIES']).credit;
+
+      if (Math.abs(glTotalDebit - glTotalCredit) > 1000) {
+        console.warn(`GL does not self-balance. Debit: ${glTotalDebit}, Credit: ${glTotalCredit}`);
+      }
+
+      // ── Sheet 3: RegCo Upload Format ──────────────────────────
+      // IMPORTANT: "TOTAL ASSETS (GROSS)" and "TOTAL ASSETS (NET)" are DISTINCT fields.
+      const uploadRows = XLSX.utils.sheet_to_json(uploadSheet, { header: 1 }) as any[][];
+      const uploadData: Record<string, number> = {};
+      for (const row of uploadRows) {
+        const label = norm(String(row[0] ?? ''));
+        const amount = Number(String(row[1] ?? '').replace(/,/g, '')) || 0;
+        if (label && amount) uploadData[label] = amount;
+      }
+
+      const uploadFind = (keys: string[]) => {
+        for (const k of keys) {
+          if (uploadData[k] !== undefined) return uploadData[k];
+          const match = Object.keys(uploadData).find(l => l.includes(k));
+          if (match) return uploadData[match];
+        }
+        return 0;
+      };
+
+      const totalAssetsGross        = uploadFind(['TOTAL ASSETS (GROSS)', 'GROSS ASSETS', 'TOTAL ASSETS GROSS']);
+      const provisionsAmount        = uploadFind(['LESS: PROVISIONS', 'LOAN LOSS PROVISION', 'PROVISIONS']) || provisionsFromGL;
+      const totalAssetsNet          = uploadFind(['TOTAL ASSETS (NET)', 'NET ASSETS', 'TOTAL ASSETS NET'])
+                                       || (totalAssetsGross - provisionsAmount);
+      const totalDeposits           = uploadFind(['TOTAL CUSTOMER DEPOSITS', 'CUSTOMER DEPOSITS', 'TOTAL DEPOSITS']);
+      const totalLiabilities        = uploadFind(['TOTAL LIABILITIES']);
+      const shareholdersFunds       = uploadFind(['SHAREHOLDERS FUNDS', "SHAREHOLDERS' FUNDS", 'EQUITY']);
+      const totalLiabilitiesAndEquity = uploadFind(['TOTAL LIABILITIES AND EQUITY', 'TOTAL LIABILITIES + EQUITY', 'LIABILITIES AND EQUITY']);
+      const tier1Capital            = uploadFind(['TIER 1 CAPITAL']);
+      const tier2Capital            = uploadFind(['TIER 2 CAPITAL']);
+      const totalCapital            = uploadFind(['TOTAL QUALIFYING CAPITAL', 'QUALIFYING CAPITAL']);
+      const rwa                     = uploadFind(['RISK WEIGHTED ASSETS (RWA)', 'RISK WEIGHTED ASSETS', 'RWA']);
+      const carPercent              = uploadFind(['CAPITAL ADEQUACY RATIO (%)', 'CAPITAL ADEQUACY RATIO', 'CAR']);
+      const liquidityPercent        = uploadFind(['LIQUIDITY RATIO (%)', 'LIQUIDITY RATIO']);
+
+      // Guard: TOTAL LIABILITIES must NOT equal TOTAL LIABILITIES AND EQUITY (wrong fuzzy match)
+      const safeTotalLiabilities = (totalLiabilities === totalLiabilitiesAndEquity)
+        ? totalLiabilitiesAndEquity - shareholdersFunds
+        : totalLiabilities;
+
+      // ── Balance Sheet Validation ──────────────────────────────
+      // CORRECT: Total Assets (Net) = Total Liabilities + Equity (NOT Gross)
+      const bsRHS = totalLiabilitiesAndEquity || (safeTotalLiabilities + shareholdersFunds);
+      const difference = Math.abs(totalAssetsNet - bsRHS);
+      const tolerance = totalAssetsNet * 0.001; // 0.1% — handles CBS rounding
+
+      if (totalAssetsNet > 0 && bsRHS > 0 && difference > tolerance) {
+        const errMsg =
+          `Balance sheet does not reconcile. ` +
+          `Net Assets (₦${totalAssetsNet.toLocaleString('en-NG')}) ≠ ` +
+          `Total Liabilities + Equity (₦${bsRHS.toLocaleString('en-NG')}). ` +
+          `Difference: ₦${difference.toLocaleString('en-NG')}. ` +
+          `Please check your RegCo Upload Format sheet. ` +
+          `Note: Use Total Assets (Net), not Gross, in your upload file.`;
+        await patchReport(report_id, {
+          status: 'failed',
+          error_message: errMsg,
+          error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
+        }, serviceRoleKey);
+        return new Response(JSON.stringify({ success: true, status: 'ERROR', error: errMsg }), {
+          status: 200,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      const carCalc = carPercent || (rwa > 0 ? ((tier1Capital + tier2Capital) / rwa) * 100 : 0);
+      const liqCalc = liquidityPercent || (totalDeposits > 0
+        ? ((cashAndEquivalents + cbnBalance + interbankBalance + investments) / totalDeposits) * 100
+        : 0);
+      const nplCalc = grossLoans > 0 ? (provisionsAmount / grossLoans) * 100 : 0;
+
+      metrics = {
+        car_percentage: carCalc,
+        liquidity_percentage: liqCalc,
+        npl_ratio: nplCalc,
+        loan_to_deposit_ratio: totalDeposits > 0 ? (grossLoans / totalDeposits) * 100 : 0,
+      };
+
+      financialData = {
+        cash_and_equivalents: cashAndEquivalents,
+        balances_with_cbn: cbnBalance,
+        balances_with_other_banks: interbankBalance,
+        investment_securities: investments,
+        gross_loans: grossLoans,
+        fixed_assets: fixedAssets,
+        other_assets: otherAssets,
+        loan_loss_provisions: provisionsAmount,
+        savings_deposits: savingsDeposits,
+        demand_deposits: currentDeposits,
+        time_deposits: fixedDeposits,
+        other_deposits: specialDeposits,
+        total_deposits: totalDeposits,
+        total_liabilities: safeTotalLiabilities,
+        total_shareholders_funds: shareholdersFunds,
+        total_assets: totalAssetsNet,
+        tier_1_capital: tier1Capital,
+        tier_2_capital: tier2Capital,
+        risk_weighted_assets: rwa,
+        liquid_assets: cashAndEquivalents + cbnBalance + interbankBalance + investments,
+      };
+
+      dataPayload = `
+INSTITUTION DETAILS
+===================
+Institution Name: ${institutionNameParsed}
+License Number: ${licenseNumberParsed}
+License Category: ${licenseCategoryParsed}
+RC Number: ${rcNumber}
+Reporting Period: ${reportingPeriod}
+State: ${stateField}
+Head Office Address: ${address}
+
+BALANCE SHEET SUMMARY (CBN-FORMAT)
+===================================
+Total Assets (Gross): ₦${totalAssetsGross.toLocaleString('en-NG')}
+Less: Loan Loss Provisions: ₦${provisionsAmount.toLocaleString('en-NG')}
+Total Assets (Net): ₦${totalAssetsNet.toLocaleString('en-NG')}
+Total Customer Deposits: ₦${totalDeposits.toLocaleString('en-NG')}
+Total Liabilities: ₦${safeTotalLiabilities.toLocaleString('en-NG')}
+Shareholders Funds: ₦${shareholdersFunds.toLocaleString('en-NG')}
+Total Liabilities and Equity: ₦${bsRHS.toLocaleString('en-NG')}
+
+CAPITAL & LIQUIDITY RATIOS
+===========================
+Tier 1 Capital: ₦${tier1Capital.toLocaleString('en-NG')}
+Tier 2 Capital: ₦${tier2Capital.toLocaleString('en-NG')}
+Total Qualifying Capital: ₦${totalCapital.toLocaleString('en-NG')}
+Risk Weighted Assets: ₦${rwa.toLocaleString('en-NG')}
+Capital Adequacy Ratio (CAR): ${carCalc.toFixed(2)}%
+Liquidity Ratio: ${liqCalc.toFixed(2)}%
+
+GL BREAKDOWN
+=============
+Cash and Cash Equivalents: ₦${cashAndEquivalents.toLocaleString('en-NG')}
+Balances with CBN: ₦${cbnBalance.toLocaleString('en-NG')}
+Balances with Other Banks: ₦${interbankBalance.toLocaleString('en-NG')}
+Investment Securities: ₦${investments.toLocaleString('en-NG')}
+Gross Loans and Advances: ₦${grossLoans.toLocaleString('en-NG')}
+Fixed Assets (Net): ₦${fixedAssets.toLocaleString('en-NG')}
+Other Assets: ₦${otherAssets.toLocaleString('en-NG')}
+Savings Deposits: ₦${savingsDeposits.toLocaleString('en-NG')}
+Current and Demand Deposits: ₦${currentDeposits.toLocaleString('en-NG')}
+Fixed and Time Deposits: ₦${fixedDeposits.toLocaleString('en-NG')}
+Other Special Deposits: ₦${specialDeposits.toLocaleString('en-NG')}
+CBN Refinancing/Borrowings: ₦${borrowings.toLocaleString('en-NG')}
+Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
+`.trim();
+
+      console.log(`RegCo template parsed: ${institutionNameParsed} | CAR=${carCalc.toFixed(2)}%, Liquidity=${liqCalc.toFixed(2)}%, NPL=${nplCalc.toFixed(2)}%`);
+
+    } else {
+      // ── Fallback: generic fuzzy CBS parser ───────────────────
+      const rawData = parseCBSWorkbook(workbook);
+
+      if (Object.keys(rawData).length === 0) {
+        throw new Error(
+          'We could not identify any recognized account labels in your CBS export. ' +
+          'Please ensure the file contains the trial balance, general ledger, or summary balance sheet from your core banking system, ' +
+          'or use the RegCo CBS Template (with sheets: Institution Details, GL Summary, RegCo Upload Format).'
+        );
+      }
+
+      const { derived, metrics: m, validationError } = deriveAndValidate(rawData);
+
+      if (validationError) {
+        await patchReport(report_id, {
+          status: 'failed',
+          error_message: validationError,
+          error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
+        }, serviceRoleKey);
+        return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
+          status: 200,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      financialData = derived;
+      metrics = m;
+      dataPayload = `Institution: ${institution_name}\nPeriod: ${reporting_period_start} to ${reporting_period_end}\nFinancial Data: ${JSON.stringify(financialData)}`;
+      console.log(`Generic CBS parsed. CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
     }
-
-    const { derived: financialData, metrics, validationError } = deriveAndValidate(rawData);
-
-    if (validationError) {
-      await patchReport(report_id, {
-        status: 'failed',
-        error_message: validationError,
-        error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
-      }, serviceRoleKey);
-      return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
-        status: 200,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    console.log(`Parsed ${Object.keys(financialData).length} fields. Computed CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
 
     const systemPrompt = getSystemPrompt(reportType);
     const userMessage = `Generate ${reportType}.
-Institution: ${institution_name}
-CBN License: ${cbn_license_number}
-Category: ${cbn_license_category}
-Compliance Lead: ${compliance_lead_name}
-Period: ${reporting_period_start} to ${reporting_period_end}
-Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%, LDR=${metrics.loan_to_deposit_ratio.toFixed(2)}%
-Financial Data: ${JSON.stringify(financialData)}`;
+${dataPayload}
+Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%, LDR=${metrics.loan_to_deposit_ratio.toFixed(2)}%`;
 
     let aiRaw: any;
     const callAI = async (model: string): Promise<any | null> => {
@@ -984,8 +1218,12 @@ Financial Data: ${JSON.stringify(financialData)}`;
     };
 
     const meta: Meta = {
-      institution_name, cbn_license_number, cbn_license_category,
-      compliance_lead_name, reporting_period_start, reporting_period_end,
+      institution_name: institutionNameParsed,
+      cbn_license_number: licenseNumberParsed,
+      cbn_license_category: licenseCategoryParsed,
+      compliance_lead_name,
+      reporting_period_start,
+      reporting_period_end,
     };
 
     const reportText = buildReportText(reportType, financialData, validationSummary, meta);
@@ -1013,7 +1251,7 @@ Financial Data: ${JSON.stringify(financialData)}`;
       throw new Error(`Storage upload failed: ${errText}`);
     }
 
-    await patchReport(report_id, {
+    const updateError = await patchReport(report_id, {
       status: 'ready',
       report_url: storagePath,
       report_filename: filename,
@@ -1021,8 +1259,14 @@ Financial Data: ${JSON.stringify(financialData)}`;
       liquidity_percentage: validationSummary.liquidity_percentage,
       npl_ratio: validationSummary.npl_ratio,
       validation_passed: true,
+      generated_at: new Date().toISOString(),
       error_message: null,
     }, serviceRoleKey);
+
+    if (updateError) {
+      console.error('Failed to update report status:', updateError);
+      throw new Error('Report generated but status update failed: ' + updateError);
+    }
 
     const car = validationSummary.car_percentage;
     const liq = validationSummary.liquidity_percentage;

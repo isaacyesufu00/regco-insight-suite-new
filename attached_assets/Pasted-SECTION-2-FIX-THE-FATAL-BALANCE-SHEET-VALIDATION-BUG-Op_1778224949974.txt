@@ -1,0 +1,357 @@
+SECTION 2 — FIX THE FATAL BALANCE SHEET VALIDATION BUG
+Open supabase/functions/process-report/index.ts (or wherever the process-report edge function lives).
+2A — Replace the entire field extraction block
+Find the section that parses the uploaded Excel file. Replace it completely with the following logic. This handles all three sheets in the RegCo CBS template:
+typescript// ============================================================
+// SHEET PARSER — RegCo CBS Template
+// Handles: Institution Details, GL Summary, RegCo Upload Format
+// ============================================================
+
+// CRITICAL RULE: normalize ALL label strings to UPPERCASE + trim before
+// any comparison or fuzzy match. This eliminates ALL case-sensitivity
+// failures and speeds up matching significantly.
+const norm = (s: string) => String(s ?? '').toUpperCase().trim();
+
+// --- Parse Sheet 1: Institution Details ---
+// Two columns: Field | Value
+const institutionSheet = workbook.Sheets['Institution Details'];
+const institutionRows = XLSX.utils.sheet_to_json(institutionSheet, { header: 1 }) as any[][];
+const instData: Record<string, string> = {};
+for (const row of institutionRows) {
+  if (row[0] && row[1]) instData[norm(String(row[0]))] = String(row[1]).trim();
+}
+const institutionName = instData['INSTITUTION NAME'] ?? '';
+const licenseCategory = instData['LICENSE CATEGORY'] ?? '';
+const licenseNumber = instData['LICENSE NUMBER'] ?? '';
+const rcNumber = instData['RC NUMBER'] ?? '';
+const reportingPeriod = instData['REPORTING PERIOD'] ?? '';
+const stateField = instData['STATE'] ?? '';
+const address = instData['HEAD OFFICE ADDRESS'] ?? '';
+
+// --- Parse Sheet 2: GL Summary ---
+// Three columns: Account Description | Debit (NGN) | Credit (NGN)
+// IMPORTANT: Labels kept in UPPERCASE in the template = zero fuzzy match latency
+const glSheet = workbook.Sheets['GL Summary'];
+const glRows = XLSX.utils.sheet_to_json(glSheet, { header: 1 }) as any[][];
+const glData: Record<string, { debit: number; credit: number }> = {};
+let glTotalDebit = 0, glTotalCredit = 0;
+for (const row of glRows) {
+  const label = norm(String(row[0] ?? ''));
+  const debit = Number(row[1]) || 0;
+  const credit = Number(row[2]) || 0;
+  if (label === 'TOTAL') { glTotalDebit = debit; glTotalCredit = credit; }
+  else if (label) glData[label] = { debit, credit };
+}
+
+// GL field extraction using UPPERCASE match first, fuzzy fallback
+const glFind = (keys: string[]) => {
+  for (const k of keys) {
+    if (glData[k]) return glData[k];
+    const match = Object.keys(glData).find(l => l.includes(k));
+    if (match) return glData[match];
+  }
+  return { debit: 0, credit: 0 };
+};
+
+const cashAndEquivalents   = glFind(['CASH AND CASH EQUIVALENTS', 'CASH']).debit;
+const cbnBalance           = glFind(['BALANCES WITH CENTRAL BANK OF NIGERIA', 'CBN BALANCE']).debit;
+const interbankBalance     = glFind(['BALANCES WITH OTHER BANKS', 'INTERBANK']).debit;
+const investments          = glFind(['INVESTMENT SECURITIES', 'INVESTMENTS']).debit;
+const grossLoans           = glFind(['GROSS LOANS AND ADVANCES', 'GROSS LOANS', 'LOANS AND ADVANCES']).debit;
+const fixedAssets          = glFind(['FIXED ASSETS (NET)', 'FIXED ASSETS']).debit;
+const otherAssets          = glFind(['OTHER ASSETS']).debit;
+const provisionsFromGL     = glFind(['LOAN LOSS PROVISIONS (CONTRA-ASSET)', 'LOAN LOSS PROVISIONS', 'PROVISIONS', 'CONTRA']).credit;
+const savingsDeposits      = glFind(['SAVINGS DEPOSITS', 'SAVINGS']).credit;
+const currentDeposits      = glFind(['CURRENT AND DEMAND DEPOSITS', 'CURRENT DEPOSITS']).credit;
+const fixedDeposits        = glFind(['FIXED AND TIME DEPOSITS', 'TERM DEPOSITS', 'FIXED DEPOSITS']).credit;
+const specialDeposits      = glFind(['OTHER SPECIAL DEPOSITS', 'SPECIAL DEPOSITS']).credit;
+const borrowings           = glFind(['CBN REFINANCING/BORROWINGS', 'BORROWINGS', 'CBN REFINANCING']).credit;
+const otherLiabilities     = glFind(['OTHER LIABILITIES']).credit;
+const shareholdersFundsGL  = glFind(["SHAREHOLDERS' FUNDS (CAPITAL & RESERVES)", 'SHAREHOLDERS FUNDS', 'CAPITAL AND RESERVES', 'EQUITY']).credit;
+
+// GL self-check — warn only, never block report generation
+if (Math.abs(glTotalDebit - glTotalCredit) > 1000) {
+  console.warn(`GL does not self-balance. Debit: ${glTotalDebit}, Credit: ${glTotalCredit}`);
+}
+
+// --- Parse Sheet 3: RegCo Upload Format ---
+// Two columns: Line Item | Amount
+// IMPORTANT: "TOTAL ASSETS (GROSS)" and "TOTAL ASSETS (NET)" are DISTINCT fields.
+// Do NOT collapse them. Match them separately.
+const uploadSheet = workbook.Sheets['RegCo Upload Format'];
+const uploadRows = XLSX.utils.sheet_to_json(uploadSheet, { header: 1 }) as any[][];
+const uploadData: Record<string, number> = {};
+for (const row of uploadRows) {
+  const label = norm(String(row[0] ?? ''));
+  const amount = Number(String(row[1]).replace(/,/g, '')) || 0;
+  if (label && amount) uploadData[label] = amount;
+}
+
+const uploadFind = (keys: string[]) => {
+  for (const k of keys) {
+    if (uploadData[k] !== undefined) return uploadData[k];
+    const match = Object.keys(uploadData).find(l => l.includes(k));
+    if (match) return uploadData[match];
+  }
+  return 0;
+};
+
+// These three MUST be separate variables — never merged
+const totalAssetsGross         = uploadFind(['TOTAL ASSETS (GROSS)', 'GROSS ASSETS', 'TOTAL ASSETS GROSS']);
+const provisionsAmount         = uploadFind(['LESS: PROVISIONS', 'LOAN LOSS PROVISION', 'PROVISIONS']) || provisionsFromGL;
+const totalAssetsNet           = uploadFind(['TOTAL ASSETS (NET)', 'NET ASSETS', 'TOTAL ASSETS NET'])
+                                  || (totalAssetsGross - provisionsAmount); // auto-calculate if missing
+const totalDeposits            = uploadFind(['TOTAL CUSTOMER DEPOSITS', 'CUSTOMER DEPOSITS', 'TOTAL DEPOSITS']);
+const totalLiabilities         = uploadFind(['TOTAL LIABILITIES']); // exact match preferred — see note below
+const shareholdersFunds        = uploadFind(['SHAREHOLDERS FUNDS', "SHAREHOLDERS' FUNDS", 'EQUITY']);
+const totalLiabilitiesAndEquity = uploadFind(['TOTAL LIABILITIES AND EQUITY', 'TOTAL LIABILITIES + EQUITY', 'LIABILITIES AND EQUITY']);
+const tier1Capital             = uploadFind(['TIER 1 CAPITAL']);
+const tier2Capital             = uploadFind(['TIER 2 CAPITAL']);
+const totalCapital             = uploadFind(['TOTAL QUALIFYING CAPITAL', 'QUALIFYING CAPITAL']);
+const rwa                      = uploadFind(['RISK WEIGHTED ASSETS (RWA)', 'RISK WEIGHTED ASSETS', 'RWA']);
+const carPercent               = uploadFind(['CAPITAL ADEQUACY RATIO (%)', 'CAPITAL ADEQUACY RATIO', 'CAR']);
+const liquidityPercent         = uploadFind(['LIQUIDITY RATIO (%)', 'LIQUIDITY RATIO']);
+
+// NOTE on totalLiabilities: "TOTAL LIABILITIES" must NOT match "TOTAL LIABILITIES AND EQUITY"
+// The uploadFind function checks exact match first so this is safe, but add this guard:
+// If totalLiabilities === totalLiabilitiesAndEquity, it was wrongly matched — recalculate:
+const safeTotalLiabilities = (totalLiabilities === totalLiabilitiesAndEquity)
+  ? totalLiabilitiesAndEquity - shareholdersFunds
+  : totalLiabilities;
+
+// ============================================================
+// BALANCE SHEET VALIDATION
+// CORRECT EQUATION: Total Assets (Net) = Total Liabilities + Equity
+// WRONG (old code): Total Assets (Gross) = Total Liabilities + Equity
+// ============================================================
+const bsRHS = totalLiabilitiesAndEquity || (safeTotalLiabilities + shareholdersFunds);
+const difference = Math.abs(totalAssetsNet - bsRHS);
+const tolerance = totalAssetsNet * 0.001; // 0.1% — handles CBS rounding differences
+
+if (difference > tolerance) {
+  throw new Error(
+    `Balance sheet does not reconcile. ` +
+    `Net Assets (₦${totalAssetsNet.toLocaleString('en-NG')}) ≠ ` +
+    `Total Liabilities + Equity (₦${bsRHS.toLocaleString('en-NG')}). ` +
+    `Difference: ₦${difference.toLocaleString('en-NG')}. ` +
+    `Please check your RegCo Upload Format sheet. ` +
+    `Note: Use Total Assets (Net), not Gross, in your upload file.`
+  );
+}
+// ============================================================
+2B — Update the AI system prompt payload
+After extraction, pass these exact fields into the AI system prompt for all 16 report types:
+typescriptconst dataPayload = `
+INSTITUTION DETAILS
+===================
+Institution Name: ${institutionName}
+License Number: ${licenseNumber}
+License Category: ${licenseCategory}
+RC Number: ${rcNumber}
+Reporting Period: ${reportingPeriod}
+State: ${stateField}
+Head Office Address: ${address}
+
+BALANCE SHEET SUMMARY (CBN-FORMAT)
+===================================
+Total Assets (Gross): ₦${totalAssetsGross.toLocaleString('en-NG')}
+Less: Loan Loss Provisions: ₦${provisionsAmount.toLocaleString('en-NG')}
+Total Assets (Net): ₦${totalAssetsNet.toLocaleString('en-NG')}
+Total Customer Deposits: ₦${totalDeposits.toLocaleString('en-NG')}
+Total Liabilities: ₦${safeTotalLiabilities.toLocaleString('en-NG')}
+Shareholders Funds: ₦${shareholdersFunds.toLocaleString('en-NG')}
+Total Liabilities and Equity: ₦${bsRHS.toLocaleString('en-NG')}
+
+CAPITAL & LIQUIDITY RATIOS
+===========================
+Tier 1 Capital: ₦${tier1Capital.toLocaleString('en-NG')}
+Tier 2 Capital: ₦${tier2Capital.toLocaleString('en-NG')}
+Total Qualifying Capital: ₦${totalCapital.toLocaleString('en-NG')}
+Risk Weighted Assets: ₦${rwa.toLocaleString('en-NG')}
+Capital Adequacy Ratio (CAR): ${carPercent}%
+Liquidity Ratio: ${liquidityPercent}%
+
+GL BREAKDOWN
+=============
+Cash and Cash Equivalents: ₦${cashAndEquivalents.toLocaleString('en-NG')}
+Balances with CBN: ₦${cbnBalance.toLocaleString('en-NG')}
+Balances with Other Banks: ₦${interbankBalance.toLocaleString('en-NG')}
+Investment Securities: ₦${investments.toLocaleString('en-NG')}
+Gross Loans and Advances: ₦${grossLoans.toLocaleString('en-NG')}
+Fixed Assets (Net): ₦${fixedAssets.toLocaleString('en-NG')}
+Other Assets: ₦${otherAssets.toLocaleString('en-NG')}
+Savings Deposits: ₦${savingsDeposits.toLocaleString('en-NG')}
+Current and Demand Deposits: ₦${currentDeposits.toLocaleString('en-NG')}
+Fixed and Time Deposits: ₦${fixedDeposits.toLocaleString('en-NG')}
+Other Special Deposits: ₦${specialDeposits.toLocaleString('en-NG')}
+CBN Refinancing/Borrowings: ₦${borrowings.toLocaleString('en-NG')}
+Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
+`.trim();
+
+SECTION 3 — CBN-COMPLIANT REPORT OUTPUT FORMAT
+The AI system prompt for the MFB Regulatory Return must generate output that is a one-to-one match of the CBN's official template. Update the AI system prompt for mfb-regulatory-return to produce exactly this structure:
+CENTRAL BANK OF NIGERIA
+MICROFINANCE BANK REGULATORY RETURN
+MONTHLY REPORT — [REPORTING PERIOD]
+
+SECTION A: INSTITUTION IDENTIFICATION
+======================================
+1. Name of Institution:          [institutionName]
+2. CBN License Number:           [licenseNumber]
+3. License Category:             [licenseCategory]
+4. RC Number:                    [rcNumber]
+5. Head Office Address:          [address]
+6. State of Operation:           [stateField]
+7. Reporting Date:               [reportingPeriod]
+
+SECTION B: BALANCE SHEET
+=========================
+ASSETS                                         ₦'000
+-------------------------------------------------------
+B1.  Cash and Cash Equivalents:                [cashAndEquivalents / 1000]
+B2.  Balances with CBN:                        [cbnBalance / 1000]
+B3.  Balances with Other Banks:                [interbankBalance / 1000]
+B4.  Investment Securities:                    [investments / 1000]
+B5.  Gross Loans and Advances:                 [grossLoans / 1000]
+B6.  Fixed Assets (Net):                       [fixedAssets / 1000]
+B7.  Other Assets:                             [otherAssets / 1000]
+     Less: Loan Loss Provisions:               ([provisionsAmount / 1000])
+-------------------------------------------------------
+TOTAL ASSETS (NET):                            [totalAssetsNet / 1000]
+
+LIABILITIES
+-------------------------------------------------------
+B8.  Savings Deposits:                         [savingsDeposits / 1000]
+B9.  Current and Demand Deposits:              [currentDeposits / 1000]
+B10. Fixed and Time Deposits:                  [fixedDeposits / 1000]
+B11. Other Special Deposits:                   [specialDeposits / 1000]
+B12. CBN Refinancing/Borrowings:               [borrowings / 1000]
+B13. Other Liabilities:                        [otherLiabilities / 1000]
+-------------------------------------------------------
+TOTAL LIABILITIES:                             [safeTotalLiabilities / 1000]
+
+SHAREHOLDERS' FUNDS
+-------------------------------------------------------
+B14. Shareholders' Funds (Capital & Reserves): [shareholdersFunds / 1000]
+-------------------------------------------------------
+TOTAL LIABILITIES AND EQUITY:                  [totalLiabilitiesAndEquity / 1000]
+
+SECTION C: CAPITAL ADEQUACY
+============================
+C1.  Tier 1 Capital (₦'000):                  [tier1Capital / 1000]
+C2.  Tier 2 Capital (₦'000):                  [tier2Capital / 1000]
+C3.  Total Qualifying Capital (₦'000):         [totalCapital / 1000]
+C4.  Total Risk Weighted Assets (₦'000):       [rwa / 1000]
+C5.  Capital Adequacy Ratio (CAR):             [carPercent]%
+     CBN Minimum Requirement:                  10%
+     Status:                                   [COMPLIANT if carPercent >= 10, else NON-COMPLIANT]
+
+SECTION D: LIQUIDITY
+=====================
+D1.  Liquidity Ratio:                          [liquidityPercent]%
+     CBN Minimum Requirement:                  20%
+     Status:                                   [COMPLIANT if liquidityPercent >= 20, else NON-COMPLIANT]
+
+SECTION E: DEPOSIT ANALYSIS
+============================
+E1.  Total Customer Deposits (₦'000):          [totalDeposits / 1000]
+E2.  Savings Deposits:                         [savingsDeposits / 1000]
+E3.  Current and Demand Deposits:              [currentDeposits / 1000]
+E4.  Fixed/Time Deposits:                      [fixedDeposits / 1000]
+E5.  Other Special Deposits:                   [specialDeposits / 1000]
+
+SECTION F: LOAN PORTFOLIO
+==========================
+F1.  Gross Loans and Advances (₦'000):         [grossLoans / 1000]
+F2.  Loan Loss Provisions (₦'000):             [provisionsAmount / 1000]
+F3.  Net Loans and Advances (₦'000):           [(grossLoans - provisionsAmount) / 1000]
+F4.  NPL Ratio:                                [calculate: provisions/grossLoans * 100]%
+     CBN Maximum Threshold:                    5%
+     Status:                                   [COMPLIANT / NON-COMPLIANT]
+
+SECTION G: CERTIFICATION
+=========================
+I certify that the information provided in this return is true, accurate and complete
+to the best of my knowledge and in accordance with the CBN guidelines for Microfinance
+Banks as contained in the Revised Regulatory and Supervisory Guidelines for MFBs in
+Nigeria (2012) and subsequent circulars.
+
+Name of Authorized Signatory: _______________________________
+Designation:                   _______________________________
+Date:                          _______________________________
+Signature:                     _______________________________
+All figures in the report must be in ₦'000 (divide raw naira figures by 1000 and format with commas). Show the CBN minimum thresholds next to every ratio. Show COMPLIANT or NON-COMPLIANT status for CAR, Liquidity Ratio, and NPL Ratio automatically based on the actual figures.
+
+SECTION 4 — FIX REPORTS NOT APPEARING ON DASHBOARD
+4A — Enable Realtime on reports table
+Create a new migration file supabase/migrations/[timestamp]_enable_reports_realtime.sql:
+sqlALTER PUBLICATION supabase_realtime ADD TABLE reports;
+4B — Fix the service role key in process-report
+In process-report/index.ts, find where the Supabase client is initialized for writing to the database. It MUST use the service role key, not the anon key:
+typescriptconst supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, // NOT the anon key
+  { auth: { persistSession: false } }
+);
+Use supabaseAdmin for all INSERT and UPDATE operations on the reports table.
+4C — Fix the status update — it must be awaited
+Find the report status update at the end of the edge function. Make sure it is:
+typescriptconst { error: updateError } = await supabaseAdmin
+  .from('reports')
+  .update({
+    status: 'ready',
+    report_url: publicUrl,
+    report_filename: fileName,
+    generated_at: new Date().toISOString(),
+    validation_passed: true,
+    car_percentage: carPercent,
+    liquidity_percentage: liquidityPercent,
+  })
+  .eq('id', reportId);
+
+if (updateError) {
+  console.error('Failed to update report status:', updateError);
+  throw new Error('Report generated but status update failed: ' + updateError.message);
+}
+4D — Add Realtime subscription to Dashboard and My Reports
+In both src/pages/Dashboard.tsx and src/pages/Reports.tsx (or wherever these pages live), add this subscription pattern inside the component:
+typescriptuseEffect(() => {
+  fetchReports(); // initial load
+
+  const channel = supabase
+    .channel('reports-live')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'reports',
+      filter: `user_id=eq.${user?.id}`
+    }, (payload) => {
+      console.log('Report updated:', payload);
+      fetchReports(); // refetch on any change
+    })
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+}, [user?.id]);
+
+SECTION 5 — DEPLOY EVERYTHING
+Run these commands in order after all code changes are complete:
+bashsupabase functions deploy process-report
+supabase functions deploy notify-automation
+supabase db push
+git add -A
+git commit -m "Fix: balance sheet validation, CBN report format, dashboard realtime, git state"
+git push origin main --force-with-lease
+
+SECTION 6 — VERIFY THE FIX WORKS
+After deployment, confirm the following by showing me the code:
+
+Show me the validation logic block (the difference and tolerance check)
+Show me that totalAssetsNet and totalAssetsGross are two separate variables
+Show me the Supabase client initialization in process-report and confirm it uses SUPABASE_SERVICE_ROLE_KEY
+Show me the Realtime subscription code in the Dashboard page
+Confirm git status shows "On branch main, nothing to commit, working tree clean"
+
+
+
+That is the complete prompt, Isaac. Every single failure point is covered. Go win that 10am meeting.

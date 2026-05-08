@@ -20,6 +20,7 @@ import DataSources from "./pages/DataSources";
 import DashboardSettings from "./pages/DashboardSettings";
 import ComplianceCalendar from "./pages/ComplianceCalendar";
 import DashboardTutorial from "./pages/DashboardTutorial";
+import TransactionMonitor from "./pages/TransactionMonitor";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="tutorial" element={<DashboardTutorial />} />
+              <Route path="transactions" element={<TransactionMonitor />} />
             </Route>
             <Route
               path="/admin"
