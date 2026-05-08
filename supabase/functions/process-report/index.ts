@@ -1327,6 +1327,9 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
       await patchReport(reportId, {
         status: 'failed',
         error_message: error.message || 'Unknown error occurred',
+        error_type: 'processing_error',
+        validation_passed: false,
+        generated_at: new Date().toISOString(),
       }, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '').catch(console.error);
     }
     return new Response(JSON.stringify({ error: error.message }), {
