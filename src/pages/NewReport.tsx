@@ -594,8 +594,16 @@ const NewReport = () => {
                   onDragOver={(e) => e.preventDefault()}
                 >
                   <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm font-medium text-foreground">Click to upload or drag &amp; drop your CBS export</p>
-                  <p className="text-xs text-muted-foreground mt-1">Accepted: .xlsx, .xls, .csv (max 50MB)</p>
+                  <p className="text-sm font-medium text-foreground">Upload your CBS export or GL report</p>
+                  <div className="mt-2 space-y-0.5 text-xs text-muted-foreground text-left inline-block">
+                    <p>✅ RegCo template (recommended — download below)</p>
+                    <p>✅ Raw GL trial balance from FlexCube, Ncube, Finacle, or Temenos</p>
+                    <p>✅ Any Excel file with balance sheet or GL data</p>
+                    <p>✅ .xlsx and .xls files (max 50MB)</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 max-w-xs mx-auto">
+                    RegCo automatically reads your file and extracts the figures needed. For best results, include: Total Assets, Total Deposits, Shareholders Funds, and Capital Adequacy figures.
+                  </p>
                 </div>
               )}
               <input ref={fileInputRef} type="file" className="hidden" accept=".xlsx,.xls,.csv" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileSelect(f); }} />

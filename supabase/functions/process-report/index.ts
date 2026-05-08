@@ -424,6 +424,442 @@ function deriveAndValidate(d: Record<string, number>): {
   };
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// UNIVERSAL CBS FILE PARSER — Parts 1–6
+// Accepts raw exports from FlexCube, Ncube, Finacle, Temenos, or any Excel GL
+// ══════════════════════════════════════════════════════════════════════════════
+
+type ParserStrategy = 'template' | 'gl_trial_balance' | 'keyword_extractor' | 'multi_sheet';
+
+interface UniversalParseResult {
+  data: Record<string, number>;
+  strategyUsed: ParserStrategy;
+  multiplierIs1000: boolean;
+  institutionDetails: { name?: string; licenseNumber?: string; rcNumber?: string; reportingPeriod?: string };
+  dataSourceLog: Record<string, any>;
+}
+
+// ── PART 1: Multi-Strategy Detection ─────────────────────────────────────────
+
+function detectUniversalStrategy(workbook: XLSX.WorkBook): ParserStrategy {
+  const sheetNames = workbook.SheetNames;
+
+  // Strategy A already handled before calling universal parser
+  // Strategy B: GL Trial Balance — sheet with debit+credit columns AND 20+ data rows
+  for (const name of sheetNames) {
+    const sheet = workbook.Sheets[name];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+    if (rows.length < 5) continue;
+
+    // Look for header row with debit/credit column headers
+    const headerRow = rows.slice(0, 10).find(r =>
+      r.some((c: any) => /debit/i.test(String(c))) &&
+      r.some((c: any) => /credit/i.test(String(c)))
+    );
+    if (headerRow) {
+      // Count data rows (rows with at least one non-zero numeric value)
+      const dataRows = rows.filter(r =>
+        r.some((c: any) => { const n = parseFloat(String(c).replace(/[,\s]/g, '')); return isFinite(n) && n !== 0; })
+      );
+      if (dataRows.length >= 20) {
+        console.log('Parser strategy: gl_trial_balance (debit+credit header, ' + dataRows.length + ' data rows)');
+        return 'gl_trial_balance';
+      }
+    }
+  }
+
+  // Strategy D: Multi-sheet — 3 or more sheets
+  if (sheetNames.length >= 3) {
+    console.log('Parser strategy: multi_sheet (' + sheetNames.length + ' sheets)');
+    return 'multi_sheet';
+  }
+
+  // Strategy C: Single sheet keyword extractor
+  console.log('Parser strategy: keyword_extractor');
+  return 'keyword_extractor';
+}
+
+// ── Thousands multiplier detection ───────────────────────────────────────────
+
+function detectThousandsMultiplier(workbook: XLSX.WorkBook): boolean {
+  for (const name of workbook.SheetNames) {
+    const sheet = workbook.Sheets[name];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+    // Scan first 15 rows for thousands notation
+    for (const row of rows.slice(0, 15)) {
+      for (const cell of row) {
+        const s = String(cell || '');
+        if (/'000|thousands|N'000|₦'000/i.test(s)) {
+          console.log('Thousands multiplier detected in sheet:', name);
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+// ── PART 2: Raw GL Trial Balance Parser ──────────────────────────────────────
+
+function parseGLTrialBalance(workbook: XLSX.WorkBook, multiplierIs1000: boolean): Record<string, number> {
+  const mult = multiplierIs1000 ? 1000 : 1;
+
+  // Accumulator keyed by our CBN field names (snake_case, same as FIELD_SYNONYMS)
+  const acc: Record<string, number> = {};
+  const add = (field: string, v: number) => { acc[field] = (acc[field] || 0) + Math.abs(v) * mult; };
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+
+    // Detect column positions for: account code, description, debit, credit
+    let colCode = -1, colDesc = -1, colDebit = -1, colCredit = -1;
+    let headerRowIdx = -1;
+    for (let i = 0; i < Math.min(15, rows.length); i++) {
+      const r = rows[i];
+      for (let j = 0; j < r.length; j++) {
+        const cell = String(r[j] || '').toUpperCase().trim();
+        if (/^(ACCT|ACCOUNT)[\s_]?(CODE|NO|NUM)?$/.test(cell) || cell === 'GL CODE' || cell === 'GL NO') colCode = j;
+        else if (/^(ACCOUNT|GL)?\s*(NAME|DESCRIPTION|DESC|TITLE)/.test(cell) || cell === 'DESCRIPTION') colDesc = j;
+        else if (/^(DEBIT|DR\.?|DR\s)/.test(cell)) colDebit = j;
+        else if (/^(CREDIT|CR\.?|CR\s)/.test(cell)) colCredit = j;
+      }
+      if ((colDebit >= 0 || colCredit >= 0) && (colDesc >= 0 || colCode >= 0)) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+    if (headerRowIdx < 0) continue;
+
+    // If no explicit desc column, assume col 1 is desc, col 0 is code
+    if (colDesc < 0 && colCode < 0) { colCode = 0; colDesc = 1; }
+    if (colDesc < 0) colDesc = colCode >= 0 ? colCode + 1 : 1;
+    if (colDebit < 0) colDebit = colDesc + 1;
+    if (colCredit < 0) colCredit = colDebit + 1;
+
+    for (let i = headerRowIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!Array.isArray(row) || row.length === 0) continue;
+
+      const codeRaw = String(row[colCode] ?? '').trim();
+      const descRaw = String(row[colDesc] ?? '').toUpperCase().trim().replace(/[^A-Z0-9 ]/g, ' ');
+      const debitRaw = parseFloat(String(row[colDebit] ?? '').replace(/[,\s]/g, ''));
+      const creditRaw = parseFloat(String(row[colCredit] ?? '').replace(/[,\s]/g, ''));
+      const debit = isFinite(debitRaw) ? debitRaw : 0;
+      const credit = isFinite(creditRaw) ? creditRaw : 0;
+      const val = debit > 0 ? debit : credit;
+      if (val === 0 || (!descRaw && !codeRaw)) continue;
+
+      const d = descRaw;
+      const c = codeRaw;
+      const sw = (prefix: string) => c.startsWith(prefix);
+
+      // ASSETS
+      if (/CASH|VAULT|ATM|CASH IN TRANSIT|TILL/.test(d) || sw('1001') || sw('1002') || sw('1003') || sw('100') || sw('101')) {
+        add('cash_and_equivalents', debit || credit);
+      } else if (/CBN|CENTRAL BANK|SDF|CRR|CASH RESERVE/.test(d) || sw('1101') || sw('1102') || sw('110')) {
+        add('balances_with_cbn', debit || credit);
+      } else if (/PLACEMENT|INTERBANK|NOSTRO|MONEY MARKET|OTHER BANK|CORRESPONDENT/.test(d) || sw('1201') || sw('1202') || sw('120')) {
+        add('balances_with_other_banks', debit || credit);
+      } else if (/INVESTMENT|TREASURY BILL|T-BILL|BOND|FGN BOND|SECURITIES|NTB/.test(d) || sw('1301') || sw('130') || sw('131')) {
+        add('investment_securities', debit || credit);
+      } else if (/PROVISION|IMPAIRMENT|ALLOWANCE|LOAN LOSS|CREDIT LOSS/.test(d) || sw('2901') || sw('290')) {
+        add('loan_loss_provisions', credit || debit);
+      } else if (/LOAN|ADVANCE|OVERDRAFT|CREDIT FACILITY|MORTGAGE|LEASE/.test(d) || sw('2001') || sw('2002') || sw('200') || sw('201') || sw('202')) {
+        // Check if sub-classified as NPL
+        if (/NON.?PERFORM|NPL|SUBSTANDARD|DOUBTFUL|LOSS/.test(d)) {
+          add('non_performing_loans', debit || credit);
+        } else {
+          add('performing_loans', debit || credit);
+        }
+        add('gross_loans', debit || credit);
+      } else if (/FIXED ASSET|PROPERTY|EQUIPMENT|FURNITURE|VEHICLE|COMPUTER|PPE|LEASEHOLD/.test(d) || sw('3001') || sw('300') || sw('301') || sw('302')) {
+        add('fixed_assets', debit || credit);
+      } else if (/PREPAID|ACCRUED INCOME|SUNDRY ASSET|OTHER ASSET|DEFERRED/.test(d) || sw('3901') || sw('390')) {
+        add('other_assets', debit || credit);
+
+      // LIABILITIES
+      } else if (/SAVING[S]?\s+(ACCOUNT|DEPOSIT)/.test(d) || sw('4001') || sw('400')) {
+        add('savings_deposits', credit || debit);
+      } else if (/CURRENT ACCOUNT|DEMAND DEPOSIT|CURRENT DEPOSIT/.test(d) || sw('4101') || sw('410')) {
+        add('demand_deposits', credit || debit);
+      } else if (/FIXED DEPOSIT|TERM DEPOSIT|TIME DEPOSIT|CALL DEPOSIT/.test(d) || sw('4201') || sw('420')) {
+        add('time_deposits', credit || debit);
+      } else if (/SPECIAL DEPOSIT|ESCROW|DOMICILIARY|TARGET SAVING/.test(d) || sw('4301') || sw('430')) {
+        add('other_deposits', credit || debit);
+      } else if (/BORROWING|CBN FACILITY|REFINANC|WHOLESALE FUND|BOND ISSUED|COMMERCIAL PAPER/.test(d) || sw('5001') || sw('500')) {
+        add('borrowings', credit || debit);
+      } else if (/OTHER LIABILITY|ACCRUAL|SUNDRY LIABILITY|UNCLAIMED|DIVIDEND PAYABLE/.test(d) || sw('5901') || sw('590')) {
+        add('other_liabilities', credit || debit);
+
+      // EQUITY
+      } else if (/SHARE CAPITAL|PAID.?UP CAPITAL|ORDINARY SHARE/.test(d) || sw('6001') || sw('600')) {
+        add('paid_up_capital', credit || debit);
+      } else if (/RETAINED|PROFIT AND LOSS|ACCUMULATED|SURPLUS/.test(d) || sw('6101') || sw('610')) {
+        add('retained_earnings', credit || debit);
+      } else if (/RESERVE|STATUTORY RESERVE|SMSE RESERVE|REGULATORY RESERVE/.test(d) || sw('6201') || sw('620')) {
+        add('statutory_reserve', credit || debit);
+      }
+    }
+  }
+
+  // Derive totals from GL aggregations
+  if (!acc.gross_loans && acc.performing_loans) acc.gross_loans = acc.performing_loans + (acc.non_performing_loans || 0);
+  const totalDeposits = (acc.savings_deposits || 0) + (acc.demand_deposits || 0) + (acc.time_deposits || 0) + (acc.other_deposits || 0);
+  if (totalDeposits > 0) acc.total_deposits = totalDeposits;
+  const totalLiabilities = totalDeposits + (acc.borrowings || 0) + (acc.other_liabilities || 0);
+  if (totalLiabilities > 0) acc.total_liabilities = totalLiabilities;
+  const shareholdersFunds = (acc.paid_up_capital || 0) + (acc.retained_earnings || 0) + (acc.statutory_reserve || 0);
+  if (shareholdersFunds > 0) acc.total_shareholders_funds = shareholdersFunds;
+  const totalAssetsGross = (acc.cash_and_equivalents || 0) + (acc.balances_with_cbn || 0) + (acc.balances_with_other_banks || 0) +
+    (acc.investment_securities || 0) + (acc.gross_loans || 0) + (acc.fixed_assets || 0) + (acc.other_assets || 0);
+  if (totalAssetsGross > 0) acc.total_assets = totalAssetsGross - (acc.loan_loss_provisions || 0);
+  const liquidAssets = (acc.cash_and_equivalents || 0) + (acc.balances_with_cbn || 0) + (acc.balances_with_other_banks || 0) + (acc.investment_securities || 0);
+  if (liquidAssets > 0) acc.liquid_assets = liquidAssets;
+
+  return acc;
+}
+
+// ── PART 3: Keyword Extractor for Summary Sheets ─────────────────────────────
+
+const UNIVERSAL_KEYWORD_MAP: Array<{ field: string; keywords: string[] }> = [
+  { field: 'total_assets',          keywords: ['TOTAL ASSETS NET', 'NET TOTAL ASSETS', 'TOTAL ASSETS (NET)', 'NET ASSETS TOTAL'] },
+  { field: 'total_assets',          keywords: ['TOTAL ASSETS GROSS', 'GROSS TOTAL ASSETS', 'TOTAL ASSETS (GROSS)', 'TOTAL ASSETS'] },
+  { field: 'gross_loans',           keywords: ['GROSS LOANS AND ADVANCES', 'LOANS AND ADVANCES', 'GROSS ADVANCES', 'TOTAL LOANS', 'GROSS LOANS'] },
+  { field: 'loan_loss_provisions',  keywords: ['LOAN LOSS PROVISION', 'PROVISION FOR LOAN', 'IMPAIRMENT CHARGE', 'ALLOWANCE FOR LOSSES', 'PROVISION FOR LOSSES'] },
+  { field: 'cash_and_equivalents',  keywords: ['CASH AND CASH EQUIVALENT', 'CASH AND EQUIVALENT', 'CASH EQUIVALENTS', 'CASH AND BANK BALANCE'] },
+  { field: 'investment_securities', keywords: ['INVESTMENT SECURITIES', 'AVAILABLE FOR SALE', 'HELD TO MATURITY', 'INVESTMENTS'] },
+  { field: 'balances_with_cbn',     keywords: ['BALANCES WITH CBN', 'CBN BALANCE', 'CASH RESERVE REQUIREMENT', 'CRR BALANCE', 'CENTRAL BANK BALANCE'] },
+  { field: 'balances_with_other_banks', keywords: ['PLACEMENT WITH BANK', 'INTERBANK PLACEMENT', 'BALANCES WITH OTHER BANK', 'NOSTRO ACCOUNT'] },
+  { field: 'fixed_assets',          keywords: ['FIXED ASSET', 'PROPERTY PLANT AND EQUIPMENT', 'PPE NET', 'PROPERTY AND EQUIPMENT'] },
+  { field: 'other_assets',          keywords: ['OTHER ASSET', 'PREPAID EXPENSE', 'ACCRUED INCOME', 'SUNDRY ASSET'] },
+  { field: 'total_liabilities',     keywords: ['TOTAL LIABILITIES'] },
+  { field: 'total_deposits',        keywords: ['TOTAL DEPOSITS', 'TOTAL CUSTOMER DEPOSIT', 'CUSTOMER DEPOSITS', 'DEPOSITS FROM CUSTOMER'] },
+  { field: 'savings_deposits',      keywords: ['SAVINGS DEPOSIT', 'SAVINGS ACCOUNT BALANCE'] },
+  { field: 'demand_deposits',       keywords: ['CURRENT DEPOSIT', 'CURRENT ACCOUNT DEPOSIT', 'DEMAND DEPOSIT'] },
+  { field: 'time_deposits',         keywords: ['FIXED DEPOSIT', 'TERM DEPOSIT', 'TIME DEPOSIT', 'CALL DEPOSIT'] },
+  { field: 'other_deposits',        keywords: ['SPECIAL DEPOSIT', 'OTHER DEPOSIT', 'DOMICILIARY DEPOSIT'] },
+  { field: 'borrowings',            keywords: ['BORROWING', 'CBN FUND', 'REFINANCING FACILITY', 'WHOLESALE FUNDING'] },
+  { field: 'other_liabilities',     keywords: ['OTHER LIABILITY', 'ACCRUED EXPENSE', 'SUNDRY LIABILITY'] },
+  { field: 'total_shareholders_funds', keywords: ['SHAREHOLDERS FUND', "SHAREHOLDERS' FUND", 'SHAREHOLDERS EQUITY', 'TOTAL EQUITY', 'EQUITY'] },
+  { field: 'paid_up_capital',       keywords: ['SHARE CAPITAL', 'PAID UP CAPITAL', 'ORDINARY SHARE CAPITAL'] },
+  { field: 'retained_earnings',     keywords: ['RETAINED EARNING', 'ACCUMULATED SURPLUS', 'PROFIT AND LOSS ACCOUNT'] },
+  { field: 'statutory_reserve',     keywords: ['STATUTORY RESERVE', 'SMSE DEVELOPMENT RESERVE', 'REGULATORY RESERVE', 'GENERAL RESERVE'] },
+  { field: 'non_performing_loans',  keywords: ['NON PERFORMING LOAN', 'NPL BALANCE', 'IMPAIRED LOAN'] },
+  { field: 'performing_loans',      keywords: ['PERFORMING LOAN', 'STANDARD LOAN', 'WATCH LIST LOAN'] },
+  { field: 'tier_1_capital',        keywords: ['TIER 1 CAPITAL', 'TIER ONE CAPITAL', 'CORE CAPITAL'] },
+  { field: 'tier_2_capital',        keywords: ['TIER 2 CAPITAL', 'TIER TWO CAPITAL'] },
+  { field: 'risk_weighted_assets',  keywords: ['RISK WEIGHTED ASSET', 'RISK ASSET', 'RWA'] },
+  { field: 'liquid_assets',         keywords: ['LIQUID ASSET', 'LIQUIDITY PORTFOLIO'] },
+  { field: 'interest_income',       keywords: ['INTEREST INCOME', 'INTEREST AND SIMILAR INCOME'] },
+  { field: 'non_interest_income',   keywords: ['NON INTEREST INCOME', 'NON-INTEREST INCOME', 'FEE AND COMMISSION INCOME', 'OTHER INCOME'] },
+  { field: 'profit_before_tax',     keywords: ['PROFIT BEFORE TAX', 'PBT'] },
+  { field: 'profit_after_tax',      keywords: ['PROFIT AFTER TAX', 'PAT', 'NET PROFIT'] },
+];
+
+function extractNumber(raw: any): number | null {
+  if (raw === null || raw === undefined || raw === '') return null;
+  const str = String(raw).replace(/[₦$,\s\u20a6]/g, '');
+  const num = parseFloat(str);
+  return isNaN(num) ? null : num;
+}
+
+function extractKeywordsUniversal(workbook: XLSX.WorkBook, multiplierIs1000: boolean): { data: Record<string, number>; rowsScanned: number } {
+  const mult = multiplierIs1000 ? 1000 : 1;
+  const result: Record<string, number> = {};
+  let rowsScanned = 0;
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+
+    for (const row of rows) {
+      rowsScanned++;
+      if (!Array.isArray(row) || row.length < 2) continue;
+      const rawLabel = String(row[0] ?? '');
+      if (!rawLabel.trim()) continue;
+      const label = rawLabel.toUpperCase().replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+
+      for (const { field, keywords } of UNIVERSAL_KEYWORD_MAP) {
+        if (result[field] !== undefined) continue; // already found
+        const matched = keywords.some(kw => label.startsWith(kw) || label.includes(kw));
+        if (!matched) continue;
+
+        // Extract first non-empty numeric value to the right
+        for (let j = 1; j < row.length; j++) {
+          const n = extractNumber(row[j]);
+          if (n !== null && n !== 0) {
+            result[field] = n * mult;
+            break;
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // Derive totals where missing
+  if (!result.total_deposits) {
+    const sum = (result.savings_deposits || 0) + (result.demand_deposits || 0) + (result.time_deposits || 0) + (result.other_deposits || 0);
+    if (sum > 0) result.total_deposits = sum;
+  }
+  if (!result.total_shareholders_funds) {
+    const sum = (result.paid_up_capital || 0) + (result.retained_earnings || 0) + (result.statutory_reserve || 0);
+    if (sum > 0) result.total_shareholders_funds = sum;
+  }
+  if (!result.gross_loans && result.performing_loans) {
+    result.gross_loans = result.performing_loans + (result.non_performing_loans || 0);
+  }
+  if (!result.liquid_assets) {
+    const sum = (result.cash_and_equivalents || 0) + (result.balances_with_cbn || 0) + (result.balances_with_other_banks || 0) + (result.investment_securities || 0);
+    if (sum > 0) result.liquid_assets = sum;
+  }
+
+  return { data: result, rowsScanned };
+}
+
+// ── PART 4: Institution Details Auto-Detection ───────────────────────────────
+
+function autoDetectInstitutionDetails(workbook: XLSX.WorkBook): {
+  name?: string; licenseNumber?: string; rcNumber?: string; reportingPeriod?: string;
+} {
+  const details: { name?: string; licenseNumber?: string; rcNumber?: string; reportingPeriod?: string } = {};
+  const months = 'JANUARY|FEBRUARY|MARCH|APRIL|MAY|JUNE|JULY|AUGUST|SEPTEMBER|OCTOBER|NOVEMBER|DECEMBER';
+  const licenseRe = /MFB\/[A-Z]+\/[A-Z]\/[0-9]+\/[0-9]+/i;
+  const periodRe = new RegExp(`(${months})\\s+(20[0-9]{2})`, 'i');
+  const rcRe = /\bRC\s*:?\s*([0-9]{4,8})\b/i;
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) continue;
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as any[][];
+
+    for (const row of rows.slice(0, 30)) {
+      for (const cell of row) {
+        const s = String(cell || '').trim();
+        if (!s) continue;
+        const upper = s.toUpperCase();
+
+        if (!details.name && (upper.includes('MICROFINANCE BANK') || upper.includes(' MFB') || (upper.includes('LIMITED') && upper.length < 80))) {
+          details.name = s;
+        }
+        if (!details.licenseNumber) {
+          const m = s.match(licenseRe);
+          if (m) details.licenseNumber = m[0];
+        }
+        if (!details.reportingPeriod) {
+          const m = s.match(periodRe);
+          if (m) details.reportingPeriod = m[0];
+        }
+        if (!details.rcNumber) {
+          const m = s.match(rcRe);
+          if (m) details.rcNumber = m[1];
+        }
+      }
+    }
+    if (details.name && details.licenseNumber && details.reportingPeriod) break;
+  }
+
+  return details;
+}
+
+// ── PART 5: Smart Validation ─────────────────────────────────────────────────
+
+function validateUniversal(d: Record<string, number>): string[] {
+  const issues: string[] = [];
+
+  const totalAssetsNet = d.total_assets || 0;
+  const totalDeposits = d.total_deposits || 0;
+  const totalLiabilities = d.total_liabilities || (totalDeposits + (d.borrowings || 0) + (d.other_liabilities || 0));
+  const shareholdersFunds = d.total_shareholders_funds || 0;
+  const totalLiabilitiesAndEquity = totalLiabilities + shareholdersFunds;
+
+  if (totalAssetsNet > 0 && totalLiabilitiesAndEquity > 0) {
+    const diff = Math.abs(totalAssetsNet - totalLiabilitiesAndEquity);
+    if (diff > totalAssetsNet * 0.001) {
+      issues.push(
+        `Balance sheet does not reconcile. ` +
+        `Net Assets ₦${totalAssetsNet.toLocaleString()} ≠ Total Liabilities + Equity ₦${totalLiabilitiesAndEquity.toLocaleString()}. ` +
+        `Difference: ₦${diff.toLocaleString()}.`
+      );
+    }
+  }
+
+  const required: Record<string, string> = {
+    total_assets: 'total assets',
+    total_deposits: 'total deposits',
+    total_shareholders_funds: "shareholders' funds",
+  };
+  for (const [field, label] of Object.entries(required)) {
+    if (!d[field]) {
+      issues.push(
+        `Could not find "${label}" in the uploaded file. ` +
+        `Please ensure your file contains total assets, total deposits, and shareholders funds.`
+      );
+    }
+  }
+
+  if (totalAssetsNet > 0 && totalAssetsNet < 10_000_000) {
+    issues.push(
+      `Total assets appear unusually low (₦${totalAssetsNet.toLocaleString()}). ` +
+      `Please check your figures or whether the file is in ₦'000 notation.`
+    );
+  }
+
+  return issues;
+}
+
+// ── Universal Orchestrator ───────────────────────────────────────────────────
+
+function runUniversalParser(workbook: XLSX.WorkBook): UniversalParseResult {
+  const multiplierIs1000 = detectThousandsMultiplier(workbook);
+  const strategyUsed = detectUniversalStrategy(workbook);
+  let data: Record<string, number>;
+  let rowsScanned = 0;
+
+  if (strategyUsed === 'gl_trial_balance') {
+    data = parseGLTrialBalance(workbook, multiplierIs1000);
+    rowsScanned = workbook.SheetNames.reduce((acc, n) => {
+      const s = workbook.Sheets[n];
+      const r = s ? (XLSX.utils.sheet_to_json(s, { header: 1 }) as any[][]).length : 0;
+      return acc + r;
+    }, 0);
+  } else {
+    // keyword_extractor or multi_sheet — scan all sheets with keyword approach
+    const extracted = extractKeywordsUniversal(workbook, multiplierIs1000);
+    data = extracted.data;
+    rowsScanned = extracted.rowsScanned;
+
+    // If keyword extractor found nothing useful, fall back to existing parseCBSWorkbook
+    if (Object.keys(data).length < 3) {
+      console.log('Keyword extractor insufficient, falling back to synonym parser');
+      const fallback = parseCBSWorkbook(workbook);
+      data = Object.keys(fallback).length > Object.keys(data).length ? fallback : data;
+    }
+  }
+
+  const autoInst = autoDetectInstitutionDetails(workbook);
+
+  const requiredFields = ['total_assets', 'total_deposits', 'total_shareholders_funds'];
+  const dataSourceLog = {
+    parser_strategy: strategyUsed,
+    fields_found: Object.keys(data).filter(k => data[k]),
+    fields_missing: requiredFields.filter(f => !data[f]),
+    thousands_multiplier_detected: multiplierIs1000,
+    sheet_names_found: workbook.SheetNames,
+    row_count: rowsScanned,
+  };
+  console.log('Data source log:', JSON.stringify(dataSourceLog));
+
+  return { data, strategyUsed, multiplierIs1000, institutionDetails: autoInst, dataSourceLog };
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+
 async function patchReport(reportId: string, data: Record<string, any>, serviceRoleKey: string): Promise<string | null> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${reportId}`, {
     method: 'PATCH',
@@ -1054,15 +1490,41 @@ Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
       console.log(`RegCo template parsed: ${institutionNameParsed} | CAR=${carCalc.toFixed(2)}%, Liquidity=${liqCalc.toFixed(2)}%, NPL=${nplCalc.toFixed(2)}%`);
 
     } else {
-      // ── Fallback: generic fuzzy CBS parser ───────────────────
-      const rawData = parseCBSWorkbook(workbook);
+      // ── Universal CBS Parser (Strategies B / C / D) ───────────────
+      const universal = runUniversalParser(workbook);
+      const { data: rawData, strategyUsed, institutionDetails } = universal;
 
-      if (Object.keys(rawData).length === 0) {
-        throw new Error(
-          'We could not identify any recognized account labels in your CBS export. ' +
-          'Please ensure the file contains the trial balance, general ledger, or summary balance sheet from your core banking system, ' +
-          'or use the RegCo CBS Template (with sheets: Institution Details, GL Summary, RegCo Upload Format).'
-        );
+      // Supplement institution fields from auto-detection if not already set
+      if (!institutionNameParsed && institutionDetails.name)      institutionNameParsed = institutionDetails.name;
+      if (!licenseNumberParsed && institutionDetails.licenseNumber) licenseNumberParsed = institutionDetails.licenseNumber;
+      if (!rcNumberParsed && institutionDetails.rcNumber)           rcNumberParsed = institutionDetails.rcNumber;
+      if (!reportingPeriodParsed && institutionDetails.reportingPeriod) reportingPeriodParsed = institutionDetails.reportingPeriod;
+
+      // Smart validation (Part 5)
+      const validationIssues = validateUniversal(rawData);
+
+      if (Object.keys(rawData).length < 3 || (validationIssues.length > 0 && !rawData.total_assets)) {
+        const errorMsg = validationIssues.length > 0
+          ? validationIssues.join(' | ')
+          : 'We could not identify any recognized account labels in your CBS export. ' +
+            'Please ensure the file contains the trial balance, general ledger, or balance sheet from your core banking system, ' +
+            'or use the RegCo template (sheets: Institution Details, GL Summary, RegCo Upload Format).';
+        await patchReport(report_id, {
+          status: 'failed',
+          error_message: errorMsg,
+          error_type: 'INSUFFICIENT_DATA',
+          validation_passed: false,
+          generated_at: new Date().toISOString(),
+        }, serviceRoleKey);
+        return new Response(JSON.stringify({ success: true, status: 'ERROR', error: errorMsg }), {
+          status: 200,
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Balance sheet reconciliation warning (soft — log but don't fail if AI can still generate)
+      if (validationIssues.length > 0) {
+        console.warn('Validation issues (non-fatal):', validationIssues.join(' | '));
       }
 
       const { derived, metrics: m, validationError } = deriveAndValidate(rawData);
@@ -1072,6 +1534,8 @@ Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
           status: 'failed',
           error_message: validationError,
           error_type: 'BALANCE_SHEET_RECONCILIATION_FAILED',
+          validation_passed: false,
+          generated_at: new Date().toISOString(),
         }, serviceRoleKey);
         return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
           status: 200,
@@ -1081,8 +1545,8 @@ Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
 
       financialData = derived;
       metrics = m;
-      dataPayload = `Institution: ${institution_name}\nPeriod: ${reporting_period_start} to ${reporting_period_end}\nFinancial Data: ${JSON.stringify(financialData)}`;
-      console.log(`Generic CBS parsed. CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
+      dataPayload = `Institution: ${institutionNameParsed || institution_name}\nPeriod: ${reportingPeriodParsed || `${reporting_period_start} to ${reporting_period_end}`}\nParser Strategy: ${strategyUsed}\nFinancial Data: ${JSON.stringify(financialData)}`;
+      console.log(`Universal CBS parsed [${strategyUsed}]: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${metrics.liquidity_percentage.toFixed(2)}%, NPL=${metrics.npl_ratio.toFixed(2)}%`);
     }
 
     const systemPrompt = getSystemPrompt(reportType);

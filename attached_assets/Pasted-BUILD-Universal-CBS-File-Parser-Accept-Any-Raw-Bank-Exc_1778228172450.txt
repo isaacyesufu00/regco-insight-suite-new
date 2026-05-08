@@ -1,0 +1,245 @@
+BUILD: Universal CBS File Parser — Accept Any Raw Bank Excel File
+This is the most critical feature for RegCo's commercial viability. Right now RegCo only accepts a specific 3-sheet template. Real clients will upload raw exports from FlexCube, Ncube, Finacle, Temenos, or plain Excel GL reports with hundreds of rows. RegCo must intelligently parse ALL of these and extract the figures needed to generate CBN returns.
+Build a complete universal parser that sits inside the process-report edge function and handles any file a Nigerian MFB throws at it.
+
+PART 1 — MULTI-STRATEGY FILE DETECTION
+When a file is uploaded, before any parsing, run a detection phase to identify what kind of file it is. Check these in order:
+Strategy A — RegCo Template Detection (existing flow)
+Check if the workbook contains a sheet named exactly "RegCo Upload Format". If yes, use the existing template parser. No changes needed for this path.
+Strategy B — GL Trial Balance Detection
+Check if any sheet contains BOTH a debit column AND a credit column AND more than 20 rows of data. If yes, treat it as a raw GL trial balance and use the GL parser (Part 2 below).
+Strategy C — Single Sheet Summary Detection
+Check if any sheet has rows where column A contains keywords like "total assets", "deposits", "capital", "loans". If yes, treat it as a financial summary sheet and use the keyword extractor (Part 3 below).
+Strategy D — Multi-Sheet Workbook
+If the file has 3 or more sheets, scan ALL sheets for financial data and merge findings across sheets.
+After detection, log which strategy was used: console.log('Parser strategy:', strategyUsed).
+
+PART 2 — RAW GL TRIAL BALANCE PARSER
+This handles files where the client exports their full GL directly from FlexCube, Ncube, Finacle, or any CBS. These files have account codes, account descriptions, debit balances, and credit balances — often hundreds of rows.
+Example raw GL rows a client might upload:
+1001  | Cash in Vault                    | 45,000,000  |
+1002  | Cash in ATMs                     | 12,500,000  |
+1003  | Cash in Transit                  | 8,200,000   |
+1101  | CBN Current Account              | 280,000,000 |
+1102  | CBN SDF Account                  | 165,000,000 |
+2001  | Savings Accounts - Individuals   |             | 445,000,000
+2002  | Savings Accounts - SME           |             | 223,000,000
+3001  | Share Capital                    |             | 200,000,000
+Build a GL aggregator that maps individual GL account codes and descriptions into CBN regulatory categories using this mapping logic:
+ASSET AGGREGATION RULES (sum all matching rows into one figure):
+cashAndEquivalents — aggregate ALL rows where description matches any of:
+
+UPPERCASE contains: "CASH", "VAULT", "ATM", "CASH IN TRANSIT", "TILL"
+Account code starts with: 1001, 1002, 1003, 100, 101 (typical CBN chart of accounts)
+
+cbnBalance — aggregate rows where:
+
+UPPERCASE contains: "CBN", "CENTRAL BANK", "SDF", "CRR", "CASH RESERVE"
+Account code starts with: 1101, 1102, 110
+
+interbankBalance — aggregate rows where:
+
+UPPERCASE contains: "PLACEMENT", "INTERBANK", "NOSTRO", "MONEY MARKET", "OTHER BANK", "CORRESPONDENT"
+Account code starts with: 1201, 1202, 120
+
+investments — aggregate rows where:
+
+UPPERCASE contains: "INVESTMENT", "TREASURY BILL", "T-BILL", "BOND", "FGN BOND", "SECURITIES", "NTB"
+Account code starts with: 1301, 130, 131
+
+grossLoans — aggregate rows where:
+
+UPPERCASE contains: "LOAN", "ADVANCE", "OVERDRAFT", "CREDIT FACILITY", "MORTGAGE", "LEASE"
+Account code starts with: 2001, 2002, 200, 201, 202 (NOTE: loans are assets with debit balance)
+
+provisions — aggregate rows where:
+
+UPPERCASE contains: "PROVISION", "IMPAIRMENT", "ALLOWANCE", "LOAN LOSS", "CREDIT LOSS"
+Account code starts with: 2901, 290 (contra-asset — take credit balance)
+
+fixedAssets — aggregate rows where:
+
+UPPERCASE contains: "FIXED ASSET", "PROPERTY", "EQUIPMENT", "FURNITURE", "VEHICLE", "COMPUTER", "PPE", "LEASEHOLD"
+Account code starts with: 3001, 300, 301, 302
+
+otherAssets — aggregate rows where:
+
+UPPERCASE contains: "PREPAID", "ACCRUED INCOME", "SUNDRY ASSET", "OTHER ASSET", "DEFERRED"
+Account code starts with: 3901, 390
+
+LIABILITY AGGREGATION RULES:
+savingsDeposits — aggregate rows where:
+
+UPPERCASE contains: "SAVING", "SAVINGS ACCOUNT"
+Account code starts with: 4001, 400
+
+currentDeposits — aggregate rows where:
+
+UPPERCASE contains: "CURRENT ACCOUNT", "DEMAND DEPOSIT", "CURRENT DEPOSIT"
+Account code starts with: 4101, 410
+
+fixedDeposits — aggregate rows where:
+
+UPPERCASE contains: "FIXED DEPOSIT", "TERM DEPOSIT", "TIME DEPOSIT", "CALL DEPOSIT"
+Account code starts with: 4201, 420
+
+specialDeposits — aggregate rows where:
+
+UPPERCASE contains: "SPECIAL DEPOSIT", "ESCROW", "DOMICILIARY", "TARGET SAVING"
+Account code starts with: 4301, 430
+
+borrowings — aggregate rows where:
+
+UPPERCASE contains: "BORROWING", "CBN FACILITY", "REFINANCING", "WHOLESALE FUND", "BOND ISSUED", "COMMERCIAL PAPER"
+Account code starts with: 5001, 500
+
+otherLiabilities — aggregate rows where:
+
+UPPERCASE contains: "OTHER LIABILITY", "ACCRUAL", "SUNDRY LIABILITY", "UNCLAIMED", "DIVIDEND PAYABLE"
+Account code starts with: 5901, 590
+
+EQUITY AGGREGATION RULES:
+shareCapital — aggregate rows where:
+
+UPPERCASE contains: "SHARE CAPITAL", "PAID UP CAPITAL", "ORDINARY SHARE"
+Account code starts with: 6001, 600
+
+retainedEarnings — aggregate rows where:
+
+UPPERCASE contains: "RETAINED", "PROFIT AND LOSS", "ACCUMULATED", "SURPLUS"
+Account code starts with: 6101, 610
+
+otherReserves — aggregate rows where:
+
+UPPERCASE contains: "RESERVE", "STATUTORY RESERVE", "SMSE RESERVE", "REGULATORY RESERVE"
+Account code starts with: 6201, 620
+
+After aggregation, calculate the derived totals:
+javascripttotalAssetsGross = cashAndEquivalents + cbnBalance + interbankBalance + investments + grossLoans + fixedAssets + otherAssets;
+totalAssetsNet = totalAssetsGross - provisions;
+totalDeposits = savingsDeposits + currentDeposits + fixedDeposits + specialDeposits;
+totalLiabilities = totalDeposits + borrowings + otherLiabilities;
+shareholdersFunds = shareCapital + retainedEarnings + otherReserves;
+totalLiabilitiesAndEquity = totalLiabilities + shareholdersFunds;
+
+PART 3 — KEYWORD EXTRACTOR FOR SUMMARY SHEETS
+Some clients will upload a single-sheet Excel summary (like a management accounts report). This parser scans every row and looks for CBN financial keywords to extract figures.
+For every row in the sheet:
+
+Normalize the label in column A to UPPERCASE and trim whitespace
+Remove all special characters except letters, numbers and spaces
+Check against this priority-ordered keyword list:
+
+javascriptconst keywordMap = [
+  // ASSETS — check most specific first
+  { field: 'totalAssetsNet',    keywords: ['TOTAL ASSETS NET', 'NET TOTAL ASSETS', 'TOTAL ASSETS (NET)', 'NET ASSETS'] },
+  { field: 'totalAssetsGross',  keywords: ['TOTAL ASSETS GROSS', 'GROSS TOTAL ASSETS', 'TOTAL ASSETS (GROSS)', 'TOTAL ASSETS'] },
+  { field: 'grossLoans',        keywords: ['GROSS LOANS', 'LOANS AND ADVANCES', 'GROSS ADVANCES', 'TOTAL LOANS'] },
+  { field: 'provisions',        keywords: ['LOAN LOSS PROVISION', 'PROVISION FOR LOAN', 'IMPAIRMENT', 'ALLOWANCE FOR LOSSES'] },
+  { field: 'cashAndEquivalents',keywords: ['CASH AND CASH EQUIVALENT', 'CASH AND EQUIVALENT', 'CASH EQUIVALENT'] },
+  { field: 'investments',       keywords: ['INVESTMENT SECURITIES', 'AVAILABLE FOR SALE', 'HELD TO MATURITY'] },
+  // LIABILITIES
+  { field: 'totalLiabilitiesAndEquity', keywords: ['TOTAL LIABILITIES AND EQUITY', 'TOTAL LIABILITIES AND SHAREHOLDERS', 'LIABILITIES AND EQUITY'] },
+  { field: 'totalLiabilities',  keywords: ['TOTAL LIABILITIES'] }, // after the above to avoid false match
+  { field: 'totalDeposits',     keywords: ['TOTAL DEPOSITS', 'TOTAL CUSTOMER DEPOSIT', 'CUSTOMER DEPOSITS'] },
+  { field: 'savingsDeposits',   keywords: ['SAVINGS DEPOSIT', 'SAVINGS ACCOUNT'] },
+  { field: 'currentDeposits',   keywords: ['CURRENT DEPOSIT', 'CURRENT ACCOUNT', 'DEMAND DEPOSIT'] },
+  { field: 'fixedDeposits',     keywords: ['FIXED DEPOSIT', 'TERM DEPOSIT', 'TIME DEPOSIT'] },
+  { field: 'borrowings',        keywords: ['BORROWING', 'CBN FUND', 'REFINANCING'] },
+  // EQUITY
+  { field: 'shareholdersFunds', keywords: ['SHAREHOLDERS FUND', 'SHAREHOLDERS EQUITY', "SHAREHOLDERS' FUND", 'TOTAL EQUITY'] },
+  { field: 'shareCapital',      keywords: ['SHARE CAPITAL', 'PAID UP CAPITAL'] },
+  { field: 'retainedEarnings',  keywords: ['RETAINED EARNING', 'ACCUMULATED SURPLUS'] },
+  // RATIOS
+  { field: 'carPercent',        keywords: ['CAPITAL ADEQUACY RATIO', 'CAR', 'CAPITAL RATIO'] },
+  { field: 'liquidityPercent',  keywords: ['LIQUIDITY RATIO', 'LIQUIDITY'] },
+  { field: 'tier1Capital',      keywords: ['TIER 1 CAPITAL', 'TIER ONE CAPITAL', 'CORE CAPITAL'] },
+  { field: 'tier2Capital',      keywords: ['TIER 2 CAPITAL', 'TIER TWO CAPITAL'] },
+  { field: 'rwa',               keywords: ['RISK WEIGHTED ASSET', 'RWA', 'RISK ASSET'] },
+];
+For each row, check if the normalized label STARTS WITH or CONTAINS any keyword (check starts-with first for accuracy). When matched, extract the numeric value from the first non-empty numeric column to the right of the label.
+Number extraction rules — handle all common formats:
+javascriptfunction extractNumber(raw) {
+  if (!raw && raw !== 0) return null;
+  const str = String(raw).replace(/[₦$,\s]/g, ''); // remove currency symbols and commas
+  // Handle thousands notation (e.g. "2,847,700" in a ₦'000 sheet = 2,847,700,000)
+  const num = parseFloat(str);
+  return isNaN(num) ? null : num;
+}
+IMPORTANT — Thousands multiplier detection:
+Scan the sheet header rows for any text containing "'000" or "thousands" or "N'000" or "₦'000". If found, set multiplerIs1000 = true and multiply ALL extracted figures by 1000 before using them. Many CBN reports are submitted in ₦'000 notation.
+
+PART 4 — INSTITUTION DETAILS AUTO-DETECTION
+Search ALL sheets for institution information. Scan every cell in the first 30 rows of every sheet for these patterns:
+
+Institution name: Any cell containing "MICROFINANCE BANK", "MFB", "LIMITED", "LTD" — take the full cell value
+License number: Any cell matching pattern MFB/[A-Z]+/[A-Z]/[0-9]+/[0-9]+
+Reporting period: Any cell containing month names (JANUARY through DECEMBER) followed by a 4-digit year, OR any date value in Excel date format
+RC Number: Any cell where the label nearby says "RC" or "RC NUMBER" or "CAC" followed by digits
+
+If institution name is not found in the file, fall back to the value stored in the user's profiles table (company_name field) — fetch it from Supabase using the user's ID.
+
+PART 5 — VALIDATION WITH SMART ERROR MESSAGES
+After all parsing is complete, run these checks:
+javascriptconst issues = [];
+
+// Check 1: Balance sheet must reconcile (0.1% tolerance)
+if (totalAssetsNet && totalLiabilitiesAndEquity) {
+  const diff = Math.abs(totalAssetsNet - totalLiabilitiesAndEquity);
+  if (diff > totalAssetsNet * 0.001) {
+    issues.push(`Balance sheet does not reconcile. Net Assets ₦${totalAssetsNet.toLocaleString()} ≠ Total Liabilities + Equity ₦${totalLiabilitiesAndEquity.toLocaleString()}. Difference: ₦${diff.toLocaleString()}.`);
+  }
+}
+
+// Check 2: Minimum fields required for any report
+const requiredFields = ['totalAssetsNet', 'totalDeposits', 'shareholdersFunds'];
+for (const f of requiredFields) {
+  if (!extractedData[f]) {
+    issues.push(`Could not find "${f}" in the uploaded file. Please ensure your file contains total assets, total deposits, and shareholders funds.`);
+  }
+}
+
+// Check 3: Reasonable value sanity checks
+if (totalAssetsNet < 10_000_000) {
+  issues.push('Total assets appear unusually low (under ₦10 million). Please check your figures or whether the file is in ₦\'000 notation.');
+}
+
+// If hard failures, throw with combined message
+if (issues.length > 0) {
+  throw new Error(issues.join(' | '));
+}
+
+PART 6 — DATA SOURCE LOGGING (for the Data Sources dashboard page)
+After successful parsing, write a record to the reports table indicating how each field was found. This powers the "Data Sources" page in the dashboard:
+javascriptconst dataSourceLog = {
+  parser_strategy: strategyUsed,         // 'template' | 'gl_trial_balance' | 'keyword_extractor'
+  fields_found: Object.keys(extractedData).filter(k => extractedData[k]),
+  fields_missing: requiredFields.filter(f => !extractedData[f]),
+  thousands_multiplier_detected: multiplierIs1000,
+  sheet_names_found: workbook.SheetNames,
+  row_count: totalRowsScanned,
+};
+console.log('Data source log:', JSON.stringify(dataSourceLog));
+
+PART 7 — UPDATE THE UPLOAD UI TO TELL USERS WHAT FILES ARE ACCEPTED
+In src/pages/new-report (the Create Report page), update the file upload zone text to say:
+Upload your CBS export or GL report
+
+Accepted formats:
+✅ RegCo template (recommended — download below)
+✅ Raw GL trial balance from FlexCube, Ncube, Finacle, or Temenos
+✅ Any Excel file with balance sheet or GL data
+✅ .xlsx and .xls files
+
+RegCo automatically reads your file and extracts the figures needed.
+For best results, ensure your file includes: Total Assets, Total Deposits,
+Shareholders Funds, and Capital Adequacy figures.
+
+[Download RegCo Template] ← keep this button
+
+PART 8 — DEPLOY
+After all changes:
+bashsupabase functions deploy process-report
+supabase functions deploy notify-automation
+git add -A && git commit -m "feat: universal CBS parser — accepts raw FlexCube, Ncube, and any Excel GL export" && git push origin main --force-with-lease
+Confirm by showing me the strategy detection logic and the GL aggregator mapping code.
