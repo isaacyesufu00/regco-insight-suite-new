@@ -112,7 +112,7 @@ export default function TransactionMonitor() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    if (data) setFlags(data as FlaggedTransaction[]);
+    if (data) setFlags(data as unknown as FlaggedTransaction[]);
   }, [user]);
 
   useEffect(() => {
