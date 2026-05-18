@@ -1,33 +1,25 @@
-import Navbar from "@/components/Navbar";
-import HeroSection from "@/components/HeroSection";
-import ReportTypesTicker from "@/components/ReportTypesTicker";
-import StatsSection from "@/components/StatsSection";
-import InstitutionScrollSection from "@/components/InstitutionScrollSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import HowItWorks from "@/components/HowItWorks";
-import ComplianceTypesSection from "@/components/ComplianceTypesSection";
-import PricingSection from "@/components/PricingSection";
-import AboutSection from "@/components/AboutSection";
-import CTASection from "@/components/CTASection";
-import Footer from "@/components/Footer";
+import EigenNavbar from "@/components/eigen/EigenNavbar";
+import EigenHero from "@/components/eigen/EigenHero";
+import TaglineSection from "@/components/eigen/TaglineSection";
+import PlatformSection from "@/components/eigen/PlatformSection";
+import BestInClassSection from "@/components/eigen/BestInClassSection";
+import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
+import UseCasesSection from "@/components/eigen/UseCasesSection";
+import FinalCTASection from "@/components/eigen/FinalCTASection";
+import EigenFooter from "@/components/eigen/EigenFooter";
 
-const Index = () => {
-  return (
-    <div style={{ background: "#F5F5F7" }}>
-      <Navbar />
-      <HeroSection />
-      <ReportTypesTicker />
-      <StatsSection />
-      <InstitutionScrollSection />
-      <FeaturesSection />
-      <HowItWorks />
-      <ComplianceTypesSection />
-      <PricingSection />
-      <AboutSection />
-      <CTASection />
-      <Footer />
-    </div>
-  );
-};
+const Index = () => (
+  <div style={{ background: "#F5F5F0", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
+    <EigenNavbar />
+    <EigenHero />
+    <TaglineSection />
+    <PlatformSection />
+    <BestInClassSection />
+    <SecurityDarkSection />
+    <UseCasesSection />
+    <FinalCTASection />
+    <EigenFooter />
+  </div>
+);
 
 export default Index;
