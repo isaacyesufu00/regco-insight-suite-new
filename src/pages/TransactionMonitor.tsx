@@ -108,11 +108,11 @@ export default function TransactionMonitor() {
   const fetchFlags = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("flagged_transactions")
+      .from("flagged_transactions" as any)
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    if (data) setFlags(data as FlaggedTransaction[]);
+    if (data) setFlags(data as unknown as FlaggedTransaction[]);
   }, [user]);
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export default function TransactionMonitor() {
     if (!user) return;
     const ch = supabase
       .channel("flagged-tx-live")
-      .on("postgres_changes", { event: "*", schema: "public", table: "flagged_transactions", filter: `user_id=eq.${user.id}` }, (payload) => {
+      .on("postgres_changes", { event: "*", schema: "public", table: "flagged_transactions" as any, filter: `user_id=eq.${user.id}` }, (payload) => {
         if (payload.eventType === "INSERT") {
           setFlags((p) => [payload.new as FlaggedTransaction, ...p]);
         } else if (payload.eventType === "UPDATE") {
@@ -177,7 +177,7 @@ export default function TransactionMonitor() {
         if (toInsert.length > 0) {
           const BATCH = 50;
           for (let b = 0; b < toInsert.length; b += BATCH) {
-            await supabase.from("flagged_transactions").insert(toInsert.slice(b, b + BATCH));
+            await supabase.from("flagged_transactions" as any).insert(toInsert.slice(b, b + BATCH));
           }
         }
       } finally {
@@ -189,7 +189,7 @@ export default function TransactionMonitor() {
   };
 
   const updateStatus = async (id: string, status: FlaggedTransaction["status"]) => {
-    await supabase.from("flagged_transactions").update({ status }).eq("id", id);
+    await supabase.from("flagged_transactions" as any).update({ status }).eq("id", id);
   };
 
   const filtered = flags.filter((f) => {
