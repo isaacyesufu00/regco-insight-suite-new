@@ -347,6 +347,7 @@ export type Database = {
           error_type: string | null
           file_path: string | null
           file_url: string | null
+          generated_at: string | null
           id: string
           liquidity_percentage: number | null
           npl_ratio: number | null
@@ -371,6 +372,7 @@ export type Database = {
           error_type?: string | null
           file_path?: string | null
           file_url?: string | null
+          generated_at?: string | null
           id?: string
           liquidity_percentage?: number | null
           npl_ratio?: number | null
@@ -395,6 +397,7 @@ export type Database = {
           error_type?: string | null
           file_path?: string | null
           file_url?: string | null
+          generated_at?: string | null
           id?: string
           liquidity_percentage?: number | null
           npl_ratio?: number | null
