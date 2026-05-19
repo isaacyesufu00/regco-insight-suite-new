@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import { Navigate } from "react-router-dom";
 import Contact from "./pages/Contact";
 import BookDemo from "./pages/BookDemo";
@@ -48,7 +49,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Navigate to="/book-demo" replace />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/book-demo" element={<BookDemo />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
