@@ -18,8 +18,8 @@ const EigenHero = () => (
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              background: "rgba(76,175,80,0.1)",
-              color: "#2D6A4F",
+              background: "rgba(0,0,0,0.1)",
+              color: "#0A0A0A",
               borderRadius: 4,
               padding: "4px 10px",
               fontSize: 11,
@@ -27,7 +27,7 @@ const EigenHero = () => (
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               marginBottom: 24,
-              border: "1px solid rgba(76,175,80,0.2)",
+              border: "1px solid rgba(0,0,0,0.2)",
             }}
           >
             ✦ Trusted by Nigerian Financial Institutions
@@ -53,7 +53,7 @@ const EigenHero = () => (
             monitor transactions, and manage KYC — from one dashboard.
           </p>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            <Link to="/login" style={{ background: "#4CAF50", color: "#FFFFFF", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+            <Link to="/login" style={{ background: "#0A0A0A", color: "#FFFFFF", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
               START FOR FREE <ArrowRight size={12} />
             </Link>
             <Link to="/book-demo" style={{ background: "transparent", color: "#1A1A1A", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, border: "1px solid rgba(0,0,0,0.15)", textDecoration: "none" }}>

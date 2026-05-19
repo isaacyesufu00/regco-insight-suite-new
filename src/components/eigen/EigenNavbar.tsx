@@ -68,7 +68,7 @@ const EigenNavbar = () => (
       <Link
         to="/book-demo"
         style={{
-          background: "#4CAF50",
+          background: "#0A0A0A",
           color: "#FFFFFF",
           borderRadius: 6,
           padding: "8px 16px",

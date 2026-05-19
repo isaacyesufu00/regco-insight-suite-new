@@ -79,7 +79,7 @@ const DocumentIllustration = () => (
             style={{
               height: 7,
               width: `${width}%`,
-              background: lineIndex === 0 ? "rgba(76,175,80,0.3)" : "rgba(0,0,0,0.10)",
+              background: lineIndex === 0 ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.10)",
               borderRadius: 3,
             }}
           />
@@ -118,7 +118,7 @@ const ProcessingIcon = () => (
           key={`left-${i}`}
           cy={-20 + i * 14}
           r="3"
-          fill="#4CAF50"
+          fill="#0A0A0A"
           animate={{ cx: [-80, -20], opacity: [0, 1, 0] }}
           transition={{ duration: 1.5, delay: i * 0.2, repeat: Infinity, ease: "linear" }}
         />
@@ -128,7 +128,7 @@ const ProcessingIcon = () => (
           key={`right-${i}`}
           cy={-20 + i * 14}
           r="3"
-          fill="#4CAF50"
+          fill="#0A0A0A"
           animate={{ cx: [20, 80], opacity: [0, 1, 0] }}
           transition={{ duration: 1.5, delay: i * 0.2 + 0.75, repeat: Infinity, ease: "linear" }}
         />
@@ -150,7 +150,7 @@ const ProcessingIcon = () => (
       }}
     >
       <motion.span
-        style={{ fontSize: 24, color: "#4CAF50", fontWeight: 700 }}
+        style={{ fontSize: 24, color: "#0A0A0A", fontWeight: 700 }}
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
       >
@@ -176,7 +176,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
     <div key="0">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>● Return Types</span>
-        <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 600 }}>16 available</span>
+        <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 600 }}>16 available</span>
       </div>
       <div style={labelRow}><span>REGULATOR</span><span>TYPE</span></div>
       {[
@@ -193,7 +193,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
             alignItems: "center",
             padding: "10px 0",
             borderBottom: "1px solid rgba(0,0,0,0.05)",
-            background: item.active ? "rgba(76,175,80,0.04)" : "transparent",
+            background: item.active ? "rgba(0,0,0,0.04)" : "transparent",
             borderRadius: item.active ? 6 : 0,
             paddingLeft: item.active ? 8 : 0,
           }}
@@ -201,8 +201,8 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
           <span
             style={{
               fontSize: 11,
-              background: item.active ? "rgba(76,175,80,0.12)" : "rgba(0,0,0,0.06)",
-              color: item.active ? "#2D6A4F" : "#6B6B6B",
+              background: item.active ? "rgba(0,0,0,0.12)" : "rgba(0,0,0,0.06)",
+              color: item.active ? "#0A0A0A" : "#6B6B6B",
               borderRadius: 4,
               padding: "2px 6px",
               fontWeight: 600,
@@ -219,7 +219,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
     <div key="1">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>● File Analysis</span>
-        <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 600 }}>3 sheets detected</span>
+        <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 600 }}>3 sheets detected</span>
       </div>
       <div style={labelRow}><span>SHEET</span><span>ROWS</span></div>
       {[
@@ -229,7 +229,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
       ].map((item, i) => (
         <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#4CAF50", fontSize: 14 }}>⊙</span>
+            <span style={{ color: "#0A0A0A", fontSize: 14 }}>⊙</span>
             <span style={{ fontSize: 12, color: "#1A1A1A" }}>{item.sheet}</span>
           </div>
           <span style={{ fontSize: 12, color: "#6B6B6B" }}>{item.rows}</span>
@@ -241,7 +241,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
     <div key="2">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>● Validation Results</span>
-        <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 600 }}>All passed ✓</span>
+        <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 600 }}>All passed ✓</span>
       </div>
       <div style={labelRow}><span>CHECK</span><span>RESULT</span></div>
       {[
@@ -252,10 +252,10 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
       ].map((item, i) => (
         <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#4CAF50", fontSize: 14 }}>⊙</span>
+            <span style={{ color: "#0A0A0A", fontSize: 14 }}>⊙</span>
             <span style={{ fontSize: 12, color: "#1A1A1A" }}>{item.check}</span>
           </div>
-          <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 500 }}>{item.result}</span>
+          <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 500 }}>{item.result}</span>
         </div>
       ))}
     </div>,
@@ -264,7 +264,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
     <div key="3">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 600, color: "#1A1A1A" }}>● Report Ready</span>
-        <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 600 }}>4m 32s</span>
+        <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 600 }}>4m 32s</span>
       </div>
       <div style={labelRow}><span>SECTION</span><span>STATUS</span></div>
       {[
@@ -275,10 +275,10 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
       ].map((item, i) => (
         <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#4CAF50", fontSize: 14 }}>⊙</span>
+            <span style={{ color: "#0A0A0A", fontSize: 14 }}>⊙</span>
             <span style={{ fontSize: 12, color: "#1A1A1A" }}>{item.section}</span>
           </div>
-          <span style={{ fontSize: 12, color: "#4CAF50", fontWeight: 500 }}>{item.status}</span>
+          <span style={{ fontSize: 12, color: "#0A0A0A", fontWeight: 500 }}>{item.status}</span>
         </div>
       ))}
       <motion.button
@@ -288,7 +288,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
           width: "100%",
           marginTop: 16,
           height: 38,
-          background: "#1B4332",
+          background: "#0A0A0A",
           color: "#FFFFFF",
           border: "none",
           borderRadius: 6,
@@ -337,7 +337,7 @@ const ResultsCard = ({ stepIndex }: { stepIndex: number }) => {
         { name: "CBN MFB Regulatory", due: "7 days", color: "#DC2626", bg: "#FEF2F2" },
         { name: "PAYE Remittance", due: "14 days", color: "#D97706", bg: "#FFFBEB" },
         { name: "VAT Return", due: "14 days", color: "#D97706", bg: "#FFFBEB" },
-        { name: "AML/CFT Report", due: "28 days", color: "#4CAF50", bg: "#F0FDF4" },
+        { name: "AML/CFT Report", due: "28 days", color: "#0A0A0A", bg: "#F4F4F4" },
       ].map((item, i) => (
         <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -460,7 +460,7 @@ const DashboardTutorialSection = () => {
                 key={i}
                 animate={{
                   width: i === activeStep ? 28 : 8,
-                  background: i === activeStep ? "#1B4332" : "rgba(0,0,0,0.15)",
+                  background: i === activeStep ? "#0A0A0A" : "rgba(0,0,0,0.15)",
                 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                 style={{ height: 8, borderRadius: 999 }}
@@ -481,7 +481,7 @@ const DashboardTutorialSection = () => {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: "#4CAF50",
+                  color: "#0A0A0A",
                   letterSpacing: "0.1em",
                   textTransform: "uppercase",
                   display: "block",

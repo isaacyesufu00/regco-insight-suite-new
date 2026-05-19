@@ -1,17 +1,17 @@
 import { motion } from "framer-motion";
 
 const statusCards = [
-  { label: "Ready", value: 12, color: "#4CAF50" },
+  { label: "Ready", value: 12, color: "#0A0A0A" },
   { label: "Processing", value: 3, color: "#FF9F0A" },
   { label: "Draft", value: 5, color: "#6B6B6B" },
   { label: "Failed", value: 1, color: "#FF3B30" },
 ];
 
 const reports = [
-  { name: "MFB Regulatory Return — Oct 2026", reg: "CBN", status: "Ready", color: "#4CAF50" },
-  { name: "AML/CFT Quarterly Report", reg: "NFIU", status: "Ready", color: "#4CAF50" },
+  { name: "MFB Regulatory Return — Oct 2026", reg: "CBN", status: "Ready", color: "#0A0A0A" },
+  { name: "AML/CFT Quarterly Report", reg: "NFIU", status: "Ready", color: "#0A0A0A" },
   { name: "SCUML Annual Return", reg: "SCUML", status: "Processing", color: "#FF9F0A" },
-  { name: "NDIC Premium Return", reg: "NDIC", status: "Ready", color: "#4CAF50" },
+  { name: "NDIC Premium Return", reg: "NDIC", status: "Ready", color: "#0A0A0A" },
   { name: "VAT Return — Sep 2026", reg: "FIRS", status: "Draft", color: "#6B6B6B" },
 ];
 
@@ -60,7 +60,7 @@ const DashboardMockup = () => (
               color: i === 0 ? "#1A1A1A" : "#6B6B6B",
               padding: "8px 10px",
               borderRadius: 6,
-              background: i === 0 ? "rgba(76,175,80,0.10)" : "transparent",
+              background: i === 0 ? "rgba(0,0,0,0.10)" : "transparent",
               marginBottom: 4,
               fontWeight: i === 0 ? 600 : 500,
             }}
