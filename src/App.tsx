@@ -9,6 +9,7 @@ import CookieConsent from "@/components/CookieConsent";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import { Navigate } from "react-router-dom";
 import Contact from "./pages/Contact";
 import BookDemo from "./pages/BookDemo";
