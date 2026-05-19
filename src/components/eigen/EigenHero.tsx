@@ -30,7 +30,7 @@ const EigenHero = () => (
               border: "1px solid rgba(0,0,0,0.2)",
             }}
           >
-            ✦ Trusted by Nigerian Financial Institutions
+            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#0A0A0A", marginRight: 8, verticalAlign: "middle" }} /> Trusted by Nigerian Financial Institutions
           </div>
           <h1
             style={{
