@@ -1723,9 +1723,19 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
       throw new Error(`Storage upload failed: ${errText}`);
     }
 
+    // Resolve a public URL for the uploaded report so the dashboard download button works
+    const publicUrlRes = await fetch(
+      `${SUPABASE_URL}/storage/v1/object/public/reports/${storagePath}`,
+      { method: 'HEAD' },
+    ).catch(() => null);
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/reports/${storagePath}`;
+    void publicUrlRes;
+
     const updateError = await patchReport(report_id, {
       status: 'ready',
-      report_url: storagePath,
+      report_url: publicUrl,
+      file_url: publicUrl,
+      file_path: storagePath,
       report_filename: filename,
       car_percentage: validationSummary.car_percentage,
       liquidity_percentage: validationSummary.liquidity_percentage,
