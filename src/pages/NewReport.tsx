@@ -23,6 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import DownloadButton from "@/components/DownloadButton";
 
 // ─── All 16 report types grouped by regulator ───
 
@@ -710,12 +711,21 @@ const NewReport = () => {
                   </div>
                 )}
                 <div className="flex gap-3 justify-center">
-                  {downloadUrl && (
-                    <Button asChild>
-                      <a href={downloadUrl} target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2 h-4 w-4" />Download Report
-                      </a>
-                    </Button>
+                  {currentReportId && (
+                    <DownloadButton
+                      report={{
+                        id: currentReportId,
+                        report_type: reportType,
+                        report_url: downloadUrl || undefined,
+                        status: 'ready',
+                        car_percentage: validationMetrics?.car_percentage ?? null,
+                        liquidity_percentage: validationMetrics?.liquidity_percentage ?? null,
+                        npl_ratio: validationMetrics?.npl_ratio ?? null,
+                        validation_passed: true,
+                      }}
+                      variant="primary"
+                      size="md"
+                    />
                   )}
                   <Button variant="outline" onClick={() => navigate("/dashboard/my-reports")}>View All Reports</Button>
                 </div>
