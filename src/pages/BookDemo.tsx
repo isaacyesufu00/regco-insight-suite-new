@@ -1,9 +1,32 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
 const institutionTypes = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank", "Finance Company", "Primary Mortgage Bank", "Fintech"];
+
+const fieldStyle: React.CSSProperties = {
+  width: "100%",
+  height: 48,
+  background: "#FFFFFF",
+  border: "1.5px solid rgba(0,0,0,0.12)",
+  borderRadius: 10,
+  padding: "0 14px",
+  fontSize: 15,
+  color: "#0A0A0A",
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "border-color 0.15s, box-shadow 0.15s",
+};
+
+const onFocus = (e: React.FocusEvent<any>) => {
+  e.target.style.borderColor = "#0A0A0A";
+  e.target.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.06)";
+};
+const onBlur = (e: React.FocusEvent<any>) => {
+  e.target.style.borderColor = "rgba(0,0,0,0.12)";
+  e.target.style.boxShadow = "none";
+};
 
 const BookDemo = () => {
   const [fullName, setFullName] = useState("");
@@ -20,19 +43,18 @@ const BookDemo = () => {
     e.preventDefault();
     setError("");
 
-    const trimmed = {
+    const t = {
       fullName: fullName.trim(),
       institutionName: institutionName.trim(),
       phone: phone.trim(),
       email: email.trim(),
     };
 
-    if (!trimmed.fullName || !trimmed.institutionName || !institutionType || !trimmed.phone || !trimmed.email) {
+    if (!t.fullName || !t.institutionName || !institutionType || !t.phone || !t.email) {
       setError("Please fill in all required fields.");
       return;
     }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed.email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t.email)) {
       setError("Please enter a valid email address.");
       return;
     }
@@ -40,10 +62,10 @@ const BookDemo = () => {
     setLoading(true);
 
     const payload = {
-      full_name: trimmed.fullName.slice(0, 100),
-      company_name: trimmed.institutionName.slice(0, 100),
-      email: trimmed.email.slice(0, 255),
-      phone: trimmed.phone.slice(0, 30),
+      full_name: t.fullName.slice(0, 100),
+      company_name: t.institutionName.slice(0, 100),
+      email: t.email.slice(0, 255),
+      phone: t.phone.slice(0, 30),
       report_type: institutionType,
       message: message.trim().slice(0, 2000) || null,
     };
@@ -58,142 +80,176 @@ const BookDemo = () => {
     try {
       await supabase.functions.invoke("send-demo-notification", { body: payload });
     } catch (err) {
-      console.error("Email notification failed:", err);
+      console.error("Notification failed:", err);
     }
 
     setLoading(false);
     setSubmitted(true);
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "rgba(0,0,0,0.04)",
-    border: "1.5px solid rgba(0,0,0,0.12)",
-    borderRadius: 10,
-    padding: "13px 16px",
-    fontSize: 17,
-    color: "#1D1D1F",
-    outline: "none",
-    transition: "all 0.2s",
-  };
-
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = "#0066CC";
-    e.target.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
-    e.target.style.background = "white";
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    e.target.style.borderColor = "rgba(0,0,0,0.12)";
-    e.target.style.boxShadow = "none";
-    e.target.style.background = "rgba(0,0,0,0.04)";
-  };
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-16" style={{ background: "#F5F5F7" }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="w-full max-w-[480px]"
-        style={{ background: "white", borderRadius: 18, padding: 52, boxShadow: "0 4px 32px rgba(0,0,0,0.1)" }}
+    <div style={{ minHeight: "100vh", display: "flex", background: "#F7F7F5" }}>
+      {/* Left panel */}
+      <div
+        className="hidden md:flex"
+        style={{
+          flex: 1,
+          background: "#F7F7F5",
+          padding: 56,
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
       >
-        <div className="text-center mb-6">
-          <Link to="/" style={{ fontWeight: 600, fontSize: 20, color: "#1D1D1F", textDecoration: "none" }}>
-            RegCo
-          </Link>
-        </div>
+        <Link to="/" style={{ fontWeight: 600, fontSize: 22, color: "#0A0A0A", textDecoration: "none", letterSpacing: -0.3 }}>
+          RegCo
+        </Link>
 
-        {submitted ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="text-center py-8"
-          >
-            <svg className="mx-auto mb-6" width="80" height="80" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="38" fill="none" stroke="#34C759" strokeWidth="3" />
-              <motion.path
-                d="M24 42 L34 52 L56 30"
-                fill="none"
-                stroke="#34C759"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              />
-            </svg>
-            <h2 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", marginBottom: 8 }}>Demo Booked.</h2>
-            <p style={{ fontSize: 17, color: "#6E6E73" }}>We will confirm your time within 24 hours.</p>
-            <p style={{ fontSize: 15, color: "#0066CC", marginTop: 8 }}>isaacyesufu00@gmail.com</p>
-            <Link
-              to="/"
-              className="inline-block mt-8"
-              style={{
-                background: "rgba(0,0,0,0.06)",
-                color: "#1D1D1F",
-                borderRadius: 980,
-                padding: "10px 24px",
-                fontSize: 14,
-                textDecoration: "none",
-              }}
-            >
-              Back to home
-            </Link>
-          </motion.div>
-        ) : (
-          <>
-            <h1 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", textAlign: "center", marginBottom: 8 }}>
-              Book a Demo
-            </h1>
-            <p style={{ fontSize: 15, color: "#6E6E73", textAlign: "center", marginBottom: 28 }}>
-              Schedule a 20-minute live walkthrough.
-            </p>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          style={{ maxWidth: 460 }}
+        >
+          <h2 style={{ fontSize: 36, fontWeight: 600, color: "#0A0A0A", lineHeight: 1.15, letterSpacing: -0.8, marginBottom: 18 }}>
+            See RegCo in action.
+          </h2>
+          <p style={{ fontSize: 16, color: "#6E6E73", lineHeight: 1.55 }}>
+            A 20-minute live walkthrough tailored to your institution. We'll show how RegCo automates your CBN, NDIC and NFIU returns end-to-end.
+          </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input placeholder="Full Name *" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-              <input placeholder="Institution Name *" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} required maxLength={100} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-              <select value={institutionType} onChange={(e) => setInstitutionType(e.target.value)} style={{ ...inputStyle, appearance: "none" }} onFocus={handleFocus as any} onBlur={handleBlur as any}>
-                <option value="">Institution Type *</option>
-                {institutionTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <input type="email" placeholder="Email Address *" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-              <input type="tel" placeholder="Phone Number *" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={30} style={inputStyle} onFocus={handleFocus} onBlur={handleBlur} />
-              <textarea
-                placeholder="What would you like to see?"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                maxLength={2000}
-                style={{ ...inputStyle, height: 90, resize: "none" as const }}
-                onFocus={handleFocus as any}
-                onBlur={handleBlur as any}
-              />
+          <div style={{ marginTop: 36, display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              "Tailored to your institution type",
+              "Live CBS-to-return demo",
+              "Pricing & onboarding timeline",
+            ].map((t) => (
+              <div key={t} style={{ display: "flex", alignItems: "center", gap: 10, color: "#1D1D1F", fontSize: 14.5 }}>
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="10" fill="#0A0A0A" />
+                  <path d="M6 10.5l2.5 2.5L14 7.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t}
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
-              {error && <p style={{ fontSize: 14, color: "#FF3B30", fontWeight: 500 }}>{error}</p>}
+        <p style={{ fontSize: 13, color: "#8A8A8E" }}>© {new Date().getFullYear()} RegCo. All rights reserved.</p>
+      </div>
 
-              <button
-                type="submit"
-                disabled={loading}
+      {/* Right panel */}
+      <div style={{ flex: 1, background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{ width: "100%", maxWidth: 440 }}
+        >
+          {submitted ? (
+            <div style={{ textAlign: "center" }}>
+              <svg className="mx-auto mb-5" width="64" height="64" viewBox="0 0 80 80">
+                <circle cx="40" cy="40" r="38" fill="none" stroke="#34C759" strokeWidth="3" />
+                <motion.path
+                  d="M24 42 L34 52 L56 30"
+                  fill="none"
+                  stroke="#34C759"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.6, delay: 0.15 }}
+                />
+              </svg>
+              <h1 style={{ fontSize: 26, fontWeight: 600, color: "#0A0A0A", marginBottom: 8, letterSpacing: -0.5 }}>Demo booked.</h1>
+              <p style={{ fontSize: 15, color: "#6E6E73", lineHeight: 1.5 }}>
+                We'll confirm your time within 24 hours at{" "}
+                <strong style={{ color: "#0A0A0A" }}>{email}</strong>.
+              </p>
+              <Link
+                to="/"
                 style={{
-                  width: "100%",
-                  height: 52,
-                  background: "#0066CC",
+                  display: "inline-block",
+                  marginTop: 28,
+                  background: "#0A0A0A",
                   color: "white",
                   borderRadius: 10,
-                  fontSize: 17,
+                  padding: "12px 26px",
+                  fontSize: 15,
                   fontWeight: 500,
-                  border: "none",
-                  cursor: loading ? "wait" : "pointer",
+                  textDecoration: "none",
                 }}
               >
-                {loading ? "Submitting..." : "Book My Demo"}
-              </button>
-            </form>
-          </>
-        )}
-      </motion.div>
+                Back to home
+              </Link>
+            </div>
+          ) : (
+            <>
+              <h1 style={{ fontSize: 30, fontWeight: 600, color: "#0A0A0A", letterSpacing: -0.6, marginBottom: 8 }}>
+                Book a demo
+              </h1>
+              <p style={{ fontSize: 15, color: "#6E6E73", marginBottom: 28 }}>
+                Schedule a 20-minute live walkthrough.
+              </p>
+
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <input placeholder="Full name" value={fullName} onChange={(e) => setFullName(e.target.value)} required maxLength={100} style={fieldStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input placeholder="Institution name" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} required maxLength={100} style={fieldStyle} onFocus={onFocus} onBlur={onBlur} />
+                <select
+                  value={institutionType}
+                  onChange={(e) => setInstitutionType(e.target.value)}
+                  required
+                  style={{ ...fieldStyle, appearance: "none", color: institutionType ? "#0A0A0A" : "#8A8A8E" }}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                >
+                  <option value="">Institution type</option>
+                  {institutionTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <input type="email" placeholder="Work email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} style={fieldStyle} onFocus={onFocus} onBlur={onBlur} />
+                <input type="tel" placeholder="Phone number" value={phone} onChange={(e) => setPhone(e.target.value)} required maxLength={30} style={fieldStyle} onFocus={onFocus} onBlur={onBlur} />
+                <textarea
+                  placeholder="What would you like to see? (optional)"
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  maxLength={2000}
+                  style={{ ...fieldStyle, height: 100, padding: "12px 14px", resize: "none", fontFamily: "inherit" }}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+
+                {error && <p style={{ fontSize: 14, color: "#FF3B30", fontWeight: 500, margin: 0 }}>{error}</p>}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    height: 50,
+                    background: "#0A0A0A",
+                    color: "white",
+                    borderRadius: 10,
+                    fontSize: 15.5,
+                    fontWeight: 500,
+                    border: "none",
+                    cursor: loading ? "wait" : "pointer",
+                    marginTop: 4,
+                    opacity: loading ? 0.7 : 1,
+                    transition: "opacity 0.15s",
+                  }}
+                >
+                  {loading ? "Submitting..." : "Book my demo"}
+                </button>
+              </form>
+
+              <p style={{ marginTop: 24, textAlign: "center", fontSize: 14.5, color: "#6E6E73" }}>
+                Already have an account?{" "}
+                <Link to="/login" style={{ color: "#0A0A0A", fontWeight: 500, textDecoration: "none" }}>Log in</Link>
+              </p>
+            </>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 };
