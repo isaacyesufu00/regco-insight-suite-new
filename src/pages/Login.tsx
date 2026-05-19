@@ -3,6 +3,29 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
+const fieldStyle: React.CSSProperties = {
+  width: "100%",
+  height: 48,
+  background: "#FFFFFF",
+  border: "1.5px solid rgba(0,0,0,0.12)",
+  borderRadius: 10,
+  padding: "0 14px",
+  fontSize: 15,
+  color: "#0A0A0A",
+  outline: "none",
+  boxSizing: "border-box",
+  transition: "border-color 0.15s, box-shadow 0.15s",
+};
+
+const onFocus = (e: React.FocusEvent<any>) => {
+  e.target.style.borderColor = "#0A0A0A";
+  e.target.style.boxShadow = "0 0 0 3px rgba(0,0,0,0.06)";
+};
+const onBlur = (e: React.FocusEvent<any>) => {
+  e.target.style.borderColor = "rgba(0,0,0,0.12)";
+  e.target.style.boxShadow = "none";
+};
+
 const Login = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -89,164 +112,168 @@ const Login = () => {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    background: "rgba(0,0,0,0.04)",
-    border: "1.5px solid rgba(0,0,0,0.12)",
-    borderRadius: 10,
-    padding: "13px 16px",
-    fontSize: 17,
-    color: "#1D1D1F",
-    outline: "none",
-    transition: "all 0.2s",
-  };
-
-  if (isLocked) {
-    return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F5F7" }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="w-full max-w-[400px] text-center"
-          style={{ background: "white", borderRadius: 18, padding: 52, boxShadow: "0 4px 32px rgba(0,0,0,0.1)" }}
-        >
-          <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: "rgba(255,59,48,0.1)" }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
-          </div>
-          <h2 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", marginBottom: 8 }}>Account Temporarily Locked</h2>
-          <p style={{ fontSize: 15, color: "#6E6E73", marginBottom: 24 }}>
-            Too many failed attempts. Please try again in 15 minutes or reset your password.
-          </p>
-          <div style={{ fontWeight: 700, fontSize: 36, color: "#FF3B30", fontFamily: "monospace", marginBottom: 24 }}>{countdown}</div>
-          <Link to="/forgot-password" style={{ fontSize: 14, color: "#0066CC", textDecoration: "none" }}>
-            Forgot Password?
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F5F7" }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="w-full max-w-[400px]"
-        style={{ background: "white", borderRadius: 18, padding: 52, boxShadow: "0 4px 32px rgba(0,0,0,0.1)" }}
+    <div style={{ minHeight: "100vh", display: "flex", background: "#F7F7F5" }}>
+      {/* Left panel */}
+      <div
+        className="hidden md:flex"
+        style={{
+          flex: 1,
+          background: "#F7F7F5",
+          padding: 56,
+          flexDirection: "column",
+          justifyContent: "space-between",
+        }}
       >
-        <div className="text-center mb-8">
-          <Link to="/" style={{ fontWeight: 600, fontSize: 20, color: "#1D1D1F", textDecoration: "none" }}>
-            RegCo
-          </Link>
-        </div>
+        <Link to="/" style={{ fontWeight: 600, fontSize: 22, color: "#0A0A0A", textDecoration: "none", letterSpacing: -0.3 }}>
+          RegCo
+        </Link>
 
-        <h1 style={{ fontWeight: 700, fontSize: 28, color: "#1D1D1F", textAlign: "center", marginBottom: 8 }}>
-          Sign in to RegCo
-        </h1>
-        <p style={{ fontSize: 15, color: "#6E6E73", textAlign: "center", marginBottom: 28 }}>
-          Enter your email to continue
-        </p>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          style={{ maxWidth: 460 }}
+        >
+          <h2 style={{ fontSize: 36, fontWeight: 600, color: "#0A0A0A", lineHeight: 1.15, letterSpacing: -0.8, marginBottom: 18 }}>
+            Welcome back.
+          </h2>
+          <p style={{ fontSize: 16, color: "#6E6E73", lineHeight: 1.55 }}>
+            Sign in to access your compliance dashboard, generate returns, and track regulatory deadlines in one place.
+          </p>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#0066CC";
-                e.target.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
-                e.target.style.background = "white";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "rgba(0,0,0,0.12)";
-                e.target.style.boxShadow = "none";
-                e.target.style.background = "rgba(0,0,0,0.04)";
-              }}
-            />
+          <div style={{ marginTop: 36, display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              "Bank-grade security",
+              "Live compliance score",
+              "One-click CBN, NDIC & NFIU returns",
+            ].map((t) => (
+              <div key={t} style={{ display: "flex", alignItems: "center", gap: 10, color: "#1D1D1F", fontSize: 14.5 }}>
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="10" fill="#0A0A0A" />
+                  <path d="M6 10.5l2.5 2.5L14 7.5" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                {t}
+              </div>
+            ))}
           </div>
-          <div>
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              style={inputStyle}
-              onFocus={(e) => {
-                e.target.style.borderColor = "#0066CC";
-                e.target.style.boxShadow = "0 0 0 3px rgba(0,102,204,0.15)";
-                e.target.style.background = "white";
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = "rgba(0,0,0,0.12)";
-                e.target.style.boxShadow = "none";
-                e.target.style.background = "rgba(0,0,0,0.04)";
-              }}
-            />
-            <div className="text-right mt-1">
-              <Link to="/forgot-password" style={{ fontSize: 13, color: "#0066CC", textDecoration: "none" }}>
-                Forgot password?
+        </motion.div>
+
+        <p style={{ fontSize: 13, color: "#8A8A8E" }}>© {new Date().getFullYear()} RegCo. All rights reserved.</p>
+      </div>
+
+      {/* Right panel */}
+      <div style={{ flex: 1, background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center", padding: 32 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.25, 0.46, 0.45, 0.94] }}
+          style={{ width: "100%", maxWidth: 440 }}
+        >
+          {isLocked ? (
+            <div style={{ textAlign: "center" }}>
+              <div className="w-16 h-16 rounded-full mx-auto mb-5 flex items-center justify-center" style={{ background: "rgba(255,59,48,0.1)" }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <h1 style={{ fontSize: 26, fontWeight: 600, color: "#0A0A0A", marginBottom: 8, letterSpacing: -0.5 }}>Account temporarily locked</h1>
+              <p style={{ fontSize: 15, color: "#6E6E73", lineHeight: 1.5, marginBottom: 20 }}>
+                Too many failed attempts. Try again in 15 minutes or reset your password.
+              </p>
+              <div style={{ fontWeight: 600, fontSize: 36, color: "#FF3B30", fontFamily: "monospace", marginBottom: 24 }}>{countdown}</div>
+              <Link
+                to="/forgot-password"
+                style={{
+                  display: "inline-block",
+                  background: "#0A0A0A",
+                  color: "white",
+                  borderRadius: 10,
+                  padding: "12px 26px",
+                  fontSize: 15,
+                  fontWeight: 500,
+                  textDecoration: "none",
+                }}
+              >
+                Reset password
               </Link>
             </div>
-          </div>
+          ) : (
+            <>
+              <h1 style={{ fontSize: 30, fontWeight: 600, color: "#0A0A0A", letterSpacing: -0.6, marginBottom: 8 }}>
+                Sign in
+              </h1>
+              <p style={{ fontSize: 15, color: "#6E6E73", marginBottom: 28 }}>
+                Enter your credentials to continue.
+              </p>
 
-          {error && <p style={{ fontSize: 14, color: "#FF3B30", fontWeight: 500 }}>{error}</p>}
+              <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <input
+                  type="email"
+                  placeholder="Work email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={fieldStyle}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  style={fieldStyle}
+                  onFocus={onFocus}
+                  onBlur={onBlur}
+                />
 
-          {attemptCount >= 3 && attemptCount < 5 && (
-            <div style={{ background: "rgba(255,159,10,0.1)", border: "1px solid rgba(255,159,10,0.3)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#FF9F0A" }}>
-              ⚠️ {attemptCount} failed attempts. Account locks after 5.
-            </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", marginTop: -4 }}>
+                  <Link to="/forgot-password" style={{ fontSize: 13.5, color: "#0A0A0A", textDecoration: "none", fontWeight: 500 }}>
+                    Forgot password?
+                  </Link>
+                </div>
+
+                {error && <p style={{ fontSize: 14, color: "#FF3B30", fontWeight: 500, margin: 0 }}>{error}</p>}
+
+                {attemptCount >= 3 && attemptCount < 5 && (
+                  <div style={{ background: "rgba(255,159,10,0.08)", border: "1px solid rgba(255,159,10,0.25)", borderRadius: 10, padding: "10px 14px", fontSize: 13, color: "#B26B00" }}>
+                    {attemptCount} failed attempts. Account locks after 5.
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    height: 50,
+                    background: "#0A0A0A",
+                    color: "white",
+                    borderRadius: 10,
+                    fontSize: 15.5,
+                    fontWeight: 500,
+                    border: "none",
+                    cursor: loading ? "wait" : "pointer",
+                    marginTop: 4,
+                    opacity: loading ? 0.7 : 1,
+                    transition: "opacity 0.15s",
+                  }}
+                >
+                  {loading ? "Signing in..." : "Sign in"}
+                </button>
+              </form>
+
+              <p style={{ marginTop: 24, textAlign: "center", fontSize: 14.5, color: "#6E6E73" }}>
+                Don't have an account?{" "}
+                <Link to="/sign-up" style={{ color: "#0A0A0A", fontWeight: 500, textDecoration: "none" }}>Sign up</Link>
+              </p>
+            </>
           )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              height: 52,
-              background: "#0066CC",
-              color: "white",
-              borderRadius: 10,
-              fontSize: 17,
-              fontWeight: 500,
-              border: "none",
-              cursor: loading ? "wait" : "pointer",
-              marginTop: 20,
-              transition: "all 0.2s",
-            }}
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
-        </form>
-
-        <div className="text-center mt-6">
-          <p style={{ fontSize: 14, color: "#6E6E73" }}>
-            Don't have an account?{" "}
-            <Link to="/book-demo" style={{ color: "#0066CC", fontWeight: 600, textDecoration: "none" }}>
-              Book a demo
-            </Link>
-          </p>
-        </div>
-
-        <div className="text-center mt-8">
-          <span style={{ fontSize: 12, color: "#86868B" }}>
-            <Link to="/contact" style={{ color: "#86868B", textDecoration: "none" }}>Help</Link>
-            {" · "}
-            <Link to="/privacy-policy" style={{ color: "#86868B", textDecoration: "none" }}>Privacy</Link>
-            {" · "}
-            <Link to="/terms" style={{ color: "#86868B", textDecoration: "none" }}>Terms</Link>
-          </span>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };
