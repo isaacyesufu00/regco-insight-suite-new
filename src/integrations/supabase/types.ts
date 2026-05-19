@@ -352,6 +352,8 @@ export type Database = {
           liquidity_percentage: number | null
           npl_ratio: number | null
           pdf_url: string | null
+          period_end: string | null
+          period_start: string | null
           regulator: string | null
           report_filename: string | null
           report_name: string
@@ -377,6 +379,8 @@ export type Database = {
           liquidity_percentage?: number | null
           npl_ratio?: number | null
           pdf_url?: string | null
+          period_end?: string | null
+          period_start?: string | null
           regulator?: string | null
           report_filename?: string | null
           report_name: string
@@ -402,6 +406,8 @@ export type Database = {
           liquidity_percentage?: number | null
           npl_ratio?: number | null
           pdf_url?: string | null
+          period_end?: string | null
+          period_start?: string | null
           regulator?: string | null
           report_filename?: string | null
           report_name?: string
