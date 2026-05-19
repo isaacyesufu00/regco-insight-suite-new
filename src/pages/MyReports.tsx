@@ -33,6 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import DownloadButton from "@/components/DownloadButton";
 
 interface Report {
   id: string;
