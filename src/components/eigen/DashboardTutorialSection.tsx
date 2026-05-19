@@ -149,13 +149,7 @@ const ProcessingIcon = () => (
         position: "relative",
       }}
     >
-      <motion.span
-        style={{ fontSize: 24, color: "#0A0A0A", fontWeight: 700 }}
-        animate={{ rotate: [0, 360] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-      >
-        ✦
-      </motion.span>
+      <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#0A0A0A", display: "inline-block" }} />
     </div>
   </div>
 );
