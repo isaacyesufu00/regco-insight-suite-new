@@ -233,19 +233,7 @@ const MyReports = () => {
 
   const actionCell = (r: Report) => {
     if (isReady(r.status)) {
-      if (r.report_url) {
-        return <Button size="sm" onClick={() => handleDownload(r)}><Download className="mr-1 h-3 w-3" /> Download Report</Button>;
-      }
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild><Button size="sm" variant="outline"><Download className="mr-1 h-3 w-3" /> Download <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleDownloadFormat(r.pdf_url, r.file_path, `${r.report_name}.pdf`)}>Download PDF</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDownloadFormat(r.docx_url, null, `${r.report_name}.docx`)}>Download Word (.docx)</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDownloadFormat(r.xlsx_url, null, `${r.report_name}.xlsx`)}>Download Excel (.xlsx)</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
+      return <DownloadButton report={r as any} variant="icon" size="sm" />;
     }
     if (isFailed(r.status)) {
       return (
