@@ -17,7 +17,7 @@ const TaglineSection = () => {
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
         <ScrollReveal>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div style={{ fontSize: 24, color: "#0A0A0A", marginBottom: 8 }}>✦</div>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0A0A0A", margin: "0 auto 12px" }} />
             <p style={{ fontSize: 11, letterSpacing: "0.12em", color: "#9B9B9B", textTransform: "uppercase", margin: "0 0 16px" }}>PRODUCT</p>
             <h2 style={{ fontSize: 40, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-1px", lineHeight: 1.15, maxWidth: 600, margin: "0 auto 20px" }}>
               RegCo. So you don't have<br />to file manually.

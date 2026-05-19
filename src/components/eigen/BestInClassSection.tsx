@@ -49,7 +49,7 @@ const BestInClassSection = () => (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
       <ScrollReveal>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontSize: 20, color: "#0A0A0A", marginBottom: 12 }}>✦</div>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0A0A0A", marginBottom: 14 }} />
           <h2 style={{ fontSize: 36, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.8px", margin: 0 }}>
             Best in class CBN compliance
           </h2>
