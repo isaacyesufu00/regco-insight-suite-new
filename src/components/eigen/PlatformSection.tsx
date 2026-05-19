@@ -19,7 +19,7 @@ const ReportTypeMini = () => (
         style={{
           padding: "4px 10px",
           borderRadius: 4,
-          background: i === 0 ? "#4CAF50" : "rgba(0,0,0,0.05)",
+          background: i === 0 ? "#0A0A0A" : "rgba(0,0,0,0.05)",
           color: i === 0 ? "#fff" : "#6B6B6B",
           fontSize: 10,
           fontWeight: 600,
@@ -51,7 +51,7 @@ const CustomerMini = () => (
   <div style={{ marginTop: 16, padding: 12, background: "#F8F8F4", borderRadius: 8 }}>
     <p style={{ fontSize: 12, fontWeight: 700, color: "#1A1A1A", margin: 0 }}>Adebayo Okonkwo</p>
     <p style={{ fontSize: 10, color: "#9B9B9B", margin: "2px 0" }}>BVN: 22198765432</p>
-    <span style={{ display: "inline-block", background: "rgba(76,175,80,0.15)", color: "#2D6A4F", padding: "2px 8px", borderRadius: 10, fontSize: 9, fontWeight: 700 }}>LOW RISK</span>
+    <span style={{ display: "inline-block", background: "rgba(0,0,0,0.15)", color: "#0A0A0A", padding: "2px 8px", borderRadius: 10, fontSize: 9, fontWeight: 700 }}>LOW RISK</span>
   </div>
 );
 
@@ -59,7 +59,7 @@ const DonutMini = () => (
   <div style={{ display: "flex", justifyContent: "center", marginTop: 16 }}>
     <svg width="90" height="90" viewBox="0 0 36 36">
       <circle cx="18" cy="18" r="15.9" fill="none" stroke="#F0EFEA" strokeWidth="3.5" />
-      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#4CAF50" strokeWidth="3.5" strokeDasharray="65 100" strokeDashoffset="25" transform="rotate(-90 18 18)" />
+      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#0A0A0A" strokeWidth="3.5" strokeDasharray="65 100" strokeDashoffset="25" transform="rotate(-90 18 18)" />
       <circle cx="18" cy="18" r="15.9" fill="none" stroke="#FF9F0A" strokeWidth="3.5" strokeDasharray="20 100" strokeDashoffset="-40" transform="rotate(-90 18 18)" />
       <circle cx="18" cy="18" r="15.9" fill="none" stroke="#FF3B30" strokeWidth="3.5" strokeDasharray="15 100" strokeDashoffset="-60" transform="rotate(-90 18 18)" />
       <text x="18" y="20" textAnchor="middle" fontSize="6" fontWeight="700" fill="#1A1A1A">CAMEL</text>
@@ -110,7 +110,7 @@ const PlatformSection = () => (
               transition: "box-shadow 0.2s",
             }}
           >
-            <c.icon size={22} color="#4CAF50" />
+            <c.icon size={22} color="#0A0A0A" />
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "14px 0 6px" }}>{c.title}</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.55, margin: 0 }}>{c.desc}</p>
             {c.inner}

@@ -15,7 +15,7 @@ const SecurityDarkSection = () => {
   const y = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
 
   return (
-    <section ref={ref} style={{ background: "#1B4332", padding: "80px 0", overflow: "hidden" }}>
+    <section ref={ref} style={{ background: "#0A0A0A", padding: "80px 0", overflow: "hidden" }}>
       <motion.div style={{ y, maxWidth: 1100, margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
         <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>
           FOR ALL TIERS
@@ -29,7 +29,7 @@ const SecurityDarkSection = () => {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 24, maxWidth: 720, margin: "0 auto" }}>
           {badges.map((b) => (
             <div key={b.title} style={{ textAlign: "center" }}>
-              <b.icon size={26} color="#4CAF50" style={{ marginBottom: 10 }} />
+              <b.icon size={26} color="#0A0A0A" style={{ marginBottom: 10 }} />
               <p style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF", margin: "0 0 4px" }}>{b.title}</p>
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.5 }}>{b.sub}</p>
             </div>

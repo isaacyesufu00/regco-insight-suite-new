@@ -30,15 +30,15 @@ const MiniDoc = ({ title, reg, rotate }: { title: string; reg: string; rotate: n
     }}
   >
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-      <span style={{ fontSize: 8, fontWeight: 700, color: "#4CAF50", letterSpacing: "0.08em" }}>{reg}</span>
-      <span style={{ width: 18, height: 18, borderRadius: 9, background: "rgba(76,175,80,0.15)" }} />
+      <span style={{ fontSize: 8, fontWeight: 700, color: "#0A0A0A", letterSpacing: "0.08em" }}>{reg}</span>
+      <span style={{ width: 18, height: 18, borderRadius: 9, background: "rgba(0,0,0,0.15)" }} />
     </div>
     <p style={{ fontSize: 11, fontWeight: 700, color: "#1A1A1A", margin: "0 0 12px", lineHeight: 1.3 }}>{title}</p>
     <p style={{ fontSize: 8, color: "#9B9B9B", margin: "0 0 10px", letterSpacing: "0.04em" }}>NAKDNX MFB · RC 1234567</p>
     {[...Array(8)].map((_, i) => (
       <div key={i} style={{ height: 5, background: i % 3 === 0 ? "rgba(0,0,0,0.10)" : "rgba(0,0,0,0.05)", borderRadius: 2, marginBottom: 5, width: `${70 + (i * 13) % 30}%` }} />
     ))}
-    <div style={{ marginTop: 12, padding: "4px 8px", background: "rgba(76,175,80,0.10)", borderRadius: 4, fontSize: 8, color: "#2D6A4F", fontWeight: 600, display: "inline-block" }}>
+    <div style={{ marginTop: 12, padding: "4px 8px", background: "rgba(0,0,0,0.10)", borderRadius: 4, fontSize: 8, color: "#0A0A0A", fontWeight: 600, display: "inline-block" }}>
       ✓ READY
     </div>
   </motion.div>
@@ -49,7 +49,7 @@ const BestInClassSection = () => (
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
       <ScrollReveal>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontSize: 20, color: "#4CAF50", marginBottom: 12 }}>✦</div>
+          <div style={{ fontSize: 20, color: "#0A0A0A", marginBottom: 12 }}>✦</div>
           <h2 style={{ fontSize: 36, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.8px", margin: 0 }}>
             Best in class CBN compliance
           </h2>
@@ -73,7 +73,7 @@ const BestInClassSection = () => (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         <ScrollReveal>
           <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid rgba(0,0,0,0.07)" }}>
-            <div style={{ fontSize: 48, fontWeight: 700, color: "#4CAF50", lineHeight: 1, margin: "0 0 8px" }}>16</div>
+            <div style={{ fontSize: 48, fontWeight: 700, color: "#0A0A0A", lineHeight: 1, margin: "0 0 8px" }}>16</div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>Full compliance coverage</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.55, margin: 0 }}>
               All 16 returns across 5 regulators. Every mandatory filing for Nigerian licensed institutions.
@@ -82,7 +82,7 @@ const BestInClassSection = () => (
         </ScrollReveal>
         <ScrollReveal delay={0.1}>
           <div style={{ background: "#fff", borderRadius: 12, padding: 24, border: "1px solid rgba(0,0,0,0.07)" }}>
-            <Shield size={32} color="#4CAF50" style={{ marginBottom: 8 }} />
+            <Shield size={32} color="#0A0A0A" style={{ marginBottom: 8 }} />
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>On-premise ready and enterprise-grade</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.55, margin: 0 }}>
               Bank-grade security. Your data never leaves Nigeria. Supabase PostgreSQL with row-level security.

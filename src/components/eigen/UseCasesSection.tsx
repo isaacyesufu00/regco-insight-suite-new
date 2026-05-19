@@ -25,7 +25,7 @@ const UseCasesSection = () => (
           <h2 style={{ fontSize: 40, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-1px", lineHeight: 1.1, maxWidth: 380, margin: "0 0 24px" }}>
             Unlock compliance automation across every institution type.
           </h2>
-          <Link to="/login" style={{ background: "#4CAF50", color: "#fff", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <Link to="/login" style={{ background: "#0A0A0A", color: "#fff", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
             START FOR FREE <ArrowRight size={12} />
           </Link>
         </ScrollReveal>
@@ -50,7 +50,7 @@ const UseCasesSection = () => (
             whileHover={{ y: -2, boxShadow: "0 12px 40px rgba(0,0,0,0.08)" }}
             style={{ background: "#fff", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", padding: 24 }}
           >
-            <c.icon size={24} color="#4CAF50" />
+            <c.icon size={24} color="#0A0A0A" />
             <h3 style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", margin: "14px 0 6px" }}>{c.title}</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.6, margin: 0 }}>{c.desc}</p>
           </motion.div>
