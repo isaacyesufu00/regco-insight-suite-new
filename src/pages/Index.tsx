@@ -15,6 +15,7 @@ const Index = () => (
     <EigenHero />
     <TaglineSection />
     <PlatformSection />
+    <DashboardTutorialSection />
     <BestInClassSection />
     <SecurityDarkSection />
     <UseCasesSection />
