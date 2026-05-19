@@ -256,19 +256,8 @@ const DashboardHome = () => {
                       </span>
                     </td>
                     <td style={{ padding: "12px 18px", textAlign: "right" }}>
-                      {r.status === "Ready" && r.file_path && (
-                        <button
-                          onClick={() => handleDownload(r.file_path!, r.report_name)}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#0066CC",
-                            fontSize: 13,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Download
-                        </button>
+                      {r.status?.toLowerCase() === "ready" && (
+                        <DownloadButton report={r as any} variant="icon" size="sm" />
                       )}
                     </td>
                   </tr>
