@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { FileText, Clock, CheckCircle, CalendarDays, FilePlus, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ComplianceGauge } from "@/components/ComplianceGauge";
+import DownloadButton from "@/components/DownloadButton";
 
 interface Profile {
   full_name: string | null;
