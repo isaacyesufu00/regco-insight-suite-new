@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { ScrollReveal } from "./ScrollReveal";
 
@@ -25,9 +26,9 @@ const TaglineSection = () => {
             <p style={{ fontSize: 14, color: "#6B6B6B", maxWidth: 520, margin: "0 auto 24px" }}>
               It handles regulatory compliance processing with Nigerian CBN precision. Production-ready results.
             </p>
-            <button style={{ background: "#0A0A0A", color: "#fff", borderRadius: 6, padding: "10px 20px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", border: "none", display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+            <Link to="/book-demo" style={{ background: "#0A0A0A", color: "#fff", borderRadius: 6, padding: "10px 20px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", border: "none", display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", textDecoration: "none" }}>
               START AUTOMATING YOUR REPORTS NOW <ArrowRight size={12} />
-            </button>
+            </Link>
           </div>
         </ScrollReveal>
 
