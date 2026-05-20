@@ -601,8 +601,75 @@ const NewReport = () => {
         </div>
       )}
 
-      {/* ── Step 1: Reporting Period + Raw CBS File Upload ── */}
-      {step === 1 && (
+      {/* ── Step 1 (form-based): Period + structured form ── */}
+      {step === 1 && isFormBased(reportType) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{reportType}</CardTitle>
+            <CardDescription>
+              Complete the sections below. All required fields must be filled before you can continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent style={{ background: "#F5F5F0", fontFamily: "Inter, sans-serif" }} className="space-y-2">
+            <div style={{ display: "grid", gridTemplateColumns: isQuarterlyForm(reportType) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Year</label>
+                <select value={formYear} onChange={e => setFormYear(e.target.value)}
+                  style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                  {Array.from({ length: 6 }).map((_, i) => {
+                    const y = String(currentYear - i);
+                    return <option key={y} value={y}>{y}</option>;
+                  })}
+                </select>
+              </div>
+              {isQuarterlyForm(reportType) && (
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Quarter</label>
+                  <select value={formQuarter} onChange={e => setFormQuarter(e.target.value)}
+                    style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                    {["Q1", "Q2", "Q3", "Q4"].map(q => <option key={q} value={q}>{q}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {reportType === "SCUML Annual Compliance Report" && (
+              <SCUMLForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: SCUMLPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "NDIC Premium Return" && (
+              <NDICPremiumForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: NDICPremiumPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Single Obligor Report" && (
+              <NDICSingleObligorForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                period={`${formQuarter} ${formYear}`}
+                onValidChange={(v, p: SingleObligorPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+
+            <div className="flex justify-between" style={{ marginTop: 24 }}>
+              <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
+              <Button onClick={() => setStep(2)} disabled={!canProceedStep1}>
+                Review <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Step 1 (CBS upload, default): Reporting Period + Raw CBS File Upload ── */}
+      {step === 1 && !isFormBased(reportType) && (
         <Card>
           <CardHeader>
             <CardTitle>Reporting Period &amp; CBS Export</CardTitle>
