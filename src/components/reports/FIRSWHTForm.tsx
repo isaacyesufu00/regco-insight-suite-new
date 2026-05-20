@@ -1,0 +1,153 @@
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import { Section, Field, Row, TextInput, NumberInput, Computed } from "./FormShell";
+
+export interface WHTRow {
+  id: string;
+  payee_name: string;
+  payee_tin: string;
+  nature: string;
+  gross: string;
+  rate: string;
+  wht: string;
+}
+
+export interface FIRSWHTPayload {
+  section_a: Record<string, string>;
+  transactions: WHTRow[];
+  summary: { total_gross: number; total_wht: number };
+  section_c: Record<string, string>;
+  section_d: Record<string, string>;
+}
+
+interface Props {
+  companyName: string;
+  periodLabel: string;
+  onValidChange: (valid: boolean, payload: FIRSWHTPayload) => void;
+}
+
+const num = (s: string) => parseFloat(s) || 0;
+
+const NATURE_RATES: Record<string, number> = {
+  "Rent": 10,
+  "Dividend": 10,
+  "Interest": 10,
+  "Contract": 5,
+  "Professional Fee": 10,
+  "Other": 5,
+};
+
+const newRow = (): WHTRow => ({
+  id: Math.random().toString(36).slice(2),
+  payee_name: "", payee_tin: "", nature: "Contract",
+  gross: "", rate: "5", wht: "",
+});
+
+export default function FIRSWHTForm({ companyName, periodLabel, onValidChange }: Props) {
+  const [a, setA] = useState({ company_name: companyName, tin: "", period: periodLabel });
+  const [rows, setRows] = useState<WHTRow[]>([newRow()]);
+  const [c, setC] = useState({ paid: "", payment_date: "", receipt_number: "" });
+  const [d, setD] = useState({ signatory_name: "", designation: "", date: "" });
+
+  const computed = useMemo(() => rows.map(r => {
+    const rate = NATURE_RATES[r.nature] ?? 5;
+    const wht = num(r.gross) * (rate / 100);
+    return { ...r, rate: String(rate), wht: String(wht) };
+  }), [rows]);
+
+  const summary = useMemo(() => ({
+    total_gross: computed.reduce((s, r) => s + num(r.gross), 0),
+    total_wht: computed.reduce((s, r) => s + num(r.wht), 0),
+  }), [computed]);
+
+  useEffect(() => {
+    const validRows = computed.every(r => !!r.payee_name && num(r.gross) > 0);
+    const valid = !!a.tin && computed.length >= 1 && validRows && !!c.paid && !!d.signatory_name && !!d.designation && !!d.date;
+    onValidChange(valid, { section_a: a, transactions: computed, summary, section_c: c, section_d: d });
+  }, [a, computed, summary, c, d, onValidChange]);
+
+  const updateRow = (id: string, patch: Partial<WHTRow>) =>
+    setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
+  const removeRow = (id: string) => setRows(rs => rs.length > 1 ? rs.filter(r => r.id !== id) : rs);
+
+  const sel: React.CSSProperties = { width: "100%", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, padding: "6px 8px", fontSize: 12, background: "#FFF" };
+
+  return (
+    <div>
+      <Section letter="A" title="Remitting Company Details">
+        <Row>
+          <Field label="Company Name"><TextInput value={a.company_name} readOnly /></Field>
+          <Field label="Reporting Period"><TextInput value={a.period} readOnly /></Field>
+        </Row>
+        <Field label="TIN *"><TextInput value={a.tin} onChange={ev => setA({ ...a, tin: ev.target.value })} /></Field>
+      </Section>
+
+      <Section letter="B" title="WHT Transactions">
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: "#F5F5F0" }}>
+                {["Payee Name", "Payee TIN", "Nature of Payment", "Gross ₦", "Rate", "WHT ₦", ""].map(h => (
+                  <th key={h} style={{ textAlign: "left", padding: "8px 6px", fontWeight: 600, color: "#0A0A0A", borderBottom: "1px solid rgba(0,0,0,0.12)", whiteSpace: "nowrap" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {computed.map(r => (
+                <tr key={r.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                  <td style={{ padding: 4 }}><input style={sel} value={r.payee_name} onChange={ev => updateRow(r.id, { payee_name: ev.target.value })} /></td>
+                  <td style={{ padding: 4 }}><input style={sel} value={r.payee_tin} onChange={ev => updateRow(r.id, { payee_tin: ev.target.value })} /></td>
+                  <td style={{ padding: 4 }}>
+                    <select style={sel} value={r.nature} onChange={ev => updateRow(r.id, { nature: ev.target.value })}>
+                      {Object.keys(NATURE_RATES).map(n => <option key={n}>{n}</option>)}
+                    </select>
+                  </td>
+                  <td style={{ padding: 4 }}><input type="number" style={sel} value={r.gross} onChange={ev => updateRow(r.id, { gross: ev.target.value })} /></td>
+                  <td style={{ padding: 4, fontVariantNumeric: "tabular-nums" }}>{r.rate}%</td>
+                  <td style={{ padding: 4, fontVariantNumeric: "tabular-nums" }}>₦{new Intl.NumberFormat("en-NG", { maximumFractionDigits: 2 }).format(num(r.wht))}</td>
+                  <td style={{ padding: 4 }}>
+                    <button type="button" onClick={() => removeRow(r.id)} disabled={rows.length === 1}
+                      style={{ background: "transparent", border: "none", color: rows.length === 1 ? "#CCC" : "#0A0A0A", cursor: rows.length === 1 ? "not-allowed" : "pointer", padding: 4 }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <button type="button" onClick={() => setRows([...rows, newRow()])}
+          style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, background: "#FFF", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", color: "#0A0A0A" }}>
+          <Plus size={14} /> Add row
+        </button>
+      </Section>
+
+      <Section letter="C" title="Summary">
+        <Row>
+          <Computed label="Total gross payments subject to WHT" value={summary.total_gross} prefix="₦" />
+          <Computed label="Total WHT deducted" value={summary.total_wht} prefix="₦" />
+        </Row>
+        <Field label="Payment made to FIRS? *">
+          <select value={c.paid} onChange={ev => setC({ ...c, paid: ev.target.value })}
+            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+            <option value="">Select…</option><option>Yes</option><option>No</option>
+          </select>
+        </Field>
+        {c.paid === "Yes" && (
+          <Row>
+            <Field label="Payment date"><TextInput type="date" value={c.payment_date} onChange={ev => setC({ ...c, payment_date: ev.target.value })} /></Field>
+            <Field label="FIRS receipt number"><TextInput value={c.receipt_number} onChange={ev => setC({ ...c, receipt_number: ev.target.value })} /></Field>
+          </Row>
+        )}
+      </Section>
+
+      <Section letter="D" title="Declaration">
+        <Row>
+          <Field label="Authorised Signatory *"><TextInput value={d.signatory_name} onChange={ev => setD({ ...d, signatory_name: ev.target.value })} /></Field>
+          <Field label="Designation *"><TextInput value={d.designation} onChange={ev => setD({ ...d, designation: ev.target.value })} /></Field>
+        </Row>
+        <Field label="Date *"><TextInput type="date" value={d.date} onChange={ev => setD({ ...d, date: ev.target.value })} /></Field>
+      </Section>
+    </div>
+  );
+}
