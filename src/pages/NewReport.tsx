@@ -630,7 +630,16 @@ const NewReport = () => {
             </CardDescription>
           </CardHeader>
           <CardContent style={{ background: "#F5F5F0", fontFamily: "Inter, sans-serif" }} className="space-y-2">
-            <div style={{ display: "grid", gridTemplateColumns: isQuarterlyForm(reportType) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: (isQuarterlyForm(reportType) || isMonthlyForm(reportType)) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+              {isMonthlyForm(reportType) && (
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Month</label>
+                  <select value={formMonth} onChange={e => setFormMonth(e.target.value)}
+                    style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                    {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Year</label>
                 <select value={formYear} onChange={e => setFormYear(e.target.value)}
@@ -674,6 +683,35 @@ const NewReport = () => {
                 cbnLicense={profile?.rc_number || ""}
                 period={`${formQuarter} ${formYear}`}
                 onValidChange={(v, p: SingleObligorPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "VAT Return" && (
+              <FIRSVATForm
+                institutionName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSVATPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "PAYE Remittance" && (
+              <FIRSPAYEForm
+                employerName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSPAYEPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Withholding Tax Return" && (
+              <FIRSWHTForm
+                companyName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSWHTPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Company Income Tax Return" && (
+              <FIRSCITForm
+                companyName={profile?.company_name || ""}
+                rcNumber={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: FIRSCITPayload) => { setFormValid(v); setFormPayload(p); }}
               />
             )}
 
