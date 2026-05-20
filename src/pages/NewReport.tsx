@@ -320,6 +320,63 @@ const NewReport = () => {
     setDownloadUrl("");
     setProcessingError("");
     setValidationMetrics(null);
+    setFormPayload(null);
+    setFormValid(false);
+  };
+
+  const handleFormSubmit = async () => {
+    if (!user || !profile || !formPayload) return;
+    setSubmitting(true);
+    let createdReportId: string | null = null;
+    try {
+      const reportName = `${reportType} — ${profile.company_name || "Report"}`;
+      const periodLabel = isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
+      const periodStartStr = isQuarterlyForm(reportType)
+        ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
+        : `${formYear}-01-01`;
+      const periodEndStr = isQuarterlyForm(reportType)
+        ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
+        : `${formYear}-12-31`;
+
+      const { data: newReport, error: reportError } = await supabase
+        .from("reports")
+        .insert({
+          user_id: user.id,
+          report_name: reportName,
+          report_type: reportType,
+          status: "processing",
+          reporting_period_start: periodStartStr,
+          reporting_period_end: periodEndStr,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (reportError || !newReport) throw new Error(reportError?.message || "Failed to create report record.");
+      createdReportId = newReport.id;
+
+      const { error: fnError } = await supabase.functions.invoke("generate-form-report", {
+        body: {
+          report_id: newReport.id,
+          report_type: reportType,
+          form_payload: formPayload,
+          period_label: periodLabel,
+        },
+      });
+      if (fnError) throw new Error(fnError.message || "Generation engine error");
+
+      setCurrentReportId(newReport.id);
+      setProcessingStatus("processing");
+      setStep(3);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      if (createdReportId) {
+        await supabase.from("reports").update({ status: "failed", error_message: errMsg }).eq("id", createdReportId);
+      }
+      toast({ title: "Submission failed", description: errMsg, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
