@@ -27,8 +27,10 @@ import DownloadButton from "@/components/DownloadButton";
 import SCUMLForm, { SCUMLPayload } from "@/components/reports/SCUMLForm";
 import NDICPremiumForm, { NDICPremiumPayload } from "@/components/reports/NDICPremiumForm";
 import NDICSingleObligorForm, { SingleObligorPayload } from "@/components/reports/NDICSingleObligorForm";
-
-// ─── All 16 report types grouped by regulator ───
+import FIRSVATForm, { FIRSVATPayload } from "@/components/reports/FIRSVATForm";
+import FIRSPAYEForm, { FIRSPAYEPayload } from "@/components/reports/FIRSPAYEForm";
+import FIRSWHTForm, { FIRSWHTPayload } from "@/components/reports/FIRSWHTForm";
+import FIRSCITForm, { FIRSCITPayload } from "@/components/reports/FIRSCITForm";
 
 interface ReportTypeInfo {
   name: string;
@@ -58,10 +60,10 @@ const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
     { name: "Single Obligor Report", freq: "Quarterly", desc: "Large exposure and concentration risk" },
   ],
   FIRS: [
-    { name: "Company Income Tax Return", freq: "Annual", desc: "Corporate tax filing and compliance" },
-    { name: "PAYE Remittance", freq: "Monthly", desc: "Employee income tax remittance" },
-    { name: "Withholding Tax Return", freq: "Monthly", desc: "WHT on vendor payments and dividends" },
-    { name: "VAT Return", freq: "Monthly", desc: "Value added tax on qualifying services" },
+    { name: "VAT Return", freq: "Monthly", desc: "Value Added Tax on taxable supplies at 7.5% (Finance Act 2019)" },
+    { name: "PAYE Remittance", freq: "Monthly", desc: "Pay-As-You-Earn deductions remitted to State IRS" },
+    { name: "Withholding Tax Return", freq: "Monthly", desc: "WHT on rent, dividends, contracts and professional fees" },
+    { name: "Company Income Tax Return", freq: "Annual", desc: "Corporate tax by company size, plus 2.5% education tax" },
   ],
 };
 
@@ -74,9 +76,17 @@ const FORM_BASED_TYPES = new Set<string>([
   "SCUML Annual Compliance Report",
   "NDIC Premium Return",
   "Single Obligor Report",
+  "VAT Return",
+  "PAYE Remittance",
+  "Withholding Tax Return",
+  "Company Income Tax Return",
 ]);
+const MONTHLY_FORMS = new Set(["VAT Return", "PAYE Remittance", "Withholding Tax Return"]);
 const isFormBased = (t: string) => FORM_BASED_TYPES.has(t);
 const isQuarterlyForm = (t: string) => t === "Single Obligor Report";
+const isMonthlyForm = (t: string) => MONTHLY_FORMS.has(t);
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // ─── CBS Templates ───
 
