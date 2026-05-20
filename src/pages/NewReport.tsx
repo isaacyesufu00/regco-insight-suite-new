@@ -208,6 +208,13 @@ const NewReport = () => {
     npl_ratio: number | null;
   } | null>(null);
 
+  // Form-based report state
+  const currentYear = new Date().getFullYear();
+  const [formYear, setFormYear] = useState<string>(String(currentYear));
+  const [formQuarter, setFormQuarter] = useState<string>("Q1");
+  const [formPayload, setFormPayload] = useState<unknown>(null);
+  const [formValid, setFormValid] = useState(false);
+
   useEffect(() => {
     const preselected = searchParams.get("type");
     if (preselected) {
