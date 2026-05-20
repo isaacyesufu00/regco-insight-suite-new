@@ -114,7 +114,7 @@ const EigenNavbar = () => {
             textDecoration: "none",
           }}
         >
-          START FOR FREE <ArrowRight size={12} />
+          BOOK A DEMO <ArrowRight size={12} />
         </Link>
       </div>
     </nav>
