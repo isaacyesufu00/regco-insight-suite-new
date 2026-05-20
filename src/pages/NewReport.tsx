@@ -341,13 +341,21 @@ const NewReport = () => {
     let createdReportId: string | null = null;
     try {
       const reportName = `${reportType} — ${profile.company_name || "Report"}`;
-      const periodLabel = isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
-      const periodStartStr = isQuarterlyForm(reportType)
-        ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
-        : `${formYear}-01-01`;
-      const periodEndStr = isQuarterlyForm(reportType)
-        ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
-        : `${formYear}-12-31`;
+      const monthIdx = MONTHS.indexOf(formMonth) + 1;
+      const lastDay = monthIdx > 0 ? new Date(parseInt(formYear), monthIdx, 0).getDate() : 31;
+      const periodLabel = isMonthlyForm(reportType)
+        ? `${formMonth} ${formYear}`
+        : isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
+      const periodStartStr = isMonthlyForm(reportType)
+        ? `${formYear}-${String(monthIdx).padStart(2, "0")}-01`
+        : isQuarterlyForm(reportType)
+          ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
+          : `${formYear}-01-01`;
+      const periodEndStr = isMonthlyForm(reportType)
+        ? `${formYear}-${String(monthIdx).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+        : isQuarterlyForm(reportType)
+          ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
+          : `${formYear}-12-31`;
 
       const { data: newReport, error: reportError } = await supabase
         .from("reports")
