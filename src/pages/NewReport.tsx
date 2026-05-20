@@ -843,7 +843,7 @@ const NewReport = () => {
                 <p className="text-muted-foreground">Reporting Period</p>
                 <p className="font-medium">
                   {isFormBased(reportType)
-                    ? (isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
+                    ? (isMonthlyForm(reportType) ? `${formMonth} ${formYear}` : isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
                     : <>{periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}</>}
                 </p>
               </div>
