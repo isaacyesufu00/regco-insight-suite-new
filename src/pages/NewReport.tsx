@@ -468,7 +468,9 @@ const NewReport = () => {
   };
 
   const canProceedStep0 = !!reportType;
-  const canProceedStep1 = !!periodStart && !!periodEnd && !!cbsFile;
+  const canProceedStep1 = isFormBased(reportType)
+    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && formValid
+    : !!periodStart && !!periodEnd && !!cbsFile;
 
   const filteredTypes = useMemo(() => {
     const regTypes = REPORT_TYPES_BY_REGULATOR[activeRegulator] || [];
