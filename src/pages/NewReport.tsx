@@ -222,6 +222,7 @@ const NewReport = () => {
   const currentYear = new Date().getFullYear();
   const [formYear, setFormYear] = useState<string>(String(currentYear));
   const [formQuarter, setFormQuarter] = useState<string>("Q1");
+  const [formMonth, setFormMonth] = useState<string>(MONTHS[new Date().getMonth()]);
   const [formPayload, setFormPayload] = useState<unknown>(null);
   const [formValid, setFormValid] = useState(false);
 
