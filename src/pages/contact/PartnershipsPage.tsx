@@ -45,9 +45,9 @@ const PartnershipsPage = () => {
         full_name: form.name,
         company_name: form.company,
         email: form.email,
-        message: `[Partnership: ${form.type}] ${form.message}`,
-        category: "partnership",
-      } as any);
+        message: form.message,
+        report_type: `Partnership — ${form.type}`,
+      });
       if (error) throw error;
       toast.success("Thanks — our partnerships team will be in touch.");
       setForm({ name: "", company: "", type: "Referral Partner", email: "", message: "" });
