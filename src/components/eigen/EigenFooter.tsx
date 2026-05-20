@@ -1,7 +1,22 @@
-const cols = [
-  { title: "BLOG", links: ["Updates", "Compliance Guide", "CBN Circulars"] },
-  { title: "LEGAL", links: ["Privacy Policy", "Terms of Service", "Data Processing", "NDPC Compliance"] },
-  { title: "CONTACT", links: ["Book a Demo", "Support", "Partnerships"] },
+import { Link } from "react-router-dom";
+
+const cols: { title: string; links: { label: string; to: string }[] }[] = [
+  { title: "BLOG", links: [
+    { label: "Updates", to: "/blog/updates" },
+    { label: "Compliance Guide", to: "/blog/compliance-guide" },
+    { label: "CBN Circulars", to: "/blog/cbn-circulars" },
+  ]},
+  { title: "LEGAL", links: [
+    { label: "Privacy Policy", to: "/legal/privacy-policy" },
+    { label: "Terms of Service", to: "/legal/terms-of-service" },
+    { label: "Data Processing", to: "/legal/data-processing" },
+    { label: "NDPC Compliance", to: "/legal/ndpc-compliance" },
+  ]},
+  { title: "CONTACT", links: [
+    { label: "Book a Demo", to: "/book-demo" },
+    { label: "Support", to: "/contact/support" },
+    { label: "Partnerships", to: "/contact/partnerships" },
+  ]},
 ];
 
 const EigenFooter = () => (
@@ -24,8 +39,8 @@ const EigenFooter = () => (
               {c.title}
             </p>
             {c.links.map((l) => (
-              <p key={l} style={{ margin: "0 0 8px" }}>
-                <a href="#" style={{ fontSize: 13, color: "#6B6B6B", textDecoration: "none" }}>{l}</a>
+              <p key={l.label} style={{ margin: "0 0 8px" }}>
+                <Link to={l.to} style={{ fontSize: 13, color: "#6B6B6B", textDecoration: "none" }}>{l.label}</Link>
               </p>
             ))}
           </div>
@@ -44,7 +59,7 @@ const EigenFooter = () => (
           fontSize: "clamp(120px, 18vw, 280px)",
           fontWeight: 800,
           color: "transparent",
-          WebkitTextStroke: "1px rgba(0,0,0,0.08)",
+          WebkitTextStroke: "1px rgba(0,0,0,0.22)",
           letterSpacing: "-8px",
           margin: 0,
           padding: "0 24px",

@@ -35,6 +35,16 @@ import SupportTickets from "./pages/SupportTickets";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthConfirm from "./pages/auth/Confirm";
+import BlogUpdates from "./pages/blog/BlogUpdates";
+import BlogUpdateDetail from "./pages/blog/BlogUpdateDetail";
+import ComplianceGuide from "./pages/blog/ComplianceGuide";
+import CBNCirculars from "./pages/blog/CBNCirculars";
+import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
+import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
+import DataProcessingPage from "./pages/legal/DataProcessingPage";
+import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
+import SupportPage from "./pages/contact/SupportPage";
+import PartnershipsPage from "./pages/contact/PartnershipsPage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +70,20 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<Security />} />
+            {/* Blog */}
+            <Route path="/blog/updates" element={<BlogUpdates />} />
+            <Route path="/blog/updates/:slug" element={<BlogUpdateDetail />} />
+            <Route path="/blog/compliance-guide" element={<ComplianceGuide />} />
+            <Route path="/blog/cbn-circulars" element={<CBNCirculars />} />
+            {/* Legal */}
+            <Route path="/legal/privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="/legal/terms-of-service" element={<TermsOfServicePage />} />
+            <Route path="/legal/data-processing" element={<DataProcessingPage />} />
+            <Route path="/legal/ndpc-compliance" element={<NDPCCompliancePage />} />
+            {/* Contact */}
+            <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
+            <Route path="/contact/support" element={<SupportPage />} />
+            <Route path="/contact/partnerships" element={<PartnershipsPage />} />
             {/* Redirect old public pages to homepage */}
             <Route path="/about" element={<Navigate to="/#about" replace />} />
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
