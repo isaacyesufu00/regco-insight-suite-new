@@ -1,282 +1,393 @@
-import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const tutorialSteps = [
+interface Step {
+  number: string;
+  title: string;
+  description: string;
+  detail: string;
+}
+
+const steps: Step[] = [
   {
-    step: "01",
-    title: "Select your\nreturn type",
-    description: "Choose from all 16 mandatory returns grouped by regulator. CBN, NFIU, SCUML, NDIC, and FIRS — all in one place.",
+    number: "01",
+    title: "Open Create Report",
+    description:
+      'From your dashboard, click "Create Report" in the left sidebar. You\'ll see all 16 mandatory return types organised by regulator — CBN, NFIU, SCUML, NDIC, and FIRS. Pick the one you need to file.',
+    detail: "RegCo shows you every return your institution is required to file based on your CBN license category. Nothing irrelevant — just the returns that apply to you.",
   },
   {
-    step: "02",
-    title: "Upload your\nCBS data",
-    description: "Upload your Excel export from FlexCube, Ncube, Finacle, or any core banking system. RegCo reads the file automatically.",
+    number: "02",
+    title: "Select the reporting period",
+    description:
+      "Choose the month, quarter, or year you are filing for. RegCo shows you the CBN deadline for that period and tells you if you are cutting it close.",
+    detail: "The deadline tracker compares today's date against the CBN filing deadline. Red means urgent. Orange means file this week. Green means you're ahead.",
   },
   {
-    step: "03",
-    title: "RegCo validates\nyour figures",
-    description: "Balance sheet reconciliation, CAR check, liquidity ratio, and NPL ratio — all validated automatically against CBN thresholds.",
+    number: "03",
+    title: "Upload your CBS export",
+    description:
+      "Export your trial balance or GL summary from your core banking system — FlexCube, Ncube, Finacle, or any system that can export to Excel. Drag and drop the file onto RegCo.",
+    detail: "No special template required. RegCo reads your raw CBS export and automatically identifies your assets, liabilities, deposits, loans, and capital figures.",
   },
   {
-    step: "04",
-    title: "Download your\nformatted return",
-    description: "A CBN-formatted regulatory return is produced in under 5 minutes. Download it directly to your computer.",
+    number: "04",
+    title: "RegCo validates your figures",
+    description:
+      "Before generating the return, RegCo checks your balance sheet reconciles, your Capital Adequacy Ratio meets CBN's 10% minimum, your Liquidity Ratio is above 20%, and your NPL ratio is within threshold.",
+    detail: "If validation fails, RegCo tells you exactly what's wrong and which figure to check — not a generic error. You fix it once and regenerate.",
   },
   {
-    step: "05",
-    title: "Monitor\ntransactions",
-    description: "Upload transaction data and RegCo flags suspicious activity using 6 CBN AML rules instantly.",
+    number: "05",
+    title: "Download your CBN-formatted return",
+    description:
+      "In under 5 minutes, your regulatory return is ready. It's formatted exactly as CBN requires — section headers, figure alignment, certification block, everything. Download it directly to your computer.",
+    detail: "The downloaded file is plain text that opens in any text editor, Word, or Notepad. Format it, print it, or submit it — exactly as regulators accept.",
   },
   {
-    step: "06",
-    title: "Track every\ndeadline",
-    description: "The Compliance Calendar shows every filing deadline for the year, colour-coded by urgency.",
+    number: "06",
+    title: "Your dashboard updates automatically",
+    description:
+      "The generated report appears instantly in My Reports. Your compliance health score updates. Your calendar marks the deadline as filed. Every metric reflects the new report in real time.",
+    detail: "No page refresh needed. RegCo uses Supabase Realtime — every change in the database pushes to your dashboard instantly.",
   },
 ];
 
-const labelRow: React.CSSProperties = {
-  fontSize: 10,
-  color: "#9B9B9B",
-  display: "flex",
-  justifyContent: "space-between",
-  marginBottom: 10,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
-};
+const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
-const TutorialMockupContent = ({ stepIndex }: { stepIndex: number }) => {
-  const inner: React.CSSProperties = { padding: 20 };
+const Mockup = ({ index }: { index: number }) => {
+  const wrap: React.CSSProperties = { display: "flex", flexDirection: "column", gap: 14 };
+  const title: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: "#0A0A0A", margin: 0, letterSpacing: "0.04em", textTransform: "uppercase" };
 
-  if (stepIndex === 0) {
+  if (index === 0) {
     return (
-      <div style={inner}>
-        <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+      <div style={wrap}>
+        <p style={title}>Select Report Type</p>
+        <div style={{ display: "flex", gap: 6 }}>
           {["CBN", "NFIU", "SCUML", "NDIC", "FIRS"].map((t, i) => (
-            <span key={t} style={{
-              padding: "5px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600,
-              background: i === 0 ? "#0A0A0A" : "rgba(0,0,0,0.05)",
-              color: i === 0 ? "#fff" : "#6B6B6B",
-            }}>{t}</span>
+            <span
+              key={t}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "6px 12px",
+                borderRadius: 999,
+                background: i === 0 ? "#0A0A0A" : "rgba(0,0,0,0.05)",
+                color: i === 0 ? "#FFFFFF" : "#525252",
+              }}
+            >
+              {t}
+            </span>
           ))}
         </div>
-        <div style={labelRow}><span>RETURN TYPE</span><span>FREQUENCY</span></div>
-        {[
-          { name: "MFB Regulatory Return", f: "Monthly", active: true },
-          { name: "Prudential Return", f: "Quarterly" },
-          { name: "Forex Return", f: "Monthly" },
-          { name: "Monetary Policy Return", f: "Monthly" },
-        ].map((r) => (
-          <div key={r.name} style={{
-            display: "flex", justifyContent: "space-between", alignItems: "center",
-            padding: "10px 8px", borderRadius: 6, marginBottom: 2,
-            background: r.active ? "rgba(0,0,0,0.05)" : "transparent",
-            borderBottom: "1px solid rgba(0,0,0,0.04)",
-          }}>
-            <span style={{ fontSize: 12, color: "#1A1A1A", fontWeight: r.active ? 600 : 400 }}>{r.name}</span>
-            <span style={{ fontSize: 11, color: "#6B6B6B" }}>{r.f}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (stepIndex === 1) {
-    return (
-      <div style={inner}>
-        <div style={{
-          border: "2px dashed rgba(0,0,0,0.15)", borderRadius: 12, padding: "40px 20px",
-          textAlign: "center", background: "#F5F5F0",
-        }}>
-          <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#0A0A0A", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 24, marginBottom: 12 }}>↑</div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: "#1A1A1A", margin: 0 }}>Drop your CBS export here</p>
-          <p style={{ fontSize: 11, color: "#9B9B9B", margin: "4px 0 0" }}>.xlsx, .csv up to 50MB</p>
-        </div>
-        <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "#F5F5F0", borderRadius: 8 }}>
-          <span style={{ fontSize: 12, color: "#1A1A1A" }}>📄 GL_SUMMARY_NOV2025.xlsx</span>
-          <span style={{ fontSize: 11, color: "#0A0A0A", fontWeight: 600 }}>Uploaded ✓</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (stepIndex === 2) {
-    return (
-      <div style={inner}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A" }}>● Validation Results</span>
-          <span style={{ fontSize: 11, color: "#0A0A0A", fontWeight: 600 }}>All passed ✓</span>
-        </div>
-        {[
-          { check: "Balance Sheet", result: "Reconciled" },
-          { check: "Capital Adequacy", result: "14.4% (min 10%)" },
-          { check: "Liquidity Ratio", result: "55.3% (min 20%)" },
-          { check: "NPL Ratio", result: "4.0% (max 5%)" },
-        ].map((r) => (
-          <div key={r.check} style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
-            <span style={{ fontSize: 12, color: "#1A1A1A" }}>⊙ {r.check}</span>
-            <span style={{ fontSize: 11, color: "#0A0A0A", fontWeight: 600 }}>{r.result}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  if (stepIndex === 3) {
-    return (
-      <div style={inner}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A" }}>● Report Ready</span>
-          <span style={{ fontSize: 11, color: "#0A0A0A", fontWeight: 600 }}>4m 32s</span>
-        </div>
-        {[
-          "Section A — Institution",
-          "Section B — Balance Sheet",
-          "Section C — Capital Adequacy",
-          "Section G — Certification",
-        ].map((s) => (
-          <div key={s} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
-            <span style={{ fontSize: 12, color: "#1A1A1A" }}>⊙ {s}</span>
-            <span style={{ fontSize: 11, color: "#0A0A0A", fontWeight: 600 }}>Complete</span>
-          </div>
-        ))}
-        <button style={{
-          width: "100%", marginTop: 14, padding: "10px", background: "#0A0A0A", color: "#fff",
-          border: "none", borderRadius: 6, fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", cursor: "pointer",
-        }}>DOWNLOAD REPORT →</button>
-      </div>
-    );
-  }
-
-  if (stepIndex === 4) {
-    return (
-      <div style={inner}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 14 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A" }}>● AML Flags</span>
-          <span style={{ fontSize: 11, color: "#DC2626", fontWeight: 600 }}>4 flagged</span>
-        </div>
-        {[
-          { n: "Emeka Okafor", a: "₦6.5M", s: "CRITICAL", c: "#DC2626", bg: "#FEF2F2" },
-          { n: "Fatima Al-Hassan", a: "₦4.75M", s: "HIGH", c: "#D97706", bg: "#FFFBEB" },
-          { n: "Chukwudi Obi", a: "₦3.0M", s: "MEDIUM", c: "#2563EB", bg: "#EFF6FF" },
-        ].map((r) => (
-          <div key={r.n} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#1A1A1A", margin: 0 }}>{r.n}</p>
-              <p style={{ fontSize: 11, color: "#9B9B9B", margin: 0 }}>{r.a}</p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {["MFB Regulatory Return", "Monetary Policy Return", "Prudential Return", "CBN Forex Return"].map((r, i) => (
+            <div
+              key={r}
+              style={{
+                background: i === 0 ? "#F5F5F0" : "#FFFFFF",
+                border: i === 0 ? "1px solid #0A0A0A" : "1px solid rgba(0,0,0,0.08)",
+                borderRadius: 8,
+                padding: "12px 14px",
+              }}
+            >
+              <p style={{ fontSize: 13, fontWeight: 600, color: "#0A0A0A", margin: 0 }}>{r}</p>
+              <p style={{ fontSize: 11, color: "#737373", margin: "2px 0 0" }}>Monthly · CBN</p>
             </div>
-            <span style={{ fontSize: 10, fontWeight: 700, background: r.bg, color: r.c, borderRadius: 999, padding: "3px 8px", letterSpacing: "0.04em" }}>{r.s}</span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     );
   }
 
-  // stepIndex 5 — calendar
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const deadlines: Record<number, string> = { 7: "#DC2626", 10: "#DC2626", 14: "#D97706", 21: "#D97706", 28: "#22C55E" };
-  return (
-    <div style={inner}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A" }}>May 2026</span>
-        <span style={{ fontSize: 11, color: "#D97706", fontWeight: 600 }}>3 deadlines</span>
+  if (index === 1) {
+    return (
+      <div style={wrap}>
+        <p style={title}>Select Reporting Period</p>
+        <div style={{ background: "#F5F5F0", borderRadius: 10, padding: 16 }}>
+          <p style={{ fontSize: 11, fontWeight: 600, color: "#737373", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Month</p>
+          <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 8, padding: "10px 14px", fontSize: 14, fontWeight: 600, color: "#0A0A0A" }}>
+            May 2026
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", background: "rgba(234, 88, 12, 0.08)", border: "1px solid rgba(234,88,12,0.25)", borderRadius: 10, padding: "14px 16px" }}>
+          <span style={{ fontSize: 18 }}>⚠</span>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "#0A0A0A", margin: 0 }}>Deadline: June 15, 2026</p>
+            <p style={{ fontSize: 12, color: "#A04D00", margin: "2px 0 0" }}>26 days remaining</p>
+          </div>
+        </div>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4 }}>
-        {["S","M","T","W","T","F","S"].map((d, i) => (
-          <div key={i} style={{ fontSize: 9, color: "#9B9B9B", textAlign: "center" }}>{d}</div>
-        ))}
-        {days.map((d) => (
-          <div key={d} style={{
-            aspectRatio: "1", display: "flex", flexDirection: "column", alignItems: "center",
-            justifyContent: "center", background: "#F5F5F0", borderRadius: 4, fontSize: 10, color: "#1A1A1A",
-          }}>
-            {d}
-            {deadlines[d] && <span style={{ width: 4, height: 4, borderRadius: "50%", background: deadlines[d], marginTop: 1 }} />}
+    );
+  }
+
+  if (index === 2) {
+    return (
+      <div style={wrap}>
+        <p style={title}>Upload CBS Data</p>
+        <div
+          style={{
+            border: "2px dashed rgba(0,0,0,0.15)",
+            borderRadius: 12,
+            padding: "32px 16px",
+            textAlign: "center",
+            background: "rgba(0,0,0,0.02)",
+          }}
+        >
+          <p style={{ fontSize: 36, margin: 0 }}>📄</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#0A0A0A", margin: "8px 0 4px" }}>Drag your CBS export here</p>
+          <p style={{ fontSize: 12, color: "#737373", margin: 0 }}>Excel files from FlexCube, Ncube, Finacle accepted</p>
+        </div>
+        <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 8, padding: "10px 14px" }}>
+          <p style={{ fontSize: 12, color: "#047857", fontWeight: 600, margin: 0 }}>✓ GL_Summary_May2026.xlsx — 3 sheets detected</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 3) {
+    const items = [
+      { check: "Balance Sheet Reconciliation", result: "Balanced" },
+      { check: "Capital Adequacy Ratio", result: "14.4% — above 10% min" },
+      { check: "Liquidity Ratio", result: "55.3% — above 20% min" },
+      { check: "NPL Ratio", result: "4.0% — below 5% max" },
+    ];
+    return (
+      <div style={wrap}>
+        <p style={title}>Validation Results</p>
+        {items.map((v) => (
+          <div key={v.check} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "10px 14px" }}>
+            <p style={{ fontSize: 13, color: "#0A0A0A", margin: 0, fontWeight: 500 }}>{v.check}</p>
+            <span style={{ fontSize: 12, color: "#047857", fontWeight: 600 }}>✓ {v.result}</span>
           </div>
         ))}
+        <div style={{ background: "#0A0A0A", borderRadius: 8, padding: "10px 14px", textAlign: "center" }}>
+          <p style={{ fontSize: 12, color: "#FFFFFF", fontWeight: 600, margin: 0 }}>All validations passed — generating report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (index === 4) {
+    return (
+      <div style={wrap}>
+        <p style={title}>Report Ready</p>
+        <div style={{ background: "#F5F5F0", borderRadius: 12, padding: "32px 16px", textAlign: "center" }}>
+          <p style={{ fontSize: 40, margin: 0 }}>✅</p>
+          <p style={{ fontSize: 16, fontWeight: 700, color: "#0A0A0A", margin: "10px 0 4px" }}>Report Generated</p>
+          <p style={{ fontSize: 13, color: "#525252", margin: 0 }}>MFB Regulatory Return — May 2026</p>
+          <p style={{ fontSize: 11, color: "#737373", margin: "4px 0 0" }}>Generated in 4m 32s</p>
+        </div>
+        <button
+          style={{
+            background: "#0A0A0A",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: 8,
+            padding: "12px",
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          ↓ Download MFB_Return_May2026.txt
+        </button>
+      </div>
+    );
+  }
+
+  // index 5 — dashboard update
+  return (
+    <div style={wrap}>
+      <p style={title}>Dashboard Updated</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        {[
+          { n: "12", l: "Total" },
+          { n: "1", l: "Processing" },
+          { n: "11", l: "Ready" },
+        ].map((c) => (
+          <div key={c.l} style={{ background: "#F5F5F0", borderRadius: 8, padding: "12px" }}>
+            <p style={{ fontSize: 22, fontWeight: 800, color: "#0A0A0A", margin: 0, lineHeight: 1 }}>{c.n}</p>
+            <p style={{ fontSize: 11, color: "#737373", margin: "4px 0 0" }}>{c.l}</p>
+          </div>
+        ))}
+      </div>
+      <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 8, padding: "12px 14px" }}>
+        <p style={{ fontSize: 11, color: "#737373", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>Compliance Health</p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <p style={{ fontSize: 24, fontWeight: 800, color: "#047857", margin: 0 }}>94<span style={{ fontSize: 14, color: "#737373" }}>/100</span></p>
+          <span style={{ fontSize: 11, color: "#047857", fontWeight: 600 }}>↑ +3 this month</span>
+        </div>
+      </div>
+      <div style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.25)", borderRadius: 8, padding: "10px 14px" }}>
+        <p style={{ fontSize: 12, color: "#047857", fontWeight: 600, margin: 0 }}>✓ MFB Regulatory Return — May 2026 marked as filed</p>
       </div>
     </div>
   );
 };
 
 const TutorialSection = () => {
-  const sectionRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end end"],
-  });
-  const x = useTransform(scrollYProgress, [0, 1], ["0vw", "-500vw"]);
+  const [activeStep, setActiveStep] = useState(0);
+  const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const observers = stepRefs.current.map((ref, i) => {
+      if (!ref) return null;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) setActiveStep(i);
+        },
+        { threshold: 0.6 }
+      );
+      observer.observe(ref);
+      return observer;
+    });
+    return () => observers.forEach((o) => o?.disconnect());
+  }, []);
 
   return (
-    <section id="tutorial" ref={sectionRef} style={{ height: "600vh", position: "relative", background: "#F5F5F0" }}>
-      <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 70, left: "50%", transform: "translateX(-50%)", textAlign: "center", zIndex: 10 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>PRODUCT TOUR</p>
-          <h2 style={{ fontSize: 36, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.8px", margin: 0 }}>How RegCo works</h2>
-        </div>
-
-        <motion.div style={{ display: "flex", width: "600vw", height: "100vh", x, willChange: "transform" }}>
-          {tutorialSteps.map((step, i) => (
-            <div key={i} style={{
-              width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
-              alignItems: "center", justifyContent: "center", padding: "140px 80px 80px", flexShrink: 0,
-            }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", maxWidth: 1100, width: "100%" }}>
-                <div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: 16 }}>
-                    STEP {step.step}
-                  </span>
-                  <h3 style={{
-                    fontSize: 52, fontWeight: 800, color: "#1A1A1A",
-                    letterSpacing: "-2px", lineHeight: 1.05, marginBottom: 24, whiteSpace: "pre-line",
-                  }}>
-                    {step.title}
-                  </h3>
-                  <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.7, maxWidth: 400 }}>
-                    {step.description}
-                  </p>
-                  <div style={{ display: "flex", gap: 8, marginTop: 40 }}>
-                    {tutorialSteps.map((_, di) => (
-                      <div key={di} style={{
-                        width: di === i ? 24 : 8, height: 8, borderRadius: 999,
-                        background: di === i ? "#0A0A0A" : "rgba(0,0,0,0.15)",
-                        transition: "width 0.3s ease",
-                      }} />
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{
-                  background: "#FFFFFF", borderRadius: 16,
-                  border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.10)",
-                  overflow: "hidden", minHeight: 360,
-                }}>
-                  <div style={{
-                    height: 36, background: "#F5F5F0", borderBottom: "1px solid rgba(0,0,0,0.07)",
-                    display: "flex", alignItems: "center", padding: "0 14px", gap: 6,
-                  }}>
-                    {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
-                      <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
-                    ))}
-                    <div style={{
-                      flex: 1, height: 20, background: "#EAEAE4", borderRadius: 4, marginLeft: 8,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <span style={{ fontSize: 10, color: "#9B9B9B" }}>regco.app/dashboard</span>
-                    </div>
-                  </div>
-                  <TutorialMockupContent stepIndex={i} />
-                </div>
-              </div>
-            </div>
-          ))}
+    <section id="tutorial" style={{ background: "#F5F5F0", padding: "120px 0" }}>
+      <style>{`
+        @media (max-width: 980px) {
+          .tutorial-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .tutorial-sticky { position: relative !important; top: auto !important; }
+        }
+      `}</style>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          style={{ textAlign: "center", marginBottom: 80 }}
+        >
+          <p style={{ fontSize: 11, color: "#9B9B9B", letterSpacing: "0.14em", textTransform: "uppercase", margin: "0 0 16px", fontWeight: 600 }}>
+            PRODUCT TOUR
+          </p>
+          <h2 style={{ fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 800, color: "#0A0A0A", letterSpacing: "-1.5px", lineHeight: 1.05, margin: "0 0 24px" }}>
+            From file upload<br />to filed return.
+          </h2>
+          <p style={{ fontSize: 17, color: "#525252", lineHeight: 1.6, maxWidth: 620, margin: "0 auto" }}>
+            Here is exactly how RegCo turns your CBS data into a CBN-ready regulatory return in under 5 minutes.
+          </p>
         </motion.div>
 
-        <div style={{
-          position: "absolute", bottom: 32, left: "50%", transform: "translateX(-50%)",
-          display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#9B9B9B",
-        }}>
-          <span>Scroll to continue</span>
-          <motion.span animate={{ y: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>↓</motion.span>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }} className="tutorial-grid">
+          {/* LEFT — Step cards */}
+          <div>
+            {steps.map((step, i) => (
+              <div
+                key={i}
+                ref={(el) => (stepRefs.current[i] = el)}
+                style={{
+                  marginBottom: 80,
+                  paddingBottom: 80,
+                  borderBottom: i < steps.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none",
+                }}
+              >
+                <motion.div
+                  initial={{ opacity: 0, x: -24 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.6, ease: EASE }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
+                        background: activeStep === i ? "#0A0A0A" : "rgba(0,0,0,0.06)",
+                        color: activeStep === i ? "#FFFFFF" : "#525252",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        transition: "background 0.3s ease, color 0.3s ease",
+                      }}
+                    >
+                      {i + 1}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                      Step {step.number}
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: 30, fontWeight: 800, color: "#0A0A0A", margin: "0 0 16px", letterSpacing: "-0.8px", lineHeight: 1.15 }}>
+                    {step.title}
+                  </h3>
+                  <p style={{ fontSize: 16, color: "#525252", lineHeight: 1.7, margin: "0 0 16px" }}>
+                    {step.description}
+                  </p>
+                  <p style={{ fontSize: 14, color: "#737373", lineHeight: 1.6, margin: 0, padding: "12px 16px", background: "rgba(0,0,0,0.03)", borderRadius: 8, borderLeft: "2px solid #0A0A0A" }}>
+                    💡 {step.detail}
+                  </p>
+                </motion.div>
+              </div>
+            ))}
+          </div>
+
+          {/* RIGHT — Sticky mockup */}
+          <div className="tutorial-sticky" style={{ position: "sticky", top: 100 }}>
+            <div
+              style={{
+                background: "#FFFFFF",
+                borderRadius: 16,
+                border: "1px solid rgba(0,0,0,0.08)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.10)",
+                overflow: "hidden",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", background: "#F5F5F0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
+                {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
+                  <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+                ))}
+                <div
+                  style={{
+                    marginLeft: 12,
+                    flex: 1,
+                    background: "#FFFFFF",
+                    borderRadius: 6,
+                    padding: "4px 10px",
+                    fontSize: 11,
+                    color: "#737373",
+                    textAlign: "center",
+                  }}
+                >
+                  regco-insight-suite.vercel.app/dashboard
+                </div>
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeStep}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.35, ease: EASE }}
+                  style={{ padding: 24, minHeight: 400 }}
+                >
+                  <Mockup index={activeStep} />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>
+              {steps.map((_, i) => (
+                <motion.div
+                  key={i}
+                  animate={{
+                    width: i === activeStep ? 32 : 8,
+                    background: i === activeStep ? "#0A0A0A" : "rgba(0,0,0,0.15)",
+                  }}
+                  transition={{ duration: 0.3 }}
+                  style={{ height: 8, borderRadius: 999 }}
+                />
+              ))}
+            </div>
+            <p style={{ textAlign: "center", fontSize: 12, color: "#737373", marginTop: 12 }}>
+              Step {activeStep + 1} of {steps.length} — {steps[activeStep].title}
+            </p>
+          </div>
         </div>
       </div>
     </section>

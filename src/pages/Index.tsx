@@ -7,6 +7,7 @@ import BestInClassSection from "@/components/eigen/BestInClassSection";
 import TutorialSection from "@/components/eigen/TutorialSection";
 import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
 import UseCasesSection from "@/components/eigen/UseCasesSection";
+import RegulatoryReturnsSection from "@/components/eigen/RegulatoryReturnsSection";
 import PricingSection from "@/components/eigen/PricingSection";
 import AboutUsSection from "@/components/eigen/AboutUsSection";
 import FinalCTASection from "@/components/eigen/FinalCTASection";
@@ -19,10 +20,11 @@ const Index = () => (
     <TaglineSection />
     <PlatformSection />
     <FeaturesSection />
-    <TutorialSection />
     <BestInClassSection />
     <SecurityDarkSection />
     <UseCasesSection />
+    <RegulatoryReturnsSection />
+    <TutorialSection />
     <PricingSection />
     <AboutUsSection />
     <FinalCTASection />
