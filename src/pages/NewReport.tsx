@@ -492,10 +492,8 @@ const NewReport = () => {
     : !!periodStart && !!periodEnd && !!cbsFile;
 
   const filteredTypes = useMemo(() => {
-    const regTypes = REPORT_TYPES_BY_REGULATOR[activeRegulator] || [];
-    if (availableTypes.length === ALL_REPORT_TYPE_NAMES.length) return regTypes;
-    return regTypes.filter(t => availableTypes.includes(t.name));
-  }, [activeRegulator, availableTypes]);
+    return REPORT_TYPES_BY_REGULATOR[activeRegulator] || [];
+  }, [activeRegulator]);
 
   return (
     <div className="max-w-3xl mx-auto">
