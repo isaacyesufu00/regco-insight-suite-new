@@ -26,16 +26,28 @@ const buildFileName = (report: ReportData): string => {
   return `RegCo_${type}_${reg}_${date}.txt`;
 };
 
-const triggerBrowserDownload = (blob: Blob, fileName: string): void => {
+const triggerBrowserDownload = (content: Blob | string, fileName: string): void => {
+  const blob = typeof content === 'string'
+    ? new Blob([content], { type: 'text/plain;charset=utf-8' })
+    : new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const safeName = fileName.endsWith('.txt') ? fileName : fileName.replace(/\.[^.]+$/, '') + '.txt';
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = fileName;
+  a.download = safeName;
   a.style.display = 'none';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const isBinaryZipBlob = async (blob: Blob): Promise<boolean> => {
+  try {
+    const buf = await blob.slice(0, 4).arrayBuffer();
+    const b = new Uint8Array(buf);
+    return b[0] === 0x50 && b[1] === 0x4b; // "PK" — zip/docx header
+  } catch { return false; }
 };
 
 const buildFallbackContent = (report: ReportData): string => {
@@ -97,7 +109,12 @@ export const downloadReport = async (
       const filePath = parts.slice(1).join('/').split('?')[0];
       const blob = await tryStorageDownload(bucket, filePath);
       if (blob) {
-        triggerBrowserDownload(blob, fileName);
+        if (await isBinaryZipBlob(blob)) {
+          console.warn('Storage file is binary (docx/zip); using fallback text.');
+          triggerBrowserDownload(buildFallbackContent(report), fileName);
+        } else {
+          triggerBrowserDownload(blob, fileName);
+        }
         onComplete?.();
         return;
       }
@@ -109,7 +126,11 @@ export const downloadReport = async (
   if (rawPath) {
     const blob = await tryStorageDownload('reports', rawPath);
     if (blob) {
-      triggerBrowserDownload(blob, fileName);
+      if (await isBinaryZipBlob(blob)) {
+        triggerBrowserDownload(buildFallbackContent(report), fileName);
+      } else {
+        triggerBrowserDownload(blob, fileName);
+      }
       onComplete?.();
       return;
     }
@@ -121,7 +142,11 @@ export const downloadReport = async (
       const response = await fetch(fileUrl, { mode: 'cors' });
       if (response.ok) {
         const blob = await response.blob();
-        triggerBrowserDownload(blob, fileName);
+        if (await isBinaryZipBlob(blob)) {
+          triggerBrowserDownload(buildFallbackContent(report), fileName);
+        } else {
+          triggerBrowserDownload(blob, fileName);
+        }
         onComplete?.();
         return;
       }
