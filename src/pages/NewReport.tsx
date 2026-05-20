@@ -66,6 +66,15 @@ const REGULATORS = Object.keys(REPORT_TYPES_BY_REGULATOR);
 
 const ALL_REPORT_TYPE_NAMES = Object.values(REPORT_TYPES_BY_REGULATOR).flat().map(r => r.name);
 
+// Report types that use a structured form instead of a CBS file upload
+const FORM_BASED_TYPES = new Set<string>([
+  "SCUML Annual Compliance Report",
+  "NDIC Premium Return",
+  "Single Obligor Report",
+]);
+const isFormBased = (t: string) => FORM_BASED_TYPES.has(t);
+const isQuarterlyForm = (t: string) => t === "Single Obligor Report";
+
 // ─── CBS Templates ───
 
 function getTemplateForReportType(reportType: string): { headers: string[]; rows: string[][] } | null {
