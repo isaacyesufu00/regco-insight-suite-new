@@ -2,10 +2,13 @@ import EigenNavbar from "@/components/eigen/EigenNavbar";
 import EigenHero from "@/components/eigen/EigenHero";
 import TaglineSection from "@/components/eigen/TaglineSection";
 import PlatformSection from "@/components/eigen/PlatformSection";
+import FeaturesSection from "@/components/eigen/FeaturesSection";
 import BestInClassSection from "@/components/eigen/BestInClassSection";
-import DashboardTutorialSection from "@/components/eigen/DashboardTutorialSection";
+import TutorialSection from "@/components/eigen/TutorialSection";
 import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
 import UseCasesSection from "@/components/eigen/UseCasesSection";
+import PricingSection from "@/components/eigen/PricingSection";
+import AboutUsSection from "@/components/eigen/AboutUsSection";
 import FinalCTASection from "@/components/eigen/FinalCTASection";
 import EigenFooter from "@/components/eigen/EigenFooter";
 
@@ -15,10 +18,13 @@ const Index = () => (
     <EigenHero />
     <TaglineSection />
     <PlatformSection />
-    <DashboardTutorialSection />
+    <FeaturesSection />
+    <TutorialSection />
     <BestInClassSection />
     <SecurityDarkSection />
     <UseCasesSection />
+    <PricingSection />
+    <AboutUsSection />
     <FinalCTASection />
     <EigenFooter />
   </div>
