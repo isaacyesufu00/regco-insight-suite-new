@@ -48,7 +48,7 @@ const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
     { name: "International Transfers Report", freq: "Quarterly", desc: "Cross-border transaction monitoring" },
   ],
   SCUML: [
-    { name: "SCUML Annual Compliance", freq: "Annual", desc: "Designated non-financial business compliance" },
+    { name: "SCUML Annual Compliance Report", freq: "Annual", desc: "Annual compliance attestation submitted to SCUML covering AML/CFT programme, customer records, and transaction reporting." },
   ],
   NDIC: [
     { name: "NDIC Premium Return", freq: "Annual", desc: "Deposit insurance premium calculation" },
