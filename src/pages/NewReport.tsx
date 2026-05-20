@@ -24,6 +24,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import DownloadButton from "@/components/DownloadButton";
+import SCUMLForm, { SCUMLPayload } from "@/components/reports/SCUMLForm";
+import NDICPremiumForm, { NDICPremiumPayload } from "@/components/reports/NDICPremiumForm";
+import NDICSingleObligorForm, { SingleObligorPayload } from "@/components/reports/NDICSingleObligorForm";
 
 // ─── All 16 report types grouped by regulator ───
 
@@ -48,7 +51,7 @@ const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
     { name: "International Transfers Report", freq: "Quarterly", desc: "Cross-border transaction monitoring" },
   ],
   SCUML: [
-    { name: "SCUML Annual Compliance", freq: "Annual", desc: "Designated non-financial business compliance" },
+    { name: "SCUML Annual Compliance Report", freq: "Annual", desc: "Annual compliance attestation submitted to SCUML covering AML/CFT programme, customer records, and transaction reporting." },
   ],
   NDIC: [
     { name: "NDIC Premium Return", freq: "Annual", desc: "Deposit insurance premium calculation" },
@@ -65,6 +68,15 @@ const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
 const REGULATORS = Object.keys(REPORT_TYPES_BY_REGULATOR);
 
 const ALL_REPORT_TYPE_NAMES = Object.values(REPORT_TYPES_BY_REGULATOR).flat().map(r => r.name);
+
+// Report types that use a structured form instead of a CBS file upload
+const FORM_BASED_TYPES = new Set<string>([
+  "SCUML Annual Compliance Report",
+  "NDIC Premium Return",
+  "Single Obligor Report",
+]);
+const isFormBased = (t: string) => FORM_BASED_TYPES.has(t);
+const isQuarterlyForm = (t: string) => t === "Single Obligor Report";
 
 // ─── CBS Templates ───
 
@@ -196,6 +208,13 @@ const NewReport = () => {
     npl_ratio: number | null;
   } | null>(null);
 
+  // Form-based report state
+  const currentYear = new Date().getFullYear();
+  const [formYear, setFormYear] = useState<string>(String(currentYear));
+  const [formQuarter, setFormQuarter] = useState<string>("Q1");
+  const [formPayload, setFormPayload] = useState<unknown>(null);
+  const [formValid, setFormValid] = useState(false);
+
   useEffect(() => {
     const preselected = searchParams.get("type");
     if (preselected) {
@@ -301,6 +320,63 @@ const NewReport = () => {
     setDownloadUrl("");
     setProcessingError("");
     setValidationMetrics(null);
+    setFormPayload(null);
+    setFormValid(false);
+  };
+
+  const handleFormSubmit = async () => {
+    if (!user || !profile || !formPayload) return;
+    setSubmitting(true);
+    let createdReportId: string | null = null;
+    try {
+      const reportName = `${reportType} — ${profile.company_name || "Report"}`;
+      const periodLabel = isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
+      const periodStartStr = isQuarterlyForm(reportType)
+        ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
+        : `${formYear}-01-01`;
+      const periodEndStr = isQuarterlyForm(reportType)
+        ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
+        : `${formYear}-12-31`;
+
+      const { data: newReport, error: reportError } = await supabase
+        .from("reports")
+        .insert({
+          user_id: user.id,
+          report_name: reportName,
+          report_type: reportType,
+          status: "processing",
+          reporting_period_start: periodStartStr,
+          reporting_period_end: periodEndStr,
+          created_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (reportError || !newReport) throw new Error(reportError?.message || "Failed to create report record.");
+      createdReportId = newReport.id;
+
+      const { error: fnError } = await supabase.functions.invoke("generate-form-report", {
+        body: {
+          report_id: newReport.id,
+          report_type: reportType,
+          form_payload: formPayload,
+          period_label: periodLabel,
+        },
+      });
+      if (fnError) throw new Error(fnError.message || "Generation engine error");
+
+      setCurrentReportId(newReport.id);
+      setProcessingStatus("processing");
+      setStep(3);
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : "An unexpected error occurred.";
+      if (createdReportId) {
+        await supabase.from("reports").update({ status: "failed", error_message: errMsg }).eq("id", createdReportId);
+      }
+      toast({ title: "Submission failed", description: errMsg, variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -392,7 +468,9 @@ const NewReport = () => {
   };
 
   const canProceedStep0 = !!reportType;
-  const canProceedStep1 = !!periodStart && !!periodEnd && !!cbsFile;
+  const canProceedStep1 = isFormBased(reportType)
+    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && formValid
+    : !!periodStart && !!periodEnd && !!cbsFile;
 
   const filteredTypes = useMemo(() => {
     const regTypes = REPORT_TYPES_BY_REGULATOR[activeRegulator] || [];
@@ -523,8 +601,75 @@ const NewReport = () => {
         </div>
       )}
 
-      {/* ── Step 1: Reporting Period + Raw CBS File Upload ── */}
-      {step === 1 && (
+      {/* ── Step 1 (form-based): Period + structured form ── */}
+      {step === 1 && isFormBased(reportType) && (
+        <Card>
+          <CardHeader>
+            <CardTitle>{reportType}</CardTitle>
+            <CardDescription>
+              Complete the sections below. All required fields must be filled before you can continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent style={{ background: "#F5F5F0", fontFamily: "Inter, sans-serif" }} className="space-y-2">
+            <div style={{ display: "grid", gridTemplateColumns: isQuarterlyForm(reportType) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Year</label>
+                <select value={formYear} onChange={e => setFormYear(e.target.value)}
+                  style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                  {Array.from({ length: 6 }).map((_, i) => {
+                    const y = String(currentYear - i);
+                    return <option key={y} value={y}>{y}</option>;
+                  })}
+                </select>
+              </div>
+              {isQuarterlyForm(reportType) && (
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Quarter</label>
+                  <select value={formQuarter} onChange={e => setFormQuarter(e.target.value)}
+                    style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                    {["Q1", "Q2", "Q3", "Q4"].map(q => <option key={q} value={q}>{q}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {reportType === "SCUML Annual Compliance Report" && (
+              <SCUMLForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: SCUMLPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "NDIC Premium Return" && (
+              <NDICPremiumForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: NDICPremiumPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Single Obligor Report" && (
+              <NDICSingleObligorForm
+                institutionName={profile?.company_name || ""}
+                cbnLicense={profile?.rc_number || ""}
+                period={`${formQuarter} ${formYear}`}
+                onValidChange={(v, p: SingleObligorPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+
+            <div className="flex justify-between" style={{ marginTop: 24 }}>
+              <Button variant="outline" onClick={() => setStep(0)}>Back</Button>
+              <Button onClick={() => setStep(2)} disabled={!canProceedStep1}>
+                Review <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Step 1 (CBS upload, default): Reporting Period + Raw CBS File Upload ── */}
+      {step === 1 && !isFormBased(reportType) && (
         <Card>
           <CardHeader>
             <CardTitle>Reporting Period &amp; CBS Export</CardTitle>
@@ -640,17 +785,19 @@ const NewReport = () => {
               <div>
                 <p className="text-muted-foreground">Reporting Period</p>
                 <p className="font-medium">
-                  {periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}
+                  {isFormBased(reportType)
+                    ? (isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
+                    : <>{periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}</>}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">CBS File</p>
-                <p className="font-medium">{cbsFile?.name}</p>
+                <p className="text-muted-foreground">{isFormBased(reportType) ? "Input Method" : "CBS File"}</p>
+                <p className="font-medium">{isFormBased(reportType) ? "Structured form" : cbsFile?.name}</p>
               </div>
             </div>
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleSubmit} disabled={submitting}>
+              <Button onClick={isFormBased(reportType) ? handleFormSubmit : handleSubmit} disabled={submitting}>
                 {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : <>Generate Report <Sparkles className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
