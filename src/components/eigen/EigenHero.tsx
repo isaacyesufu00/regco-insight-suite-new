@@ -54,7 +54,7 @@ const EigenHero = () => (
           </p>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <Link to="/login" style={{ background: "#0A0A0A", color: "#FFFFFF", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-              START FOR FREE <ArrowRight size={12} />
+              LOG IN <ArrowRight size={12} />
             </Link>
             <Link to="/book-demo" style={{ background: "transparent", color: "#1A1A1A", borderRadius: 6, padding: "10px 18px", fontSize: 12, fontWeight: 600, border: "1px solid rgba(0,0,0,0.15)", textDecoration: "none" }}>
               BOOK A DEMO
