@@ -109,7 +109,12 @@ export const downloadReport = async (
       const filePath = parts.slice(1).join('/').split('?')[0];
       const blob = await tryStorageDownload(bucket, filePath);
       if (blob) {
-        triggerBrowserDownload(blob, fileName);
+        if (await isBinaryZipBlob(blob)) {
+          console.warn('Storage file is binary (docx/zip); using fallback text.');
+          triggerBrowserDownload(buildFallbackContent(report), fileName);
+        } else {
+          triggerBrowserDownload(blob, fileName);
+        }
         onComplete?.();
         return;
       }
@@ -121,7 +126,11 @@ export const downloadReport = async (
   if (rawPath) {
     const blob = await tryStorageDownload('reports', rawPath);
     if (blob) {
-      triggerBrowserDownload(blob, fileName);
+      if (await isBinaryZipBlob(blob)) {
+        triggerBrowserDownload(buildFallbackContent(report), fileName);
+      } else {
+        triggerBrowserDownload(blob, fileName);
+      }
       onComplete?.();
       return;
     }
@@ -133,7 +142,11 @@ export const downloadReport = async (
       const response = await fetch(fileUrl, { mode: 'cors' });
       if (response.ok) {
         const blob = await response.blob();
-        triggerBrowserDownload(blob, fileName);
+        if (await isBinaryZipBlob(blob)) {
+          triggerBrowserDownload(buildFallbackContent(report), fileName);
+        } else {
+          triggerBrowserDownload(blob, fileName);
+        }
         onComplete?.();
         return;
       }
