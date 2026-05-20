@@ -24,6 +24,9 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import DownloadButton from "@/components/DownloadButton";
+import SCUMLForm, { SCUMLPayload } from "@/components/reports/SCUMLForm";
+import NDICPremiumForm, { NDICPremiumPayload } from "@/components/reports/NDICPremiumForm";
+import NDICSingleObligorForm, { SingleObligorPayload } from "@/components/reports/NDICSingleObligorForm";
 
 // ─── All 16 report types grouped by regulator ───
 
