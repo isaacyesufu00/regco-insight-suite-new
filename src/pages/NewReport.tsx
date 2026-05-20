@@ -27,8 +27,10 @@ import DownloadButton from "@/components/DownloadButton";
 import SCUMLForm, { SCUMLPayload } from "@/components/reports/SCUMLForm";
 import NDICPremiumForm, { NDICPremiumPayload } from "@/components/reports/NDICPremiumForm";
 import NDICSingleObligorForm, { SingleObligorPayload } from "@/components/reports/NDICSingleObligorForm";
-
-// ─── All 16 report types grouped by regulator ───
+import FIRSVATForm, { FIRSVATPayload } from "@/components/reports/FIRSVATForm";
+import FIRSPAYEForm, { FIRSPAYEPayload } from "@/components/reports/FIRSPAYEForm";
+import FIRSWHTForm, { FIRSWHTPayload } from "@/components/reports/FIRSWHTForm";
+import FIRSCITForm, { FIRSCITPayload } from "@/components/reports/FIRSCITForm";
 
 interface ReportTypeInfo {
   name: string;
@@ -58,10 +60,10 @@ const REPORT_TYPES_BY_REGULATOR: Record<string, ReportTypeInfo[]> = {
     { name: "Single Obligor Report", freq: "Quarterly", desc: "Large exposure and concentration risk" },
   ],
   FIRS: [
-    { name: "Company Income Tax Return", freq: "Annual", desc: "Corporate tax filing and compliance" },
-    { name: "PAYE Remittance", freq: "Monthly", desc: "Employee income tax remittance" },
-    { name: "Withholding Tax Return", freq: "Monthly", desc: "WHT on vendor payments and dividends" },
-    { name: "VAT Return", freq: "Monthly", desc: "Value added tax on qualifying services" },
+    { name: "VAT Return", freq: "Monthly", desc: "Value Added Tax on taxable supplies at 7.5% (Finance Act 2019)" },
+    { name: "PAYE Remittance", freq: "Monthly", desc: "Pay-As-You-Earn deductions remitted to State IRS" },
+    { name: "Withholding Tax Return", freq: "Monthly", desc: "WHT on rent, dividends, contracts and professional fees" },
+    { name: "Company Income Tax Return", freq: "Annual", desc: "Corporate tax by company size, plus 2.5% education tax" },
   ],
 };
 
@@ -74,9 +76,17 @@ const FORM_BASED_TYPES = new Set<string>([
   "SCUML Annual Compliance Report",
   "NDIC Premium Return",
   "Single Obligor Report",
+  "VAT Return",
+  "PAYE Remittance",
+  "Withholding Tax Return",
+  "Company Income Tax Return",
 ]);
+const MONTHLY_FORMS = new Set(["VAT Return", "PAYE Remittance", "Withholding Tax Return"]);
 const isFormBased = (t: string) => FORM_BASED_TYPES.has(t);
 const isQuarterlyForm = (t: string) => t === "Single Obligor Report";
+const isMonthlyForm = (t: string) => MONTHLY_FORMS.has(t);
+
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 // ─── CBS Templates ───
 
@@ -212,6 +222,7 @@ const NewReport = () => {
   const currentYear = new Date().getFullYear();
   const [formYear, setFormYear] = useState<string>(String(currentYear));
   const [formQuarter, setFormQuarter] = useState<string>("Q1");
+  const [formMonth, setFormMonth] = useState<string>(MONTHS[new Date().getMonth()]);
   const [formPayload, setFormPayload] = useState<unknown>(null);
   const [formValid, setFormValid] = useState(false);
 
@@ -330,13 +341,21 @@ const NewReport = () => {
     let createdReportId: string | null = null;
     try {
       const reportName = `${reportType} — ${profile.company_name || "Report"}`;
-      const periodLabel = isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
-      const periodStartStr = isQuarterlyForm(reportType)
-        ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
-        : `${formYear}-01-01`;
-      const periodEndStr = isQuarterlyForm(reportType)
-        ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
-        : `${formYear}-12-31`;
+      const monthIdx = MONTHS.indexOf(formMonth) + 1;
+      const lastDay = monthIdx > 0 ? new Date(parseInt(formYear), monthIdx, 0).getDate() : 31;
+      const periodLabel = isMonthlyForm(reportType)
+        ? `${formMonth} ${formYear}`
+        : isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear;
+      const periodStartStr = isMonthlyForm(reportType)
+        ? `${formYear}-${String(monthIdx).padStart(2, "0")}-01`
+        : isQuarterlyForm(reportType)
+          ? `${formYear}-${String(({ Q1: 1, Q2: 4, Q3: 7, Q4: 10 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-01`
+          : `${formYear}-01-01`;
+      const periodEndStr = isMonthlyForm(reportType)
+        ? `${formYear}-${String(monthIdx).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`
+        : isQuarterlyForm(reportType)
+          ? `${formYear}-${String(({ Q1: 3, Q2: 6, Q3: 9, Q4: 12 } as Record<string, number>)[formQuarter]).padStart(2, "0")}-${formQuarter === "Q1" ? "31" : formQuarter === "Q2" ? "30" : formQuarter === "Q3" ? "30" : "31"}`
+          : `${formYear}-12-31`;
 
       const { data: newReport, error: reportError } = await supabase
         .from("reports")
@@ -469,7 +488,7 @@ const NewReport = () => {
 
   const canProceedStep0 = !!reportType;
   const canProceedStep1 = isFormBased(reportType)
-    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && formValid
+    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && (!isMonthlyForm(reportType) || !!formMonth) && formValid
     : !!periodStart && !!periodEnd && !!cbsFile;
 
   const filteredTypes = useMemo(() => {
@@ -611,7 +630,16 @@ const NewReport = () => {
             </CardDescription>
           </CardHeader>
           <CardContent style={{ background: "#F5F5F0", fontFamily: "Inter, sans-serif" }} className="space-y-2">
-            <div style={{ display: "grid", gridTemplateColumns: isQuarterlyForm(reportType) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+            <div style={{ display: "grid", gridTemplateColumns: (isQuarterlyForm(reportType) || isMonthlyForm(reportType)) ? "1fr 1fr" : "1fr", gap: 14, marginBottom: 8 }}>
+              {isMonthlyForm(reportType) && (
+                <div>
+                  <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Month</label>
+                  <select value={formMonth} onChange={e => setFormMonth(e.target.value)}
+                    style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+                    {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 500, color: "#6E6E73", marginBottom: 6 }}>Reporting Year</label>
                 <select value={formYear} onChange={e => setFormYear(e.target.value)}
@@ -655,6 +683,35 @@ const NewReport = () => {
                 cbnLicense={profile?.rc_number || ""}
                 period={`${formQuarter} ${formYear}`}
                 onValidChange={(v, p: SingleObligorPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "VAT Return" && (
+              <FIRSVATForm
+                institutionName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSVATPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "PAYE Remittance" && (
+              <FIRSPAYEForm
+                employerName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSPAYEPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Withholding Tax Return" && (
+              <FIRSWHTForm
+                companyName={profile?.company_name || ""}
+                periodLabel={`${formMonth} ${formYear}`}
+                onValidChange={(v, p: FIRSWHTPayload) => { setFormValid(v); setFormPayload(p); }}
+              />
+            )}
+            {reportType === "Company Income Tax Return" && (
+              <FIRSCITForm
+                companyName={profile?.company_name || ""}
+                rcNumber={profile?.rc_number || ""}
+                reportingYear={formYear}
+                onValidChange={(v, p: FIRSCITPayload) => { setFormValid(v); setFormPayload(p); }}
               />
             )}
 
@@ -786,7 +843,7 @@ const NewReport = () => {
                 <p className="text-muted-foreground">Reporting Period</p>
                 <p className="font-medium">
                   {isFormBased(reportType)
-                    ? (isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
+                    ? (isMonthlyForm(reportType) ? `${formMonth} ${formYear}` : isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
                     : <>{periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}</>}
                 </p>
               </div>
