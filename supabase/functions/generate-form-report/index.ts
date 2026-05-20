@@ -26,6 +26,18 @@ function buildSystemPrompt(reportType: string): string {
   if (reportType === "NDIC Premium Return") {
     return `You are a Nigerian banking regulatory expert. Generate a complete NDIC Annual Premium Return for a Nigerian Microfinance Bank in the exact format required by the Nigeria Deposit Insurance Corporation. Use the structured data provided. Output PLAIN TEXT only, preserving section headings, alignment, and dividers exactly. No markdown, no commentary.`;
   }
+  if (reportType === "VAT Return") {
+    return `You are a Nigerian tax compliance expert. Generate a complete FIRS Monthly VAT Return for a Nigerian financial institution. Current Nigeria VAT rate is 7.5% per Finance Act 2019. Use the structured data provided. Output PLAIN TEXT only, preserving section headings, dividers, and spacing exactly as shown in the template. No markdown, no commentary, no backticks.`;
+  }
+  if (reportType === "PAYE Remittance") {
+    return `You are a Nigerian tax compliance expert. Generate a complete FIRS Monthly PAYE Remittance Return for a Nigerian employer. Use the structured data provided. Output PLAIN TEXT only, preserving section headings, dividers, and spacing exactly as shown in the template. No markdown.`;
+  }
+  if (reportType === "Withholding Tax Return") {
+    return `You are a Nigerian tax compliance expert. Generate a complete FIRS Monthly Withholding Tax Return tracking deductions at source on rent (10%), dividends (10%), interest (10%), contracts (5%), and professional fees (10%). Use the structured data provided. Output PLAIN TEXT only, preserving the schedule, dividers, and certification block exactly. No markdown.`;
+  }
+  if (reportType === "Company Income Tax Return") {
+    return `You are a Nigerian tax compliance expert. Generate a complete FIRS Company Income Tax Return for a Nigerian financial institution. CIT rates: 0% (turnover < ₦25M), 20% (₦25M–₦100M), 30% (> ₦100M). Education tax: 2.5% of assessable profit. Use the structured data provided. Output PLAIN TEXT only, preserving section headings, dividers, and spacing exactly. No markdown.`;
+  }
   return `You are a Nigerian banking regulatory expert. Generate a complete NDIC Single Obligor Report for a Nigerian Microfinance Bank tracking large credit exposures against the 5% single obligor limit. Use the structured data provided. Output PLAIN TEXT only, preserving the schedule, dividers, and certification block exactly. No markdown.`;
 }
 
