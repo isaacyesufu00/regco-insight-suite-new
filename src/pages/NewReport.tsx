@@ -488,7 +488,7 @@ const NewReport = () => {
 
   const canProceedStep0 = !!reportType;
   const canProceedStep1 = isFormBased(reportType)
-    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && formValid
+    ? !!formYear && (!isQuarterlyForm(reportType) || !!formQuarter) && (!isMonthlyForm(reportType) || !!formMonth) && formValid
     : !!periodStart && !!periodEnd && !!cbsFile;
 
   const filteredTypes = useMemo(() => {
