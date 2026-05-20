@@ -9,7 +9,7 @@ const FinalCTASection = () => {
   const y = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
 
   return (
-    <section id="pricing" ref={ref} style={{ background: "#0A0A0A", padding: "96px 0", overflow: "hidden" }}>
+    <section ref={ref} style={{ background: "#0A0A0A", padding: "96px 0", overflow: "hidden" }}>
       <motion.div style={{ y, textAlign: "center", padding: "0 24px" }}>
         <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 20 }}>
           LET'S TALK
