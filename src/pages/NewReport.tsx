@@ -785,17 +785,19 @@ const NewReport = () => {
               <div>
                 <p className="text-muted-foreground">Reporting Period</p>
                 <p className="font-medium">
-                  {periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}
+                  {isFormBased(reportType)
+                    ? (isQuarterlyForm(reportType) ? `${formQuarter} ${formYear}` : formYear)
+                    : <>{periodStart && format(periodStart, "dd MMM yyyy")} — {periodEnd && format(periodEnd, "dd MMM yyyy")}</>}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">CBS File</p>
-                <p className="font-medium">{cbsFile?.name}</p>
+                <p className="text-muted-foreground">{isFormBased(reportType) ? "Input Method" : "CBS File"}</p>
+                <p className="font-medium">{isFormBased(reportType) ? "Structured form" : cbsFile?.name}</p>
               </div>
             </div>
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleSubmit} disabled={submitting}>
+              <Button onClick={isFormBased(reportType) ? handleFormSubmit : handleSubmit} disabled={submitting}>
                 {submitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : <>Generate Report <Sparkles className="ml-2 h-4 w-4" /></>}
               </Button>
             </div>
