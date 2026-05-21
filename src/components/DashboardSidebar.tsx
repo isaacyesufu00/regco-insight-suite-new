@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users, Shield } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
