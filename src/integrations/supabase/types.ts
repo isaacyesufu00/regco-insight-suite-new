@@ -381,6 +381,45 @@ export type Database = {
         }
         Relationships: []
       }
+      pep_entries: {
+        Row: {
+          category: string | null
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          id: string
+          position: string | null
+          source: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name: string
+          id?: string
+          position?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          id?: string
+          position?: string | null
+          source?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           account_status: string
@@ -585,36 +624,105 @@ export type Database = {
           aliases: string | null
           country: string | null
           created_at: string
+          date_listed: string | null
           date_of_birth: string | null
+          entity_type: string | null
           full_name: string
           id: string
+          last_updated: string | null
           list_name: string
           list_type: string | null
+          nationality: string | null
           notes: string | null
+          raw_data: Json | null
+          reason: string | null
+          source_url: string | null
         }
         Insert: {
           active?: boolean | null
           aliases?: string | null
           country?: string | null
           created_at?: string
+          date_listed?: string | null
           date_of_birth?: string | null
+          entity_type?: string | null
           full_name: string
           id?: string
+          last_updated?: string | null
           list_name: string
           list_type?: string | null
+          nationality?: string | null
           notes?: string | null
+          raw_data?: Json | null
+          reason?: string | null
+          source_url?: string | null
         }
         Update: {
           active?: boolean | null
           aliases?: string | null
           country?: string | null
           created_at?: string
+          date_listed?: string | null
           date_of_birth?: string | null
+          entity_type?: string | null
           full_name?: string
           id?: string
+          last_updated?: string | null
           list_name?: string
           list_type?: string | null
+          nationality?: string | null
           notes?: string | null
+          raw_data?: Json | null
+          reason?: string | null
+          source_url?: string | null
+        }
+        Relationships: []
+      }
+      screening_results: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          customer_id: string | null
+          highest_risk: string
+          id: string
+          match_details: Json | null
+          matches_found: number
+          notes: string | null
+          screened_by: string | null
+          search_bvn: string | null
+          search_date: string
+          search_name: string
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          customer_id?: string | null
+          highest_risk?: string
+          id?: string
+          match_details?: Json | null
+          matches_found?: number
+          notes?: string | null
+          screened_by?: string | null
+          search_bvn?: string | null
+          search_date?: string
+          search_name: string
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          customer_id?: string | null
+          highest_risk?: string
+          id?: string
+          match_details?: Json | null
+          matches_found?: number
+          notes?: string | null
+          screened_by?: string | null
+          search_bvn?: string | null
+          search_date?: string
+          search_name?: string
+          user_id?: string
         }
         Relationships: []
       }
