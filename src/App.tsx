@@ -23,6 +23,7 @@ import ComplianceCalendar from "./pages/ComplianceCalendar";
 import DashboardTutorial from "./pages/DashboardTutorial";
 import TransactionMonitor from "./pages/TransactionMonitor";
 import Customer360 from "./pages/Customer360";
+import Screening from "./pages/Screening";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
