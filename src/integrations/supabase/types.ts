@@ -86,6 +86,163 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_accounts: {
+        Row: {
+          account_number: string
+          account_type: string | null
+          balance: number | null
+          branch: string | null
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          id: string
+          open_date: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          account_type?: string | null
+          balance?: number | null
+          branch?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          open_date?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          account_type?: string | null
+          balance?: number | null
+          branch?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          id?: string
+          open_date?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_kyc: {
+        Row: {
+          address_verified: boolean | null
+          bvn_verified: boolean | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          id_number: string | null
+          id_type: string | null
+          id_verified: boolean | null
+          kyc_status: string | null
+          kyc_tier: number | null
+          last_reviewed_at: string | null
+          missing_items: Json | null
+          photo_verified: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address_verified?: boolean | null
+          bvn_verified?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          id_verified?: boolean | null
+          kyc_status?: string | null
+          kyc_tier?: number | null
+          last_reviewed_at?: string | null
+          missing_items?: Json | null
+          photo_verified?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address_verified?: boolean | null
+          bvn_verified?: boolean | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          id_number?: string | null
+          id_type?: string | null
+          id_verified?: boolean | null
+          kyc_status?: string | null
+          kyc_tier?: number | null
+          last_reviewed_at?: string | null
+          missing_items?: Json | null
+          photo_verified?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_kyc_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers: {
+        Row: {
+          account_number: string | null
+          address: string | null
+          bvn: string | null
+          created_at: string
+          customer_segment: string | null
+          date_of_birth: string | null
+          email: string | null
+          full_name: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          address?: string | null
+          bvn?: string | null
+          created_at?: string
+          customer_segment?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          address?: string | null
+          bvn?: string | null
+          created_at?: string
+          customer_segment?: string | null
+          date_of_birth?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       data_sources: {
         Row: {
           created_at: string
@@ -422,6 +579,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sanctions_entries: {
+        Row: {
+          active: boolean | null
+          aliases: string | null
+          country: string | null
+          created_at: string
+          date_of_birth: string | null
+          full_name: string
+          id: string
+          list_name: string
+          list_type: string | null
+          notes: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          aliases?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name: string
+          id?: string
+          list_name: string
+          list_type?: string | null
+          notes?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          aliases?: string | null
+          country?: string | null
+          created_at?: string
+          date_of_birth?: string | null
+          full_name?: string
+          id?: string
+          list_name?: string
+          list_type?: string | null
+          notes?: string | null
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           created_at: string
@@ -451,6 +647,110 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      transaction_reviews: {
+        Row: {
+          account_number: string | null
+          amount: number | null
+          case_number: string | null
+          created_at: string
+          customer_id: string | null
+          flag_reason: string | null
+          flag_severity: string | null
+          id: string
+          notes: string | null
+          status: string | null
+          transaction_date: string
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          amount?: number | null
+          case_number?: string | null
+          created_at?: string
+          customer_id?: string | null
+          flag_reason?: string | null
+          flag_severity?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          transaction_date?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          amount?: number | null
+          case_number?: string | null
+          created_at?: string
+          customer_id?: string | null
+          flag_reason?: string | null
+          flag_severity?: string | null
+          id?: string
+          notes?: string | null
+          status?: string | null
+          transaction_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      unified_transactions: {
+        Row: {
+          account_number: string | null
+          amount: number
+          balance_after: number | null
+          channel: string | null
+          counterparty: string | null
+          created_at: string
+          currency: string | null
+          customer_id: string | null
+          description: string | null
+          id: string
+          reference: string | null
+          transaction_date: string
+          transaction_type: string | null
+          user_id: string
+        }
+        Insert: {
+          account_number?: string | null
+          amount?: number
+          balance_after?: number | null
+          channel?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          reference?: string | null
+          transaction_date?: string
+          transaction_type?: string | null
+          user_id: string
+        }
+        Update: {
+          account_number?: string | null
+          amount?: number
+          balance_after?: number | null
+          channel?: string | null
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_id?: string | null
+          description?: string | null
+          id?: string
+          reference?: string | null
+          transaction_date?: string
+          transaction_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unified_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

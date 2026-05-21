@@ -22,6 +22,7 @@ import DashboardSettings from "./pages/DashboardSettings";
 import ComplianceCalendar from "./pages/ComplianceCalendar";
 import DashboardTutorial from "./pages/DashboardTutorial";
 import TransactionMonitor from "./pages/TransactionMonitor";
+import Customer360 from "./pages/Customer360";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="support" element={<SupportTickets />} />
               <Route path="tutorial" element={<DashboardTutorial />} />
               <Route path="transactions" element={<TransactionMonitor />} />
+              <Route path="customers" element={<Customer360 />} />
             </Route>
             <Route
               path="/admin"

@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,7 @@ interface DashboardSidebarProps {
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { path: "/dashboard/reports", label: "My Reports", icon: FileText },
+  { path: "/dashboard/customers", label: "Customer 360", icon: Users },
   { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus },
   { path: "/dashboard/support", label: "Compliance Mail", icon: Mail, hasBadge: true },
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
