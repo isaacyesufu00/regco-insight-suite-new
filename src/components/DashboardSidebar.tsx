@@ -17,6 +17,7 @@ interface DashboardSidebarProps {
 const navItems = [
   { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { path: "/dashboard/reports", label: "My Reports", icon: FileText },
+  { path: "/dashboard/customers", label: "Customer 360", icon: Users },
   { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus },
   { path: "/dashboard/support", label: "Compliance Mail", icon: Mail, hasBadge: true },
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
