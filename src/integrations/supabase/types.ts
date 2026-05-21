@@ -698,14 +698,25 @@ export type Database = {
           account_number: string | null
           amount: number
           balance_after: number | null
+          branch_code: string | null
           channel: string | null
           counterparty: string | null
           created_at: string
           currency: string | null
           customer_id: string | null
+          customer_name: string | null
           description: string | null
+          flag_reason: string | null
+          flag_rule: string | null
+          flag_severity: string | null
           id: string
+          is_flagged: boolean
+          narration: string | null
           reference: string | null
+          review_notes: string | null
+          review_status: string
+          str_filed_at: string | null
+          str_reference: string | null
           transaction_date: string
           transaction_type: string | null
           user_id: string
@@ -714,14 +725,25 @@ export type Database = {
           account_number?: string | null
           amount?: number
           balance_after?: number | null
+          branch_code?: string | null
           channel?: string | null
           counterparty?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
+          flag_reason?: string | null
+          flag_rule?: string | null
+          flag_severity?: string | null
           id?: string
+          is_flagged?: boolean
+          narration?: string | null
           reference?: string | null
+          review_notes?: string | null
+          review_status?: string
+          str_filed_at?: string | null
+          str_reference?: string | null
           transaction_date?: string
           transaction_type?: string | null
           user_id: string
@@ -730,14 +752,25 @@ export type Database = {
           account_number?: string | null
           amount?: number
           balance_after?: number | null
+          branch_code?: string | null
           channel?: string | null
           counterparty?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
+          flag_reason?: string | null
+          flag_rule?: string | null
+          flag_severity?: string | null
           id?: string
+          is_flagged?: boolean
+          narration?: string | null
           reference?: string | null
+          review_notes?: string | null
+          review_status?: string
+          str_filed_at?: string | null
+          str_reference?: string | null
           transaction_date?: string
           transaction_type?: string | null
           user_id?: string
@@ -797,6 +830,36 @@ export type Database = {
           updated_at?: string
           user_id?: string
           violations?: number
+        }
+        Relationships: []
+      }
+      webhook_api_keys: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
