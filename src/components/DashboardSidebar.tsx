@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users, Shield } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,6 +23,7 @@ const navItems = [
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { path: "/dashboard/data-sources", label: "Data Sources", icon: Database },
   { path: "/dashboard/transactions", label: "Transactions", icon: Activity },
+  { path: "/dashboard/screening", label: "Screening", icon: Shield },
   { path: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

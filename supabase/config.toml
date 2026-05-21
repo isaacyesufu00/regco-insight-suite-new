@@ -27,3 +27,6 @@ verify_jwt = false
 [functions.provision-webhook-key]
 verify_jwt = false
 
+[functions.sync-sanctions-lists]
+verify_jwt = false
+
