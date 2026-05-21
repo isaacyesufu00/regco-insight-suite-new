@@ -108,6 +108,7 @@ const App = () => (
               <Route path="tutorial" element={<DashboardTutorial />} />
               <Route path="transactions" element={<TransactionMonitor />} />
               <Route path="customers" element={<Customer360 />} />
+              <Route path="screening" element={<Screening />} />
             </Route>
             <Route
               path="/admin"
