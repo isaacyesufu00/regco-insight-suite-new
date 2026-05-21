@@ -20,3 +20,10 @@ verify_jwt = false
 
 [functions.process-report]
 verify_jwt = false
+
+[functions.receive-transaction]
+verify_jwt = false
+
+[functions.provision-webhook-key]
+verify_jwt = false
+
