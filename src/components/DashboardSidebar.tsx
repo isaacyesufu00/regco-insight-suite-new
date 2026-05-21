@@ -23,6 +23,7 @@ const navItems = [
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { path: "/dashboard/data-sources", label: "Data Sources", icon: Database },
   { path: "/dashboard/transactions", label: "Transactions", icon: Activity },
+  { path: "/dashboard/screening", label: "Screening", icon: Shield },
   { path: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
