@@ -60,9 +60,10 @@ const DashboardSettings = () => {
       notification_email_report_ready: notifyReportReady,
     }).eq("id", user.id);
     setSaving(false);
+    if (!error) await refreshProfile();
     toast({
       title: error ? "Something went wrong" : "Profile updated",
-      description: error ? "We couldn't save your changes. Please try again." : "Your profile has been updated successfully.",
+      description: error ? "We couldn't save your changes. Please try again." : "Your changes have been applied across your dashboard.",
       variant: error ? "destructive" : "default",
     });
   };
