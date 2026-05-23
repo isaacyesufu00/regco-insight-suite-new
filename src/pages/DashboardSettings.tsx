@@ -9,9 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { BackButton } from "@/components/BackButton";
+import { useProfile } from "@/contexts/ProfileContext";
 
 const DashboardSettings = () => {
   const { user } = useAuth();
+  const { refreshProfile } = useProfile();
   const { toast } = useToast();
 
   const [companyName, setCompanyName] = useState("");
