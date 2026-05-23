@@ -1,18 +1,29 @@
 import { motion } from "framer-motion";
 
 const statusCards = [
-  { label: "Ready", value: 12, color: "#0A0A0A" },
-  { label: "Processing", value: 3, color: "#FF9F0A" },
-  { label: "Draft", value: 5, color: "#6B6B6B" },
-  { label: "Failed", value: 1, color: "#FF3B30" },
+  { label: "Reports Ready", value: "8", color: "#16A34A", bg: "#F0FDF4" },
+  { label: "Flagged Txns", value: "3", color: "#DC2626", bg: "#FEF2F2" },
+  { label: "KYC Incomplete", value: "12", color: "#D97706", bg: "#FFFBEB" },
+  { label: "Screened Today", value: "47", color: "#2563EB", bg: "#EFF6FF" },
 ];
 
 const reports = [
-  { name: "MFB Regulatory Return — Oct 2026", reg: "CBN", status: "Ready", color: "#0A0A0A" },
-  { name: "AML/CFT Quarterly Report", reg: "NFIU", status: "Ready", color: "#0A0A0A" },
-  { name: "SCUML Annual Return", reg: "SCUML", status: "Processing", color: "#FF9F0A" },
-  { name: "NDIC Premium Return", reg: "NDIC", status: "Ready", color: "#0A0A0A" },
-  { name: "VAT Return — Sep 2026", reg: "FIRS", status: "Draft", color: "#6B6B6B" },
+  { name: "MFB Regulatory Return", reg: "CBN", status: "Ready", color: "#16A34A", bg: "#F0FDF4" },
+  { name: "AML Transaction Scan", reg: "NFIU", status: "Ready", color: "#16A34A", bg: "#F0FDF4" },
+  { name: "Customer 360 — Emeka Okafor", reg: "Internal", status: "Screened", color: "#2563EB", bg: "#EFF6FF" },
+];
+
+const sidebarItems = [
+  { label: "Dashboard", active: true },
+  { label: "My Reports", active: false },
+  { label: "Create Report", active: false },
+  { label: "Customer 360", active: false, isNew: true },
+  { label: "Transactions", active: false },
+  { label: "Risk Screening", active: false, isNew: true },
+  { label: "Compliance Mail", active: false },
+  { label: "Calendar", active: false },
+  { label: "Data Sources", active: false },
+  { label: "Settings", active: false },
 ];
 
 const DashboardMockup = () => (
@@ -48,24 +59,33 @@ const DashboardMockup = () => (
     </div>
 
     {/* Body */}
-    <div style={{ display: "grid", gridTemplateColumns: "180px 1fr", minHeight: 380 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", minHeight: 420 }}>
       {/* Sidebar */}
       <div style={{ background: "#FAFAFA", borderRight: "1px solid rgba(0,0,0,0.06)", padding: 16 }}>
         <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 16px" }}>RegCo</p>
-        {["Home", "New Report", "My Reports", "Calendar", "Data Sources", "Settings"].map((n, i) => (
+        {sidebarItems.map((item) => (
           <div
-            key={n}
+            key={item.label}
             style={{
               fontSize: 12,
-              color: i === 0 ? "#1A1A1A" : "#6B6B6B",
-              padding: "8px 10px",
+              color: item.active ? "#1A1A1A" : "#6B6B6B",
+              padding: "7px 10px",
               borderRadius: 6,
-              background: i === 0 ? "rgba(0,0,0,0.10)" : "transparent",
-              marginBottom: 4,
-              fontWeight: i === 0 ? 600 : 500,
+              background: item.active ? "rgba(0,0,0,0.10)" : "transparent",
+              marginBottom: 3,
+              fontWeight: item.active ? 600 : 500,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 6,
             }}
           >
-            {n}
+            <span>{item.label}</span>
+            {item.isNew && (
+              <span style={{ background: "#16A34A", color: "#fff", fontSize: 8, fontWeight: 700, padding: "2px 5px", borderRadius: 3, letterSpacing: "0.04em" }}>
+                NEW
+              </span>
+            )}
           </div>
         ))}
       </div>
@@ -81,9 +101,9 @@ const DashboardMockup = () => (
         {/* Status cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
           {statusCards.map((c) => (
-            <div key={c.label} style={{ background: "#fff", borderRadius: 8, padding: 10, border: "1px solid rgba(0,0,0,0.06)" }}>
-              <p style={{ fontSize: 10, color: "#9B9B9B", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em" }}>{c.label}</p>
-              <p style={{ fontSize: 20, fontWeight: 700, color: c.color, margin: "2px 0 0" }}>{c.value}</p>
+            <div key={c.label} style={{ background: c.bg, borderRadius: 8, padding: 10, border: "1px solid rgba(0,0,0,0.06)" }}>
+              <p style={{ fontSize: 10, color: "#6B6B6B", margin: 0, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{c.label}</p>
+              <p style={{ fontSize: 22, fontWeight: 700, color: c.color, margin: "2px 0 0" }}>{c.value}</p>
             </div>
           ))}
         </div>
@@ -91,15 +111,15 @@ const DashboardMockup = () => (
         {/* Reports table */}
         <div style={{ background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.06)", overflow: "hidden" }}>
           <div style={{ padding: "10px 14px", borderBottom: "1px solid rgba(0,0,0,0.06)", fontSize: 12, fontWeight: 600, color: "#1A1A1A" }}>
-            Recent Reports
+            Recent Activity
           </div>
           {reports.map((r, i) => (
             <div
               key={i}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1fr 60px 70px",
-                padding: "8px 14px",
+                gridTemplateColumns: "1fr 70px 80px",
+                padding: "9px 14px",
                 fontSize: 11,
                 borderTop: i ? "1px solid rgba(0,0,0,0.04)" : "none",
                 alignItems: "center",
@@ -107,7 +127,7 @@ const DashboardMockup = () => (
             >
               <span style={{ color: "#1A1A1A" }}>{r.name}</span>
               <span style={{ color: "#6B6B6B" }}>{r.reg}</span>
-              <span style={{ background: r.color + "20", color: r.color, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, textAlign: "center" }}>{r.status}</span>
+              <span style={{ background: r.bg, color: r.color, padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, textAlign: "center" }}>{r.status}</span>
             </div>
           ))}
         </div>
