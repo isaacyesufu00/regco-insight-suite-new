@@ -248,10 +248,11 @@ export default function Screening() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         <button style={tabBtn(tab === "quick")} onClick={() => setTab("quick")}>Quick Screen</button>
         <button style={tabBtn(tab === "batch")} onClick={() => setTab("batch")}>Batch Screen</button>
         <button style={tabBtn(tab === "history")} onClick={() => setTab("history")}>Screening History</button>
+        <button style={tabBtn(tab === "status")} onClick={() => setTab("status")}>List Status</button>
       </div>
 
       {/* === QUICK SCREEN === */}
