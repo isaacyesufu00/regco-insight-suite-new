@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Shield, Search, Upload, History, Loader2, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Shield, Search, Upload, History, Loader2, Download, AlertTriangle, CheckCircle2, RefreshCw, Database } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "quick" | "batch" | "history";
+type Tab = "quick" | "batch" | "history" | "status";
 
 interface SanctionsMatch {
   id: string;
