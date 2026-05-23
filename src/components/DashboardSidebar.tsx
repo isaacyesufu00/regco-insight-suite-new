@@ -2,6 +2,7 @@ import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calend
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -31,10 +32,10 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
+  const { institutionName, userName, userInitial } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
-  const [fullName, setFullName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -44,13 +45,6 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
       .eq("user_id", user.id)
       .eq("is_read", false)
       .then(({ count }) => setUnreadCount(count || 0));
-
-    supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => setFullName(data?.full_name || null));
   }, [user]);
 
   const handleSignOut = async () => {
@@ -61,8 +55,9 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const isActive = (path: string, end?: boolean) =>
     end ? location.pathname === path : location.pathname.startsWith(path);
 
-  const initial = (fullName || user?.email || "R").charAt(0).toUpperCase();
-  const displayName = fullName || user?.email?.split("@")[0] || "User";
+  const initial = userInitial;
+  const displayName = userName;
+  const shownCompany = companyName || institutionName;
 
   return (
     <Sidebar collapsible="icon">
@@ -95,7 +90,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
               Institution
             </p>
             <p style={{ fontSize: 13, fontWeight: 600, color: "#0A0A0A", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {companyName || "RegCo"}
+              {shownCompany || "RegCo"}
             </p>
           </div>
         )}

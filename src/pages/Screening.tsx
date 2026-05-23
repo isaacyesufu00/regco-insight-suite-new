@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Shield, Search, Upload, History, Loader2, Download, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Shield, Search, Upload, History, Loader2, Download, AlertTriangle, CheckCircle2, RefreshCw, Database } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "quick" | "batch" | "history";
+type Tab = "quick" | "batch" | "history" | "status";
 
 interface SanctionsMatch {
   id: string;
@@ -248,10 +248,11 @@ export default function Screening() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
         <button style={tabBtn(tab === "quick")} onClick={() => setTab("quick")}>Quick Screen</button>
         <button style={tabBtn(tab === "batch")} onClick={() => setTab("batch")}>Batch Screen</button>
         <button style={tabBtn(tab === "history")} onClick={() => setTab("history")}>Screening History</button>
+        <button style={tabBtn(tab === "status")} onClick={() => setTab("status")}>List Status</button>
       </div>
 
       {/* === QUICK SCREEN === */}
@@ -519,6 +520,97 @@ export default function Screening() {
           )}
         </div>
       )}
+
+      {/* === LIST STATUS === */}
+      {tab === "status" && <ListStatusTab />}
     </div>
   );
 }
+
+function ListStatusTab() {
+  const [syncLogs, setSyncLogs] = useState<any[]>([]);
+  const [counts, setCounts] = useState<Record<string, number>>({});
+  const [syncing, setSyncing] = useState(false);
+
+  const load = async () => {
+    const [{ data: logs }, { data: entries }] = await Promise.all([
+      supabase.from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
+      supabase.from("sanctions_entries").select("list_name").limit(20000),
+    ]);
+    setSyncLogs(logs || []);
+    const c: Record<string, number> = {};
+    (entries || []).forEach((r: any) => { c[r.list_name] = (c[r.list_name] || 0) + 1; });
+    setCounts(c);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const triggerSync = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke("sync-sanctions", { body: { list: "all" } });
+      if (error) toast.error(error.message);
+      else toast.success("Sync triggered — refreshing list counts");
+      await load();
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const lists = [
+    { name: "UN Security Council", source: "scsanctions.un.org", type: "Auto-synced daily" },
+    { name: "OFAC SDN", source: "treasury.gov/ofac", type: "Auto-synced daily" },
+    { name: "EU Consolidated", source: "webgate.ec.europa.eu", type: "Auto-synced daily" },
+    { name: "UK HM Treasury", source: "gov.uk", type: "Auto-synced daily" },
+    { name: "CBN Watchlist", source: "cbn.gov.ng", type: "Manually maintained" },
+  ];
+
+  return (
+    <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 12, padding: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }}>
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0A0A0A", margin: "0 0 4px" }}>Sanctions List Status</h2>
+          <p style={{ fontSize: 12, color: "#6B6B6B", margin: 0 }}>Lists are synced automatically every day at 02:00.</p>
+        </div>
+        <button onClick={triggerSync} disabled={syncing} style={{ height: 36, padding: "0 18px", background: "#0A0A0A", color: "#FFFFFF", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: syncing ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+          {syncing ? <><Loader2 size={14} className="animate-spin" /> Syncing…</> : <><RefreshCw size={14} /> Sync All Now</>}
+        </button>
+      </div>
+
+      {lists.map((list) => {
+        const latest = syncLogs.find((l) => l.list_name === list.name);
+        const count = counts[list.name] || 0;
+        const ok = count > 0;
+        return (
+          <div key={list.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 0", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: ok ? "#DCFCE7" : "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {ok ? <CheckCircle2 size={16} color="#166534" /> : <AlertTriangle size={16} color="#9A3412" />}
+              </div>
+              <div>
+                <p style={{ fontSize: 13, fontWeight: 600, color: "#0A0A0A", margin: 0 }}>{list.name}</p>
+                <p style={{ fontSize: 11, color: "#6B6B6B", margin: 0 }}>{list.source} · {list.type}</p>
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: 16, fontWeight: 700, color: "#0A0A0A", margin: 0 }}>{count.toLocaleString()}</p>
+              <p style={{ fontSize: 11, color: "#9B9B9B", margin: 0 }}>
+                {latest ? `Last synced ${new Date(latest.sync_date).toLocaleDateString("en-NG")}` : ok ? "Active" : "Not yet synced"}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+
+      <div style={{ marginTop: 18, padding: 14, background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: 8 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, color: "#854D0E", margin: "0 0 4px" }}>About the CBN Watchlist</p>
+        <p style={{ fontSize: 12, color: "#78350F", margin: 0, lineHeight: 1.55 }}>
+          The CBN does not publish a machine-readable terrorism watchlist. RegCo maintains this list manually from
+          publicly available CBN circulars. To obtain the full CBN watchlist, write to the Director, Financial Policy
+          and Regulation at the CBN, then contact support to ingest the updated list.
+        </p>
+      </div>
+    </div>
+  );
+}
+

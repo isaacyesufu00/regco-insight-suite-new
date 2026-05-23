@@ -678,6 +678,42 @@ export type Database = {
         }
         Relationships: []
       }
+      sanctions_sync_log: {
+        Row: {
+          duration_ms: number | null
+          error_message: string | null
+          id: string
+          list_name: string
+          records_added: number | null
+          records_updated: number | null
+          status: string | null
+          sync_date: string | null
+          total_records: number | null
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          list_name: string
+          records_added?: number | null
+          records_updated?: number | null
+          status?: string | null
+          sync_date?: string | null
+          total_records?: number | null
+        }
+        Update: {
+          duration_ms?: number | null
+          error_message?: string | null
+          id?: string
+          list_name?: string
+          records_added?: number | null
+          records_updated?: number | null
+          status?: string | null
+          sync_date?: string | null
+          total_records?: number | null
+        }
+        Relationships: []
+      }
       screening_results: {
         Row: {
           action_taken: string | null
