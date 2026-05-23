@@ -59,7 +59,7 @@ export const Customer360Section = () => {
               </motion.div>
             ))}
           </div>
-          <a href="/sign-in" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0A0A0A", color: "#FFFFFF", borderRadius: 8, padding: "11px 22px", fontSize: 13, fontWeight: 600, textDecoration: "none", letterSpacing: "0.02em" }}>
+          <a href="/book-demo" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "#0A0A0A", color: "#FFFFFF", borderRadius: 8, padding: "11px 22px", fontSize: 13, fontWeight: 600, textDecoration: "none", letterSpacing: "0.02em" }}>
             See Customer 360 in action →
           </a>
         </motion.div>
