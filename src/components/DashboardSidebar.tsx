@@ -90,7 +90,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
               Institution
             </p>
             <p style={{ fontSize: 13, fontWeight: 600, color: "#0A0A0A", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {companyName || "RegCo"}
+              {shownCompany || "RegCo"}
             </p>
           </div>
         )}
