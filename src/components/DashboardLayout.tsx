@@ -1,32 +1,17 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
 import { HelpPanel } from "@/components/HelpPanel";
-import { useEffect, useState } from "react";
 import { WelcomeTutorialModal } from "@/components/WelcomeTutorialModal";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useSessionTimeout } from "@/hooks/useSessionTimeout";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user } = useAuth();
-  const [companyName, setCompanyName] = useState<string | null>(null);
+  const { institutionName } = useProfile();
   useSessionTimeout();
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("company_name")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data) setCompanyName(data.company_name);
-      });
-  }, [user]);
 
   return (
     <SidebarProvider>
@@ -39,7 +24,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
         }}
       >
-        <DashboardSidebar companyName={companyName} />
+        <DashboardSidebar companyName={institutionName} />
         <div className="flex-1 flex flex-col min-w-0">
           <header
             className="flex items-center px-5"
