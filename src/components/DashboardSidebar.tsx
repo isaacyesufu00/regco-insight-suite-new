@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users, Shield } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,7 @@ const navItems = [
   { path: "/dashboard/reports", label: "My Reports", icon: FileText },
   { path: "/dashboard/customers", label: "Customer 360", icon: Users },
   { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus },
-  { path: "/dashboard/support", label: "Compliance Mail", icon: Mail, hasBadge: true },
+  { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intelligence", icon: Newspaper, hasBadge: true },
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { path: "/dashboard/data-sources", label: "Data Sources", icon: Database },
   { path: "/dashboard/transactions", label: "Transactions", icon: Activity },
@@ -39,12 +39,25 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("compliance_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false)
-      .then(({ count }) => setUnreadCount(count || 0));
+    (async () => {
+      const { data: news } = await supabase
+        .from("regulatory_news")
+        .select("id")
+        .order("published_at", { ascending: false })
+        .limit(50);
+      const ids = (news || []).map((n: any) => n.id);
+      if (ids.length === 0) {
+        setUnreadCount(0);
+        return;
+      }
+      const { data: reads } = await supabase
+        .from("news_read_status")
+        .select("news_id")
+        .eq("user_id", user.id)
+        .in("news_id", ids);
+      const readSet = new Set((reads || []).map((r: any) => r.news_id));
+      setUnreadCount(ids.filter((id) => !readSet.has(id)).length);
+    })();
   }, [user]);
 
   const handleSignOut = async () => {
