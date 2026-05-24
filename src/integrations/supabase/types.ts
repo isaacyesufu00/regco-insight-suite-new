@@ -381,6 +381,83 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_compliance_tasks: {
+        Row: {
+          category: string
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          month: string
+          notes: string | null
+          priority: string | null
+          priority_order: number | null
+          recurring: boolean | null
+          status: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          month: string
+          notes?: string | null
+          priority?: string | null
+          priority_order?: number | null
+          recurring?: boolean | null
+          status?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          month?: string
+          notes?: string | null
+          priority?: string | null
+          priority_order?: number | null
+          recurring?: boolean | null
+          status?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      news_read_status: {
+        Row: {
+          id: string
+          news_id: string
+          read_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          news_id: string
+          read_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          news_id?: string
+          read_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "news_read_status_news_id_fkey"
+            columns: ["news_id"]
+            isOneToOne: false
+            referencedRelation: "regulatory_news"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pep_entries: {
         Row: {
           category: string | null
@@ -459,6 +536,54 @@ export type Database = {
           phone?: string | null
           rc_number?: string | null
           tutorial_completed?: boolean
+        }
+        Relationships: []
+      }
+      regulatory_news: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          fetched_at: string | null
+          id: string
+          image_url: string | null
+          is_important: boolean | null
+          is_read: boolean | null
+          published_at: string | null
+          source: string | null
+          tags: string[] | null
+          title: string
+          url: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fetched_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_important?: boolean | null
+          is_read?: boolean | null
+          published_at?: string | null
+          source?: string | null
+          tags?: string[] | null
+          title: string
+          url: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          fetched_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_important?: boolean | null
+          is_read?: boolean | null
+          published_at?: string | null
+          source?: string | null
+          tags?: string[] | null
+          title?: string
+          url?: string
         }
         Relationships: []
       }

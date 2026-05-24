@@ -33,4 +33,9 @@ verify_jwt = false
 [functions.sync-sanctions]
 verify_jwt = false
 
+[functions.fetch-regulatory-news]
+verify_jwt = false
+
+
+
 
