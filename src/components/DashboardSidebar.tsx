@@ -39,12 +39,25 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("compliance_messages")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("is_read", false)
-      .then(({ count }) => setUnreadCount(count || 0));
+    (async () => {
+      const { data: news } = await supabase
+        .from("regulatory_news")
+        .select("id")
+        .order("published_at", { ascending: false })
+        .limit(50);
+      const ids = (news || []).map((n: any) => n.id);
+      if (ids.length === 0) {
+        setUnreadCount(0);
+        return;
+      }
+      const { data: reads } = await supabase
+        .from("news_read_status")
+        .select("news_id")
+        .eq("user_id", user.id)
+        .in("news_id", ids);
+      const readSet = new Set((reads || []).map((r: any) => r.news_id));
+      setUnreadCount(ids.filter((id) => !readSet.has(id)).length);
+    })();
   }, [user]);
 
   const handleSignOut = async () => {
