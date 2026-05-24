@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Mail, BookOpen, Activity, Users, Shield } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,7 +20,7 @@ const navItems = [
   { path: "/dashboard/reports", label: "My Reports", icon: FileText },
   { path: "/dashboard/customers", label: "Customer 360", icon: Users },
   { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus },
-  { path: "/dashboard/support", label: "Compliance Mail", icon: Mail, hasBadge: true },
+  { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intelligence", icon: Newspaper, hasBadge: true },
   { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
   { path: "/dashboard/data-sources", label: "Data Sources", icon: Database },
   { path: "/dashboard/transactions", label: "Transactions", icon: Activity },
