@@ -25,6 +25,7 @@ import DashboardTutorial from "./pages/DashboardTutorial";
 import TransactionMonitor from "./pages/TransactionMonitor";
 import Customer360 from "./pages/Customer360";
 import Screening from "./pages/Screening";
+import RegulatoryIntelligence from "./pages/RegulatoryIntelligence";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
@@ -111,6 +112,7 @@ const App = () => (
               <Route path="transactions" element={<TransactionMonitor />} />
               <Route path="customers" element={<Customer360 />} />
               <Route path="screening" element={<Screening />} />
+              <Route path="regulatory-intelligence" element={<RegulatoryIntelligence />} />
             </Route>
             <Route
               path="/admin"
