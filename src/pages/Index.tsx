@@ -4,6 +4,7 @@ import TaglineSection from "@/components/eigen/TaglineSection";
 import PlatformSection from "@/components/eigen/PlatformSection";
 import FeaturesSection from "@/components/eigen/FeaturesSection";
 import { Customer360Section, FraudPreventionSection, ScreeningSection } from "@/components/eigen/NewFeaturesSections";
+import { BoardPackSection, AuditTrackerSection, RegulatoryIntelSection, PlatformCounterSection } from "@/components/eigen/HomepageExtraSections";
 import BestInClassSection from "@/components/eigen/BestInClassSection";
 import TutorialSection from "@/components/eigen/TutorialSection";
 import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
@@ -24,6 +25,10 @@ const Index = () => (
     <Customer360Section />
     <FraudPreventionSection />
     <ScreeningSection />
+    <BoardPackSection />
+    <AuditTrackerSection />
+    <RegulatoryIntelSection />
+    <PlatformCounterSection />
     <BestInClassSection />
     <SecurityDarkSection />
     <UseCasesSection />
