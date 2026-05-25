@@ -7,6 +7,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 
 type Tab = "live" | "batch" | "flagged" | "str";
 const WEBHOOK_URL = `https://pdplkprcomjslilznbsl.supabase.co/functions/v1/receive-transaction`;
@@ -38,6 +39,7 @@ const startOfTodayISO = () => { const d = new Date(); d.setHours(0,0,0,0); retur
 
 export default function TransactionMonitor() {
   const { user, session } = useAuth();
+  const { liveWebhook } = useFeatureAccess();
   const [tab, setTab] = useState<Tab>("live");
 
   // ---- Live tab state ----
@@ -308,7 +310,7 @@ export default function TransactionMonitor() {
       {/* ====== LIVE MONITOR ====== */}
       {tab === "live" && (
         <>
-          {(() => { try { return require('@/hooks/useFeatureAccess').useFeatureAccess().liveWebhook; } catch { return true; } })() && (
+          {liveWebhook && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
             {/* Webhook card */}
             <div style={{ background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", padding: 24 }}>
@@ -399,6 +401,9 @@ export default function TransactionMonitor() {
               </div>
             </div>
           </div>
+          )}
+
+
 
           {/* Live feed */}
           <div style={{ background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", overflow: "hidden" }}>
