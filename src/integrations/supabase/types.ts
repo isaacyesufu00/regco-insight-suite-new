@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_issues: {
+        Row: {
+          category: string | null
+          closed_date: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          evidence_notes: string | null
+          examination_date: string | null
+          id: string
+          issue_ref: string | null
+          owner_email: string | null
+          owner_name: string | null
+          regulator: string | null
+          remediation_plan: string | null
+          severity: string | null
+          source: string
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          closed_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          evidence_notes?: string | null
+          examination_date?: string | null
+          id?: string
+          issue_ref?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          regulator?: string | null
+          remediation_plan?: string | null
+          severity?: string | null
+          source: string
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          closed_date?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          evidence_notes?: string | null
+          examination_date?: string | null
+          id?: string
+          issue_ref?: string | null
+          owner_email?: string | null
+          owner_name?: string | null
+          regulator?: string | null
+          remediation_plan?: string | null
+          severity?: string | null
+          source?: string
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_messages: {
         Row: {
           body: string
@@ -49,6 +115,45 @@ export type Database = {
           sender_name?: string
           subject?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      compliance_reports: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          generated_at: string | null
+          id: string
+          metrics: Json | null
+          month: string
+          report_type: string | null
+          status: string | null
+          storage_path: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          metrics?: Json | null
+          month: string
+          report_type?: string | null
+          status?: string | null
+          storage_path?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          generated_at?: string | null
+          id?: string
+          metrics?: Json | null
+          month?: string
+          report_type?: string | null
+          status?: string | null
+          storage_path?: string | null
           user_id?: string
         }
         Relationships: []
