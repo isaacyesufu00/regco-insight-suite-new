@@ -36,6 +36,5 @@ verify_jwt = false
 [functions.fetch-regulatory-news]
 verify_jwt = false
 
-
-
-
+[functions.generate-board-pack]
+verify_jwt = false

@@ -26,6 +26,9 @@ import TransactionMonitor from "./pages/TransactionMonitor";
 import Customer360 from "./pages/Customer360";
 import Screening from "./pages/Screening";
 import RegulatoryIntelligence from "./pages/RegulatoryIntelligence";
+import BoardPack from "./pages/BoardPack";
+import AuditTracker from "./pages/AuditTracker";
+import FeatureGate from "./components/FeatureGate";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
 import AdminClientDetail from "./pages/AdminClientDetail";
@@ -109,10 +112,12 @@ const App = () => (
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="support" element={<SupportTickets />} />
               <Route path="tutorial" element={<DashboardTutorial />} />
-              <Route path="transactions" element={<TransactionMonitor />} />
-              <Route path="customers" element={<Customer360 />} />
-              <Route path="screening" element={<Screening />} />
+              <Route path="transactions" element={<FeatureGate feature="transactionMonitor"><TransactionMonitor /></FeatureGate>} />
+              <Route path="customers" element={<FeatureGate feature="customerIntelligence" requiredTier="State MFB"><Customer360 /></FeatureGate>} />
+              <Route path="screening" element={<FeatureGate feature="sanctionsScreening" requiredTier="State MFB"><Screening /></FeatureGate>} />
               <Route path="regulatory-intelligence" element={<RegulatoryIntelligence />} />
+              <Route path="board-pack" element={<FeatureGate feature="boardPack" requiredTier="State MFB"><BoardPack /></FeatureGate>} />
+              <Route path="audit-tracker" element={<FeatureGate feature="auditTracker" requiredTier="State MFB"><AuditTracker /></FeatureGate>} />
             </Route>
             <Route
               path="/admin"
