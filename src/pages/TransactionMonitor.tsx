@@ -308,6 +308,7 @@ export default function TransactionMonitor() {
       {/* ====== LIVE MONITOR ====== */}
       {tab === "live" && (
         <>
+          {(() => { try { return require('@/hooks/useFeatureAccess').useFeatureAccess().liveWebhook; } catch { return true; } })() && (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, marginBottom: 20 }}>
             {/* Webhook card */}
             <div style={{ background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", padding: 24 }}>

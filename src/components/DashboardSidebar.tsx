@@ -1,8 +1,10 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield, FileCheck, ClipboardCheck } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import type { FeatureSet } from "@/config/featureTiers";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -15,17 +17,28 @@ interface DashboardSidebarProps {
   companyName?: string | null;
 }
 
-const navItems = [
-  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { path: "/dashboard/reports", label: "My Reports", icon: FileText },
-  { path: "/dashboard/customers", label: "Customer 360", icon: Users },
-  { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus },
-  { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intelligence", icon: Newspaper, hasBadge: true },
-  { path: "/dashboard/calendar", label: "Calendar", icon: Calendar },
-  { path: "/dashboard/data-sources", label: "Data Sources", icon: Database },
-  { path: "/dashboard/transactions", label: "Transactions", icon: Activity },
-  { path: "/dashboard/screening", label: "Screening", icon: Shield },
-  { path: "/dashboard/settings", label: "Settings", icon: Settings },
+type NavItem = {
+  path: string;
+  label: string;
+  icon: any;
+  end?: boolean;
+  hasBadge?: boolean;
+  feature?: keyof FeatureSet | null;
+};
+
+const allNavItems: NavItem[] = [
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true, feature: null },
+  { path: "/dashboard/reports", label: "My Reports", icon: FileText, feature: null },
+  { path: "/dashboard/new-report", label: "Create Report", icon: FilePlus, feature: "reportGeneration" },
+  { path: "/dashboard/customers", label: "Customer 360", icon: Users, feature: "customerIntelligence" },
+  { path: "/dashboard/transactions", label: "Transactions", icon: Activity, feature: "transactionMonitor" },
+  { path: "/dashboard/screening", label: "Risk Screening", icon: Shield, feature: "sanctionsScreening" },
+  { path: "/dashboard/board-pack", label: "Board Pack", icon: FileCheck, feature: "boardPack" },
+  { path: "/dashboard/audit-tracker", label: "Audit Tracker", icon: ClipboardCheck, feature: "auditTracker" },
+  { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intel", icon: Newspaper, hasBadge: true, feature: "regulatoryIntelligence" },
+  { path: "/dashboard/calendar", label: "Calendar", icon: Calendar, feature: null },
+  { path: "/dashboard/data-sources", label: "Data Sources", icon: Database, feature: "dataIngestion" },
+  { path: "/dashboard/settings", label: "Settings", icon: Settings, feature: null },
 ];
 
 export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
@@ -33,9 +46,11 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
   const { institutionName, userName, userInitial } = useProfile();
+  const { canAccess } = useFeatureAccess();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadCount, setUnreadCount] = useState(0);
+  const navItems = allNavItems.filter((item) => !item.feature || canAccess(item.feature));
 
   useEffect(() => {
     if (!user) return;
