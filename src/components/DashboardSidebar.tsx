@@ -93,14 +93,43 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
         style={{
           background: "#FFFFFF",
           borderRight: "1px solid rgba(0,0,0,0.07)",
-          padding: "20px 12px",
+          padding: collapsed ? "16px 6px" : "20px 12px",
+          transition: "padding 0.2s ease",
         }}
       >
         {/* Logo */}
-        <div style={{ padding: "4px 8px", marginBottom: 24 }}>
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.5px" }}>
-            RegCo
-          </span>
+        <div
+          style={{
+            padding: collapsed ? "4px 0" : "4px 8px",
+            marginBottom: collapsed ? 18 : 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: collapsed ? "center" : "flex-start",
+          }}
+        >
+          {collapsed ? (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 8,
+                background: "#0A0A0A",
+                color: "#FFFFFF",
+                fontSize: 13,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                letterSpacing: "-0.5px",
+              }}
+            >
+              R
+            </div>
+          ) : (
+            <span style={{ fontSize: 16, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.5px" }}>
+              RegCo
+            </span>
+          )}
         </div>
 
         {/* Institution pill */}
@@ -131,7 +160,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
         )}
 
         {/* Nav items */}
-        <nav style={{ display: "flex", flexDirection: "column" }}>
+        <nav style={{ display: "flex", flexDirection: "column", gap: collapsed ? 4 : 0 }}>
           {navItems.map((item) => {
             const active = isActive(item.path, item.end);
             const Icon = item.icon;
@@ -141,11 +170,13 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                 key={item.path}
                 to={item.path}
                 end={item.end}
+                title={collapsed ? item.label : undefined}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 10,
-                  padding: "8px 10px",
+                  justifyContent: collapsed ? "center" : "flex-start",
+                  gap: collapsed ? 0 : 10,
+                  padding: collapsed ? "9px 0" : "8px 10px",
                   borderRadius: 8,
                   textDecoration: "none",
                   fontSize: 13,
@@ -153,11 +184,12 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                   color: active ? "#0A0A0A" : "#6B6B6B",
                   background: active ? "#F5F5F0" : "transparent",
                   border: active ? "1px solid rgba(0,0,0,0.08)" : "1px solid transparent",
-                  marginBottom: 2,
+                  marginBottom: collapsed ? 0 : 2,
                   transition: "all 0.15s ease",
+                  position: "relative",
                 }}
               >
-                <Icon size={15} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
+                <Icon size={collapsed ? 17 : 15} strokeWidth={active ? 2.2 : 1.8} style={{ flexShrink: 0 }} />
                 {!collapsed && <span style={{ flex: 1 }}>{item.label}</span>}
                 {!collapsed && badge !== null && (
                   <span
@@ -175,11 +207,26 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                     {badge}
                   </span>
                 )}
+                {collapsed && badge !== null && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 4,
+                      right: 4,
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: "#DC2626",
+                      border: "1.5px solid #FFFFFF",
+                    }}
+                  />
+                )}
               </RouterNavLink>
             );
           })}
         </nav>
       </SidebarContent>
+
 
       <SidebarFooter
         style={{
