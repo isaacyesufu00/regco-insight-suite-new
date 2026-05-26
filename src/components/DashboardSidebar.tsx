@@ -233,16 +233,19 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
           background: "#FFFFFF",
           borderRight: "1px solid rgba(0,0,0,0.07)",
           borderTop: "1px solid rgba(0,0,0,0.07)",
-          padding: "12px 12px",
+          padding: collapsed ? "10px 6px" : "12px 12px",
+          transition: "padding 0.2s ease",
         }}
       >
         <RouterNavLink
           to="/dashboard/tutorial"
+          title={collapsed ? "How to Use RegCo" : undefined}
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 8,
-            padding: "8px 10px",
+            justifyContent: collapsed ? "center" : "flex-start",
+            gap: collapsed ? 0 : 8,
+            padding: collapsed ? "9px 0" : "8px 10px",
             borderRadius: 8,
             textDecoration: "none",
             color: "#6B6B6B",
@@ -250,18 +253,28 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
             fontWeight: 500,
           }}
         >
-          <BookOpen size={15} strokeWidth={1.8} />
+          <BookOpen size={collapsed ? 17 : 15} strokeWidth={1.8} />
           {!collapsed && "How to Use RegCo"}
         </RouterNavLink>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", marginTop: 4 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: collapsed ? "column" : "row",
+            alignItems: "center",
+            gap: collapsed ? 8 : 10,
+            padding: collapsed ? "8px 0 4px" : "10px 8px",
+            marginTop: 4,
+          }}
+        >
           <div
+            title={collapsed ? displayName : undefined}
             style={{
-              width: 32,
-              height: 32,
+              width: collapsed ? 28 : 32,
+              height: collapsed ? 28 : 32,
               borderRadius: "50%",
               background: "#0A0A0A",
               color: "white",
-              fontSize: 13,
+              fontSize: collapsed ? 12 : 13,
               fontWeight: 700,
               display: "flex",
               alignItems: "center",
@@ -281,6 +294,7 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
           )}
           <button
             onClick={handleSignOut}
+            title="Sign out"
             style={{
               padding: 6,
               borderRadius: 8,
@@ -292,10 +306,11 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
             }}
             aria-label="Sign out"
           >
-            <LogOut size={15} strokeWidth={1.8} />
+            <LogOut size={collapsed ? 16 : 15} strokeWidth={1.8} />
           </button>
         </div>
       </SidebarFooter>
+
     </Sidebar>
   );
 }
