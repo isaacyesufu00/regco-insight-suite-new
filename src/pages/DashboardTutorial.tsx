@@ -269,8 +269,6 @@ export default function DashboardTutorial() {
   const { user } = useAuth();
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const x = useTransform(scrollYProgress, [0, 1], ["0vw", `-${(tutorialSteps.length - 1) * 100}vw`]);
-  const orb1X = useTransform(scrollYProgress, [0, 1], [0, 200]);
-  const orb2X = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   const finishTutorial = async () => {
     if (user) {
@@ -285,48 +283,10 @@ export default function DashboardTutorial() {
       style={{ height: `${tutorialSteps.length * 100}vh`, position: "relative", background: "#F5F5F0" }}
     >
       <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden" }}>
-        {/* Ambient gradient orbs */}
-        <motion.div
-          aria-hidden
-          style={{
-            position: "absolute", top: "-20%", left: "-10%",
-            width: 700, height: 700, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(10,10,10,0.06) 0%, rgba(10,10,10,0) 70%)",
-            pointerEvents: "none",
-            x: orb1X,
-          }}
-        />
-        <motion.div
-          aria-hidden
-          style={{
-            position: "absolute", bottom: "-20%", right: "-10%",
-            width: 800, height: 800, borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(10,10,10,0.05) 0%, rgba(10,10,10,0) 70%)",
-            pointerEvents: "none",
-            x: orb2X,
-          }}
-        />
-
-        {/* Top progress bar */}
-        <motion.div
-          style={{
-            position: "absolute", top: 0, left: 0, right: 0, height: 3,
-            background: "#0A0A0A", transformOrigin: "0%",
-            scaleX: scrollYProgress, zIndex: 30,
-          }}
-        />
-
         {/* Header */}
         <div style={{ position: "absolute", top: 40, left: "50%", transform: "translateX(-50%)", textAlign: "center", zIndex: 10 }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>PRODUCT TOUR</p>
-          <motion.h2
-            initial={{ opacity: 0, y: -16, filter: "blur(8px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            style={{ fontSize: 32, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.8px", margin: 0 }}
-          >
-            How to use RegCo
-          </motion.h2>
+          <h2 style={{ fontSize: 32, fontWeight: 700, color: "#1A1A1A", letterSpacing: "-0.8px", margin: 0 }}>How to use RegCo</h2>
         </div>
 
         {/* Exit / Skip */}
@@ -344,88 +304,60 @@ export default function DashboardTutorial() {
 
         {/* Horizontal track */}
         <motion.div style={{ display: "flex", width: `${tutorialSteps.length * 100}vw`, height: "100vh", x, willChange: "transform" }}>
-          {tutorialSteps.map((step, i) => {
-            // per-step entry/exit using scroll position
-            const stepProgress = useTransform(
-              scrollYProgress,
-              [
-                Math.max(0, (i - 0.7) / tutorialSteps.length),
-                i / tutorialSteps.length,
-                (i + 0.3) / tutorialSteps.length,
-                (i + 1) / tutorialSteps.length,
-              ],
-              [0, 1, 1, 0]
-            );
-            const stepY = useTransform(stepProgress, [0, 1], [60, 0]);
-            const stepScale = useTransform(stepProgress, [0, 1], [0.9, 1]);
-            const stepBlur = useTransform(stepProgress, [0, 1], ["8px", "0px"]);
-            const mockY = useTransform(stepProgress, [0, 1], [80, 0]);
+          {tutorialSteps.map((step, i) => (
+            <div key={i} style={{
+              width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", padding: "140px 80px 80px", flexShrink: 0,
+            }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", maxWidth: 1100, width: "100%" }}>
+                <div>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", display: "block", marginBottom: 16 }}>
+                    STEP {step.step}
+                  </span>
+                  <h3 style={{
+                    fontSize: 52, fontWeight: 800, color: "#1A1A1A",
+                    letterSpacing: "-2px", lineHeight: 1.05, marginBottom: 24, whiteSpace: "pre-line",
+                  }}>
+                    {step.title}
+                  </h3>
+                  <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.7, maxWidth: 400 }}>
+                    {step.description}
+                  </p>
+                  <div style={{ display: "flex", gap: 8, marginTop: 40 }}>
+                    {tutorialSteps.map((_, di) => (
+                      <div key={di} style={{
+                        width: di === i ? 24 : 8, height: 8, borderRadius: 999,
+                        background: di === i ? "#0A0A0A" : "rgba(0,0,0,0.15)",
+                        transition: "width 0.3s ease",
+                      }} />
+                    ))}
+                  </div>
+                </div>
 
-            return (
-              <div key={i} style={{
-                width: "100vw", height: "100vh", display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center", padding: "140px 80px 80px", flexShrink: 0,
-              }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", maxWidth: 1100, width: "100%" }}>
-                  <motion.div style={{ y: stepY, opacity: stepProgress, filter: stepBlur }}>
-                    <motion.span
-                      style={{
-                        fontSize: 11, fontWeight: 700, color: "#0A0A0A", letterSpacing: "0.12em",
-                        textTransform: "uppercase", display: "inline-block", marginBottom: 16,
-                        padding: "5px 12px", borderRadius: 999,
-                        background: "rgba(10,10,10,0.06)", border: "1px solid rgba(10,10,10,0.08)",
-                      }}
-                    >
-                      STEP {step.step}
-                    </motion.span>
-                    <h3 style={{
-                      fontSize: 52, fontWeight: 800, color: "#1A1A1A",
-                      letterSpacing: "-2px", lineHeight: 1.05, marginBottom: 24, whiteSpace: "pre-line",
-                    }}>
-                      {step.title}
-                    </h3>
-                    <p style={{ fontSize: 17, color: "#6B6B6B", lineHeight: 1.7, maxWidth: 400 }}>
-                      {step.description}
-                    </p>
-                    <div style={{ display: "flex", gap: 8, marginTop: 40 }}>
-                      {tutorialSteps.map((_, di) => (
-                        <div key={di} style={{
-                          width: di === i ? 28 : 8, height: 8, borderRadius: 999,
-                          background: di === i ? "#0A0A0A" : "rgba(0,0,0,0.15)",
-                          transition: "all 0.4s cubic-bezier(0.22,1,0.36,1)",
-                        }} />
-                      ))}
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    style={{
-                      y: mockY, scale: stepScale, opacity: stepProgress,
-                      background: "#FFFFFF", borderRadius: 16,
-                      border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 30px 80px rgba(0,0,0,0.14)",
-                      overflow: "hidden", minHeight: 360,
-                    }}
-                  >
+                <div style={{
+                  background: "#FFFFFF", borderRadius: 16,
+                  border: "1px solid rgba(0,0,0,0.08)", boxShadow: "0 20px 60px rgba(0,0,0,0.10)",
+                  overflow: "hidden", minHeight: 360,
+                }}>
+                  <div style={{
+                    height: 36, background: "#F5F5F0", borderBottom: "1px solid rgba(0,0,0,0.07)",
+                    display: "flex", alignItems: "center", padding: "0 14px", gap: 6,
+                  }}>
+                    {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
+                      <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
+                    ))}
                     <div style={{
-                      height: 36, background: "#F5F5F0", borderBottom: "1px solid rgba(0,0,0,0.07)",
-                      display: "flex", alignItems: "center", padding: "0 14px", gap: 6,
+                      flex: 1, height: 20, background: "#EAEAE4", borderRadius: 4, marginLeft: 8,
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
-                        <div key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
-                      ))}
-                      <div style={{
-                        flex: 1, height: 20, background: "#EAEAE4", borderRadius: 4, marginLeft: 8,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                      }}>
-                        <span style={{ fontSize: 10, color: "#9B9B9B" }}>regco.app/dashboard</span>
-                      </div>
+                      <span style={{ fontSize: 10, color: "#9B9B9B" }}>regco.app/dashboard</span>
                     </div>
-                    <MockupContent stepIndex={i} onFinish={finishTutorial} />
-                  </motion.div>
+                  </div>
+                  <MockupContent stepIndex={i} onFinish={finishTutorial} />
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </motion.div>
 
         <div style={{

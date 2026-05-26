@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Step {
   number: string;
@@ -229,15 +229,6 @@ const Mockup = ({ index }: { index: number }) => {
 const TutorialSection = () => {
   const [activeStep, setActiveStep] = useState(0);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const sectionRef = useRef<HTMLElement>(null);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"],
-  });
-  const beamHeight = useTransform(scrollYProgress, [0.05, 0.95], ["0%", "100%"]);
-  const glow1Y = useTransform(scrollYProgress, [0, 1], [-120, 120]);
-  const glow2Y = useTransform(scrollYProgress, [0, 1], [100, -100]);
 
   useEffect(() => {
     const observers = stepRefs.current.map((ref, i) => {
@@ -255,118 +246,69 @@ const TutorialSection = () => {
   }, []);
 
   return (
-    <section
-      id="tutorial"
-      ref={sectionRef}
-      style={{ background: "#F5F5F0", padding: "120px 0", position: "relative", overflow: "hidden" }}
-    >
-      <motion.div
-        aria-hidden
-        style={{
-          position: "absolute", top: "10%", left: "-10%",
-          width: 600, height: 600, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(10,10,10,0.06) 0%, rgba(10,10,10,0) 70%)",
-          y: glow1Y, pointerEvents: "none",
-        }}
-      />
-      <motion.div
-        aria-hidden
-        style={{
-          position: "absolute", bottom: "5%", right: "-15%",
-          width: 700, height: 700, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(10,10,10,0.05) 0%, rgba(10,10,10,0) 70%)",
-          y: glow2Y, pointerEvents: "none",
-        }}
-      />
-
+    <section id="tutorial" style={{ background: "#F5F5F0", padding: "120px 0" }}>
       <style>{`
         @media (max-width: 980px) {
           .tutorial-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
           .tutorial-sticky { position: relative !important; top: auto !important; }
-          .tutorial-beam { display: none !important; }
-        }
-        @keyframes tutorialPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(10,10,10,0.4); }
-          50% { box-shadow: 0 0 0 14px rgba(10,10,10,0); }
         }
       `}</style>
-
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", position: "relative" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: EASE }}
+          transition={{ duration: 0.6 }}
           style={{ textAlign: "center", marginBottom: 80 }}
         >
           <p style={{ fontSize: 11, color: "#9B9B9B", letterSpacing: "0.14em", textTransform: "uppercase", margin: "0 0 16px", fontWeight: 600 }}>
             PRODUCT TOUR
           </p>
-          <motion.h2
-            initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.9, ease: EASE }}
-            style={{ fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 800, color: "#0A0A0A", letterSpacing: "-1.5px", lineHeight: 1.05, margin: "0 0 24px" }}
-          >
+          <h2 style={{ fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 800, color: "#0A0A0A", letterSpacing: "-1.5px", lineHeight: 1.05, margin: "0 0 24px" }}>
             From file upload<br />to filed return.
-          </motion.h2>
+          </h2>
           <p style={{ fontSize: 17, color: "#525252", lineHeight: 1.6, maxWidth: 620, margin: "0 auto" }}>
             Here is exactly how RegCo turns your CBS data into a CBN-ready regulatory return in under 5 minutes.
           </p>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start", position: "relative" }} className="tutorial-grid">
-          <div
-            className="tutorial-beam"
-            aria-hidden
-            style={{
-              position: "absolute", left: "calc(50% - 1px)", top: 0, bottom: 0,
-              width: 2, background: "rgba(0,0,0,0.06)", borderRadius: 999,
-            }}
-          >
-            <motion.div
-              style={{
-                width: "100%",
-                background: "linear-gradient(180deg, rgba(10,10,10,0) 0%, #0A0A0A 30%, #0A0A0A 100%)",
-                borderRadius: 999,
-                height: beamHeight,
-              }}
-            />
-          </div>
-
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "start" }} className="tutorial-grid">
+          {/* LEFT — Step cards */}
           <div>
             {steps.map((step, i) => (
               <div
                 key={i}
                 ref={(el) => (stepRefs.current[i] = el)}
                 style={{
-                  marginBottom: 80, paddingBottom: 80,
+                  marginBottom: 80,
+                  paddingBottom: 80,
                   borderBottom: i < steps.length - 1 ? "1px solid rgba(0,0,0,0.07)" : "none",
                 }}
               >
                 <motion.div
-                  initial={{ opacity: 0, x: -40, filter: "blur(6px)" }}
-                  whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  viewport={{ once: true, margin: "-80px" }}
-                  transition={{ duration: 0.75, ease: EASE }}
+                  initial={{ opacity: 0, x: -24 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.6, ease: EASE }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
-                    <motion.div
-                      animate={activeStep === i ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                      transition={{ duration: 0.5, ease: EASE }}
+                    <div
                       style={{
-                        width: 40, height: 40, borderRadius: "50%",
+                        width: 36,
+                        height: 36,
+                        borderRadius: "50%",
                         background: activeStep === i ? "#0A0A0A" : "rgba(0,0,0,0.06)",
                         color: activeStep === i ? "#FFFFFF" : "#525252",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontWeight: 700, fontSize: 14,
-                        transition: "background 0.4s ease, color 0.4s ease",
-                        animation: activeStep === i ? "tutorialPulse 2s ease-out infinite" : "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        transition: "background 0.3s ease, color 0.3s ease",
                       }}
                     >
                       {i + 1}
-                    </motion.div>
+                    </div>
                     <span style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                       Step {step.number}
                     </span>
@@ -385,15 +327,12 @@ const TutorialSection = () => {
             ))}
           </div>
 
+          {/* RIGHT — Sticky mockup */}
           <div className="tutorial-sticky" style={{ position: "sticky", top: 100 }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.96, y: 20 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: EASE }}
-              whileHover={{ y: -4, boxShadow: "0 30px 80px rgba(0,0,0,0.16)" }}
+            <div
               style={{
-                background: "#FFFFFF", borderRadius: 16,
+                background: "#FFFFFF",
+                borderRadius: 16,
                 border: "1px solid rgba(0,0,0,0.08)",
                 boxShadow: "0 20px 60px rgba(0,0,0,0.10)",
                 overflow: "hidden",
@@ -403,26 +342,34 @@ const TutorialSection = () => {
                 {["#FF5F57", "#FEBC2E", "#28C840"].map((c) => (
                   <span key={c} style={{ width: 10, height: 10, borderRadius: "50%", background: c }} />
                 ))}
-                <div style={{
-                  marginLeft: 12, flex: 1, background: "#FFFFFF", borderRadius: 6,
-                  padding: "4px 10px", fontSize: 11, color: "#737373", textAlign: "center",
-                }}>
+                <div
+                  style={{
+                    marginLeft: 12,
+                    flex: 1,
+                    background: "#FFFFFF",
+                    borderRadius: 6,
+                    padding: "4px 10px",
+                    fontSize: 11,
+                    color: "#737373",
+                    textAlign: "center",
+                  }}
+                >
                   regco-insight-suite.vercel.app/dashboard
                 </div>
               </div>
               <AnimatePresence mode="wait">
                 <motion.div
                   key={activeStep}
-                  initial={{ opacity: 0, y: 24, filter: "blur(8px)", scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, filter: "blur(0px)", scale: 1 }}
-                  exit={{ opacity: 0, y: -24, filter: "blur(8px)", scale: 0.98 }}
-                  transition={{ duration: 0.5, ease: EASE }}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.35, ease: EASE }}
                   style={{ padding: 24, minHeight: 400 }}
                 >
                   <Mockup index={activeStep} />
                 </motion.div>
               </AnimatePresence>
-            </motion.div>
+            </div>
 
             <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>
               {steps.map((_, i) => (
@@ -432,20 +379,14 @@ const TutorialSection = () => {
                     width: i === activeStep ? 32 : 8,
                     background: i === activeStep ? "#0A0A0A" : "rgba(0,0,0,0.15)",
                   }}
-                  transition={{ duration: 0.4, ease: EASE }}
+                  transition={{ duration: 0.3 }}
                   style={{ height: 8, borderRadius: 999 }}
                 />
               ))}
             </div>
-            <motion.p
-              key={`label-${activeStep}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4 }}
-              style={{ textAlign: "center", fontSize: 12, color: "#737373", marginTop: 12 }}
-            >
+            <p style={{ textAlign: "center", fontSize: 12, color: "#737373", marginTop: 12 }}>
               Step {activeStep + 1} of {steps.length} — {steps[activeStep].title}
-            </motion.p>
+            </p>
           </div>
         </div>
       </div>
