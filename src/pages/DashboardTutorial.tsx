@@ -269,6 +269,8 @@ export default function DashboardTutorial() {
   const { user } = useAuth();
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end end"] });
   const x = useTransform(scrollYProgress, [0, 1], ["0vw", `-${(tutorialSteps.length - 1) * 100}vw`]);
+  const orb1X = useTransform(scrollYProgress, [0, 1], [0, 200]);
+  const orb2X = useTransform(scrollYProgress, [0, 1], [0, -200]);
 
   const finishTutorial = async () => {
     if (user) {
@@ -291,7 +293,7 @@ export default function DashboardTutorial() {
             width: 700, height: 700, borderRadius: "50%",
             background: "radial-gradient(circle, rgba(10,10,10,0.06) 0%, rgba(10,10,10,0) 70%)",
             pointerEvents: "none",
-            x: useTransform(scrollYProgress, [0, 1], [0, 200]),
+            x: orb1X,
           }}
         />
         <motion.div
@@ -301,7 +303,7 @@ export default function DashboardTutorial() {
             width: 800, height: 800, borderRadius: "50%",
             background: "radial-gradient(circle, rgba(10,10,10,0.05) 0%, rgba(10,10,10,0) 70%)",
             pointerEvents: "none",
-            x: useTransform(scrollYProgress, [0, 1], [0, -200]),
+            x: orb2X,
           }}
         />
 
