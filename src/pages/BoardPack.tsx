@@ -208,7 +208,7 @@ export default function BoardPack() {
               </div>
               <button
                 onClick={() => downloadPack(p)}
-                disabled={p.status !== 'ready' || !p.storage_path}
+                disabled={p.status !== 'ready'}
                 style={{
                   padding: '8px 14px', borderRadius: 8, background: p.status === 'ready' ? '#F5F5F0' : '#FAFAFA',
                   color: p.status === 'ready' ? '#0A0A0A' : '#9B9B9B', border: '1px solid rgba(0,0,0,0.08)',
