@@ -1,4 +1,4 @@
-import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield, FileCheck, ClipboardCheck } from "lucide-react";
+import { LayoutDashboard, FileText, FilePlus, Settings, LogOut, Database, Calendar, Newspaper, BookOpen, Activity, Users, Shield, FileCheck, ClipboardCheck, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NavLink as RouterNavLink, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -42,7 +42,7 @@ const allNavItems: NavItem[] = [
 ];
 
 export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
-  const { state } = useSidebar();
+  const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
   const { signOut, user } = useAuth();
   const { institutionName, userName, userInitial } = useProfile();
@@ -206,6 +206,28 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
           <BookOpen size={15} strokeWidth={1.8} />
           {!collapsed && "How to Use RegCo"}
         </RouterNavLink>
+        <button
+          onClick={toggleSidebar}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "#6B6B6B",
+            fontSize: 13,
+            fontWeight: 500,
+            textAlign: "left",
+            width: "100%",
+          }}
+        >
+          {collapsed ? <PanelLeftOpen size={15} strokeWidth={1.8} /> : <PanelLeftClose size={15} strokeWidth={1.8} />}
+          {!collapsed && "Collapse sidebar"}
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 8px", marginTop: 4 }}>
           <div
             style={{
