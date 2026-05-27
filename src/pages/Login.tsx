@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
@@ -28,6 +28,8 @@ const onBlur = (e: React.FocusEvent<any>) => {
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const timeoutNotice = searchParams.get("reason") === "timeout";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -207,6 +209,12 @@ const Login = () => {
               <p style={{ fontSize: 15, color: "#6E6E73", marginBottom: 28 }}>
                 Enter your credentials to continue.
               </p>
+
+              {timeoutNotice && (
+                <div style={{ background: "rgba(10,10,10,0.04)", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 10, padding: "12px 14px", fontSize: 13, color: "#0A0A0A", marginBottom: 18 }}>
+                  You were signed out after 8 hours of inactivity. Please sign in again.
+                </div>
+              )}
 
               <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                 <input
