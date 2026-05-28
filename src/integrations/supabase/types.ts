@@ -767,6 +767,7 @@ export type Database = {
       reports: {
         Row: {
           car_percentage: number | null
+          content: string | null
           created_at: string
           docx_url: string | null
           error_message: string | null
@@ -794,6 +795,7 @@ export type Database = {
         }
         Insert: {
           car_percentage?: number | null
+          content?: string | null
           created_at?: string
           docx_url?: string | null
           error_message?: string | null
@@ -821,6 +823,7 @@ export type Database = {
         }
         Update: {
           car_percentage?: number | null
+          content?: string | null
           created_at?: string
           docx_url?: string | null
           error_message?: string | null
@@ -1027,42 +1030,60 @@ export type Database = {
           account_number: string | null
           amount: number | null
           case_number: string | null
+          channel: string | null
           created_at: string
           customer_id: string | null
+          customer_name: string | null
           flag_reason: string | null
           flag_severity: string | null
+          flag_type: string | null
           id: string
           notes: string | null
+          review_status: string | null
           status: string | null
+          str_reference: string | null
           transaction_date: string
+          upload_batch_id: string | null
           user_id: string
         }
         Insert: {
           account_number?: string | null
           amount?: number | null
           case_number?: string | null
+          channel?: string | null
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
           flag_reason?: string | null
           flag_severity?: string | null
+          flag_type?: string | null
           id?: string
           notes?: string | null
+          review_status?: string | null
           status?: string | null
+          str_reference?: string | null
           transaction_date?: string
+          upload_batch_id?: string | null
           user_id: string
         }
         Update: {
           account_number?: string | null
           amount?: number | null
           case_number?: string | null
+          channel?: string | null
           created_at?: string
           customer_id?: string | null
+          customer_name?: string | null
           flag_reason?: string | null
           flag_severity?: string | null
+          flag_type?: string | null
           id?: string
           notes?: string | null
+          review_status?: string | null
           status?: string | null
+          str_reference?: string | null
           transaction_date?: string
+          upload_batch_id?: string | null
           user_id?: string
         }
         Relationships: []
