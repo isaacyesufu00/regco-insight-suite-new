@@ -41,6 +41,7 @@ const startOfTodayISO = () => { const d = new Date(); d.setHours(0,0,0,0); retur
 export default function TransactionMonitor() {
   const { user, session } = useAuth();
   const { liveWebhook } = useFeatureAccess();
+  const { profile, institutionName } = useProfile();
   const [tab, setTab] = useState<Tab>("live");
 
   // ---- Live tab state ----
