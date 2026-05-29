@@ -632,9 +632,10 @@ function FilterPill({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
-function FlaggedRow({ tx, expanded, onToggle, onUpdate }: {
+function FlaggedRow({ tx, expanded, onToggle, onUpdate, onGenerateSTR }: {
   tx: UnifiedTx; expanded: boolean; onToggle: () => void;
   onUpdate: (id: string, patch: Partial<UnifiedTx>) => void;
+  onGenerateSTR: (tx: UnifiedTx, existingRef?: string) => void | Promise<void>;
 }) {
   const sev = tx.flag_severity || "medium";
   const sevColor = sev === "critical" ? "#DC2626" : sev === "high" ? "#D97706" : "#2563EB";
@@ -675,7 +676,7 @@ function FlaggedRow({ tx, expanded, onToggle, onUpdate }: {
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <ActionBtn label="Clear" onClick={() => onUpdate(tx.id, { review_status: "dismissed", is_flagged: false })} />
-              <ActionBtn label="Escalate to STR" primary onClick={() => onUpdate(tx.id, { review_status: "escalated" })} />
+              <ActionBtn label="Generate STR & Download" primary onClick={() => onGenerateSTR(tx)} />
               <ActionBtn label="Add Note" onClick={() => {
                 const note = prompt("Add review note:", tx.review_notes || "");
                 if (note !== null) onUpdate(tx.id, { review_notes: note });
@@ -709,7 +710,7 @@ function ActionBtn({ label, onClick, primary }: { label: string; onClick: () => 
   );
 }
 
-function StrCard({ tx, onUpdate }: { tx: UnifiedTx; onUpdate: (id: string, patch: Partial<UnifiedTx>) => void }) {
+function StrCard({ tx, onUpdate, onRedownload }: { tx: UnifiedTx; onUpdate: (id: string, patch: Partial<UnifiedTx>) => void; onRedownload: (tx: UnifiedTx, existingRef?: string) => void | Promise<void> }) {
   const [strRef, setStrRef] = useState(tx.str_reference || "");
   const template = `SUSPICIOUS TRANSACTION REPORT (STR)
 Filed under Money Laundering (Prohibition) Act, 2022
