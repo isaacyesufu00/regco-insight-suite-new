@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
+import { useProfile } from "@/contexts/ProfileContext";
 
 type Tab = "live" | "batch" | "flagged" | "str";
 const WEBHOOK_URL = `https://pdplkprcomjslilznbsl.supabase.co/functions/v1/receive-transaction`;
