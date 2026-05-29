@@ -462,6 +462,39 @@ export type Database = {
         }
         Relationships: []
       }
+      institution_users: {
+        Row: {
+          admin_user_id: string
+          created_at: string
+          id: string
+          invited_email: string
+          invited_name: string | null
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id: string
+          created_at?: string
+          id?: string
+          invited_email: string
+          invited_name?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string
+          created_at?: string
+          id?: string
+          invited_email?: string
+          invited_name?: string | null
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       login_attempts: {
         Row: {
           attempt_count: number
