@@ -221,45 +221,59 @@ export default function RegulatoryIntelligence() {
           ) : (
             filtered.map((article) => {
               const isRead = readIds.has(article.id);
+              const isChange = isRegulatoryChange(article);
               return (
-                <motion.a
-                  key={article.id}
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => markAsRead(article.id)}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{
-                    display: 'flex', gap: 16,
-                    background: isRead ? '#FAFAFA' : '#FFFFFF',
-                    borderRadius: 12,
-                    border: `1px solid ${isRead ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.09)'}`,
-                    padding: '18px 20px', marginBottom: 8,
-                    textDecoration: 'none', color: 'inherit',
-                    borderLeft: !isRead ? '3px solid #0A0A0A' : '3px solid transparent',
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-                      <h3 style={{ fontSize: 14.5, fontWeight: 600, color: '#0A0A0A', margin: 0, lineHeight: 1.4 }}>
-                        {article.title}
-                      </h3>
-                      <ExternalLink size={14} style={{ color: '#9B9B9B', flexShrink: 0, marginTop: 2 }} />
-                    </div>
-                    {article.description && (
-                      <p style={{ fontSize: 13, color: '#6B6B6B', margin: '0 0 10px', lineHeight: 1.5 }}>
-                        {article.description}
-                      </p>
-                    )}
-                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <span style={{ fontSize: 11, fontWeight: 600, color: '#0A0A0A', background: '#F5F5F0', padding: '2px 8px', borderRadius: 4 }}>
-                        {article.source}
+                <div key={article.id}>
+                  {isChange && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      background: '#FEF3C7', borderLeft: '3px solid #D97706',
+                      borderRadius: 8, padding: '10px 14px', marginBottom: 6,
+                    }}>
+                      <AlertCircle size={14} color="#92400E" />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: '#92400E' }}>
+                        Regulatory change detected — review whether this affects your filings
                       </span>
-                      <span style={{ fontSize: 11, color: '#9B9B9B' }}>{fmtDate(article.published_at)}</span>
                     </div>
-                  </div>
-                </motion.a>
+                  )}
+                  <motion.a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => markAsRead(article.id)}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      display: 'flex', gap: 16,
+                      background: isRead ? '#FAFAFA' : '#FFFFFF',
+                      borderRadius: 12,
+                      border: `1px solid ${isRead ? 'rgba(0,0,0,0.05)' : 'rgba(0,0,0,0.09)'}`,
+                      padding: '18px 20px', marginBottom: 8,
+                      textDecoration: 'none', color: 'inherit',
+                      borderLeft: !isRead ? '3px solid #0A0A0A' : '3px solid transparent',
+                    }}
+                  >
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
+                        <h3 style={{ fontSize: 14.5, fontWeight: 600, color: '#0A0A0A', margin: 0, lineHeight: 1.4 }}>
+                          {article.title}
+                        </h3>
+                        <ExternalLink size={14} style={{ color: '#9B9B9B', flexShrink: 0, marginTop: 2 }} />
+                      </div>
+                      {article.description && (
+                        <p style={{ fontSize: 13, color: '#6B6B6B', margin: '0 0 10px', lineHeight: 1.5 }}>
+                          {article.description}
+                        </p>
+                      )}
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: '#0A0A0A', background: '#F5F5F0', padding: '2px 8px', borderRadius: 4 }}>
+                          {article.source}
+                        </span>
+                        <span style={{ fontSize: 11, color: '#9B9B9B' }}>{fmtDate(article.published_at)}</span>
+                      </div>
+                    </div>
+                  </motion.a>
+                </div>
               );
             })
           )}
