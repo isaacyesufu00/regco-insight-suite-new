@@ -593,7 +593,8 @@ ${new Date().toISOString()}`;
               flaggedRows.map((t) => (
                 <FlaggedRow key={t.id} tx={t} expanded={expandedRow === t.id}
                   onToggle={() => setExpandedRow(expandedRow === t.id ? null : t.id)}
-                  onUpdate={updateReview} />
+                  onUpdate={updateReview}
+                  onGenerateSTR={generateAndDownloadSTR} />
               ))
             )}
           </div>
@@ -610,7 +611,7 @@ ${new Date().toISOString()}`;
               <p style={{ fontSize: 12, color: "#9B9B9B", marginTop: 4 }}>Escalate flagged transactions from the Flagged tab to add them here.</p>
             </div>
           ) : (
-            strQueue.map((t) => <StrCard key={t.id} tx={t} onUpdate={updateReview} />)
+            strQueue.map((t) => <StrCard key={t.id} tx={t} onUpdate={updateReview} onRedownload={generateAndDownloadSTR} />)
           )}
         </div>
       )}
