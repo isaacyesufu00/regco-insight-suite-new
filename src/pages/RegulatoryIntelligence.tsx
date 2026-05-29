@@ -52,6 +52,13 @@ const circulars = [
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
 
+const CHANGE_KEYWORDS = ['filing requirement', 'reporting deadline', 'new guideline', 'circular', 'effective date', 'must comply', 'mandatory filing', 'compliance deadline', 'new requirement', 'amended'];
+const REGULATORS = ['cbn', 'ndic', 'nfiu', 'firs', 'scuml'];
+const isRegulatoryChange = (a: Article) => {
+  const t = `${a.title || ''} ${a.description || ''}`.toLowerCase();
+  return CHANGE_KEYWORDS.some((k) => t.includes(k)) && REGULATORS.some((r) => t.includes(r));
+};
+
 export default function RegulatoryIntelligence() {
   const { user } = useAuth();
   const [articles, setArticles] = useState<Article[]>([]);
