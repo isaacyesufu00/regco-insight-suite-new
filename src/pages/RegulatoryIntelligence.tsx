@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { RefreshCw, ExternalLink, Loader2, Inbox, Check, FileText, ListChecks } from "lucide-react";
+import { RefreshCw, ExternalLink, Loader2, Inbox, Check, FileText, ListChecks, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
