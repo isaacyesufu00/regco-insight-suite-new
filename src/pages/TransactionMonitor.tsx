@@ -753,21 +753,26 @@ ${tx.review_notes || "(none)"}
       <pre style={{ background: "#0A0A0A", color: "#E5E7EB", borderRadius: 8, padding: 16, fontSize: 11, lineHeight: 1.6, overflow: "auto", margin: 0, maxHeight: 280, fontFamily: "ui-monospace, monospace" }}>
 {template}
       </pre>
-      <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: 8, marginTop: 12, alignItems: "center", flexWrap: "wrap" }}>
         <button onClick={() => { navigator.clipboard.writeText(template); toast.success("STR template copied"); }}
           style={{ background: "#FFFFFF", color: "#0A0A0A", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
           <Copy size={12} /> Copy Template
         </button>
-        {!isFiled && (
+        {isFiled ? (
+          <button onClick={() => onRedownload(tx, tx.str_reference || undefined)}
+            style={{ background: "#0A0A0A", color: "#FFFFFF", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <FileText size={12} /> Re-download STR
+          </button>
+        ) : (
           <>
-            <input value={strRef} onChange={(e) => setStrRef(e.target.value)} placeholder="STR reference #"
+            <input value={strRef} onChange={(e) => setStrRef(e.target.value)} placeholder="NFIU reference #"
               style={{ height: 34, borderRadius: 8, border: "1px solid rgba(0,0,0,0.12)", padding: "0 10px", fontSize: 12, outline: "none", flex: 1, maxWidth: 200 }} />
             <button onClick={() => {
-              if (!strRef.trim()) { toast.error("Enter STR reference"); return; }
+              if (!strRef.trim()) { toast.error("Enter NFIU reference"); return; }
               onUpdate(tx.id, { review_status: "reported", str_reference: strRef.trim(), str_filed_at: new Date().toISOString() });
             }}
               style={{ background: "#0A0A0A", color: "#FFFFFF", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              Mark as Filed
+              Confirm Filed
             </button>
           </>
         )}
