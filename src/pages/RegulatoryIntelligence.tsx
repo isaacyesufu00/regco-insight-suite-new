@@ -287,33 +287,103 @@ export default function RegulatoryIntelligence() {
 }
 
 function CircularsTab() {
+  const [items, setItems] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('regulatory_news')
+      .select('*')
+      .eq('category', 'cbn_circular')
+      .order('published_at', { ascending: false })
+      .limit(100);
+    setItems((data as Article[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const sync = async () => {
+    setSyncing(true);
+    try {
+      const { error } = await supabase.functions.invoke('fetch-cbn-circulars', { body: {} });
+      if (error) throw error;
+      toast.success('CBN circulars synced');
+      await load();
+    } catch {
+      toast.error('Unable to sync circulars');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const parseRef = (title: string) => {
+    const m = title.match(/^\[([^\]]+)\]\s*(.+)$/);
+    return m ? { ref: m[1], clean: m[2] } : { ref: '', clean: title };
+  };
+  const parseAffects = (desc: string | null) => {
+    if (!desc) return [];
+    const m = desc.match(/Affects:\s*([^.]+)\./);
+    return m ? m[1].split(',').map((s) => s.trim()) : [];
+  };
+
   return (
     <div>
-      <p style={{ fontSize: 12, color: '#6B6B6B', margin: '0 0 14px' }}>
-        Curated list of recent regulatory circulars from CBN, NDIC and NFIU. Always verify with the official issuer.
-      </p>
-      {circulars.map((c) => (
-        <div
-          key={c.ref}
-          style={{
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <p style={{ fontSize: 12, color: '#6B6B6B', margin: 0 }}>
+          CBN circulars affecting your institution. Always verify with the official issuer.
+        </p>
+        <button onClick={sync} disabled={syncing}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 13px', borderRadius: 8, background: '#0A0A0A', color: '#FFFFFF', border: 'none', fontSize: 12, fontWeight: 600, cursor: syncing ? 'wait' : 'pointer', opacity: syncing ? 0.7 : 1 }}>
+          {syncing ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+          Sync Circulars
+        </button>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 40, color: '#9B9B9B' }}>
+          <Loader2 size={18} className="animate-spin" style={{ margin: '0 auto' }} />
+        </div>
+      ) : items.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: 40, background: '#FFFFFF', borderRadius: 12, border: '1px solid rgba(0,0,0,0.07)' }}>
+          <FileText size={24} color="#9B9B9B" style={{ margin: '0 auto 8px' }} />
+          <p style={{ fontSize: 13, color: '#6B6B6B', margin: 0 }}>No circulars yet. Click "Sync Circulars" to load.</p>
+        </div>
+      ) : items.map((c) => {
+        const { ref, clean } = parseRef(c.title);
+        const affects = parseAffects(c.description);
+        return (
+          <div key={c.id} style={{
             display: 'flex', alignItems: 'flex-start', gap: 14,
             background: '#FFFFFF', borderRadius: 12, border: '1px solid rgba(0,0,0,0.08)',
             padding: '16px 20px', marginBottom: 8,
-          }}
-        >
-          <div style={{ width: 34, height: 34, borderRadius: 8, background: '#F5F5F0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <FileText size={16} color="#0A0A0A" />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: '#FFFFFF', background: '#0A0A0A', padding: '2px 6px', borderRadius: 4 }}>{c.issuer}</span>
-              <span style={{ fontSize: 11, color: '#9B9B9B', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{c.ref}</span>
+          }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#FFFFFF', background: '#0A0A0A', padding: '2px 7px', borderRadius: 4 }}>CBN</span>
+                {ref && <span style={{ fontSize: 11, color: '#9B9B9B', fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}>{ref}</span>}
+              </div>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', margin: '0 0 8px', lineHeight: 1.35 }}>{clean}</h3>
+              {affects.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, color: '#6B6B6B', alignSelf: 'center' }}>Affects:</span>
+                  {affects.map((a) => (
+                    <span key={a} style={{ fontSize: 10, background: '#F5F5F0', color: '#525252', padding: '2px 8px', borderRadius: 999, fontWeight: 500 }}>{a}</span>
+                  ))}
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#9B9B9B' }}>Issued {fmtDate(c.published_at)}</span>
+                <a href={c.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: '#0A0A0A', fontWeight: 600, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  View on CBN website <ExternalLink size={11} />
+                </a>
+              </div>
             </div>
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: '#0A0A0A', margin: '0 0 4px' }}>{c.title}</h3>
-            <p style={{ fontSize: 11, color: '#9B9B9B', margin: 0 }}>Issued {fmtDate(c.date)}</p>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
