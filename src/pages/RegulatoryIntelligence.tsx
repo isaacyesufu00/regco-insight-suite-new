@@ -40,14 +40,6 @@ const defaultTasks = [
   { category: 'Audit', title: 'Review open audit findings and update status', description: 'Check all open issues from last internal or CBN examination. Update remediation status for any completed items.', priority: 'low' },
 ];
 
-const circulars = [
-  { ref: 'BSD/DIR/PUB/LAB/017/001', title: 'Guidelines on Operations of Bank Accounts for Virtual Asset Service Providers', date: '2024-12-22', issuer: 'CBN' },
-  { ref: 'PSM/DIR/PUB/CIR/001/030', title: 'Review of Cash Reserve Requirement (CRR) Framework', date: '2024-09-24', issuer: 'CBN' },
-  { ref: 'FPR/DIR/PUB/CIR/001/048', title: 'Guidelines on the Implementation of the Compliance Risk Management Framework', date: '2024-08-15', issuer: 'CBN' },
-  { ref: 'NDIC/RD/02/2024', title: 'Maximum Deposit Insurance Coverage Review for Deposit Money Banks', date: '2024-06-10', issuer: 'NDIC' },
-  { ref: 'NFIU/DIR/2024/03', title: 'Advisory on Suspicious Transaction Reporting Thresholds and Typologies', date: '2024-05-02', issuer: 'NFIU' },
-  { ref: 'BSD/DIR/PUB/LAB/016/044', title: 'Review of Minimum Capital Requirement for Commercial, Merchant and Non-Interest Banks', date: '2024-03-28', issuer: 'CBN' },
-];
 
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
