@@ -196,6 +196,24 @@ const DashboardHome = () => {
     )
   );
 
+  useEffect(() => {
+    if (!user || loading) return;
+    const month = new Date().toISOString().slice(0, 7);
+    supabase.from("compliance_score_history").upsert(
+      { user_id: user.id, month, score: healthScore, breakdown: scoreBreakdown as any },
+      { onConflict: "user_id,month" }
+    ).then(() => {
+      supabase.from("compliance_score_history")
+        .select("month, score")
+        .eq("user_id", user.id)
+        .order("month", { ascending: true })
+        .limit(6)
+        .then(({ data }) => {
+          if (data) setScoreHistory(data as { month: string; score: number }[]);
+        });
+    });
+  }, [user, loading, healthScore]);
+
   const recentReports = reports.slice(0, 8);
   const institutionName = profile?.company_name || "Your Institution";
   const licenseCategory = profile?.cbn_license_category || "Licensed Institution";
