@@ -25,8 +25,10 @@ const monthLabel = (m: string) => {
 
 export default function BoardPack() {
   const { user, session } = useAuth();
+  const { institutionName } = useProfile();
   const [month, setMonth] = useState(currentMonth());
   const [generating, setGenerating] = useState(false);
+  const [examLoading, setExamLoading] = useState(false);
   const [packs, setPacks] = useState<BoardPackRow[]>([]);
   const [loading, setLoading] = useState(true);
 
