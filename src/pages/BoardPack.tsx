@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { FileCheck, Loader2, Download, FileText } from 'lucide-react';
+import { FileCheck, Loader2, Download, FileText, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/contexts/ProfileContext';
 
 interface BoardPackRow {
   id: string;
