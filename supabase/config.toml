@@ -41,3 +41,12 @@ verify_jwt = false
 
 [functions.fetch-cbn-circulars]
 verify_jwt = false
+
+[functions.send-weekly-report]
+verify_jwt = false
+
+[functions.kyc-reminders]
+verify_jwt = false
+
+[functions.api-reports]
+verify_jwt = false

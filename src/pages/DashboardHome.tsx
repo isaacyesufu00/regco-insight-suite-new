@@ -3,9 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, CheckCircle, Loader2, Clock, XCircle, FilePlus } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Clock, XCircle, FilePlus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DownloadButton from "@/components/DownloadButton";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Profile {
   full_name: string | null;
@@ -113,6 +114,7 @@ const DashboardHome = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [institutionTypes, setInstitutionTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scoreHistory, setScoreHistory] = useState<{ month: string; score: number }[]>([]);
 
   const fetchAll = async () => {
     if (!user) return;
@@ -193,6 +195,24 @@ const DashboardHome = () => {
       scoreBreakdown.filingScore + scoreBreakdown.calendarScore + scoreBreakdown.recencyScore + scoreBreakdown.failurePenalty
     )
   );
+
+  useEffect(() => {
+    if (!user || loading) return;
+    const month = new Date().toISOString().slice(0, 7);
+    supabase.from("compliance_score_history").upsert(
+      { user_id: user.id, month, score: healthScore, breakdown: scoreBreakdown as any },
+      { onConflict: "user_id,month" }
+    ).then(() => {
+      supabase.from("compliance_score_history")
+        .select("month, score")
+        .eq("user_id", user.id)
+        .order("month", { ascending: true })
+        .limit(6)
+        .then(({ data }) => {
+          if (data) setScoreHistory(data as { month: string; score: number }[]);
+        });
+    });
+  }, [user, loading, healthScore]);
 
   const recentReports = reports.slice(0, 8);
   const institutionName = profile?.company_name || "Your Institution";
@@ -288,6 +308,32 @@ const DashboardHome = () => {
           <p style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", margin: "4px 0 0", fontWeight: 500 }}>{ringStatus}</p>
         </div>
       </div>
+
+      {/* Score history */}
+      <div style={{ background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <TrendingUp size={16} color="#0A0A0A" />
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#0A0A0A", margin: 0 }}>Compliance Score — Last 6 months</p>
+        </div>
+        {scoreHistory.length < 2 ? (
+          <div style={{ background: "#F5F5F0", borderRadius: 8, padding: 18, textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "#6B6B6B", margin: 0 }}>Score history will appear after your second month of use.</p>
+          </div>
+        ) : (
+          <div style={{ height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={scoreHistory.slice(-6)} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                <XAxis dataKey="month" stroke="#9B9B9B" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 100]} stroke="#9B9B9B" tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Line type="monotone" dataKey="score" stroke="#0A0A0A" strokeWidth={2} dot={{ r: 3, fill: "#0A0A0A" }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
 
       {/* Status cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 20 }}>
