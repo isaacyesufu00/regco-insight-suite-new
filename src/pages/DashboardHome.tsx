@@ -309,6 +309,32 @@ const DashboardHome = () => {
         </div>
       </div>
 
+      {/* Score history */}
+      <div style={{ background: "#FFFFFF", borderRadius: 12, border: "1px solid rgba(0,0,0,0.07)", padding: 20, marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <TrendingUp size={16} color="#0A0A0A" />
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#0A0A0A", margin: 0 }}>Compliance Score — Last 6 months</p>
+        </div>
+        {scoreHistory.length < 2 ? (
+          <div style={{ background: "#F5F5F0", borderRadius: 8, padding: 18, textAlign: "center" }}>
+            <p style={{ fontSize: 12, color: "#6B6B6B", margin: 0 }}>Score history will appear after your second month of use.</p>
+          </div>
+        ) : (
+          <div style={{ height: 180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={scoreHistory.slice(-6)} margin={{ top: 8, right: 16, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" vertical={false} />
+                <XAxis dataKey="month" stroke="#9B9B9B" tick={{ fontSize: 11 }} />
+                <YAxis domain={[0, 100]} stroke="#9B9B9B" tick={{ fontSize: 11 }} />
+                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Line type="monotone" dataKey="score" stroke="#0A0A0A" strokeWidth={2} dot={{ r: 3, fill: "#0A0A0A" }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+
+
       {/* Status cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12, marginBottom: 20 }}>
         {statusCards.map((card, i) => {
