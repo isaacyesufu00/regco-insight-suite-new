@@ -158,6 +158,33 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_score_history: {
+        Row: {
+          breakdown: Json | null
+          id: string
+          month: string
+          recorded_at: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          breakdown?: Json | null
+          id?: string
+          month: string
+          recorded_at?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          breakdown?: Json | null
+          id?: string
+          month?: string
+          recorded_at?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       compliance_scores: {
         Row: {
           calculated_at: string | null
@@ -647,6 +674,7 @@ export type Database = {
           notification_email_report_ready: boolean
           phone: string | null
           rc_number: string | null
+          reporting_api_key: string | null
           tutorial_completed: boolean
         }
         Insert: {
@@ -660,6 +688,7 @@ export type Database = {
           notification_email_report_ready?: boolean
           phone?: string | null
           rc_number?: string | null
+          reporting_api_key?: string | null
           tutorial_completed?: boolean
         }
         Update: {
@@ -673,6 +702,7 @@ export type Database = {
           notification_email_report_ready?: boolean
           phone?: string | null
           rc_number?: string | null
+          reporting_api_key?: string | null
           tutorial_completed?: boolean
         }
         Relationships: []
