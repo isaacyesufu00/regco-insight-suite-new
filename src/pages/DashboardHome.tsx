@@ -3,9 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, CheckCircle, Loader2, Clock, XCircle, FilePlus } from "lucide-react";
+import { FileText, CheckCircle, Loader2, Clock, XCircle, FilePlus, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DownloadButton from "@/components/DownloadButton";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Profile {
   full_name: string | null;
