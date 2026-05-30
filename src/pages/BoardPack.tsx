@@ -160,6 +160,28 @@ export default function BoardPack() {
           The board pack compiles regulatory returns, AML/CFT activity, customer due diligence, sanctions screening,
           and monthly task completion for the chosen month.
         </p>
+
+        <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#0A0A0A', margin: 0 }}>CBN Examination Preparation Pack</p>
+            <p style={{ fontSize: 12, color: '#9B9B9B', margin: '4px 0 0' }}>
+              A complete 12-month evidence file: regulatory returns, AML activity, audit findings, and screening logs.
+            </p>
+          </div>
+          <button
+            onClick={generateExamPack}
+            disabled={examLoading}
+            style={{
+              padding: '10px 18px', borderRadius: 8, background: '#FFFFFF', color: '#0A0A0A',
+              border: '1px solid rgba(0,0,0,0.18)', fontSize: 12.5, fontWeight: 600,
+              cursor: examLoading ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8,
+              opacity: examLoading ? 0.7 : 1,
+            }}
+          >
+            {examLoading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+            {examLoading ? 'Compiling...' : 'Download CBN Exam Prep Pack'}
+          </button>
+        </div>
       </div>
 
       <h2 style={{ fontSize: 14, fontWeight: 700, color: '#0A0A0A', margin: '0 0 14px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
