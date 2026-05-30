@@ -114,6 +114,7 @@ const DashboardHome = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [institutionTypes, setInstitutionTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scoreHistory, setScoreHistory] = useState<{ month: string; score: number }[]>([]);
 
   const fetchAll = async () => {
     if (!user) return;
