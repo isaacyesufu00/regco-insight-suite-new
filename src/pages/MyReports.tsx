@@ -152,21 +152,18 @@ const MyReports = () => {
     return () => clearInterval(interval);
   }, [user, fetchReports]);
 
-  const resolveDownloadUrl = (r: Report): string | null => {
-    if (r.report_url) {
-      const { data } = supabase.storage.from("reports").getPublicUrl(r.report_url);
-      return data?.publicUrl || null;
+  const resolveDownloadUrl = async (r: Report): Promise<string | null> => {
+    const path = r.report_url || r.file_path;
+    if (path) {
+      const { data } = await supabase.storage.from("reports").createSignedUrl(path, 3600);
+      if (data?.signedUrl) return data.signedUrl;
     }
     return r.pdf_url || null;
   };
 
   const handleDownload = async (r: Report) => {
-    const url = resolveDownloadUrl(r);
+    const url = await resolveDownloadUrl(r);
     if (url) { const a = document.createElement("a"); a.href = url; a.download = r.report_name; a.target = "_blank"; a.click(); return; }
-    if (r.file_path) {
-      const { data } = await supabase.storage.from("reports").createSignedUrl(r.file_path, 3600);
-      if (data?.signedUrl) { const a = document.createElement("a"); a.href = data.signedUrl; a.download = r.report_name; a.click(); return; }
-    }
     toast({ title: "Download unavailable", description: "The report file is not yet available.", variant: "destructive" });
   };
 
