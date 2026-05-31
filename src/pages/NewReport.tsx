@@ -277,10 +277,10 @@ const NewReport = () => {
       if (status === "ready") {
         let url = "";
         if (data.report_url) {
-          const { data: publicData } = supabase.storage
+          const { data: signedData } = await supabase.storage
             .from("reports")
-            .getPublicUrl(data.report_url as string);
-          url = publicData?.publicUrl || (data.report_url as string);
+            .createSignedUrl(data.report_url as string, 3600);
+          url = signedData?.signedUrl || "";
         }
         setDownloadUrl(url);
         setValidationMetrics({

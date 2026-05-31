@@ -11,7 +11,20 @@ serve(async (req) => {
   }
 
   try {
-    const { institution_name, subject, message, user_email } = await req.json();
+    const raw = await req.json();
+    const escHtml = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+    const institution_name = escHtml(raw.institution_name);
+    const subject = escHtml(raw.subject);
+    const message = escHtml(raw.message);
+    const user_email_safe = escHtml(raw.user_email);
+    const user_email_attr = encodeURIComponent(String(raw.user_email ?? ""));
+
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const ADMIN_EMAIL = Deno.env.get("NOTIFICATION_EMAIL") || "isaacyesufu00@gmail.com";
 
@@ -23,15 +36,15 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "RegCo Support <onboarding@resend.dev>",
         to: [ADMIN_EMAIL],
-        subject: `Support Ticket: ${subject}`,
+        subject: `Support Ticket: ${String(raw.subject ?? "").slice(0, 200)}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
             <h2 style="color:#1a1a2e;">New Support Ticket</h2>
             <p><strong>Institution:</strong> ${institution_name}</p>
             <p><strong>Subject:</strong> ${subject}</p>
             <p><strong>Message:</strong></p>
-            <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:12px 0;">${message}</div>
-            <p style="color:#666;font-size:14px;">Reply directly to the user at <a href="mailto:${user_email}">${user_email}</a></p>
+            <div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:12px 0;white-space:pre-wrap;">${message}</div>
+            <p style="color:#666;font-size:14px;">Reply directly to the user at <a href="mailto:${user_email_attr}">${user_email_safe}</a></p>
           </div>
         `,
       }),

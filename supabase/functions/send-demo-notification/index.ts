@@ -12,8 +12,20 @@ serve(async (req) => {
   }
 
   try {
-    const { full_name, company_name, email, phone, report_type, message } =
-      await req.json();
+    const raw = await req.json();
+    const escHtml = (s: unknown) =>
+      String(s ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#x27;");
+    const full_name = escHtml(raw.full_name);
+    const company_name = escHtml(raw.company_name);
+    const email = escHtml(raw.email);
+    const phone = escHtml(raw.phone);
+    const report_type = escHtml(raw.report_type);
+    const message = escHtml(raw.message);
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const NOTIFICATION_EMAIL = Deno.env.get("NOTIFICATION_EMAIL");
@@ -68,7 +80,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "RegCo <onboarding@resend.dev>",
         to: [NOTIFICATION_EMAIL],
-        subject: `New Demo Request from ${full_name} — ${company_name}`,
+        subject: `New Demo Request from ${String(raw.full_name ?? "").slice(0, 100)} — ${String(raw.company_name ?? "").slice(0, 100)}`,
         html: htmlBody,
       }),
     });
