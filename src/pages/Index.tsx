@@ -2,9 +2,8 @@ import EigenNavbar from "@/components/eigen/EigenNavbar";
 import EigenHero from "@/components/eigen/EigenHero";
 import TaglineSection from "@/components/eigen/TaglineSection";
 import PlatformSection from "@/components/eigen/PlatformSection";
-import FeaturesSection from "@/components/eigen/FeaturesSection";
-import { Customer360Section, FraudPreventionSection, ScreeningSection } from "@/components/eigen/NewFeaturesSections";
-import { BoardPackSection, AuditTrackerSection, RegulatoryIntelSection, PlatformCounterSection } from "@/components/eigen/HomepageExtraSections";
+import { MedusaFeatureGrid, ScrollProgressBar } from "@/components/eigen/MedusaSections";
+import { PlatformCounterSection } from "@/components/eigen/HomepageExtraSections";
 import BestInClassSection from "@/components/eigen/BestInClassSection";
 import TutorialSection from "@/components/eigen/TutorialSection";
 import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
@@ -18,16 +17,11 @@ import EigenFooter from "@/components/eigen/EigenFooter";
 const Index = () => (
   <div style={{ background: "#F5F5F0", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
     <EigenNavbar />
+    <ScrollProgressBar />
     <EigenHero />
     <TaglineSection />
     <PlatformSection />
-    <FeaturesSection />
-    <Customer360Section />
-    <FraudPreventionSection />
-    <ScreeningSection />
-    <BoardPackSection />
-    <AuditTrackerSection />
-    <RegulatoryIntelSection />
+    <MedusaFeatureGrid />
     <PlatformCounterSection />
     <BestInClassSection />
     <SecurityDarkSection />
