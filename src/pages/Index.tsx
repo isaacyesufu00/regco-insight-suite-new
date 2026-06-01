@@ -8,7 +8,7 @@ import { BoardPackSection, AuditTrackerSection, RegulatoryIntelSection, Platform
 import BestInClassSection from "@/components/eigen/BestInClassSection";
 import TutorialSection from "@/components/eigen/TutorialSection";
 import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
-import UseCasesSection from "@/components/eigen/UseCasesSection";
+import WhoWeServeSection from "@/components/eigen/WhoWeServeSection";
 import RegulatoryReturnsSection from "@/components/eigen/RegulatoryReturnsSection";
 import PricingSection from "@/components/eigen/PricingSection";
 import AboutUsSection from "@/components/eigen/AboutUsSection";
@@ -31,7 +31,7 @@ const Index = () => (
     <PlatformCounterSection />
     <BestInClassSection />
     <SecurityDarkSection />
-    <UseCasesSection />
+    <WhoWeServeSection />
     <RegulatoryReturnsSection />
     <TutorialSection />
     <PricingSection />
