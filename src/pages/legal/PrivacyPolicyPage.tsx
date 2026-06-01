@@ -1,4 +1,72 @@
-import { LegalPage, P, UL } from "@/components/eigen/LegalShell";
+import { LegalPage, P, UL, type LegalSection } from "@/components/eigen/LegalShell";
+
+const CookiePreferences = () => {
+  const cookies = [
+    { name: "Essential", desc: "Required for the platform to function. Cannot be disabled.", state: "required" as const },
+    { name: "Analytics", desc: "Help us understand how the platform is used. No personally identifiable data is shared.", state: "optional" as const },
+    { name: "Advertising", desc: "RegCo does not use advertising cookies. We do not run ads.", state: "na" as const },
+  ];
+  return (
+    <>
+      <P>You can review and reset your cookie preferences at any time below.</P>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12, margin: "16px 0 24px" }}>
+        {cookies.map((c) => (
+          <div
+            key={c.name}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              padding: 16,
+              background: "#FFFFFF",
+              borderRadius: 10,
+              border: "1px solid rgba(0,0,0,0.07)",
+            }}
+          >
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#0A0A0A", margin: "0 0 4px" }}>{c.name}</p>
+              <p style={{ fontSize: 13, color: "#6B6B6B", margin: 0 }}>{c.desc}</p>
+            </div>
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                background: c.state === "required" ? "#0A0A0A" : c.state === "na" ? "#F5F5F0" : "#F0FDF4",
+                color: c.state === "required" ? "#FFFFFF" : c.state === "na" ? "#9B9B9B" : "#16A34A",
+                borderRadius: 999,
+                padding: "3px 10px",
+                flexShrink: 0,
+                marginLeft: 16,
+                letterSpacing: "0.05em",
+              }}
+            >
+              {c.state === "required" ? "REQUIRED" : c.state === "na" ? "NOT USED" : "OPTIONAL"}
+            </span>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => {
+          localStorage.removeItem("regco_cookie_consent_v2");
+          window.location.reload();
+        }}
+        style={{
+          height: 40,
+          padding: "0 20px",
+          background: "transparent",
+          color: "#0A0A0A",
+          border: "1px solid rgba(0,0,0,0.15)",
+          borderRadius: 8,
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: "pointer",
+        }}
+      >
+        Reset cookie preferences
+      </button>
+    </>
+  );
+};
 
 const sections = [
   { id: "who", label: "1. Who We Are", title: "1. Who We Are", body: <P>RegCo Technologies Limited ("RegCo", "we", "us", "our") is a Nigerian technology company providing automated regulatory reporting software to licensed financial institutions. We are registered with the Corporate Affairs Commission of Nigeria.</P> },
@@ -25,6 +93,7 @@ const sections = [
     <P>Data Protection Officer: <a href="mailto:support@regco.com.ng" style={{ color: "#0A0A0A", fontWeight: 600 }}>support@regco.com.ng</a></P>
     <P>RegCo Technologies Limited, Abuja, FCT, Nigeria.</P>
   </> },
+  { id: "cookies", label: "8. Cookie Preferences", title: "8. Cookie Preferences", body: <CookiePreferences /> },
 ];
 
 const PrivacyPolicyPage = () => (
