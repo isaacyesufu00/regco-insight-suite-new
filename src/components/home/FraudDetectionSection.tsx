@@ -1,7 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-const FAKE_TRANSACTIONS = [
+interface Tx {
+  id: string;
+  account: string;
+  amount: string;
+  type: "DEBIT" | "CREDIT";
+  flag: string | null;
+  severity: "critical" | "high" | "medium" | null;
+}
+
+const FAKE_TRANSACTIONS: Tx[] = [
   { id: "tx001", account: "00812****7", amount: "₦5,200,000", type: "DEBIT", flag: "CTR", severity: "critical" },
   { id: "tx002", account: "00934****2", amount: "₦4,850,000", type: "CREDIT", flag: "STRUCT", severity: "high" },
   { id: "tx003", account: "01120****5", amount: "₦890,000", type: "DEBIT", flag: null, severity: null },
@@ -10,9 +19,7 @@ const FAKE_TRANSACTIONS = [
   { id: "tx006", account: "00788****4", amount: "₦5,000,000", type: "DEBIT", flag: "ROUND", severity: "medium" },
   { id: "tx007", account: "01205****9", amount: "₦340,000", type: "CREDIT", flag: null, severity: null },
   { id: "tx008", account: "00912****3", amount: "₦7,500,000", type: "DEBIT", flag: "VELOC", severity: "high" },
-] as const;
-
-type Tx = (typeof FAKE_TRANSACTIONS)[number] & { id: string };
+];
 
 const STAT_PILLS = [
   { rule: "CTR Threshold", detail: "Transactions ≥ ₦5,000,000 auto-flagged", color: "#FF4444" },
