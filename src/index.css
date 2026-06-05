@@ -1,17 +1,7 @@
-@import 'mapbox-gl/dist/mapbox-gl.css';
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@keyframes scrollPulse {
-  0%, 100% { opacity: 0.4; transform: scaleY(1); }
-  50% { opacity: 1; transform: scaleY(1.2); }
-}
-@keyframes locationPulse {
-  0%, 100% { box-shadow: 0 0 0 6px rgba(255,255,255,0.2), 0 0 0 12px rgba(255,255,255,0.08); }
-  50% { box-shadow: 0 0 0 10px rgba(255,255,255,0.12), 0 0 0 20px rgba(255,255,255,0.04); }
-}
 @keyframes livePulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.5; transform: scale(1.4); }
