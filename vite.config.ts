@@ -17,20 +17,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  optimizeDeps: {
-    include: ["mapbox-gl"],
-    esbuildOptions: {
-      target: "es2020",
-    },
-  },
-  build: {
-    target: "es2020",
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          mapbox: ["mapbox-gl"],
-        },
-      },
-    },
-  },
 });
