@@ -24,7 +24,7 @@ const Index = () => (
     <PlatformSection />
     <FeaturesSection />
     <Customer360Section />
-    <FraudDetectionSection />
+    <TransactionFraudSection />
     <ScreeningSection />
     <BoardPackSection />
     <AuditTrackerSection />
