@@ -8,14 +8,15 @@ mapboxgl.accessToken =
   "pk.eyJ1IjoiaXNhYWNucmoiLCJhIjoiY21wd2hrNGh6MDBobDJyc2JrOGQ0N240MiJ9.nTJtDkPUmziOf1_ZsKBp1g";
 
 // ─── Cinematic camera journey ───
-const CAMERA_KEYFRAMES = [
+type CameraKeyframe = { progress: number; center: [number, number]; zoom: number; pitch: number; bearing: number };
+const CAMERA_KEYFRAMES: CameraKeyframe[] = [
   { progress: 0.0,  center: [20, 10],   zoom: 1.2, pitch: 0,  bearing: 0   },
   { progress: 0.20, center: [15, 5],    zoom: 2.8, pitch: 20, bearing: -5  },
   { progress: 0.38, center: [8, 8],     zoom: 4.2, pitch: 35, bearing: -8  },
   { progress: 0.55, center: [8.5, 9.5], zoom: 5.8, pitch: 45, bearing: -12 },
   { progress: 0.70, center: [7.5, 9.0], zoom: 7.2, pitch: 50, bearing: -15 },
   { progress: 1.0,  center: [7.5, 9.0], zoom: 7.2, pitch: 50, bearing: -15 },
-] as const;
+];
 
 const interpolateCamera = (progress: number) => {
   let start = CAMERA_KEYFRAMES[0];
