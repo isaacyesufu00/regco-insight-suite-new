@@ -1,783 +1,410 @@
-import { useRef } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-  useMotionTemplate,
-  MotionValue,
-} from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-const SECTION_HEIGHT = "600vh";
+// Public Mapbox token — restricted by URL on the Mapbox side
+mapboxgl.accessToken =
+  "pk.eyJ1IjoiaXNhYWNucmoiLCJhIjoiY21wd2hrNGh6MDBobDJyc2JrOGQ0N240MiJ9.nTJtDkPUmziOf1_ZsKBp1g";
 
-interface Institution {
-  id: string;
-  category: string;
-  count: string;
-  headline: string;
-  description: string;
-  returns: string[];
-  price: string;
-}
+// ─── Cinematic camera journey ───
+const CAMERA_KEYFRAMES = [
+  { progress: 0.0,  center: [20, 10],   zoom: 1.2, pitch: 0,  bearing: 0   },
+  { progress: 0.20, center: [15, 5],    zoom: 2.8, pitch: 20, bearing: -5  },
+  { progress: 0.38, center: [8, 8],     zoom: 4.2, pitch: 35, bearing: -8  },
+  { progress: 0.55, center: [8.5, 9.5], zoom: 5.8, pitch: 45, bearing: -12 },
+  { progress: 0.70, center: [7.5, 9.0], zoom: 7.2, pitch: 50, bearing: -15 },
+  { progress: 1.0,  center: [7.5, 9.0], zoom: 7.2, pitch: 50, bearing: -15 },
+] as const;
 
-const institutions: Institution[] = [
-  {
-    id: "unit-mfb",
-    category: "UNIT MFB",
-    count: "847",
-    headline: "Community\nfinancial\ninstitutions",
-    description:
-      "Single-branch microfinance banks serving one community. Typically one compliance officer handling 10 mandatory returns across 4 regulators every month.",
-    returns: ["CBN Returns", "NFIU Reports", "FIRS Remittances"],
-    price: "From ₦350k/month",
-  },
-  {
-    id: "state-mfb",
-    category: "STATE MFB",
-    count: "126",
-    headline: "State-wide\nmicrofinance\nnetworks",
-    description:
-      "Operating across an entire state with multiple branches. Compliance teams consolidating data from multiple locations into a single unified return.",
-    returns: ["All 16 returns", "Customer 360", "AML Monitoring"],
-    price: "From ₦700k/month",
-  },
-  {
-    id: "national-mfb",
-    category: "NATIONAL MFB",
-    count: "8",
-    headline: "Nationwide\nmicrofinance\noperations",
-    description:
-      "Present in every state with tens of thousands of customers. CBN examinations are frequent. Compliance team under constant deadline pressure.",
-    returns: ["All 16 returns", "Live AML Screening", "Board Pack"],
-    price: "From ₦1.5M/month",
-  },
-  {
-    id: "pmb",
-    category: "PRIMARY MORTGAGE",
-    count: "34",
-    headline: "Mortgage\nand housing\nfinance",
-    description:
-      "Complex loan portfolios requiring CBN CAMEL classification. Prudential returns demand detailed borrower-level data that is time-consuming to compile manually.",
-    returns: ["CBN Prudential", "NDIC Premium", "Risk Analysis"],
-    price: "From ₦700k/month",
-  },
-  {
-    id: "finance-co",
-    category: "FINANCE COMPANY",
-    count: "150+",
-    headline: "Licensed\nfinancial\ncompanies",
-    description:
-      "Fast-growing fintech and finance companies managing FIRS, SCUML, and NFIU obligations with compliance teams that are often too small for the filing load.",
-    returns: ["FIRS Suite", "SCUML Annual", "NFIU Reports"],
-    price: "From ₦500k/month",
-  },
-  {
-    id: "pencom",
-    category: "PENCOM LICENSED",
-    count: "42",
-    headline: "Pension fund\nadministrators\n& custodians",
-    description:
-      "PFAs, PFCs, and CPFAs regulated by the National Pension Commission. Quarterly RSA returns, investment compliance, and member data submissions to PenCom.",
-    returns: ["PenCom Quarterly", "RSA Returns", "Investment Compliance"],
-    price: "From ₦900k/month",
-  },
-  {
-    id: "commercial",
-    category: "COMMERCIAL BANK",
-    count: "26",
-    headline: "Commercial\nand merchant\nbanking",
-    description:
-      "Full regulatory complexity. All 16 returns, live transaction screening, board-level reporting, and examination management under CBN's closest scrutiny.",
-    returns: ["All features", "Enterprise support", "Direct integration"],
-    price: "From ₦3M/month",
-  },
+const interpolateCamera = (progress: number) => {
+  let start = CAMERA_KEYFRAMES[0];
+  let end = CAMERA_KEYFRAMES[CAMERA_KEYFRAMES.length - 1];
+  for (let i = 0; i < CAMERA_KEYFRAMES.length - 1; i++) {
+    if (progress >= CAMERA_KEYFRAMES[i].progress && progress <= CAMERA_KEYFRAMES[i + 1].progress) {
+      start = CAMERA_KEYFRAMES[i];
+      end = CAMERA_KEYFRAMES[i + 1];
+      break;
+    }
+  }
+  const t = (progress - start.progress) / (end.progress - start.progress || 1);
+  const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  return {
+    center: [
+      start.center[0] + (end.center[0] - start.center[0]) * ease,
+      start.center[1] + (end.center[1] - start.center[1]) * ease,
+    ] as [number, number],
+    zoom: start.zoom + (end.zoom - start.zoom) * ease,
+    pitch: start.pitch + (end.pitch - start.pitch) * ease,
+    bearing: start.bearing + (end.bearing - start.bearing) * ease,
+  };
+};
+
+const institutions = [
+  { category: "UNIT MFB",         count: "847",  headline: "Community\nmicrofinance",     desc: "Single-branch institutions serving one community. One compliance officer. 10 mandatory returns across 4 regulators every month.", returns: ["CBN Returns", "NFIU Reports", "FIRS Remittances"], price: "From ₦350k/month" },
+  { category: "STATE MFB",        count: "126",  headline: "State-wide\nnetworks",        desc: "Multi-branch operations across an entire state. Complex data consolidation. All 16 mandatory returns.",                       returns: ["All 16 returns", "Customer 360", "AML Monitoring"], price: "From ₦700k/month" },
+  { category: "NATIONAL MFB",     count: "8",    headline: "Nationwide\noperations",      desc: "Present in every state. Tens of thousands of customers. Frequent CBN examinations and constant deadline pressure.",            returns: ["All features", "Live AML", "Board Pack"],          price: "From ₦1.5M/month" },
+  { category: "PRIMARY MORTGAGE", count: "34",   headline: "Housing\nfinance",            desc: "Complex loan portfolios requiring CAMEL classification. Prudential returns demand borrower-level data.",                       returns: ["CBN Prudential", "NDIC Premium", "Risk Analysis"], price: "From ₦700k/month" },
+  { category: "FINANCE COMPANY",  count: "150+", headline: "Licensed\nfintech",           desc: "Fast-growing companies managing FIRS, SCUML, and NFIU obligations with lean compliance teams.",                                returns: ["FIRS Suite", "SCUML Annual", "NFIU Reports"],      price: "From ₦500k/month" },
+  { category: "COMMERCIAL BANK",  count: "26",   headline: "Commercial\nbanking",         desc: "Full regulatory complexity. All 16 returns, live screening, board reporting, and examination management.",                     returns: ["All features", "Enterprise SLA", "Direct API"],    price: "From ₦3M/month" },
 ];
 
-/* ---------------- Map zoom layer ---------------- */
-const MapZoomLayer = ({ progress }: { progress: MotionValue<number> }) => {
-  const vbX = useTransform(progress, [0, 0.15, 0.4, 0.65], [0, 350, 440, 460]);
-  const vbY = useTransform(progress, [0, 0.15, 0.4, 0.65], [0, 80, 170, 195]);
-  const vbW = useTransform(progress, [0, 0.15, 0.4, 0.65], [1000, 500, 200, 80]);
-  const vbH = useTransform(progress, [0, 0.15, 0.4, 0.65], [500, 250, 100, 40]);
+// Simplified Nigeria boundary polygon
+const NIGERIA_POLYGON: [number, number][][] = [[
+  [2.6917, 6.3583], [3.3, 6.4], [4.2, 5.9], [5.5, 5.3],
+  [6.2, 4.7], [7.0, 4.5], [8.4, 4.5], [9.0, 4.4],
+  [9.8, 5.0], [10.5, 5.4], [11.0, 6.0], [11.5, 6.5],
+  [13.0, 7.5], [13.7, 8.7], [14.6, 10.5], [14.2, 11.3],
+  [13.5, 12.0], [13.0, 13.0], [12.3, 13.1], [11.5, 13.3],
+  [10.7, 13.5], [10.0, 13.4], [9.0, 12.8], [8.7, 12.5],
+  [7.8, 13.3], [6.7, 13.0], [5.3, 13.9], [3.6, 11.8],
+  [3.5, 11.0], [3.3, 10.2], [2.7, 9.0], [2.7, 7.9],
+  [2.6917, 6.3583],
+]];
 
-  const viewBox = useMotionTemplate`${vbX} ${vbY} ${vbW} ${vbH}`;
-
-  const mapOpacity = useTransform(progress, [0.6, 0.8], [1, 0.08]);
-  const dotGridOpacity = useTransform(progress, [0, 0.3], [0.6, 0]);
-  const africaHighlight = useTransform(progress, [0.2, 0.45], [0, 1]);
-  const nigeriaOpacity = useTransform(progress, [0.4, 0.6], [0, 1]);
-  const nigeriaGlow = useTransform(progress, [0.45, 0.65], [0, 1]);
-  const nigeriaGlowOuter = useTransform(nigeriaGlow, (v) => v * 0.5);
-  const abujaOpacity = useTransform(nigeriaOpacity, (v) => (v > 0.5 ? (v - 0.5) * 2 : 0));
-
-  return (
-    <motion.div style={{ position: "absolute", inset: 0, opacity: mapOpacity }}>
-      {/* Dot grid */}
-      <motion.div style={{ position: "absolute", inset: 0, opacity: dotGridOpacity }}>
-        <svg width="100%" height="100%" viewBox="0 0 1400 700" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <pattern id="dotGrid" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse">
-              <circle cx="7" cy="7" r="1.1" fill="rgba(255,255,255,0.22)" />
-            </pattern>
-          </defs>
-          <rect width="1400" height="700" fill="url(#dotGrid)" />
-        </svg>
-      </motion.div>
-
-      {/* Continents */}
-      <motion.svg
-        width="100%"
-        height="100%"
-        viewBox={viewBox as unknown as string}
-        preserveAspectRatio="xMidYMid meet"
-        style={{ position: "absolute", inset: 0 }}
-      >
-        <path
-          d="M 80,80 L 180,70 L 220,90 L 200,140 L 160,160 L 120,180 L 90,160 L 70,120 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.8"
-        />
-        <path
-          d="M 160,200 L 210,190 L 230,240 L 220,310 L 190,350 L 160,330 L 145,280 L 150,230 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.8"
-        />
-        <path
-          d="M 420,60 L 500,55 L 520,90 L 480,110 L 430,100 L 400,80 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.8"
-        />
-        <path
-          d="M 430,130 L 510,125 L 550,145 L 565,200 L 560,270 L 530,310 L 490,325 L 455,310 L 425,260 L 415,200 L 420,155 Z"
-          fill="rgba(255,255,255,0)"
-          stroke="rgba(255,255,255,0.18)"
-          strokeWidth="0.8"
-        />
-        <motion.path
-          d="M 430,130 L 510,125 L 550,145 L 565,200 L 560,270 L 530,310 L 490,325 L 455,310 L 425,260 L 415,200 L 420,155 Z"
-          style={{ opacity: africaHighlight }}
-          fill="rgba(255,255,255,0.04)"
-          stroke="rgba(255,255,255,0.45)"
-          strokeWidth="1.2"
-        />
-        <motion.path
-          d="M 455,195 L 480,192 L 492,200 L 495,215 L 488,225 L 470,228 L 455,222 L 448,210 Z"
-          style={{ opacity: nigeriaOpacity }}
-          fill="rgba(255,255,255,0.14)"
-          stroke="rgba(255,255,255,0.85)"
-          strokeWidth="1.5"
-        />
-        <motion.circle
-          cx="472"
-          cy="210"
-          r="20"
-          style={{ opacity: nigeriaGlow }}
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="1"
-        />
-        <motion.circle
-          cx="472"
-          cy="210"
-          r="35"
-          style={{ opacity: nigeriaGlowOuter }}
-          fill="none"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="1"
-        />
-        <path
-          d="M 560,60 L 750,50 L 800,100 L 780,160 L 700,180 L 620,170 L 565,130 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.8"
-        />
-        <path
-          d="M 720,270 L 800,265 L 820,310 L 790,350 L 730,345 L 700,310 Z"
-          fill="none"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth="0.8"
-        />
-        <motion.circle cx="472" cy="210" r="1.6" style={{ opacity: abujaOpacity }} fill="rgba(255,255,255,1)" />
-      </motion.svg>
-
-      {/* Vignette */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at center, transparent 30%, rgba(10,10,10,0.7) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-    </motion.div>
-  );
-};
-
-/* ---------------- Particles ---------------- */
-const particles = Array.from({ length: 40 }, (_, i) => ({
-  id: i,
-  x: Math.random() * 100,
-  y: Math.random() * 100,
-  size: Math.random() * 2 + 0.5,
-}));
-
-const ParticleField = ({ progress }: { progress: MotionValue<number> }) => {
-  const scale = useTransform(progress, [0, 0.6], [1, 1.8]);
-  const opacity = useTransform(progress, [0, 0.1, 0.55, 0.65], [0, 0.4, 0.4, 0]);
-  return (
-    <motion.div style={{ position: "absolute", inset: 0, scale, opacity, pointerEvents: "none" }}>
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          style={{
-            position: "absolute",
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: p.size,
-            height: p.size,
-            borderRadius: "50%",
-            background: "rgba(255,255,255,0.35)",
-          }}
-        />
-      ))}
-    </motion.div>
-  );
-};
-
-/* ---------------- Coord & zoom readouts ---------------- */
-const CoordinateDisplay = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0.15, 0.3, 0.65, 0.75], [0, 1, 1, 0]);
-  const lat = useTransform(progress, [0.15, 0.55], [0, 9.082]);
-  const lng = useTransform(progress, [0.15, 0.55], [0, 8.6753]);
-  const latText = useTransform(lat, (v) => `${v.toFixed(4)}°N`);
-  const lngText = useTransform(lng, (v) => `${v.toFixed(4)}°E`);
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        bottom: 48,
-        left: 48,
-        opacity,
-        fontFamily: "monospace",
-        fontSize: 12,
-        color: "rgba(255,255,255,0.45)",
-        letterSpacing: "0.08em",
-        pointerEvents: "none",
-      }}
-    >
-      <p style={{ margin: 0 }}>
-        <motion.span>{latText}</motion.span>
-        {"  "}
-        <motion.span>{lngText}</motion.span>
-      </p>
-      <p style={{ margin: "4px 0 0", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
-        FEDERAL REPUBLIC OF NIGERIA
-      </p>
-    </motion.div>
-  );
-};
-
-const ZoomIndicator = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0.1, 0.25, 0.65, 0.75], [0, 0.7, 0.7, 0]);
-  const zoom = useTransform(progress, [0.1, 0.65], [1, 847]);
-  const zoomText = useTransform(zoom, (v) => `${Math.round(v)}x`);
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        bottom: 48,
-        right: 48,
-        opacity,
-        fontFamily: "monospace",
-        fontSize: 11,
-        color: "rgba(255,255,255,0.4)",
-        letterSpacing: "0.1em",
-        textAlign: "right",
-        pointerEvents: "none",
-      }}
-    >
-      <p style={{ margin: 0 }}>ZOOM</p>
-      <motion.p style={{ margin: "2px 0 0", fontSize: 18, fontWeight: 700, color: "rgba(255,255,255,0.65)" }}>
-        {zoomText}
-      </motion.p>
-    </motion.div>
-  );
-};
-
-/* ---------------- Headers & overlays ---------------- */
-const SectionHeader = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0, 0.05, 0.18, 0.28], [0, 1, 1, 0]);
-  const y = useTransform(progress, [0, 0.05], [24, 0]);
-  return (
-    <motion.div
-      style={{ position: "absolute", top: 72, left: 64, opacity, y, pointerEvents: "none" }}
-    >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.45)",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          margin: "0 0 12px",
-        }}
-      >
-        Who We Serve
-      </p>
-      <h2
-        style={{
-          fontSize: 52,
-          fontWeight: 800,
-          color: "#FFFFFF",
-          letterSpacing: "-1.8px",
-          lineHeight: 1.06,
-          margin: 0,
-        }}
-      >
-        Every licensed
-        <br />
-        institution in Nigeria.
-      </h2>
-    </motion.div>
-  );
-};
-
-const NigeriaLabel = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0.48, 0.62, 0.72, 0.8], [0, 1, 1, 0]);
-  const scale = useTransform(progress, [0.48, 0.62], [0.85, 1]);
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        translateX: "-50%",
-        translateY: "-60%",
-        opacity,
-        scale,
-        textAlign: "center",
-        pointerEvents: "none",
-      }}
-    >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.45)",
-          letterSpacing: "0.15em",
-          textTransform: "uppercase",
-          margin: "0 0 8px",
-        }}
-      >
-        Federal Republic of
-      </p>
-      <p
-        style={{
-          fontSize: 64,
-          fontWeight: 900,
-          color: "#FFFFFF",
-          letterSpacing: "-2px",
-          margin: 0,
-          lineHeight: 1,
-        }}
-      >
-        Nigeria
-      </p>
-      <div
-        style={{
-          width: 1,
-          height: 48,
-          background: "rgba(255,255,255,0.2)",
-          margin: "16px auto 0",
-        }}
-      />
-      <p
-        style={{
-          fontSize: 12,
-          color: "rgba(255,255,255,0.45)",
-          margin: "12px 0 0",
-          fontFamily: "monospace",
-        }}
-      >
-        1,000+ licensed financial institutions
-      </p>
-    </motion.div>
-  );
-};
-
-const DissolveFlash = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0.62, 0.65, 0.68, 0.72], [0, 0.15, 0.08, 0]);
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        inset: 0,
-        background: "#FFFFFF",
-        opacity,
-        pointerEvents: "none",
-      }}
-    />
-  );
-};
-
-const ScrollHint = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0, 0.08, 0.15], [1, 1, 0]);
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        bottom: 32,
-        left: "50%",
-        translateX: "-50%",
-        opacity,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 8,
-        pointerEvents: "none",
-      }}
-    >
-      <motion.div
-        animate={{ y: [0, 6, 0] }}
-        transition={{ duration: 1.5, repeat: Infinity }}
-        style={{ width: 1, height: 32, background: "rgba(255,255,255,0.35)" }}
-      />
-      <p
-        style={{
-          fontSize: 11,
-          color: "rgba(255,255,255,0.35)",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          margin: 0,
-        }}
-      >
-        Scroll
-      </p>
-    </motion.div>
-  );
-};
-
-/* ---------------- Institution list ---------------- */
-const InstitutionList = ({ progress }: { progress: MotionValue<number> }) => {
-  const opacity = useTransform(progress, [0.68, 0.82], [0, 1]);
-  const y = useTransform(progress, [0.68, 0.82], [32, 0]);
-
-  return (
-    <motion.div
-      style={{
-        position: "absolute",
-        inset: 0,
-        opacity,
-        y,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
-        padding: "0 48px 48px",
-        pointerEvents: "none",
-      }}
-    >
-      <p
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.4)",
-          letterSpacing: "0.12em",
-          textTransform: "uppercase",
-          margin: "0 0 32px",
-        }}
-      >
-        Licensed Institution Categories — Nigeria
-      </p>
-
-      <div style={{ width: "100%", height: 1, background: "rgba(255,255,255,0.12)", position: "relative" }}>
-        {institutions.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              left: `${(i / (institutions.length - 1)) * 100}%`,
-              top: -4,
-              width: 1,
-              height: 8,
-              background: "rgba(255,255,255,0.35)",
-            }}
-          />
-        ))}
-      </div>
-
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${institutions.length}, 1fr)`,
-          gap: 0,
-        }}
-      >
-        {institutions.map((inst, i) => (
-          <div
-            key={inst.id}
-            style={{
-              padding: "20px 20px 0",
-              paddingLeft: i === 0 ? 0 : 20,
-              paddingRight: i === institutions.length - 1 ? 0 : 20,
-              borderRight: i < institutions.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
-            }}
-          >
-            <p
-              style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.4)",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                margin: "0 0 10px",
-                fontFamily: "monospace",
-              }}
-            >
-              {inst.category}
-            </p>
-            <p
-              style={{
-                fontSize: 28,
-                fontWeight: 900,
-                color: "#FFFFFF",
-                margin: "0 0 12px",
-                letterSpacing: "-1px",
-                lineHeight: 1,
-              }}
-            >
-              {inst.count}
-            </p>
-            <p
-              style={{
-                fontSize: 14,
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.9)",
-                lineHeight: 1.3,
-                margin: "0 0 12px",
-                whiteSpace: "pre-line",
-              }}
-            >
-              {inst.headline}
-            </p>
-            <p
-              style={{
-                fontSize: 11,
-                color: "rgba(255,255,255,0.45)",
-                lineHeight: 1.6,
-                margin: "0 0 14px",
-              }}
-            >
-              {inst.description}
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 14 }}>
-              {inst.returns.map((r) => (
-                <span key={r} style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
-                  → {r}
-                </span>
-              ))}
-            </div>
-            <p style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.65)", margin: 0 }}>
-              {inst.price}
-            </p>
-          </div>
-        ))}
-      </div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 32,
-          paddingTop: 20,
-          borderTop: "1px solid rgba(255,255,255,0.08)",
-          pointerEvents: "auto",
-        }}
-      >
-        <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0 }}>
-          Every institution above files 10–16 mandatory returns per year across 5 regulators.
-        </p>
-        <a
-          href="/book-demo"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 8,
-            background: "#FFFFFF",
-            color: "#0A0A0A",
-            borderRadius: 8,
-            padding: "10px 22px",
-            fontSize: 13,
-            fontWeight: 700,
-            textDecoration: "none",
-          }}
-        >
-          Book a demo →
-        </a>
-      </div>
-    </motion.div>
-  );
-};
-
-/* ---------------- Mobile ---------------- */
+// ─── Mobile fallback ───
 const MobileWhoWeServe = () => (
-  <section
-    id="who-we-serve"
-    style={{ background: "#0A0A0A", padding: "80px 24px", color: "#FFFFFF" }}
-  >
-    <p
-      style={{
-        fontSize: 11,
-        fontWeight: 700,
-        color: "rgba(255,255,255,0.45)",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        margin: "0 0 12px",
-      }}
-    >
-      Who We Serve
-    </p>
-    <h2
-      style={{
-        fontSize: 36,
-        fontWeight: 800,
-        letterSpacing: "-1.2px",
-        lineHeight: 1.1,
-        margin: "0 0 12px",
-      }}
-    >
-      Every licensed institution in Nigeria.
+  <section style={{ background: "#0A0A0A", color: "#FFFFFF", padding: "80px 24px" }}>
+    <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 14 }}>WHO WE SERVE</p>
+    <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1.2px", lineHeight: 1.05, marginBottom: 28 }}>
+      Every licensed<br />institution in<br />Nigeria.
     </h2>
-    <p style={{ fontSize: 14, color: "rgba(255,255,255,0.55)", margin: "0 0 40px", lineHeight: 1.6 }}>
-      1,000+ licensed financial institutions across the Federal Republic of Nigeria.
-    </p>
-
-    <div style={{ position: "relative", paddingLeft: 20 }}>
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 8,
-          bottom: 8,
-          width: 1,
-          background: "rgba(255,255,255,0.12)",
-        }}
-      />
-      {institutions.map((inst) => (
-        <div key={inst.id} style={{ position: "relative", padding: "0 0 32px" }}>
-          <div
-            style={{
-              position: "absolute",
-              left: -24,
-              top: 6,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.7)",
-            }}
-          />
-          <p
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: "rgba(255,255,255,0.45)",
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              margin: "0 0 8px",
-              fontFamily: "monospace",
-            }}
-          >
-            {inst.category}
-          </p>
-          <p
-            style={{
-              fontSize: 24,
-              fontWeight: 900,
-              margin: "0 0 8px",
-              letterSpacing: "-0.8px",
-            }}
-          >
-            {inst.count}
-          </p>
-          <p
-            style={{
-              fontSize: 16,
-              fontWeight: 700,
-              color: "rgba(255,255,255,0.9)",
-              lineHeight: 1.3,
-              margin: "0 0 8px",
-            }}
-          >
-            {inst.headline.replace(/\n/g, " ")}
-          </p>
-          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: "0 0 12px" }}>
-            {inst.description}
-          </p>
-          <p style={{ fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.7)", margin: 0 }}>
-            {inst.price}
-          </p>
+    <svg viewBox="2 4 13 10" style={{ width: "100%", maxWidth: 280, height: "auto", marginBottom: 32, opacity: 0.5 }}>
+      <polygon points={NIGERIA_POLYGON[0].map(p => `${p[0]},${15 - p[1]}`).join(" ")} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.08" />
+    </svg>
+    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+      {institutions.map(inst => (
+        <div key={inst.category} style={{ borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20 }}>
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "rgba(255,255,255,0.4)", margin: "0 0 6px" }}>{inst.category}</p>
+          <p style={{ fontSize: 36, fontWeight: 800, color: "#FFFFFF", margin: "0 0 6px", letterSpacing: "-1px" }}>{inst.count}</p>
+          <p style={{ fontSize: 14, fontWeight: 600, color: "#FFFFFF", margin: "0 0 8px", whiteSpace: "pre-line" }}>{inst.headline}</p>
+          <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, margin: 0 }}>{inst.desc}</p>
         </div>
       ))}
     </div>
-
-    <a
-      href="/book-demo"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        background: "#FFFFFF",
-        color: "#0A0A0A",
-        borderRadius: 8,
-        padding: "12px 22px",
-        fontSize: 14,
-        fontWeight: 700,
-        textDecoration: "none",
-        marginTop: 16,
-      }}
-    >
-      Book a demo →
-    </a>
   </section>
 );
 
-/* ---------------- Main ---------------- */
+// ─── Main desktop section ───
 const WhoWeServeSection = () => {
   const isMobile = useIsMobile();
   const sectionRef = useRef<HTMLElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [zoomNumber, setZoomNumber] = useState(1);
+
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end end"],
   });
-  const smoothProgress = useSpring(scrollYProgress, {
-    stiffness: 80,
-    damping: 20,
-    restDelta: 0.001,
-  });
+
+  const headerOpacity      = useTransform(scrollYProgress, [0, 0.05, 0.20, 0.30], [0, 1, 1, 0]);
+  const nigeriaLabelOpacity = useTransform(scrollYProgress, [0.48, 0.60, 0.72, 0.80], [0, 1, 1, 0]);
+  const coordinateOpacity  = useTransform(scrollYProgress, [0.20, 0.32, 0.72, 0.80], [0, 1, 1, 0]);
+  const zoomOpacity        = useTransform(scrollYProgress, [0.20, 0.32, 0.72, 0.80], [0, 1, 1, 0]);
+  const listOpacity        = useTransform(scrollYProgress, [0.72, 0.85], [0, 1]);
+  const listY              = useTransform(scrollYProgress, [0.72, 0.85], [40, 0]);
+  const scrollHintOpacity  = useTransform(scrollYProgress, [0, 0.06, 0.12], [1, 1, 0]);
+  const zoomDisplay        = useTransform(scrollYProgress, [0.20, 0.70], [1, 847]);
+
+  // Init map
+  useEffect(() => {
+    if (isMobile || !mapContainerRef.current || mapRef.current) return;
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [20, 10],
+      zoom: 1.2,
+      pitch: 0,
+      bearing: 0,
+      interactive: false,
+      attributionControl: false,
+    });
+
+    map.on("load", () => {
+      setMapLoaded(true);
+
+      map.addSource("nigeria-highlight", {
+        type: "geojson",
+        data: {
+          type: "Feature",
+          geometry: { type: "Polygon", coordinates: NIGERIA_POLYGON },
+          properties: {},
+        },
+      });
+
+      map.addLayer({
+        id: "nigeria-fill",
+        type: "fill",
+        source: "nigeria-highlight",
+        paint: { "fill-color": "rgba(255,255,255,1)", "fill-opacity": 0 },
+      });
+
+      map.addLayer({
+        id: "nigeria-border",
+        type: "line",
+        source: "nigeria-highlight",
+        paint: { "line-color": "rgba(255,255,255,0.65)", "line-width": 1.5, "line-opacity": 0 },
+      });
+
+      const abujaEl = document.createElement("div");
+      abujaEl.id = "abuja-marker";
+      abujaEl.style.cssText =
+        "width:10px;height:10px;border-radius:50%;background:#FFFFFF;box-shadow:0 0 16px rgba(255,255,255,0.7);opacity:0;transition:opacity 0.5s;";
+      new mapboxgl.Marker({ element: abujaEl, anchor: "center" })
+        .setLngLat([7.4951, 9.0579])
+        .addTo(map);
+    });
+
+    mapRef.current = map;
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [isMobile]);
+
+  // Drive map with scroll
+  useEffect(() => {
+    if (isMobile) return;
+    const unsub = scrollYProgress.on("change", (progress) => {
+      if (!mapRef.current || !mapLoaded) return;
+      const cam = interpolateCamera(progress);
+      mapRef.current.jumpTo(cam);
+
+      const nigeriaOp = Math.max(0, Math.min(1, (cam.zoom - 3.5) / 2));
+      if (mapRef.current.getLayer("nigeria-fill")) {
+        mapRef.current.setPaintProperty("nigeria-fill", "fill-opacity", nigeriaOp * 0.06);
+        mapRef.current.setPaintProperty("nigeria-border", "line-opacity", nigeriaOp);
+      }
+
+      const marker = document.getElementById("abuja-marker");
+      if (marker) {
+        marker.style.opacity = cam.zoom > 5.5 ? String(Math.min(1, (cam.zoom - 5.5) / 1.5)) : "0";
+      }
+    });
+    return unsub;
+  }, [mapLoaded, scrollYProgress, isMobile]);
+
+  // Mirror zoomDisplay motion value to state for JSX
+  useEffect(() => {
+    const unsub = zoomDisplay.on("change", (v) => setZoomNumber(Math.round(v)));
+    return unsub;
+  }, [zoomDisplay]);
 
   if (isMobile) return <MobileWhoWeServe />;
 
   return (
-    <section
-      id="who-we-serve"
-      ref={sectionRef}
-      style={{ height: SECTION_HEIGHT, position: "relative", background: "#0A0A0A" }}
-    >
-      <div style={{ position: "sticky", top: 0, height: "100vh", overflow: "hidden", background: "#0A0A0A" }}>
-        <MapZoomLayer progress={smoothProgress} />
-        <ParticleField progress={smoothProgress} />
-        <SectionHeader progress={smoothProgress} />
-        <CoordinateDisplay progress={smoothProgress} />
-        <ZoomIndicator progress={smoothProgress} />
-        <NigeriaLabel progress={smoothProgress} />
-        <DissolveFlash progress={smoothProgress} />
-        <InstitutionList progress={smoothProgress} />
-        <ScrollHint progress={smoothProgress} />
+    <section ref={sectionRef} style={{ position: "relative", height: "600vh", background: "#0A0A0A" }}>
+      <div style={{ position: "sticky", top: 0, height: "100vh", width: "100%", overflow: "hidden", background: "#0A0A0A" }}>
+        {/* Map */}
+        <div ref={mapContainerRef} style={{ position: "absolute", inset: 0, background: "#0A0A0A" }} />
+
+        {/* Dark vignette */}
+        <div
+          style={{
+            position: "absolute", inset: 0, pointerEvents: "none",
+            background: "radial-gradient(ellipse at center, transparent 40%, rgba(10,10,10,0.55) 100%)",
+          }}
+        />
+        {/* Bottom fade */}
+        <div
+          style={{
+            position: "absolute", bottom: 0, left: 0, right: 0, height: 200, pointerEvents: "none",
+            background: "linear-gradient(to bottom, transparent, #0A0A0A)",
+          }}
+        />
+
+        {/* HEADER */}
+        <motion.div
+          style={{
+            position: "absolute", top: "12vh", left: 0, right: 0, textAlign: "center",
+            color: "#FFFFFF", opacity: headerOpacity, padding: "0 24px",
+          }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", marginBottom: 18 }}>
+            WHO WE SERVE
+          </p>
+          <h2 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 800, letterSpacing: "-2px", lineHeight: 1.05, margin: 0 }}>
+            Every licensed<br />institution in Nigeria.
+          </h2>
+        </motion.div>
+
+        {/* COORDINATES — bottom left */}
+        <motion.div
+          style={{
+            position: "absolute", bottom: 40, left: 40, color: "#FFFFFF",
+            opacity: coordinateOpacity, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          }}
+        >
+          <p style={{ fontSize: 12, margin: 0, letterSpacing: "0.04em" }}>9.0820°N · 8.6753°E</p>
+          <p style={{ fontSize: 10, margin: "4px 0 0", color: "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>
+            FEDERAL REPUBLIC OF NIGERIA
+          </p>
+        </motion.div>
+
+        {/* ZOOM — bottom right */}
+        <motion.div
+          style={{
+            position: "absolute", bottom: 40, right: 40, color: "#FFFFFF",
+            opacity: zoomOpacity, textAlign: "right",
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          }}
+        >
+          <p style={{ fontSize: 10, margin: 0, letterSpacing: "0.1em", color: "rgba(255,255,255,0.45)" }}>ZOOM</p>
+          <p style={{ fontSize: 22, fontWeight: 700, margin: "4px 0 0", letterSpacing: "-0.02em" }}>{zoomNumber}x</p>
+        </motion.div>
+
+        {/* NIGERIA LABEL */}
+        <motion.div
+          style={{
+            position: "absolute", top: "38%", left: 0, right: 0, textAlign: "center",
+            color: "#FFFFFF", opacity: nigeriaLabelOpacity, pointerEvents: "none",
+          }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: "rgba(255,255,255,0.6)", margin: 0 }}>
+            FEDERAL REPUBLIC OF
+          </p>
+          <p style={{ fontSize: "clamp(56px, 9vw, 120px)", fontWeight: 800, letterSpacing: "-3px", margin: "8px 0 12px", lineHeight: 1 }}>
+            Nigeria
+          </p>
+          <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.4)", margin: "0 auto 12px" }} />
+          <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0, letterSpacing: "0.04em" }}>
+            1,000+ licensed financial institutions
+          </p>
+        </motion.div>
+
+        {/* INSTITUTION LIST */}
+        <motion.div
+          style={{
+            position: "absolute", inset: 0, padding: "80px 40px 60px",
+            opacity: listOpacity, y: listY, color: "#FFFFFF",
+            display: "flex", flexDirection: "column",
+            background: "linear-gradient(to bottom, rgba(10,10,10,0.85), rgba(10,10,10,0.98))",
+            overflowY: "auto",
+          }}
+        >
+          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 28 }}>
+            LICENSED INSTITUTION CATEGORIES — NIGERIA
+          </p>
+
+          {/* Timeline bar */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 36, maxWidth: 1280, width: "100%", margin: "0 auto 36px" }}>
+            {institutions.map((_, i) => (
+              <div key={i} style={{ flex: 1, height: 2, background: "rgba(255,255,255,0.2)" }} />
+            ))}
+          </div>
+
+          {/* Columns */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: 0,
+              maxWidth: 1280,
+              width: "100%",
+              margin: "0 auto",
+              flex: 1,
+            }}
+          >
+            {institutions.map((inst, i) => (
+              <div
+                key={inst.category}
+                style={{
+                  padding: i > 0 ? "0 20px" : "0 20px 0 0",
+                  borderRight: i < institutions.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
+                <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "rgba(255,255,255,0.5)", margin: "0 0 10px" }}>
+                  {inst.category}
+                </p>
+                <p style={{ fontSize: 44, fontWeight: 800, color: "#FFFFFF", margin: "0 0 8px", letterSpacing: "-1.5px", lineHeight: 1 }}>
+                  {inst.count}
+                </p>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#FFFFFF", whiteSpace: "pre-line", margin: "0 0 12px", lineHeight: 1.25 }}>
+                  {inst.headline}
+                </p>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", lineHeight: 1.6, margin: "0 0 14px", flex: 1 }}>
+                  {inst.desc}
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
+                  {inst.returns.map((r) => (
+                    <p key={r} style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", margin: 0, letterSpacing: "0.02em" }}>
+                      → {r}
+                    </p>
+                  ))}
+                </div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#FFFFFF", margin: 0, letterSpacing: "0.02em" }}>
+                  {inst.price}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom bar */}
+          <div
+            style={{
+              maxWidth: 1280, width: "100%", margin: "32px auto 0",
+              borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: 20,
+              display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap",
+            }}
+          >
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: 0 }}>
+              Every institution above files 10–16 mandatory returns per year across 5 regulators.
+            </p>
+            <a
+              href="/book-demo"
+              style={{
+                fontSize: 13, fontWeight: 600, color: "#0A0A0A", background: "#FFFFFF",
+                borderRadius: 8, padding: "10px 18px", textDecoration: "none", letterSpacing: "0.02em",
+              }}
+            >
+              Book a demo →
+            </a>
+          </div>
+        </motion.div>
+
+        {/* SCROLL HINT */}
+        <motion.div
+          style={{
+            position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)",
+            color: "rgba(255,255,255,0.55)", opacity: scrollHintOpacity,
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+          }}
+        >
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              width: 22, height: 34, borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.35)", position: "relative",
+            }}
+          >
+            <motion.div
+              animate={{ y: [4, 14, 4], opacity: [1, 0.2, 1] }}
+              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              style={{
+                position: "absolute", left: "50%", top: 0, marginLeft: -2,
+                width: 4, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.7)",
+              }}
+            />
+          </motion.div>
+          <p style={{ fontSize: 10, letterSpacing: "0.2em", margin: 0, fontWeight: 600 }}>SCROLL</p>
+        </motion.div>
+
+        {/* Attribution */}
+        <p
+          style={{
+            position: "absolute", bottom: 6, right: 12, margin: 0,
+            fontSize: 9, color: "rgba(255,255,255,0.3)", letterSpacing: "0.02em",
+            pointerEvents: "none",
+          }}
+        >
+          Map © Mapbox © OpenStreetMap
+        </p>
       </div>
     </section>
   );
