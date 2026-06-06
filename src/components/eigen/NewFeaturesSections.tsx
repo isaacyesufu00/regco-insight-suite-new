@@ -220,7 +220,7 @@ export const FraudPreventionSection = () => {
   ];
 
   return (
-    <section ref={sectionRef} style={{ background: "#0A0A0A", padding: "112px 0" }}>
+    <section ref={sectionRef} style={{ background: "#0A0A0A", padding: "112px 0", overflow: "hidden" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
