@@ -129,64 +129,80 @@ const demoTxns: Txn[] = [
   { name: "Yusuf Ibrahim", account: "0667788990", amount: "₦12,000,000", flag: "VELOCITY", severity: "critical", time: "31s ago", clean: false },
 ];
 
+const FEED_CAP = 5;
 const LiveFeedDemo = () => {
-  const [displayedTxns, setDisplayedTxns] = useState<Txn[]>(demoTxns.slice(0, 5));
+  const [displayedTxns, setDisplayedTxns] = useState<(Txn & { uid: string })[]>(
+    demoTxns.slice(0, FEED_CAP).map((t, i) => ({ ...t, uid: `init-${i}` }))
+  );
   useEffect(() => {
-    let index = 5;
+    let pointer = FEED_CAP % demoTxns.length;
     const interval = setInterval(() => {
-      const next = { ...demoTxns[index % demoTxns.length], time: "just now" };
-      setDisplayedTxns(prev => [next, ...prev].slice(0, 5));
-      index++;
-    }, 2200);
+      const next = { ...demoTxns[pointer], time: "just now", uid: `${Date.now()}-${pointer}` };
+      pointer = (pointer + 1) % demoTxns.length;
+      setDisplayedTxns(prev => [next, ...prev].slice(0, FEED_CAP));
+    }, 2800);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div style={{ background: "rgba(255,255,255,0.04)", borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", maxWidth: 760, margin: "0 auto 72px" }}>
-      <div style={{ padding: "16px 24px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{
+      background: "rgba(255,255,255,0.04)", borderRadius: 16,
+      border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden",
+      maxWidth: 760, margin: "0 auto 72px",
+      height: 344, display: "flex", flexDirection: "column", flexShrink: 0, position: "relative",
+    }}>
+      <div style={{ padding: "14px 22px", borderBottom: "1px solid rgba(255,255,255,0.07)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, height: 48 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <motion.div animate={{ opacity: [1, 0.2, 1] }} transition={{ duration: 1.8, repeat: Infinity }} style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ADE80" }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF" }}>Live Transaction Feed</span>
         </div>
         <span style={{ fontSize: 12, color: "rgba(255,255,255,0.3)" }}>Screening in real time</span>
       </div>
-      <AnimatePresence initial={false}>
-        {displayedTxns.map((txn, i) => (
-          <motion.div
-            key={`${txn.name}-${i}-${txn.account}`}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              padding: "14px 24px",
-              borderBottom: "1px solid rgba(255,255,255,0.05)",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              borderLeft: `3px solid ${!txn.clean ? (txn.severity === "critical" ? "#DC2626" : txn.severity === "high" ? "#D97706" : "#2563EB") : "transparent"}`,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {!txn.clean && <AlertTriangle size={14} color={txn.severity === "critical" ? "#FCA5A5" : "#FCD34D"} />}
-              <div>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF", margin: 0 }}>{txn.name}</p>
-                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>{txn.account} · {txn.time}</p>
+      <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
+        <AnimatePresence initial={false}>
+          {displayedTxns.map((txn, i) => (
+            <motion.div
+              key={txn.uid}
+              initial={{ opacity: 0, y: -52, height: 0 }}
+              animate={{ opacity: Math.max(0.25, 1 - i * 0.18), y: 0, height: 52 }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1], height: { duration: 0.28 } }}
+              style={{
+                padding: "0 22px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+                overflow: "hidden",
+                borderLeft: `3px solid ${!txn.clean ? (txn.severity === "critical" ? "#DC2626" : txn.severity === "high" ? "#D97706" : "#2563EB") : "transparent"}`,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                {!txn.clean && <AlertTriangle size={14} color={txn.severity === "critical" ? "#FCA5A5" : "#FCD34D"} />}
+                <div>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#FFFFFF", margin: 0 }}>{txn.name}</p>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>{txn.account} · {txn.time}</p>
+                </div>
               </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{txn.amount}</p>
-              {txn.clean ? (
-                <span style={{ fontSize: 11, fontWeight: 600, color: "#4ADE80" }}>CLEAN ✓</span>
-              ) : (
-                <span style={{ fontSize: 10, fontWeight: 700, background: txn.severity === "critical" ? "rgba(220,38,38,0.2)" : txn.severity === "high" ? "rgba(217,119,6,0.2)" : "rgba(37,99,235,0.2)", color: txn.severity === "critical" ? "#FCA5A5" : txn.severity === "high" ? "#FCD34D" : "#93C5FD", borderRadius: 999, padding: "3px 8px" }}>
-                  {txn.flag}
-                </span>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: 0 }}>{txn.amount}</p>
+                {txn.clean ? (
+                  <span style={{ fontSize: 11, fontWeight: 600, color: "#4ADE80" }}>CLEAN ✓</span>
+                ) : (
+                  <span style={{ fontSize: 10, fontWeight: 700, background: txn.severity === "critical" ? "rgba(220,38,38,0.2)" : txn.severity === "high" ? "rgba(217,119,6,0.2)" : "rgba(37,99,235,0.2)", color: txn.severity === "critical" ? "#FCA5A5" : txn.severity === "high" ? "#FCD34D" : "#93C5FD", borderRadius: 999, padding: "3px 8px" }}>
+                    {txn.flag}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: 80,
+          background: "linear-gradient(to bottom, transparent 0%, rgba(10,10,10,0.97) 100%)",
+          pointerEvents: "none", zIndex: 2,
+        }} />
+      </div>
     </div>
   );
 };
@@ -204,7 +220,7 @@ export const FraudPreventionSection = () => {
   ];
 
   return (
-    <section ref={sectionRef} style={{ background: "#0A0A0A", padding: "112px 0" }}>
+    <section ref={sectionRef} style={{ background: "#0A0A0A", padding: "112px 0", overflow: "hidden" }}>
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
