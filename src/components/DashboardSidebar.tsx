@@ -3,7 +3,7 @@ import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
   Shield, BarChart2, FileCheck, ClipboardCheck, Newspaper,
-  Calendar, Database, Settings, HelpCircle,
+  Calendar, Settings, HelpCircle,
   PanelLeftClose, PanelLeft, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -45,7 +45,6 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
     { path: "/dashboard/audit-tracker",         label: "Audit Tracker",   icon: ClipboardCheck,   feature: "auditTracker" },
     { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intel", icon: Newspaper,     feature: "regulatoryIntelligence" },
     { path: "/dashboard/calendar",              label: "Calendar",        icon: Calendar,         feature: null },
-    { path: "/dashboard/data-sources",          label: "Data Sources",    icon: Database,         feature: "dataIngestion" },
     { path: "/dashboard/settings",              label: "Settings",        icon: Settings,         feature: null },
     { path: "/dashboard/tutorial",              label: "How to Use RegCo",icon: HelpCircle,       feature: null },
   ] as { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean; isNew?: boolean }[]).filter((i) => !i.feature || canAccess(i.feature));
