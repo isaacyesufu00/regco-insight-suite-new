@@ -18,7 +18,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardHome from "./pages/DashboardHome";
 import NewReport from "./pages/NewReport";
 import MyReports from "./pages/MyReports";
-import DataSources from "./pages/DataSources";
+
 import DashboardSettings from "./pages/DashboardSettings";
 import ComplianceCalendar from "./pages/ComplianceCalendar";
 import DashboardTutorial from "./pages/DashboardTutorial";
@@ -107,7 +107,7 @@ const App = () => (
               <Route index element={<DashboardHome />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="new-report" element={<NewReport />} />
-              <Route path="data-sources" element={<DataSources />} />
+              <Route path="data-sources" element={<Navigate to="/dashboard/transactions" replace />} />
               <Route path="calendar" element={<ComplianceCalendar />} />
               <Route path="settings" element={<DashboardSettings />} />
               <Route path="support" element={<SupportTickets />} />
