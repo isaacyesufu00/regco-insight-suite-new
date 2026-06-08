@@ -260,106 +260,171 @@ export const FraudPreventionSection = () => {
 };
 
 /* ============ SECTION C — SANCTIONS & RISK SCREENING ============ */
-export const ScreeningSection = () => {
-  const lists = [
-    "UN Security Council Consolidated List",
-    "OFAC SDN List — US Treasury",
-    "EU Consolidated Sanctions",
-    "UK HM Treasury Sanctions",
-    "CBN Terrorism Watchlist",
-  ];
+const screeningLists = [
+  { name: "UN Security Council", status: "Live" },
+  { name: "OFAC SDN — US Treasury", status: "Live" },
+  { name: "EU Consolidated Sanctions", status: "Live" },
+  { name: "UK HM Treasury Sanctions", status: "Live" },
+  { name: "CBN Terrorism Watchlist", status: "Live" },
+];
+
+const ScreeningAnimationCard = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
 
   return (
-    <section style={{ background: "#F5F5F0", padding: "112px 0" }}>
-      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 40px" }}>
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.7 }}
-          style={{ textAlign: "center", marginBottom: 64 }}
-        >
-          <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>NEW — RISK SCREENING</p>
-          <h2 style={{ fontSize: 48, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-1.5px", lineHeight: 1.08, marginBottom: 16 }}>
-            Know who you're<br />doing business with.
-          </h2>
-          <p style={{ fontSize: 17, color: "#6B6B6B", maxWidth: 520, margin: "0 auto", lineHeight: 1.65 }}>
-            Before onboarding a customer or approving a transaction, screen them against global sanctions lists, PEP databases, and adverse media — in under a second.
+    <div
+      ref={ref}
+      style={{
+        maxWidth: 420,
+        marginLeft: "auto",
+        background: "#0A0A0A",
+        borderRadius: 16,
+        border: "1px solid rgba(255,255,255,0.08)",
+        padding: 24,
+        boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
+            SCREENING RESULT
           </p>
-        </motion.div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 16, maxWidth: 1100, margin: "0 auto" }}>
-          <motion.div
-            initial={{ opacity: 0, x: -48 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            style={{ background: "#0A0A0A", borderRadius: 20, padding: 40, gridColumn: "span 3" }}
-          >
-            <p style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>SANCTIONS SCREENING</p>
-            <h3 style={{ fontSize: 32, fontWeight: 800, color: "#FFFFFF", letterSpacing: "-0.8px", lineHeight: 1.1, marginBottom: 16 }}>
-              Five global sanctions lists.<br />Checked instantly.
-            </h3>
-            <p style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 28, maxWidth: 480 }}>
-              RegCo checks every customer against the UN Security Council list, OFAC SDN list, EU Consolidated Sanctions, UK HM Treasury, and the Nigerian CBN watchlist — automatically, every time.
-            </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {lists.map((list, i) => (
-                <motion.div
-                  key={list}
-                  initial={{ opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.07, duration: 0.4 }}
-                  style={{ display: "flex", alignItems: "center", gap: 10 }}
-                >
-                  <CheckCircle size={14} color="#4ADE80" />
-                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.7)" }}>{list}</span>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 48 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-            style={{ background: "#FFFFFF", borderRadius: 20, padding: 40, border: "1px solid rgba(0,0,0,0.07)", gridColumn: "span 2" }}
-          >
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>PEP IDENTIFICATION</p>
-            <h3 style={{ fontSize: 28, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.8px", lineHeight: 1.15, marginBottom: 14 }}>
-              Politically Exposed Persons — identified automatically.
-            </h3>
-            <p style={{ fontSize: 14, color: "#6B6B6B", lineHeight: 1.7, marginBottom: 24 }}>
-              CBN requires Enhanced Due Diligence for PEPs. RegCo identifies politicians, government officials, and their associates from our Nigerian PEP database — so you know before you onboard.
-            </p>
-            <div style={{ background: "#FFFBEB", border: "1px solid rgba(217,119,6,0.2)", borderRadius: 10, padding: "14px 16px" }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#D97706", margin: "0 0 4px" }}>PEP MATCH EXAMPLE</p>
-              <p style={{ fontSize: 13, color: "#1A1A1A", margin: 0, fontFamily: "monospace" }}>
-                "Adamu Musa" → Matches: State Governor, Kano State<br />
-                <span style={{ color: "#D97706" }}>Action required: Enhanced Due Diligence</span>
-              </p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 48 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: "-60px" }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            style={{ background: "#FFFFFF", borderRadius: 20, padding: 40, border: "1px solid rgba(0,0,0,0.07)" }}
-          >
-            <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>ADVERSE MEDIA</p>
-            <h3 style={{ fontSize: 24, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.8px", lineHeight: 1.15, marginBottom: 14 }}>
-              Crime records and adverse news — checked at onboarding.
-            </h3>
-            <p style={{ fontSize: 14, color: "#6B6B6B", lineHeight: 1.7 }}>
-              Screen customers against Nigerian crime records and adverse media databases. Know if a new customer has a history of fraud, financial crime, or regulatory violations before they become your problem.
-            </p>
-          </motion.div>
+          <p style={{ fontSize: 14, fontWeight: 700, color: "#FFFFFF", margin: "4px 0 0" }}>Adebayo Williams</p>
         </div>
+        <span style={{ fontSize: 10, fontWeight: 700, background: "rgba(74,222,128,0.15)", color: "#4ADE80", borderRadius: 999, padding: "3px 10px" }}>
+          ✓ CLEAR
+        </span>
       </div>
-    </section>
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        {screeningLists.map((list, i) => (
+          <div key={list.name}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)" }}>{list.name}</span>
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={inView ? { opacity: 1 } : {}}
+                transition={{ delay: 0.5 + i * 0.3 }}
+                style={{ fontSize: 10, fontWeight: 700, color: "#4ADE80" }}
+              >
+                ✓ Clear
+              </motion.span>
+            </div>
+            <div style={{ height: 4, background: "rgba(255,255,255,0.08)", borderRadius: 999, overflow: "hidden" }}>
+              <motion.div
+                initial={{ width: "0%" }}
+                animate={inView ? { width: "100%" } : {}}
+                transition={{ delay: i * 0.3, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                style={{ height: "100%", background: "#4ADE80", borderRadius: 999 }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
+
+export const ScreeningSection = () => (
+  <section
+    id="screening"
+    style={{
+      background: "#F5F5F0",
+      padding: "96px 0",
+      borderTop: "1px solid rgba(0,0,0,0.07)",
+    }}
+  >
+    <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+      <div
+        className="screening-grid"
+        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 72, alignItems: "center" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, x: -32 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 16 }}>
+            RISK SCREENING
+          </p>
+          <h2 style={{ fontSize: 42, fontWeight: 800, color: "#1A1A1A", letterSpacing: "-1.2px", lineHeight: 1.1, marginBottom: 18 }}>
+            Know who you're<br />doing business with.
+          </h2>
+          <p style={{ fontSize: 16, color: "#6B6B6B", lineHeight: 1.7, marginBottom: 28 }}>
+            Comprehensive risk screening covering sanctions lists, adverse media, crime databases, and PEP identification — before you onboard any customer or approve any transaction.
+          </p>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
+            {screeningLists.map((list, i) => (
+              <motion.div
+                key={list.name}
+                initial={{ opacity: 0, x: -16 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "10px 14px",
+                  background: "#FFFFFF",
+                  borderRadius: 8,
+                  border: "1px solid rgba(0,0,0,0.07)",
+                }}
+              >
+                <span style={{ fontSize: 13, color: "#0A0A0A", fontWeight: 500 }}>{list.name}</span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: "#16A34A",
+                    background: "#F0FDF4",
+                    borderRadius: 999,
+                    padding: "3px 10px",
+                    border: "1px solid rgba(22,163,74,0.15)",
+                  }}
+                >
+                  ● {list.status}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+
+          <a
+            href="/book-demo"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: "#0A0A0A",
+              color: "#FFFFFF",
+              borderRadius: 8,
+              padding: "10px 20px",
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            See screening in action →
+          </a>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <ScreeningAnimationCard />
+        </motion.div>
+      </div>
+    </div>
+
+    <style>{`
+      @media (max-width: 768px) {
+        .screening-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+      }
+    `}</style>
+  </section>
+);
