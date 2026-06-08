@@ -167,13 +167,6 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                   {item.label}
                 </span>
               )}
-              {!collapsed && item.isNew && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, background: "#0A0A0A",
-                  color: "#FFFFFF", borderRadius: 999, padding: "1px 6px",
-                  letterSpacing: "0.04em", flexShrink: 0,
-                }}>NEW</span>
-              )}
             </NavLink>
           );
         })}
