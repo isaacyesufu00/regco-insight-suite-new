@@ -65,7 +65,7 @@ const NIGERIA_POLYGON: [number, number][][] = [[
 
 // ─── Mobile fallback ───
 const MobileWhoWeServe = () => (
-  <section style={{ background: "#0A0A0A", color: "#FFFFFF", padding: "80px 24px" }}>
+  <section id="who-we-serve" style={{ background: "#0A0A0A", color: "#FFFFFF", padding: "80px 24px" }}>
     <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 14 }}>WHO WE SERVE</p>
     <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1.2px", lineHeight: 1.05, marginBottom: 28 }}>
       Every licensed<br />institution in<br />Nigeria.
