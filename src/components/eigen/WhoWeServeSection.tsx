@@ -197,7 +197,7 @@ const WhoWeServeSection = () => {
   if (isMobile) return <MobileWhoWeServe />;
 
   return (
-    <section ref={sectionRef} style={{ position: "relative", height: "600vh", background: "#0A0A0A" }}>
+    <section id="who-we-serve" ref={sectionRef} style={{ position: "relative", height: "600vh", background: "#0A0A0A" }}>
       <div style={{ position: "sticky", top: 0, height: "100vh", width: "100%", overflow: "hidden", background: "#0A0A0A" }}>
         {/* Map */}
         <div ref={mapContainerRef} style={{ position: "absolute", inset: 0, background: "#0A0A0A" }} />
