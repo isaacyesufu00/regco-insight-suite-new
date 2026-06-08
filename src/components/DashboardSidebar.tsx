@@ -34,20 +34,20 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
 
   const toggle = () => setCollapsed((p) => !p);
 
-  const navItems: { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean }[] = ([
+  const navItems: { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean; isNew?: boolean }[] = ([
     { path: "/dashboard",                       label: "Dashboard",       icon: LayoutDashboard,  feature: null,                     exact: true },
     { path: "/dashboard/reports",               label: "My Reports",      icon: FileText,         feature: null },
     { path: "/dashboard/new-report",            label: "Create Report",   icon: FilePlus,         feature: "reportGeneration" },
-    { path: "/dashboard/customers",             label: "Customer 360",    icon: Users,            feature: "customerIntelligence" },
+    { path: "/dashboard/customers",             label: "Customer 360",    icon: Users,            feature: "customerIntelligence",   isNew: true },
     { path: "/dashboard/transactions",          label: "Transactions",    icon: Activity,         feature: "transactionMonitor" },
-    { path: "/dashboard/screening",             label: "Risk Screening",  icon: Shield,           feature: "sanctionsScreening" },
+    { path: "/dashboard/screening",             label: "Risk Screening",  icon: Shield,           feature: "sanctionsScreening",     isNew: true },
     { path: "/dashboard/board-pack",            label: "Board Pack",      icon: FileCheck,        feature: "boardPack" },
     { path: "/dashboard/audit-tracker",         label: "Audit Tracker",   icon: ClipboardCheck,   feature: "auditTracker" },
     { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intel", icon: Newspaper,     feature: "regulatoryIntelligence" },
     { path: "/dashboard/calendar",              label: "Calendar",        icon: Calendar,         feature: null },
     { path: "/dashboard/settings",              label: "Settings",        icon: Settings,         feature: null },
     { path: "/dashboard/tutorial",              label: "How to Use RegCo",icon: HelpCircle,       feature: null },
-  ] as { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean }[]).filter((i) => !i.feature || canAccess(i.feature));
+  ] as { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean; isNew?: boolean }[]).filter((i) => !i.feature || canAccess(i.feature));
 
   const isActive = (item: { path: string; exact?: boolean }) =>
     item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path);
@@ -166,6 +166,13 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
                 }}>
                   {item.label}
                 </span>
+              )}
+              {!collapsed && item.isNew && (
+                <span style={{
+                  fontSize: 9, fontWeight: 700, background: "#0A0A0A",
+                  color: "#FFFFFF", borderRadius: 999, padding: "1px 6px",
+                  letterSpacing: "0.04em", flexShrink: 0,
+                }}>NEW</span>
               )}
             </NavLink>
           );

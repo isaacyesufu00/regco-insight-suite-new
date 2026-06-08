@@ -14,7 +14,7 @@ const EigenNavbar = () => {
   const [activeSection, setActiveSection] = useState<string>("");
 
   useEffect(() => {
-    const ids = ["features", "reports", "who-we-serve", "screening", "pricing", "about"];
+    const ids = ["features", "reports", "who-we-serve", "pricing", "about"];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {

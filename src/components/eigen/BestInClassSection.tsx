@@ -45,7 +45,7 @@ const MiniDoc = ({ title, reg, rotate }: { title: string; reg: string; rotate: n
 );
 
 const BestInClassSection = () => (
-  <section style={{ background: "#F5F5F0", padding: "80px 0" }}>
+  <section id="reports" style={{ background: "#F5F5F0", padding: "80px 0" }}>
     <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
       <ScrollReveal>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
