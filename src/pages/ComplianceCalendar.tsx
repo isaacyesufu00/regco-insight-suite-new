@@ -225,7 +225,10 @@ const ComplianceCalendar = () => {
                         </div>
                         <p style={{ fontSize: 13, fontWeight: 700, color: "#0A0A0A", margin: "0 0 4px", lineHeight: 1.4 }}>{dl.title}</p>
                         <p style={{ fontSize: 12, color: "#9B9B9B", margin: 0, lineHeight: 1.5 }}>{dl.description}</p>
-                        <Link to="/dashboard/new-report" style={{ display: "inline-block", marginTop: 10, fontSize: 12, fontWeight: 600, color: "#0A0A0A", textDecoration: "none", background: "#F5F5F0", borderRadius: 6, padding: "6px 10px" }}>
+                        <Link
+                          to={dl.reportType ? `/dashboard/new-report?regulator=${dl.regulator}&type=${encodeURIComponent(dl.reportType)}` : "/dashboard/new-report"}
+                          style={{ display: "inline-block", marginTop: 10, fontSize: 12, fontWeight: 600, color: "#0A0A0A", textDecoration: "none", background: "#F5F5F0", borderRadius: 6, padding: "6px 10px" }}
+                        >
                           Generate return →
                         </Link>
                       </div>
