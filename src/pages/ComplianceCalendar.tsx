@@ -6,8 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Deadline {
   id: string;
   date: number;
-  regulator: "CBN" | "FIRS" | "NFIU" | "NDIC" | "SCUML";
+  regulator: "CBN" | "FIRS" | "NFIU" | "NDIC" | "SCUML" | "PENCOM";
   title: string;
+  reportType?: string; // Maps to NewReport report_type for ?type= URL param
   description: string;
   severity: "high" | "medium";
 }
@@ -17,25 +18,27 @@ const getDeadlines = (year: number, month: number): Deadline[] => {
   const cbnReturnMonth = new Date(year, month - 1, 1).toLocaleString("en-NG", { month: "long", year: "numeric" });
 
   deadlines.push(
-    { id: `cbn-mfb-${year}-${month}`, date: 15, regulator: "CBN", title: `MFB Regulatory Return — ${cbnReturnMonth}`, description: "Monthly balance sheet, CAR, NPL, liquidity submission to CBN.", severity: "high" },
-    { id: `cbn-monetary-${year}-${month}`, date: 15, regulator: "CBN", title: `Monetary Policy Return — ${cbnReturnMonth}`, description: "Interest rates and monetary aggregates submission.", severity: "high" },
-    { id: `cbn-prudential-${year}-${month}`, date: 15, regulator: "CBN", title: `Prudential Return — ${cbnReturnMonth}`, description: "Risk assets, provisions, and loan classification.", severity: "high" },
-    { id: `firs-paye-${year}-${month}`, date: 10, regulator: "FIRS", title: "PAYE Remittance", description: "Employee income tax for previous month remitted to FIRS.", severity: "high" },
-    { id: `firs-vat-${year}-${month}`, date: 21, regulator: "FIRS", title: "VAT Return", description: "Monthly VAT return at 7.5% remitted to FIRS.", severity: "high" },
-    { id: `firs-wht-${year}-${month}`, date: 21, regulator: "FIRS", title: "WHT Return", description: "Withholding tax on vendor payments.", severity: "medium" },
+    { id: `cbn-mfb-${year}-${month}`, date: 15, regulator: "CBN", title: `MFB Regulatory Return — ${cbnReturnMonth}`, reportType: "MFB Regulatory Return", description: "Monthly balance sheet, CAR, NPL, liquidity submission to CBN.", severity: "high" },
+    { id: `cbn-monetary-${year}-${month}`, date: 15, regulator: "CBN", title: `Monetary Policy Return — ${cbnReturnMonth}`, reportType: "CBN Monetary Policy Return", description: "Interest rates and monetary aggregates submission.", severity: "high" },
+    { id: `cbn-prudential-${year}-${month}`, date: 15, regulator: "CBN", title: `Prudential Return — ${cbnReturnMonth}`, reportType: "Prudential Return", description: "Risk assets, provisions, and loan classification.", severity: "high" },
+    { id: `firs-paye-${year}-${month}`, date: 10, regulator: "FIRS", title: "PAYE Remittance", reportType: "PAYE Remittance", description: "Employee income tax for previous month remitted to FIRS.", severity: "high" },
+    { id: `firs-vat-${year}-${month}`, date: 21, regulator: "FIRS", title: "VAT Return", reportType: "VAT Return", description: "Monthly VAT return at 7.5% remitted to FIRS.", severity: "high" },
+    { id: `firs-wht-${year}-${month}`, date: 21, regulator: "FIRS", title: "WHT Return", reportType: "Withholding Tax Return", description: "Withholding tax on vendor payments.", severity: "medium" },
+    { id: `pencom-${year}-${month}`, date: 7, regulator: "PENCOM", title: "Pension Contribution Remittance", reportType: "Pension Remittance", description: "Employer + employee pension contributions to PFA within 7 days of salary payment.", severity: "high" },
   );
 
   if ([3, 6, 9, 0].includes(month)) {
-    deadlines.push({ id: `nfiu-aml-${year}-${month}`, date: 30, regulator: "NFIU", title: "AML/CFT Compliance Report", description: "Quarterly AML/CFT programme effectiveness report to NFIU.", severity: "high" });
+    deadlines.push({ id: `nfiu-aml-${year}-${month}`, date: 30, regulator: "NFIU", title: "AML/CFT Compliance Report", reportType: "AML/CFT Report", description: "Quarterly AML/CFT programme effectiveness report to NFIU.", severity: "high" });
+    deadlines.push({ id: `ndic-obligor-${year}-${month}`, date: 30, regulator: "NDIC", title: "Single Obligor Report", reportType: "Single Obligor Report", description: "Large credit exposures above 5% of capital base.", severity: "high" });
   }
   if (month === 1) {
-    deadlines.push({ id: `ndic-premium-${year}`, date: 28, regulator: "NDIC", title: "Annual Premium Return", description: "Annual NDIC insurance premium based on insured deposits.", severity: "high" });
+    deadlines.push({ id: `ndic-premium-${year}`, date: 28, regulator: "NDIC", title: "Annual Premium Return", reportType: "NDIC Premium Return", description: "Annual NDIC insurance premium based on insured deposits.", severity: "high" });
   }
   if (month === 0) {
-    deadlines.push({ id: `scuml-annual-${year}`, date: 31, regulator: "SCUML", title: "Annual Compliance Report", description: "Annual AML/CFT compliance attestation to SCUML.", severity: "high" });
+    deadlines.push({ id: `scuml-annual-${year}`, date: 31, regulator: "SCUML", title: "Annual Compliance Report", reportType: "SCUML Annual Report", description: "Annual AML/CFT compliance attestation to SCUML.", severity: "high" });
   }
   if (month === 5) {
-    deadlines.push({ id: `firs-cit-${year}`, date: 30, regulator: "FIRS", title: "Company Income Tax Return", description: "Annual CIT filing. 30% for large companies.", severity: "high" });
+    deadlines.push({ id: `firs-cit-${year}`, date: 30, regulator: "FIRS", title: "Company Income Tax Return", reportType: "Company Income Tax Return", description: "Annual CIT filing. 30% for large companies.", severity: "high" });
   }
   return deadlines;
 };
@@ -48,6 +51,7 @@ const regulatorColors: Record<string, { dot: string; badge: string; text: string
   NFIU: { dot: "#7C3AED", badge: "#F5F3FF", text: "#7C3AED" },
   NDIC: { dot: "#0369A1", badge: "#EFF6FF", text: "#0369A1" },
   SCUML: { dot: "#059669", badge: "#ECFDF5", text: "#059669" },
+  PENCOM: { dot: "#92400E", badge: "#FEF3C7", text: "#92400E" },
 };
 
 const ComplianceCalendar = () => {
