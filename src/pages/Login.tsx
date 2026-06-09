@@ -274,10 +274,27 @@ const Login = () => {
                 </button>
               </form>
 
-              <p style={{ marginTop: 24, textAlign: "center", fontSize: 14.5, color: "#6E6E73" }}>
-                Don't have an account?{" "}
-                <Link to="/sign-up" style={{ color: "#0A0A0A", fontWeight: 500, textDecoration: "none" }}>Sign up</Link>
-              </p>
+              <div style={{ marginTop: 28, paddingTop: 22, borderTop: "1px solid rgba(0,0,0,0.08)", textAlign: "center" }}>
+                <p style={{ fontSize: 13, color: "#6E6E73", margin: "0 0 12px" }}>New to RegCo?</p>
+                <Link
+                  to="/book-demo"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    height: 40, padding: "0 20px",
+                    background: "transparent", color: "#0A0A0A",
+                    border: "1px solid rgba(0,0,0,0.15)", borderRadius: 8,
+                    fontSize: 13, fontWeight: 600, textDecoration: "none",
+                    transition: "background 0.15s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#F5F5F0")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  Book a demo →
+                </Link>
+                <p style={{ fontSize: 12, color: "#9B9B9B", margin: "12px 0 0", lineHeight: 1.5 }}>
+                  We'll set up your institution's account and guide you through your first return.
+                </p>
+              </div>
             </>
           )}
         </motion.div>
