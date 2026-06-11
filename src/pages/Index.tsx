@@ -16,8 +16,7 @@ import FinalCTASection from "@/components/eigen/FinalCTASection";
 import EigenFooter from "@/components/eigen/EigenFooter";
 
 const Index = () => (
-  <div style={{ background: "#ffffff", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif", color: "#17191c" }}>
-
+  <div style={{ background: "#F5F5F0", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
     <EigenNavbar />
     <EigenHero />
     <TaglineSection />
