@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══ BALLPARK DESIGN SYSTEM ═══ */
+:root {
+  --bg-page: #ffffff;
+  --bg-dot: #ffffff;
+  --bg-section-alt: #fafafa;
+  --bg-dark: #0A0A0A;
+
+  --tx-primary: #0A0A0A;
+  --tx-secondary: #6B6B6B;
+  --tx-muted: #A0A0A0;
+  --tx-on-dark: rgba(255,255,255,0.95);
+  --tx-muted-dark: rgba(255,255,255,0.5);
+
+  --ac-teal: #0b8c6e;
+  --ac-teal-light: #e6f7f3;
+  --ac-teal-dark: #0daf89;
+
+  --bd-light: rgba(0,0,0,0.07);
+  --bd-dark: rgba(255,255,255,0.1);
+
+  --font-head: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, system-ui, sans-serif;
+
+  --r-btn: 8px;
+  --r-card: 12px;
+  --r-sm: 4px;
+
+  --sh-card: 0 1px 3px rgba(0,0,0,0.05), 0 8px 20px rgba(0,0,0,0.06);
+  --sh-float: 0 4px 6px rgba(0,0,0,0.03), 0 16px 40px rgba(0,0,0,0.10);
+}
+
+.ballpark-bg {
+  background-color: #ffffff;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.055) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+.section-white { background: rgba(255,255,255,0.97); }
+.section-alt { background: rgba(250,250,250,0.97); }
+
 @layer base {
   :root {
     --background: 0 0% 96.1%;

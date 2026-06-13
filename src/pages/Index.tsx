@@ -1,44 +1,29 @@
-import EigenNavbar from "@/components/eigen/EigenNavbar";
-import EigenHero from "@/components/eigen/EigenHero";
-import TaglineSection from "@/components/eigen/TaglineSection";
-import PlatformSection from "@/components/eigen/PlatformSection";
-import FeaturesSection from "@/components/eigen/FeaturesSection";
-import { Customer360Section, FraudPreventionSection, ScreeningSection } from "@/components/eigen/NewFeaturesSections";
-import { BoardPackSection, AuditTrackerSection, RegulatoryIntelSection, PlatformCounterSection } from "@/components/eigen/HomepageExtraSections";
-import BestInClassSection from "@/components/eigen/BestInClassSection";
-import TutorialSection from "@/components/eigen/TutorialSection";
-import SecurityDarkSection from "@/components/eigen/SecurityDarkSection";
-import WhoWeServeSection from "@/components/eigen/WhoWeServeSection";
-import RegulatoryReturnsSection from "@/components/eigen/RegulatoryReturnsSection";
-import PricingSection from "@/components/eigen/PricingSection";
-import AboutUsSection from "@/components/eigen/AboutUsSection";
-import FinalCTASection from "@/components/eigen/FinalCTASection";
-import EigenFooter from "@/components/eigen/EigenFooter";
+import { Navbar } from '@/components/homepage/Navbar';
+import { HeroSection } from '@/components/homepage/HeroSection';
+import { HarveyUseCases } from '@/components/homepage/HarveyUseCases';
+import { SpeedSection } from '@/components/homepage/SpeedSection';
+import { CompactProblemSolution } from '@/components/homepage/CompactProblemSolution';
+import { CompactPillars } from '@/components/homepage/CompactPillars';
+import { TimelineSection } from '@/components/homepage/TimelineSection';
+import { CompactFlows } from '@/components/homepage/CompactFlows';
+import { CompactWhoWeServe } from '@/components/homepage/CompactWhoWeServe';
+import { CompactCtaFaq } from '@/components/homepage/CompactCtaFaq';
+import { Footer } from '@/components/homepage/Footer';
 
-const Index = () => (
-  <div style={{ background: "#F5F5F0", fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
-    <EigenNavbar />
-    <EigenHero />
-    <TaglineSection />
-    <PlatformSection />
-    <FeaturesSection />
-    <Customer360Section />
-    <FraudPreventionSection />
-    <ScreeningSection />
-    <BoardPackSection />
-    <AuditTrackerSection />
-    <RegulatoryIntelSection />
-    <PlatformCounterSection />
-    <BestInClassSection />
-    <SecurityDarkSection />
-    <WhoWeServeSection />
-    <RegulatoryReturnsSection />
-    <TutorialSection />
-    <PricingSection />
-    <AboutUsSection />
-    <FinalCTASection />
-    <EigenFooter />
-  </div>
-);
-
-export default Index;
+export default function Index() {
+  return (
+    <div className="ballpark-bg" style={{ minHeight: '100vh', fontFamily: 'var(--font-body)', color: 'var(--tx-primary)' }}>
+      <Navbar />
+      <HeroSection />
+      <HarveyUseCases />
+      <SpeedSection />
+      <CompactProblemSolution />
+      <CompactPillars />
+      <TimelineSection />
+      <CompactFlows />
+      <CompactWhoWeServe />
+      <CompactCtaFaq />
+      <Footer />
+    </div>
+  );
+}
