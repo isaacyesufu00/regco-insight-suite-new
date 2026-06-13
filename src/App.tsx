@@ -52,6 +52,10 @@ import DataProcessingPage from "./pages/legal/DataProcessingPage";
 import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
+import Features from "./pages/Features";
+import Solutions from "./pages/Solutions";
+import Pricing from "./pages/Pricing";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -92,10 +96,15 @@ const App = () => (
             <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
             <Route path="/contact/support" element={<SupportPage />} />
             <Route path="/contact/partnerships" element={<PartnershipsPage />} />
-            {/* Redirect old public pages to homepage */}
-            <Route path="/about" element={<Navigate to="/#about" replace />} />
-            <Route path="/features/*" element={<Navigate to="/#features" replace />} />
-            <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
+            {/* New marketing pages */}
+            <Route path="/features" element={<Features />} />
+            <Route path="/solutions" element={<Solutions />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/sign-in" element={<Navigate to="/login" replace />} />
+            {/* Redirect old public pages */}
+            <Route path="/features/*" element={<Navigate to="/features" replace />} />
+            <Route path="/use-cases/*" element={<Navigate to="/solutions" replace />} />
             <Route
               path="/dashboard"
               element={
