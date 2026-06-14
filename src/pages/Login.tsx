@@ -110,7 +110,7 @@ const Login = () => {
       else setError(authError.message);
     } else {
       await resetAttempts(trimmedEmail);
-      navigate("/dashboard");
+      navigate("/dashboard/agent");
     }
   };
 
