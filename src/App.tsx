@@ -52,6 +52,8 @@ import DataProcessingPage from "./pages/legal/DataProcessingPage";
 import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
+import AgentPage from "./pages/dashboard/AgentPage";
+import { ProductPage, WhoWeServePage, PricingPage, CompanyPage, SecurityMarketingPage } from "./pages/marketing/MarketingPages";
 
 const queryClient = new QueryClient();
 
