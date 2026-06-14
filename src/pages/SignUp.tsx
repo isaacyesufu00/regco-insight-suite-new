@@ -111,7 +111,7 @@ const SignUp = () => {
     if (data.user && !data.session) {
       setSubmitted(true);
     } else {
-      navigate("/dashboard/agent");
+      navigate("/dashboard");
     }
   };
 
