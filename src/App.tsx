@@ -103,6 +103,14 @@ const App = () => (
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
             <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
             <Route
+              path="/dashboard/agent"
+              element={
+                <ProtectedRoute>
+                  <AgentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/dashboard"
               element={
                 <ProtectedRoute>
