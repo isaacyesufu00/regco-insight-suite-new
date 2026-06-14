@@ -79,7 +79,11 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthConfirm />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/security" element={<Security />} />
+            <Route path="/security" element={<SecurityMarketingPage />} />
+            <Route path="/product" element={<ProductPage />} />
+            <Route path="/who-we-serve" element={<WhoWeServePage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/company" element={<CompanyPage />} />
             {/* Blog */}
             <Route path="/blog/updates" element={<BlogUpdates />} />
             <Route path="/blog/updates/:slug" element={<BlogUpdateDetail />} />
