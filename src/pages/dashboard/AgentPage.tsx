@@ -39,10 +39,9 @@ const AgentSidebar = ({
   setCollapsed: (b: boolean) => void;
 }) => {
   const navigate = useNavigate();
-  const { profile } = useProfile();
-  const userName = profile?.full_name || "User";
+  const { profile, institutionName } = useProfile();
+  const userName = profile?.compliance_lead_name || profile?.full_name || "User";
   const userInitial = userName[0]?.toUpperCase() || "U";
-  const institutionName = profile?.company_name || "Institution";
 
   const navItems = [
     { icon: Zap, label: "Live Monitoring", path: "/dashboard/transactions" },
