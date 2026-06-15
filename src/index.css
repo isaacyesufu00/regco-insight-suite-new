@@ -4,6 +4,9 @@
 
 @layer base {
   :root {
+    --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+    --font-sans: 'Inter', -apple-system, system-ui, sans-serif;
+
     --background: 0 0% 96.1%;
     --foreground: 0 0% 11.4%;
 
