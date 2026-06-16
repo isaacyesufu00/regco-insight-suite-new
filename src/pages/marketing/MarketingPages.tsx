@@ -80,6 +80,7 @@ export const ProductPage = () => (
     title={<>An AI compliance copilot, not another dashboard.</>}
     subtitle="Speak to RegCo Agent the way you'd brief a senior compliance officer. It reads your CBS file, drafts the return, screens the customer, and surfaces the AML flag — then asks you to confirm before filing."
   >
+    <ScreenshotBlock variant="agent" />
     <Sections
       groups={[
         {
@@ -120,6 +121,7 @@ export const WhoWeServePage = () => (
     title={<>Built for every Nigerian licensed financial institution.</>}
     subtitle="Microfinance Banks. Primary Mortgage Banks. Commercial Banks. Finance Companies. Payment Service Providers. If you file with the CBN, RegCo is for you."
   >
+    <ScreenshotBlock variant="reports" />
     <Sections
       groups={[
         { title: "Microfinance Banks (Tier 1–3)", rows: ["MFB Regulatory Returns", "PDR calculation", "Liquidity ratio reporting", "Tier-specific compliance thresholds"] },
@@ -189,6 +191,7 @@ export const CompanyPage = () => (
     title={<>The future state of Nigerian compliance.</>}
     subtitle="We're building the AI compliance partner Nigerian financial institutions deserve. Bank-grade. Locally aware. Built in Abuja, for the CBN's regulatory reality."
   >
+    <ScreenshotBlock variant="calendar" />
     <Sections
       groups={[
         {
@@ -218,6 +221,7 @@ export const SecurityMarketingPage = () => (
     }
     subtitle="RegCo secures your institution's data with bank-grade security, NDPA-compliant data handling, and full audit visibility for every action the agent takes."
   >
+    <ScreenshotBlock variant="security" />
     <section style={{ padding: "80px 40px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
         {[
