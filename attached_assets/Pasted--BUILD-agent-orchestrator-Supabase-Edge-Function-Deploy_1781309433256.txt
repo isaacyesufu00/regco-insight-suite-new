@@ -1,0 +1,348 @@
+## BUILD: agent-orchestrator Supabase Edge Function
+
+Deploy a new edge function that powers the RegCo Agent. Receives a message + history from the frontend, queries institution context from Supabase, calls the LLM with tool descriptions, executes chosen tools against real DB data, and returns a structured response with message + optional panel update + action buttons.
+
+---
+
+### CREATE supabase/functions/agent-orchestrator/index.ts
+
+```typescript
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const OPENROUTER_KEY = Deno.env.get('OPENROUTER_API_KEY')!;
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const AGENT_MODEL = 'meta-llama/llama-3.3-70b-instruct';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// ─── TOOLS ────────────────────────────────────────────────────────────────────
+
+const TOOL_DESCRIPTIONS = `
+You have access to the following tools. Call them by responding with valid JSON containing "tool" and "params". Only call one tool per response.
+
+TOOL: get_compliance_status
+DESCRIPTION: Returns all regulatory returns and their status — due, overdue, recently filed, or upcoming. Call when the officer asks about their compliance posture.
+PARAMS: {}
+
+TOOL: get_recent_alerts
+DESCRIPTION: Returns recent flagged/suspicious transactions with their flag type, amount, and customer name.
+PARAMS: { days: number (default 7), severity?: "high" | "critical" }
+
+TOOL: get_customer_profile
+DESCRIPTION: Returns full Customer 360 for a given customer — accounts, transactions, KYC status, risk score, sanctions hits.
+PARAMS: { customer_name?: string, bvn?: string, account_number?: string }
+
+TOOL: get_regulatory_news
+DESCRIPTION: Returns recent regulatory news and CBN circulars relevant to the institution's license type.
+PARAMS: { days?: number (default 30), category?: string }
+
+TOOL: get_audit_issues
+DESCRIPTION: Returns open audit issues grouped by severity with owner and due date.
+PARAMS: { status?: "open" | "in_progress" | "resolved" (default "open") }
+
+TOOL: get_monthly_tasks
+DESCRIPTION: Returns compliance tasks for the current month with completion status.
+PARAMS: {}
+
+TOOL: draft_str_narrative
+DESCRIPTION: Drafts a Suspicious Transaction Report narrative for a specific flagged transaction or customer.
+PARAMS: { transaction_id?: string, customer_name?: string, amount?: number, flag_reason?: string }
+
+TOOL: navigate_to
+DESCRIPTION: Returns a deep link action button to a specific page in RegCo. Use when the user asks to "go to" or "show me" a page.
+PARAMS: { page: "transactions" | "customers" | "screening" | "regulatory-intelligence" | "audit-tracker" | "reports" | "board-pack" | "cases" }
+`;
+
+const SYSTEM_PROMPT = (institutionName: string, licenseType: string) => `
+You are RegCo Agent, a domain-expert compliance assistant for ${institutionName}. You are deeply familiar with Nigerian financial regulation — CBN, NFIU, SCUML, NDIC, FIRS, PENCOM — and RegCo's features. You are neutral and professional; you do not have a nationality or personal identity.
+
+Institution context:
+- Name: ${institutionName}
+- License: ${licenseType}
+- Platform: RegCo (regulatory compliance automation)
+
+Your role is to help compliance officers:
+1. Understand their regulatory obligations and current status
+2. Generate and review regulatory returns
+3. Investigate suspicious transactions and draft STRs
+4. Run and interpret sanctions/PEP screenings
+5. Prepare board packs and audit summaries
+6. Stay current on regulatory changes
+
+CRITICAL RULES:
+- You NEVER file anything directly with regulators. All outputs are drafts for human review.
+- You NEVER fabricate data. If a tool fails or returns nothing, say so clearly.
+- You ALWAYS cite your data source (e.g., "Based on your current transaction data...").
+- You speak with authority but recommend rather than command. The compliance officer decides.
+
+RESPONSE FORMAT:
+Respond in JSON with this exact structure:
+{
+  "thinking": "brief reasoning (not shown to user)",
+  "tool": "tool_name_or_null",
+  "params": {},
+  "direct_response": "your message if not calling a tool",
+  "actions": [{ "label": "Open Reports", "url": "/dashboard/reports" }],
+  "panel_update": { "title": "Panel Title", "data": {} },
+  "conversation_title": "Short conversation title (only on first message)"
+}
+
+If calling a tool, set "tool" and "params". Set "direct_response" to null.
+If responding directly, set "tool" to null and write your full response in "direct_response".
+"actions" and "panel_update" are optional — only include when useful.
+`;
+
+// ─── TOOL EXECUTORS ────────────────────────────────────────────────────────────
+
+async function executeTool(toolName: string, params: any, userId: string): Promise<any> {
+  const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  switch (toolName) {
+
+    case 'get_compliance_status': {
+      const { data: reports } = await db.from('reports')
+        .select('id, report_type, regulatory_body, period, status, generated_at')
+        .eq('user_id', userId)
+        .order('generated_at', { ascending: false })
+        .limit(30);
+
+      const { data: tasks } = await db.from('monthly_compliance_tasks')
+        .select('task_name, due_date, completed, priority')
+        .eq('user_id', userId)
+        .eq('completed', false)
+        .order('due_date', { ascending: true })
+        .limit(10);
+
+      return {
+        recent_reports: reports || [],
+        pending_tasks: tasks || [],
+        summary: `${(reports || []).filter(r => r.status === 'failed').length} failed, ${(reports || []).filter(r => r.status === 'generated').length} generated this period. ${(tasks || []).length} tasks pending.`
+      };
+    }
+
+    case 'get_recent_alerts': {
+      const days = params.days || 7;
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+      const { data: alerts } = await db.from('transaction_reviews')
+        .select('id, customer_name, amount, flag_reason, status, created_at, ai_risk_score')
+        .eq('user_id', userId)
+        .in('status', ['flagged', 'escalated'])
+        .gte('created_at', since)
+        .order('ai_risk_score', { ascending: false })
+        .limit(20);
+      return { alerts: alerts || [], count: (alerts || []).length, days };
+    }
+
+    case 'get_customer_profile': {
+      const { customer_name, bvn, account_number } = params;
+      let query = db.from('customers').select('*').eq('user_id', userId);
+      if (bvn) query = query.eq('bvn', bvn);
+      else if (customer_name) query = query.ilike('full_name', `%${customer_name}%`);
+      const { data: customers } = await query.limit(3);
+      if (!customers?.length) return { error: 'Customer not found', searched: params };
+
+      const customer = customers[0];
+      const [accounts, transactions, screenings] = await Promise.all([
+        db.from('customer_accounts').select('account_number, account_type, balance').eq('customer_id', customer.id).limit(5),
+        db.from('unified_transactions').select('amount, transaction_type, created_at, narration').eq('customer_id', customer.id).order('created_at', { ascending: false }).limit(10),
+        db.from('screening_results').select('risk_level, sanctions_hits, pep_hits, screened_at').eq('customer_name', customer.full_name).order('screened_at', { ascending: false }).limit(1),
+      ]);
+
+      return {
+        customer: { name: customer.full_name, bvn: customer.bvn, kyc_status: customer.kyc_status, risk_score: customer.risk_score },
+        accounts: accounts.data || [],
+        recent_transactions: transactions.data || [],
+        screening: screenings.data?.[0] || null,
+      };
+    }
+
+    case 'get_regulatory_news': {
+      const since = new Date(Date.now() - (params.days || 30) * 86400000).toISOString();
+      const { data: news } = await db.from('regulatory_news')
+        .select('title, source, published_at, summary, category, url')
+        .gte('published_at', since)
+        .order('published_at', { ascending: false })
+        .limit(10);
+      return { articles: news || [], count: (news || []).length };
+    }
+
+    case 'get_audit_issues': {
+      const { data: issues } = await db.from('audit_issues')
+        .select('title, severity, status, owner, due_date, description')
+        .eq('user_id', userId)
+        .eq('status', params.status || 'open')
+        .order('severity', { ascending: true })
+        .limit(20);
+      return { issues: issues || [], summary: `${(issues || []).length} ${params.status || 'open'} audit issues.` };
+    }
+
+    case 'get_monthly_tasks': {
+      const now = new Date();
+      const { data: tasks } = await db.from('monthly_compliance_tasks')
+        .select('task_name, description, due_date, completed, priority, regulatory_body')
+        .eq('user_id', userId)
+        .gte('due_date', new Date(now.getFullYear(), now.getMonth(), 1).toISOString())
+        .lte('due_date', new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString())
+        .order('due_date', { ascending: true });
+      return {
+        tasks: tasks || [],
+        completed: (tasks || []).filter(t => t.completed).length,
+        total: (tasks || []).length,
+      };
+    }
+
+    case 'draft_str_narrative': {
+      const { transaction_id, customer_name, amount, flag_reason } = params;
+      let txnContext = '';
+
+      if (transaction_id) {
+        const { data: txn } = await db.from('transaction_reviews').select('*').eq('id', transaction_id).single();
+        if (txn) txnContext = JSON.stringify(txn);
+      }
+
+      const narrativePrompt = `Draft a Suspicious Transaction Report (STR) narrative for NFIU submission.
+Customer: ${customer_name || 'Unknown'}
+Amount: ₦${Number(amount || 0).toLocaleString()}
+Flag reason: ${flag_reason || 'Suspicious activity'}
+Transaction data: ${txnContext || 'Not available'}
+
+Write a professional 3-paragraph STR narrative: (1) Transaction description and detection method, (2) Why it is suspicious under Nigerian AML/CFT standards (cite relevant NFIU guidelines), (3) Recommended action (file STR with NFIU / escalate for investigation).
+
+Begin with: "DRAFT STR NARRATIVE — FOR REVIEW ONLY — NOT FOR SUBMISSION"
+Plain text only.`;
+
+      const llmResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${OPENROUTER_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: AGENT_MODEL, max_tokens: 600, messages: [{ role: 'user', content: narrativePrompt }] }),
+      });
+      const llmData = await llmResp.json();
+      return { narrative: llmData.choices?.[0]?.message?.content || 'Unable to draft narrative.', customer_name, amount };
+    }
+
+    case 'navigate_to': {
+      const PAGE_MAP: Record<string, string> = {
+        transactions: '/dashboard/transactions',
+        customers: '/dashboard/customers',
+        screening: '/dashboard/screening',
+        'regulatory-intelligence': '/dashboard/regulatory-intelligence',
+        'audit-tracker': '/dashboard/audit-tracker',
+        reports: '/dashboard/reports',
+        'board-pack': '/dashboard/board-pack',
+        cases: '/dashboard/cases',
+      };
+      return { url: PAGE_MAP[params.page] || '/dashboard', page: params.page };
+    }
+
+    default:
+      return { error: `Unknown tool: ${toolName}` };
+  }
+}
+
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+
+  try {
+    const { message, conversation_id, history, user_id } = await req.json();
+
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+    // Get institution context
+    const { data: profile } = await db.from('profiles').select('institution_name, cbn_license_category').eq('id', user_id).single();
+    const institutionName = profile?.institution_name || 'Your Institution';
+    const licenseType = profile?.cbn_license_category || 'MFB';
+
+    // Build messages array for LLM
+    const messages = [
+      { role: 'system', content: SYSTEM_PROMPT(institutionName, licenseType) + '\n\nAvailable tools:\n' + TOOL_DESCRIPTIONS },
+      ...(history || []).map((h: any) => ({ role: h.role, content: h.content })),
+      { role: 'user', content: message },
+    ];
+
+    // First LLM call
+    const firstResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENROUTER_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://regco-insight-suite.vercel.app' },
+      body: JSON.stringify({ model: AGENT_MODEL, max_tokens: 800, temperature: 0.3, messages, response_format: { type: 'json_object' } }),
+    });
+    const firstData = await firstResp.json();
+    const rawContent = firstData.choices?.[0]?.message?.content || '{}';
+
+    let parsed: any = {};
+    try { parsed = JSON.parse(rawContent); } catch { parsed = { direct_response: rawContent, tool: null }; }
+
+    let finalMessage = '';
+    let panelUpdate = parsed.panel_update || null;
+    let actions = parsed.actions || [];
+
+    // Execute tool if requested
+    if (parsed.tool && parsed.tool !== 'null') {
+      const toolResult = await executeTool(parsed.tool, parsed.params || {}, user_id);
+
+      // Handle navigate_to specially
+      if (parsed.tool === 'navigate_to' && toolResult.url) {
+        actions.push({ label: `Open ${parsed.params.page}`, url: toolResult.url });
+      }
+
+      // Second LLM call with tool result
+      messages.push({ role: 'assistant', content: rawContent });
+      messages.push({ role: 'user', content: `Tool result for ${parsed.tool}: ${JSON.stringify(toolResult)}\n\nNow give your final response to the user in JSON format with direct_response, optional actions, and optional panel_update.` });
+
+      const secondResp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${OPENROUTER_KEY}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://regco-insight-suite.vercel.app' },
+        body: JSON.stringify({ model: AGENT_MODEL, max_tokens: 1000, temperature: 0.3, messages, response_format: { type: 'json_object' } }),
+      });
+      const secondData = await secondResp.json();
+      const secondContent = secondData.choices?.[0]?.message?.content || '{}';
+
+      let secondParsed: any = {};
+      try { secondParsed = JSON.parse(secondContent); } catch { secondParsed = { direct_response: secondContent }; }
+
+      finalMessage = secondParsed.direct_response || 'I completed the analysis. Please review the results above.';
+      panelUpdate = secondParsed.panel_update || { title: `${parsed.tool.replace(/_/g,' ')}`, data: toolResult };
+      actions = [...actions, ...(secondParsed.actions || [])];
+
+    } else {
+      finalMessage = parsed.direct_response || 'I encountered an issue generating a response. Please try again.';
+    }
+
+    return new Response(JSON.stringify({
+      message: finalMessage,
+      actions,
+      panel_update: panelUpdate,
+      conversation_title: parsed.conversation_title || null,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+
+  } catch (err) {
+    console.error('Agent orchestrator error:', err);
+    return new Response(JSON.stringify({ message: 'Agent encountered an error. Please try again.', actions: [], panel_update: null }), {
+      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
+```
+
+---
+
+### Deploy the edge function:
+
+```bash
+supabase functions deploy agent-orchestrator
+```
+
+Then set secrets in Supabase dashboard:
+- OPENROUTER_API_KEY (already set)
+- SUPABASE_SERVICE_ROLE_KEY (already set)
+
+---
+
+Deploy all:
+git add -A && git commit -m "feat: agent-orchestrator edge function — tool-calling agent with 8 tools, institution context" && git push origin main

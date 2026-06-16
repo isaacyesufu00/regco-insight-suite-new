@@ -1,0 +1,1739 @@
+## BUILD: Homepage Shortening + New Detail Pages
+
+CRITICAL: Do not delete any existing components — MOVE them to new pages. The homepage Index.tsx gets replaced with 6 compact sections. Everything that was previously on the homepage lives on new pages at /features, /solutions, /pricing, /about. Same design tokens, same animations, identical visual style on every new page.
+
+---
+
+### SQL MIGRATION — None required.
+
+---
+
+### STEP 1: UPDATE src/components/homepage/Navbar.tsx
+
+Replace the centre nav links to point to the new pages:
+
+```tsx
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+
+export function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 4);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+
+  const isActive = (path: string) => location.pathname.startsWith(path);
+
+  const NAV_LINKS = [
+    { label: 'Platform', path: '/features' },
+    { label: 'Solutions', path: '/solutions' },
+    { label: 'Pricing', path: '/pricing' },
+    { label: 'Blog', path: '/blog/updates' },
+    { label: 'Company', path: '/about' },
+  ];
+
+  return (
+    
+      
+
+
+        
+          
+            
+            
+            
+          
+          RegCo
+        
+
+        
+
+
+          {NAV_LINKS.map(({ label, path }) => (
+            {label}
+          ))}
+        
+
+
+
+        
+
+
+           navigate('/sign-in')} style={{ fontFamily: 'var(--font-body, Inter)', fontSize: 14, fontWeight: 500, color: 'var(--tx-secondary, #5a6a7e)', background: 'none', border: 'none', padding: '7px 14px', borderRadius: 6, cursor: 'pointer' }}>
+            Sign in
+          
+           navigate('/book-demo')} style={{ fontFamily: 'var(--font-body, Inter)', fontSize: 14, fontWeight: 600, color: '#ffffff', background: 'var(--tx-primary, #1c2e4a)', border: 'none', padding: '8px 18px', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            Get started ›
+          
+        
+
+
+      
+
+
+    
+  );
+}
+```
+
+---
+
+### STEP 2: UPDATE src/pages/Index.tsx — 6 compact sections only
+
+```tsx
+import { Navbar } from '@/components/homepage/Navbar';
+import { HeroSection } from '@/components/homepage/HeroSection';
+import { CompactProblemSolution } from '@/components/homepage/CompactProblemSolution';
+import { CompactPillars } from '@/components/homepage/CompactPillars';
+import { CompactFlows } from '@/components/homepage/CompactFlows';
+import { CompactWhoWeServe } from '@/components/homepage/CompactWhoWeServe';
+import { CompactCtaFaq } from '@/components/homepage/CompactCtaFaq';
+import { Footer } from '@/components/homepage/Footer';
+
+export default function Index() {
+  return (
+    
+
+
+      
+      
+      
+      
+      
+      
+      
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 3: CREATE src/components/homepage/CompactProblemSolution.tsx
+
+Three pain points with scroll-reveal solutions. Max 60vh total height. Each row is compact: problem text left, solution tag right. No large blocks.
+
+```tsx
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+
+const ITEMS = [
+  { tag: '01', problem: 'Compliance teams spend days on returns that should take minutes.', solution: 'RegCo generates all 17 returns from a single CBS upload in under 5 minutes.' },
+  { tag: '02', problem: 'Suspicious transactions go undetected until regulators arrive.', solution: 'Six AML detection rules run automatically. Alerts, STRs, and case management in one place.' },
+  { tag: '03', problem: 'Regulatory changes are missed because no one reads every CBN circular.', solution: 'RegCo\'s live intelligence feed flags every circular that affects your institution.' },
+];
+
+export function CompactProblemSolution() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  return (
+    
+
+
+      
+
+
+        
+          
+
+The problem · the solution
+
+
+        
+        {ITEMS.map((item, i) => {
+          const rowRef = useRef(null);
+          const rowInView = useInView(rowRef, { once: true, margin: '-40px' });
+          return (
+            
+
+
+              {item.problem}
+              
+                
+
+
+                
+
+{item.solution}
+
+
+              
+            
+
+
+          );
+        })}
+        
+
+
+          See full platform overview ›
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 4: CREATE src/components/homepage/CompactPillars.tsx
+
+4 pillars in a 2×2 grid. Compact cards, max 50vh.
+
+```tsx
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+
+const PILLARS = [
+  { num: '01', title: 'Report Automation', body: '17 returns. 6 regulators. AI-drafted from your CBS in minutes.', tag: 'CBN · NFIU · SCUML · NDIC · FIRS · PENCOM', cta: '/features#reports' },
+  { num: '02', title: 'AML Monitoring', body: '6 real-time detection rules. Live webhook. STR auto-queue.', tag: 'Live · Rule-based · Case management', cta: '/features#aml' },
+  { num: '03', title: 'Sanctions Screening', body: 'UN, OFAC, EU, UK HMT, and CBN lists. Nigerian PEP database.', tag: '5 lists · Fuzzy matching · Daily sync', cta: '/features#screening' },
+  { num: '04', title: 'Regulatory Intelligence', body: 'Live CBN circulars, NFIU advisories, and compliance calendar.', tag: 'Real-time · Auto-updated · Searchable', cta: '/features#intel' },
+];
+
+export function CompactPillars() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  return (
+    
+
+
+      
+
+
+        
+
+
+          
+            Complete compliance infrastructure
+          
+          Full platform ›
+        
+
+
+        
+
+
+          {PILLARS.map((p, i) => (
+            
+              
+
+{p.num}
+
+
+              
+
+{p.title}
+
+
+              
+
+{p.body}
+
+
+              {p.tag}
+            
+          ))}
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 5: CREATE src/components/homepage/CompactFlows.tsx
+
+Two feature snippets side by side (report mockup + AML feed). Link to /features for full detail. Max 55vh.
+
+```tsx
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+
+export function CompactFlows() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  return (
+    
+
+
+      
+
+
+        
+
+
+          
+            See it in action
+          
+          All features ›
+        
+
+
+
+        
+
+
+          {/* Report card */}
+          
+            
+
+
+              {['#fc5753','#fdbc2c','#34c748'].map(c => 
+
+)}
+              CBN_MFB_Return_May2026.txt
+            
+
+
+            
+
+
+              
+
+TOTAL ASSETS: ₦3,250,900,000
+
+
+              
+
+CAR: 14.44% ✓
+
+
+              
+
+LIQUIDITY: 55.27% ✓
+
+
+              
+
+NPL: 4.00% ✓
+
+
+              
+
+✓ All ratios within CBN limits
+
+
+            
+
+
+            
+
+Report Generation · Learn more ›
+
+
+          
+
+          {/* AML card */}
+          
+            
+
+
+              Live Transaction Monitor
+              
+            
+
+
+            {[
+              { name: 'Emeka Okafor', amount: '₦6.5M', type: 'CTR', critical: true },
+              { name: 'Yusuf Ibrahim', amount: '₦12M', type: 'VELOCITY', critical: true },
+              { name: 'Fatima Al-Hassan', amount: '₦4.75M', type: 'STRUCTURING', critical: false },
+            ].map(r => (
+              
+
+
+                
+
+
+                  
+
+{r.name}
+
+
+                  
+
+{r.amount}
+
+
+                
+
+
+                {r.type}
+              
+
+
+            ))}
+            
+
+AML Monitoring · Learn more ›
+
+
+          
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 6: CREATE src/components/homepage/CompactWhoWeServe.tsx
+
+Mapbox globe with institution type overlay. The globe uses VITE_MAPBOX_TOKEN env var. On load it shows Africa/Nigeria from space, zooms to Abuja (9.0565°N, 7.4879°E) on interaction. Institution type pills overlaid on top. Max 80vh.
+
+```tsx
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const TIERS = [
+  { id: 'unit', label: 'Unit MFB', summary: '₦350k/month · CBN/NFIU/FIRS · 1 user', color: '#0b8c6e' },
+  { id: 'state', label: 'State MFB', summary: '₦700k/month · All 17 returns · 3 users', color: '#0b8c6e' },
+  { id: 'national', label: 'National MFB', summary: '₦1.5M/month · API access · 10 users', color: '#0b8c6e' },
+  { id: 'commercial', label: 'Commercial Bank', summary: '₦3M/month · Unlimited · White-label', color: '#0b8c6e' },
+];
+
+export function CompactWhoWeServe() {
+  const mapContainer = useRef(null);
+  const [active, setActive] = useState('state');
+
+  useEffect(() => {
+    const token = import.meta.env.VITE_MAPBOX_TOKEN;
+    if (!token || !mapContainer.current) return;
+
+    let map: any;
+    const init = async () => {
+      const mapboxgl = (await import('mapbox-gl')).default;
+      await import('mapbox-gl/dist/mapbox-gl.css');
+      mapboxgl.accessToken = token;
+
+      map = new mapboxgl.Map({
+        container: mapContainer.current!,
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [7.4879, 9.0565],
+        zoom: 2.5,
+        projection: { name: 'globe' } as any,
+        attributionControl: false,
+        interactive: false,
+      });
+
+      map.on('load', () => {
+        map.setFog({
+          color: 'rgb(12, 24, 42)',
+          'high-color': 'rgb(20, 36, 58)',
+          'horizon-blend': 0.02,
+          'space-color': 'rgb(5, 10, 20)',
+          'star-intensity': 0.15,
+        });
+        // Animate zoom to Nigeria
+        setTimeout(() => {
+          map.flyTo({ center: [7.4879, 9.0565], zoom: 5.5, duration: 3500, essential: true });
+        }, 800);
+        // Add Abuja marker
+        const el = document.createElement('div');
+        el.style.cssText = 'width:12px;height:12px;borderRadius:50%;background:#0b8c6e;border:2px solid #fff;boxShadow:0 0 12px rgba(11,140,110,0.8)';
+        new mapboxgl.Marker({ element: el }).setLngLat([7.4879, 9.0565]).addTo(map);
+      });
+    };
+    init();
+    return () => { if (map) map.remove(); };
+  }, []);
+
+  const activeTier = TIERS.find(t => t.id === active)!;
+
+  return (
+    
+
+
+      
+
+
+
+      {/* Dark gradient overlay on left side for text legibility */}
+      
+
+
+
+      
+
+
+        
+
+
+          
+
+
+            
+
+RegCo for
+
+
+
+            {/* Tier pills */}
+            
+
+
+              {TIERS.map(t => (
+                
+
+ setActive(t.id)} style={{ padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.07)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}>
+                  
+                  {t.label}
+                
+
+
+              ))}
+            
+
+
+
+            
+              
+                
+
+{activeTier.summary}
+
+
+                See full details ›
+              
+            
+
+            
+
+
+              📍 Abuja, Nigeria · CBN Headquarters
+            
+
+
+          
+
+
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 7: CREATE src/components/homepage/CompactCtaFaq.tsx
+
+```tsx
+import { useState, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { ChevronDown } from 'lucide-react';
+
+const FAQS = [
+  { q: 'Which core banking systems does RegCo support?', a: 'RegCo\'s universal CBS parser works with any export format — FlexCube, Ncube, Finacle, Temenos, and any custom CBS. No template required. Upload your file and RegCo maps the columns automatically.' },
+  { q: 'How does RegCo access our transaction data?', a: 'Two options: Option A (all tiers) — daily CSV upload from your IT team. Option B (State MFB and above) — a secure webhook URL your IT team connects to your CBS to send each transaction in real time.' },
+  { q: 'Is RegCo compliant with Nigeria\'s NDPA data protection law?', a: 'Yes. RegCo is registered with the NDPC. All customer data is stored on Supabase\'s Frankfurt region (EU) servers, encrypted at rest and in transit. Full data processing agreement available on request.' },
+  { q: 'What happens when CBN updates a regulation or return format?', a: 'RegCo\'s team updates the return templates within 48 hours of any CBN circular. You receive an in-platform notification and the new template is applied automatically to your next generation.' },
+  { q: 'How long does it take to go live?', a: 'Most institutions complete onboarding within 14 days: Day 1 (discovery call), Day 3 (CBS file mapping), Day 7 (first test return generated), Day 14 (full go-live with AML monitoring active).' },
+  { q: 'Can we trial RegCo before signing a contract?', a: 'Yes. Book a 30-minute demo and we\'ll run RegCo live on your CBS data during the call. If you want to proceed, we send the agreement that day. Most clients sign within a week of their first demo.' },
+];
+
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    
+
+
+       setOpen(!open)} style={{ width: '100%', padding: '18px 0', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, textAlign: 'left' }}>
+        {q}
+        
+      
+      
+        
+
+{a}
+
+
+      
+    
+
+
+  );
+}
+
+export function CompactCtaFaq() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+  const navigate = useNavigate();
+
+  return (
+    <>
+      {/* CTA */}
+      
+
+
+        
+          
+
+
+            Ready to automate your compliance?
+          
+
+
+          
+
+30-minute demo. Live on your CBS data. No slides.
+
+
+          
+
+
+             navigate('/book-demo')} style={{ fontFamily: 'var(--font-body,Inter)', fontSize: 14, fontWeight: 700, color: 'var(--tx-primary,#1c2e4a)', background: '#ffffff', border: 'none', padding: '12px 28px', borderRadius: 6, cursor: 'pointer', transition: 'opacity 0.12s' }}
+              onMouseEnter={e=>{e.currentTarget.style.opacity='0.88';}} onMouseLeave={e=>{e.currentTarget.style.opacity='1';}}>
+              Book a demo ›
+            
+             navigate('/sign-in')} style={{ fontFamily: 'var(--font-body,Inter)', fontSize: 14, fontWeight: 500, color: 'rgba(255,255,255,0.7)', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)', padding: '12px 28px', borderRadius: 6, cursor: 'pointer' }}>
+              Start free →
+            
+          
+
+
+        
+      
+
+
+
+      {/* FAQ */}
+      
+
+
+        
+
+
+          
+            Frequently asked questions
+          
+          {FAQS.map(faq => )}
+        
+
+
+      
+
+
+    
+  );
+}
+```
+
+---
+
+### STEP 8: CREATE src/pages/Features.tsx
+
+This page contains ALL the detailed feature content moved off the homepage: full interactive flows, the detailed alternating feature grid, the dashboard tutorial section. Same design, same animations.
+
+```tsx
+import { Navbar } from '@/components/homepage/Navbar';
+import { Footer } from '@/components/homepage/Footer';
+import { InteractiveFlowsSection } from '@/components/homepage/InteractiveFlowsSection';
+import { motion } from 'framer-motion';
+
+export default function Features() {
+  const FEATURE_SECTIONS = [
+    { id: 'reports', tag: 'Report Generation', title: 'All 17 mandatory returns, automated', body: 'Every return across CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM. Upload your CBS export and RegCo\'s AI maps every account category to the correct regulator template, validates all ratios and percentages, and produces a plain-text file ready for submission. Works with FlexCube, Ncube, Finacle, Temenos, or any custom CBS format.' },
+    { id: 'aml', tag: 'AML Monitoring', title: 'Six detection rules on every transaction', body: 'RegCo applies CTR (₦5M+ threshold), structuring pattern detection, velocity anomaly detection, round-figure screening, PEP matching against 200+ Nigerian PEPs, and sanctions matching against 5 international lists. Every flagged transaction is logged with flag reason, escalated to the STR queue, and available for case management.' },
+    { id: 'screening', tag: 'Sanctions Screening', title: 'UN, OFAC, EU, HM Treasury, and CBN — daily sync', body: 'Five international and local sanctions lists sync daily at 2am via pg_cron. Fuzzy name matching catches variants and transliterations. Screen a single customer name (Quick Screen) or upload a CSV batch. Every screening result is logged with match score, matched entry, and recommended action.' },
+    { id: 'intel', tag: 'Regulatory Intelligence', title: 'Every CBN circular, every NFIU advisory', body: 'RegCo\'s intelligence feed pulls from 6 Nigerian regulatory news sources plus NewsAPI, and seeds CBN circulars directly into your compliance calendar. Monthly compliance tasks auto-populate with this month\'s submissions. Mark items read, track completion, filter by source. Never miss a regulatory change again.' },
+    { id: 'cases', tag: 'Case Management', title: 'Enterprise AML case tracking — CBN compliant', body: 'Create, assign, prioritize, and track AML cases from alert to STR filing. AI generates a 3-paragraph case narrative (what was detected, why it\'s suspicious under CBN guidelines, recommended action) for every case. Full immutable audit trail of all actions. CBN Baseline Standards for Automated AML Solutions compliant.' },
+    { id: 'board', tag: 'Board Pack', title: 'Monthly compliance committee reports in one click', body: 'Generate a complete compliance committee pack: compliance score history, all filings for the month, outstanding items, AML case summary, sanctions screening activity, and KYC completion rate. PDF-ready. One click. Every month.' },
+  ];
+
+  return (
+    
+
+
+      
+
+      {/* Hero */}
+      
+
+
+        
+
+
+          
+            
+
+Platform features
+
+
+            
+
+
+              The complete compliance toolkit for Nigerian banks
+            
+
+
+            
+
+
+              17 returns. 5 regulators. Live AML monitoring. Sanctions screening. AI case management. All in one platform, built exclusively for CBN-licensed institutions.
+            
+
+
+          
+        
+
+
+      
+
+
+
+      {/* Feature alternating sections */}
+      {FEATURE_SECTIONS.map((feat, i) => (
+        
+
+
+          
+
+
+            
+              {feat.tag}
+              
+
+{feat.title}
+
+
+              
+
+{feat.body}
+
+
+            
+            
+              
+
+{feat.tag}
+
+
+            
+          
+
+
+        
+
+
+      ))}
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 9: CREATE src/pages/Solutions.tsx
+
+```tsx
+import { Navbar } from '@/components/homepage/Navbar';
+import { Footer } from '@/components/homepage/Footer';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+
+const TIERS = [
+  { id: 'unit', label: 'Unit MFB', monthly: '₦350,000', setup: '₦150,000', features: ['CBN/NFIU/FIRS returns (10/month)', 'Batch transaction monitor (1,000 txns)', 'Regulatory intelligence feed', 'Compliance calendar', '1 user seat'], challenge: 'Unit MFBs face the same CBN requirements as large banks with a fraction of the compliance team. Every missed return is a minimum ₦2M fine.', returns: ['MFB Regulatory Return', 'AML/CFT Quarterly Report', 'VAT Return (FIRS)', 'PAYE Remittance (FIRS)'] },
+  { id: 'state', label: 'State MFB', monthly: '₦700,000', setup: '₦300,000', features: ['All 17 mandatory returns', 'Live webhook transaction feed', 'Customer 360 profiles', 'Sanctions & PEP screening', 'Risk analysis (CAMEL)', 'Board pack generator', '3 user seats', '5,000 customer capacity'], challenge: 'State MFBs operating across multiple branches need full 5-regulator coverage, live transaction monitoring, and team-level access control.', returns: ['All 17 returns across CBN / NFIU / SCUML / NDIC / FIRS / PENCOM'] },
+  { id: 'national', label: 'National MFB', monthly: '₦1,500,000', setup: '₦500,000', features: ['Everything in State MFB', 'REST API access for CBS integration', 'Audit tracker with tamper-proof logs', 'Case management (ECM)', '10 user seats', '100,000 customer capacity', '100,000 transactions per upload'], challenge: 'National MFBs with tens of thousands of customers need bulk data ingestion, high-volume AML screening, and API access for direct CBS integration.', returns: ['All 17 returns + API output'] },
+  { id: 'commercial', label: 'Commercial Bank', monthly: '₦3,000,000', setup: '₦1,500,000', features: ['All features, unlimited', 'White-label option for group subsidiaries', 'Dedicated onboarding manager', 'Custom API integration (FlexCube/Finacle)', 'Unlimited users', 'Unlimited transactions'], challenge: 'Commercial banks under full CBN regulation need every return, every feature, unlimited scale, and the option to white-label for subsidiary institutions.', returns: ['All 17 returns + PENCOM + board pack + API + white-label'] },
+];
+
+export default function Solutions() {
+  const [active, setActive] = useState('state');
+  const navigate = useNavigate();
+  const tier = TIERS.find(t => t.id === active)!;
+
+  return (
+    
+
+
+      
+
+      
+
+
+        
+
+
+          
+
+Solutions
+
+
+          
+
+
+            Built for every CBN-licensed institution
+          
+
+
+
+          
+
+
+            {/* Left: tier selector */}
+            
+
+
+              {TIERS.map(t => (
+                
+
+ setActive(t.id)} style={{ padding: '14px 0', borderBottom: '1px solid var(--bd-light, rgba(28,46,74,0.08))', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 14 }}>
+                  
+                  {t.label}
+                
+
+
+              ))}
+            
+
+
+
+            {/* Right: detail */}
+            
+              
+                
+
+
+                  
+
+{tier.challenge}
+
+
+                  
+
+
+                    {tier.monthly}
+                    /month
+                  
+
+
+                  
+
+{tier.setup} one-time setup
+
+
+                  
+
+
+                    {tier.features.map(f => (
+                      
+
+
+                        
+                          
+                        
+                        {f}
+                      
+
+
+                    ))}
+                  
+
+
+                   navigate('/book-demo')} style={{ fontFamily: 'var(--font-body,Inter)', fontSize: 14, fontWeight: 600, color: '#fff', background: 'var(--tx-primary,#1c2e4a)', border: 'none', padding: '11px 24px', borderRadius: 6, cursor: 'pointer', width: '100%' }}>
+                    Book demo for {tier.label} ›
+                  
+                
+
+
+              
+            
+          
+
+
+        
+
+
+      
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 10: CREATE src/pages/Pricing.tsx and src/pages/About.tsx
+
+For Pricing.tsx — create a full page using the same pricing cards that were previously on the homepage. Include all 6 tiers (Unit MFB, State MFB, National MFB, PMB, Finance Company, Commercial Bank) with their exact naira pricing from the system. For About.tsx — create a page with the mission/vision cards, stat counters, and company info that was on the homepage. Both pages use the same design tokens (var(--bg-page), var(--tx-primary), etc.), same Navbar and Footer components. Both have a page header section (padding: 120px 28px 80px) with breadcrumb + large heading in the same style as Solutions.tsx above.
+
+---
+
+### STEP 11: ADD ROUTES in src/App.tsx
+
+Import and add these routes alongside existing dashboard and auth routes:
+
+```tsx
+import Features from '@/pages/Features';
+import Solutions from '@/pages/Solutions';
+import Pricing from '@/pages/Pricing';
+import About from '@/pages/About';
+
+// Inside <Routes>:
+<Route path="/features" element={<Features />} />
+<Route path="/solutions" element={<Solutions />} />
+<Route path="/pricing" element={<Pricing />} />
+<Route path="/about" element={<About />} />
+```
+
+---
+
+Deploy:
+git add -A && git commit -m "feat: homepage shortened to 6 sections, content moved to /features /solutions /pricing /about" && git push origin main
+
+## BUILD: Ballpark Design Conversion — Complete Homepage Redesign
+
+Convert the entire RegCo homepage to the Ballpark.hq visual style. Pure white background with subtle dot texture. Massive centered headings. Maximum font weight. Near-black text. Clean minimal navbar. Add generation-time speed graphic (like bland.ai's 400ms section) and 14-day onboarding timeline. Do not change any dashboard pages or the new /features, /solutions, /pricing, /about pages — homepage only.
+
+---
+
+### SQL MIGRATION — None required.
+
+---
+
+### STEP 1: UPDATE src/index.css — Ballpark design tokens
+
+Add this at the very top, replacing all previous design token overrides:
+
+```css
+/* ═══ BALLPARK DESIGN SYSTEM ═══ */
+:root {
+  --bg-page: #ffffff;
+  --bg-dot: #ffffff;
+  --bg-section-alt: #fafafa;
+  --bg-dark: #0A0A0A;
+
+  --tx-primary: #0A0A0A;
+  --tx-secondary: #6B6B6B;
+  --tx-muted: #A0A0A0;
+  --tx-on-dark: rgba(255,255,255,0.95);
+  --tx-muted-dark: rgba(255,255,255,0.5);
+
+  --ac-teal: #0b8c6e;
+  --ac-teal-light: #e6f7f3;
+  --ac-teal-dark: #0daf89;
+
+  --bd-light: rgba(0,0,0,0.07);
+  --bd-dark: rgba(255,255,255,0.1);
+
+  --font-head: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Inter', -apple-system, system-ui, sans-serif;
+
+  --r-btn: 8px;
+  --r-card: 12px;
+  --r-sm: 4px;
+
+  --sh-card: 0 1px 3px rgba(0,0,0,0.05), 0 8px 20px rgba(0,0,0,0.06);
+  --sh-float: 0 4px 6px rgba(0,0,0,0.03), 0 16px 40px rgba(0,0,0,0.10);
+}
+
+/* Ballpark dot texture on page background */
+body {
+  font-family: var(--font-body);
+  background-color: #ffffff;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.055) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+  color: var(--tx-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* White sections override the dot texture with solid white */
+.section-white {
+  background: rgba(255,255,255,0.97);
+}
+.section-alt {
+  background: rgba(250,250,250,0.97);
+}
+```
+
+---
+
+### STEP 2: REPLACE src/components/homepage/Navbar.tsx — Ballpark style
+
+```tsx
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+
+export function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const h = () => setScrolled(window.scrollY > 4);
+    window.addEventListener('scroll', h, { passive: true });
+    return () => window.removeEventListener('scroll', h);
+  }, []);
+
+  const NAV_LINKS = [
+    { label: 'Platform', path: '/features' },
+    { label: 'Solutions', path: '/solutions' },
+    { label: 'Pricing', path: '/pricing' },
+    { label: 'Company', path: '/about' },
+  ];
+
+  return (
+    
+      
+
+
+
+        
+          RegCo
+        
+
+        
+
+
+          {NAV_LINKS.map(({ label, path }) => (
+            {(e.target as HTMLElement).style.color='var(--tx-primary)';}}
+            onMouseLeave={e=>{(e.target as HTMLElement).style.color=location.pathname.startsWith(path)?'var(--tx-primary)':'var(--tx-secondary)';}}>
+              {label}
+            
+          ))}
+        
+
+
+
+        
+
+
+           navigate('/sign-in')} style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 500, color: 'var(--tx-secondary)', background: 'none', border: '1px solid transparent', padding: '7px 14px', borderRadius: 'var(--r-btn)', cursor: 'pointer', transition: 'border-color 0.12s, color 0.12s' }}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)'; e.currentTarget.style.color='var(--tx-primary)';}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='transparent'; e.currentTarget.style.color='var(--tx-secondary)';}}>
+            Sign in
+          
+           navigate('/book-demo')} style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 700, color: '#ffffff', background: 'var(--tx-primary)', border: 'none', padding: '9px 20px', borderRadius: 'var(--r-btn)', cursor: 'pointer', letterSpacing: '-0.1px', transition: 'opacity 0.12s', display: 'flex', alignItems: 'center', gap: 5 }}
+            onMouseEnter={e=>{e.currentTarget.style.opacity='0.85';}} onMouseLeave={e=>{e.currentTarget.style.opacity='1';}}>
+            Book a demo ↗
+          
+        
+
+
+      
+
+
+    
+  );
+}
+```
+
+---
+
+### STEP 3: REPLACE src/components/homepage/HeroSection.tsx — Ballpark centered hero
+
+```tsx
+import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+
+export function HeroSection() {
+  const navigate = useNavigate();
+
+  return (
+    
+
+
+      {/* Subtle radial spotlight behind heading */}
+      
+
+
+
+      
+
+
+        {/* Tag */}
+        
+          
+            CBN-COMPLIANT · NFIU-CERTIFIED · NDPA-READY
+          
+        
+
+        {/* MASSIVE heading — Ballpark style */}
+        
+
+
+          {['Compliance', 'without', 'the chaos.'].map((word, i) => (
+            
+              {word}
+            
+          ))}
+        
+
+
+
+        {/* Sub — Ballpark style: center, gray, readable weight */}
+        
+          17 mandatory returns. 6 regulators. Live AML monitoring. AI-powered case management. Built exclusively for CBN-licensed Nigerian institutions.
+        
+
+        {/* CTAs */}
+        
+           navigate('/book-demo')} style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 700, color: '#fff', background: 'var(--tx-primary)', border: 'none', padding: '13px 28px', borderRadius: 'var(--r-btn)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '-0.1px', transition: 'opacity 0.12s' }}
+            onMouseEnter={e=>{e.currentTarget.style.opacity='0.85';}} onMouseLeave={e=>{e.currentTarget.style.opacity='1';}}>
+            Book a demo ↗
+          
+           navigate('/sign-in')} style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 500, color: 'var(--tx-secondary)', background: 'none', border: '1px solid rgba(0,0,0,0.12)', padding: '12px 24px', borderRadius: 'var(--r-btn)', cursor: 'pointer', transition: 'border-color 0.12s, color 0.12s' }}
+            onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.25)'; e.currentTarget.style.color='var(--tx-primary)';}}
+            onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)'; e.currentTarget.style.color='var(--tx-secondary)';}}>
+            Get started →
+          
+        
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 4: CREATE src/components/homepage/SpeedSection.tsx — "2 minutes not 3 days" (bland.ai 400ms style)
+
+This section shows RegCo's report generation speed vs manual process. The numbers animate in when the section enters view. "2 min" counts up from 0 in massive black text (left). "3 days" appears in massive faded gray (right). A comparative progress bar animates below. A "Replay" button re-runs the animation.
+
+```tsx
+import { useRef, useState, useEffect } from 'react';
+import { motion, useInView, animate } from 'framer-motion';
+
+function AnimatedNumber({ target, suffix, onDone }: { target: number; suffix: string; onDone?: () => void }) {
+  const [val, setVal] = useState(0);
+
+  useEffect(() => {
+    const controls = animate(0, target, {
+      duration: 1.2,
+      ease: [0.22, 1, 0.36, 1],
+      onUpdate: (v) => setVal(Math.round(v)),
+      onComplete: onDone,
+    });
+    return controls.stop;
+  }, [target]);
+
+  return {val}{suffix};
+}
+
+export function SpeedSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-80px' });
+  const [replay, setReplay] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [barWidth, setBarWidth] = useState(0);
+
+  useEffect(() => {
+    if (!inView && replay === 0) return;
+    setRunning(true);
+    setBarWidth(0);
+    const timer = setTimeout(() => {
+      const barAnim = animate(0, 100, {
+        duration: 1.8,
+        ease: [0.22, 1, 0.36, 1],
+        onUpdate: (v) => setBarWidth(v),
+        onComplete: () => setRunning(false),
+      });
+      return barAnim.stop;
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [inView, replay]);
+
+  // The RegCo bar occupies 2/90 of the total width (2 min vs 3 days = 2 min vs 4320 min)
+  // Visually we'll cheat: RegCo bar = 6% of width, manual bar = 100%
+  const REGCO_PERCENT = 5.5;
+
+  return (
+    
+
+
+      
+
+
+
+        {/* Heading */}
+        
+          And all this with generation time so fast, you'll file before the reminder lands.
+        
+
+        {/* Giant numbers comparison */}
+        {(inView || replay > 0) && (
+          
+
+
+            {/* RegCo — BLACK dominant number */}
+            
+
+
+              
+
+
+                
+                  
+                
+                min
+              
+
+
+            
+
+
+
+            {/* Manual — FADED gray number, right-aligned */}
+            
+
+
+              
+
+
+                3
+                days
+              
+
+
+            
+
+
+          
+
+
+        )}
+
+        {/* Comparative bars */}
+        
+
+
+          {/* RegCo bar */}
+          
+
+
+             0) ? `${REGCO_PERCENT}%` : 0 }}
+              transition={{ delay: 0.5, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+            />
+          
+
+
+          {/* Manual bar */}
+          
+
+
+             0) ? '100%' : 0 }}
+              transition={{ delay: 0.5, duration: 1.8, ease: [0.22, 1, 0.36, 1] }}
+            />
+          
+
+
+        
+
+
+
+        {/* Labels */}
+        
+
+
+          REGCO
+          MANUAL PROCESS
+        
+
+
+
+        {/* Replay button */}
+         { setReplay(r => r + 1); }}
+          style={{ fontFamily: 'var(--font-body)', fontSize: 13, fontWeight: 600, color: 'var(--tx-secondary)', background: 'none', border: '1px solid rgba(0,0,0,0.12)', padding: '8px 18px', borderRadius: 'var(--r-btn)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, transition: 'border-color 0.12s, color 0.12s' }}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.25)'; e.currentTarget.style.color='var(--tx-primary)';}}
+          onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(0,0,0,0.12)'; e.currentTarget.style.color='var(--tx-secondary)';}}>
+          
+          Replay
+        
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 5: CREATE src/components/homepage/TimelineSection.tsx — "Live in 14 days" (bland.ai style)
+
+```tsx
+import { useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
+
+const MILESTONES = [
+  { day: 'DAY 01', title: 'Discovery', sub: 'We learn your CBS format, regulatory calendar, and team structure', above: true },
+  { day: 'DAY 03', title: 'Account mapping', sub: 'CBS file columns matched automatically to CBN return templates', above: false },
+  { day: 'DAY 07', title: 'First return', sub: 'First AI-generated return reviewed live with your compliance officer', above: true },
+  { day: 'DAY 10', title: 'AML calibration', sub: 'Transaction rules tuned to your institution\'s transaction patterns', above: false },
+  { day: 'DAY 14 · LIVE', title: 'First filing', sub: 'Full platform active. First submission filed with CBN.', above: true, highlight: true },
+];
+
+export function TimelineSection() {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: '-60px' });
+
+  return (
+    
+
+
+      
+
+
+
+        
+          Your first regulatory return,
+filed in 14 days.
+        
+
+        
+
+
+          {/* Timeline line */}
+          
+
+          {/* Milestone dots + labels */}
+          
+
+
+            {MILESTONES.map((m, i) => (
+              
+
+                {/* Above content */}
+                
+
+
+                  {m.above && (
+                    <>
+                      
+
+{m.day}
+
+
+                      
+
+{m.title}
+
+
+                      
+
+{m.sub}
+
+
+                    
+                  )}
+                
+
+
+
+                {/* Dot */}
+                
+
+
+
+                {/* Below content */}
+                
+
+
+                  {!m.above && (
+                    <>
+                      
+
+{m.day}
+
+
+                      
+
+{m.title}
+
+
+                      
+
+{m.sub}
+
+
+                    
+                  )}
+                
+
+
+              
+            ))}
+          
+
+
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 6: UPDATE CompactProblemSolution, CompactPillars, CompactFlows for Ballpark style
+
+In each of these existing components, make these style changes:
+- Headings: increase font-size to match Ballpark scale, set fontWeight to 800, set letterSpacing to -1.5px to -2px
+- Center alignment on section headings only (not on body text or grid items)
+- Background: use className="section-white" (background: rgba(255,255,255,0.97)) instead of var(--bg-white) or var(--bg-dark)
+- For dark sections (CompactPillars): keep dark background (#0A0A0A) — Ballpark also has dark sections
+- Section labels (like "The problem · the solution"): keep uppercase, small, gray
+- Body text: keep at 15-16px, color var(--tx-secondary, #6B6B6B)
+
+Specifically in CompactProblemSolution.tsx:
+- Change section style background to: rgba(255,255,255,0.97)
+- Change the h2 (if there is one) fontSize to clamp(36px,5vw,56px), fontWeight to 800, letterSpacing to -2px, textAlign to center
+
+In CompactPillars.tsx:
+- Change background to rgba(10,10,10,0.97) (Ballpark dark)
+- Change h2 fontSize to clamp(28px,4vw,42px), fontWeight to 800, letterSpacing to -1.5px
+- Keep teal accent color
+
+In CompactFlows.tsx:
+- Change background to rgba(255,255,255,0.97)
+- Change h2 fontWeight to 800, letterSpacing to -1.5px
+
+---
+
+### STEP 7: UPDATE CompactWhoWeServe — Ballpark heading above globe
+
+Add a heading ABOVE the globe container in Ballpark style. The globe itself stays identical:
+
+```tsx
+// Add this ABOVE the 
+
+ with the globe:
+
+
+
+    
+
+Who we serve
+
+
+    
+
+
+      Every licensed institution.
+One platform.
+    
+
+
+    
+
+Unit MFBs through to Commercial Banks. Abuja to Lagos.
+
+
+// Then the existing globe section follows immediately below
+```
+
+---
+
+### STEP 8: UPDATE CompactCtaFaq — Ballpark style headings
+
+In the CTA section, change the h2:
+- fontSize: clamp(36px,5.5vw,68px)
+- fontWeight: 800
+- letterSpacing: -3px
+- Keep white text on dark background
+
+In the FAQ section, change the h2:
+- fontSize: clamp(28px,4vw,44px)
+- fontWeight: 800
+- letterSpacing: -1.8px
+
+---
+
+### STEP 9: UPDATE src/pages/Index.tsx — add SpeedSection and TimelineSection
+
+```tsx
+import { Navbar } from '@/components/homepage/Navbar';
+import { HeroSection } from '@/components/homepage/HeroSection';
+import { SpeedSection } from '@/components/homepage/SpeedSection';
+import { CompactProblemSolution } from '@/components/homepage/CompactProblemSolution';
+import { CompactPillars } from '@/components/homepage/CompactPillars';
+import { TimelineSection } from '@/components/homepage/TimelineSection';
+import { CompactFlows } from '@/components/homepage/CompactFlows';
+import { CompactWhoWeServe } from '@/components/homepage/CompactWhoWeServe';
+import { CompactCtaFaq } from '@/components/homepage/CompactCtaFaq';
+import { Footer } from '@/components/homepage/Footer';
+
+export default function Index() {
+  return (
+    
+
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 10: UPDATE src/components/homepage/Footer.tsx — Ballpark footer
+
+Change footer background to rgba(255,255,255,0.97) with borderTop: '1px solid rgba(0,0,0,0.07)'. Change all text colors to var(--tx-primary) for headings and var(--tx-secondary) for links. Remove the "RegCo" watermark text at the bottom (replace with a simple centered copyright line). Keep all link structures identical.
+
+---
+
+Deploy:
+git add -A && git commit -m "feat: Ballpark design — centered hero, dot texture, speed graphic, 14-day timeline, Ballpark typography" && git push origin main
+
+
+## BUILD: Harvey-Style "What compliance teams use RegCo for" Homepage Section
+
+Add a new Harvey.ai-inspired section to the homepage with a smooth vertical scrolling animation. Ballpark font style. The center column cycles through 14 RegCo use cases — the active one is full black, items above and below fade progressively.
+
+Do not modify any dashboard pages.
+
+---
+
+### SQL MIGRATION — None required.
+
+---
+
+### STEP 1: CREATE src/components/homepage/HarveyUseCases.tsx
+
+```tsx
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const USE_CASES = [
+  'Regulatory Return Filing',
+  'AML Transaction Monitoring',
+  'STR Drafting',
+  'Customer 360 Profiles',
+  'Sanctions Screening',
+  'Board Pack Generation',
+  'Audit Issue Tracking',
+  'CBN Circular Intelligence',
+  'Compliance Calendaring',
+  'Case Management',
+  'PENCOM Remittance',
+  'Risk Scoring',
+  'PEP Screening',
+  'Compliance Exam Prep',
+];
+
+const ITEM_HEIGHT = 76; // px per item slot
+const VISIBLE = 7; // items visible at once (3 above, active, 3 below)
+const HALF = Math.floor(VISIBLE / 2); // 3
+
+// Opacity and color based on distance from active
+function getItemStyle(distance: number): React.CSSProperties {
+  const abs = Math.abs(distance);
+  const opacity = abs === 0 ? 1 : abs === 1 ? 0.38 : abs === 2 ? 0.17 : 0.06;
+  const color = abs === 0 ? '#0A0A0A' : '#0A0A0A';
+  return {
+    opacity,
+    color,
+    transform: `scale(${abs === 0 ? 1 : 0.98})`,
+    transition: 'opacity 0.55s ease, transform 0.55s ease',
+    pointerEvents: abs === 0 ? 'auto' : 'none',
+  };
+}
+
+export function HarveyUseCases() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex(prev => (prev + 1) % USE_CASES.length);
+    }, 2400);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Build the visible items array (circular)
+  const visibleItems = Array.from({ length: VISIBLE }, (_, i) => {
+    const distance = i - HALF; // -3 to +3
+    const itemIndex = ((activeIndex + distance) % USE_CASES.length + USE_CASES.length) % USE_CASES.length;
+    return { text: USE_CASES[itemIndex], distance };
+  });
+
+  return (
+    
+
+
+      {/* White gradient at top and bottom to fade dot pattern */}
+      
+
+
+      
+
+
+
+      
+
+
+
+        {/* Left text */}
+        
+
+
+          
+
+
+            The top compliance teams in Nigeria use RegCo for
+          
+
+
+        
+
+
+
+        {/* Center: scrolling use cases */}
+        
+
+
+          {/* Top/bottom fade masks */}
+          
+
+
+          
+
+
+
+          {visibleItems.map(({ text, distance }) => (
+            
+
+
+              
+                {text}
+              
+            
+
+
+          ))}
+        
+
+
+
+        {/* Right: Explore button */}
+        
+
+
+           navigate('/features')}
+            style={{
+              fontFamily: 'var(--font-body, Inter)',
+              fontSize: 13.5,
+              fontWeight: 600,
+              color: '#0A0A0A',
+              background: 'none',
+              border: '1px solid rgba(0,0,0,0.18)',
+              padding: '10px 20px',
+              borderRadius: 8,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'background 0.15s, border-color 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.3)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.borderColor = 'rgba(0,0,0,0.18)'; }}
+          >
+            Explore Platform →
+          
+        
+
+
+      
+
+
+    
+
+
+  );
+}
+```
+
+---
+
+### STEP 2: ADD to src/pages/Index.tsx
+
+Import and place the HarveyUseCases section AFTER the HeroSection and BEFORE the SpeedSection (or after Hero if those other sections don't exist yet):
+
+```tsx
+import { HarveyUseCases } from '@/components/homepage/HarveyUseCases';
+// Add <HarveyUseCases /> directly after <HeroSection /> in the JSX
+```
+
+---
+
+Deploy:
+git add -A && git commit -m "feat: Harvey-style 'what RegCo is used for' scrolling section on homepage" && git push origin main
