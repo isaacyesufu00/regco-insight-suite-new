@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 import { HomepageNavbar, HomepageFooter } from "@/components/regco/HomepageChrome";
+import MockScreenshot from "@/components/regco/MockScreenshot";
 import { motion } from "framer-motion";
+
+const ScreenshotBlock = ({ variant }: { variant: "agent" | "reports" | "monitoring" | "screening" | "calendar" | "security" }) => (
+  <section style={{ padding: "40px 24px 80px", background: "#000000" }}>
+    <MockScreenshot variant={variant} />
+  </section>
+);
 
 interface ShellProps {
   eyebrow: string;
