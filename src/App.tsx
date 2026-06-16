@@ -53,7 +53,12 @@ import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
 import AgentPage from "./pages/dashboard/AgentPage";
-import { ProductPage, WhoWeServePage, PricingPage, CompanyPage, SecurityMarketingPage } from "./pages/marketing/MarketingPages";
+import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
+import Homepage from "./pages/marketing/Homepage";
+import SecurityPage from "./pages/marketing/SecurityPage";
+import NewProductPage from "./pages/marketing/ProductPage";
+import NewCompanyPage from "./pages/marketing/CompanyPage";
+import AboutPage from "./pages/marketing/AboutPage";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +72,8 @@ const App = () => (
         <AuthProvider>
           <ProfileProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<Homepage />} />
+            <Route path="/home-legacy" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
@@ -79,11 +85,11 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthConfirm />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/security" element={<SecurityMarketingPage />} />
-            <Route path="/product" element={<ProductPage />} />
+            <Route path="/security" element={<SecurityPage />} />
+            <Route path="/product" element={<NewProductPage />} />
             <Route path="/who-we-serve" element={<WhoWeServePage />} />
             <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/company" element={<CompanyPage />} />
+            <Route path="/company" element={<NewCompanyPage />} />
             {/* Blog */}
             <Route path="/blog/updates" element={<BlogUpdates />} />
             <Route path="/blog/updates/:slug" element={<BlogUpdateDetail />} />
@@ -98,8 +104,8 @@ const App = () => (
             <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
             <Route path="/contact/support" element={<SupportPage />} />
             <Route path="/contact/partnerships" element={<PartnershipsPage />} />
+            <Route path="/about" element={<AboutPage />} />
             {/* Redirect old public pages to homepage */}
-            <Route path="/about" element={<Navigate to="/#about" replace />} />
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
             <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
             <Route
