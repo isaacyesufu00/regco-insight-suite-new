@@ -44,13 +44,27 @@ serve(async (req) => {
       });
     }
 
+    // Verify JWT and derive identity from sub (never trust client-sent userId)
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false } }
+    );
+    const { data: userResult, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userResult?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    const userId = userResult.user.id;
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       { auth: { persistSession: false } }
     );
 
-    const { messages, userId, conversationId } = await req.json();
+    const { messages, conversationId } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'No messages provided' }), {
@@ -58,39 +72,39 @@ serve(async (req) => {
       });
     }
 
+    // Institution context
     let institutionContext = '';
-    if (userId) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_name, cbn_license_category, compliance_lead_name')
-        .eq('id', userId)
-        .single();
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('company_name, cbn_license_category, compliance_lead_name')
+      .eq('id', userId)
+      .maybeSingle();
 
-      if (profile) {
-        institutionContext = `\n\nCURRENT USER CONTEXT:\nInstitution: ${profile.company_name}\nLicense Type: ${profile.cbn_license_category}\nCompliance Officer: ${profile.compliance_lead_name}`;
-      }
+    if (profile) {
+      institutionContext = `\n\nCURRENT USER CONTEXT:\nInstitution: ${profile.company_name ?? 'Unknown'}\nLicense Type: ${profile.cbn_license_category ?? 'Unknown'}\nCompliance Officer: ${profile.compliance_lead_name ?? 'Unknown'}`;
+    }
 
-      const [flagsResult, tasksResult] = await Promise.all([
-        supabase.from('transaction_reviews').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('review_status', 'pending'),
-        supabase.from('monthly_compliance_tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending').eq('month', new Date().toISOString().slice(0, 7)),
-      ]);
+    const [flagsResult, tasksResult] = await Promise.all([
+      supabase.from('transaction_reviews').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('review_status', 'pending'),
+      supabase.from('monthly_compliance_tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending').eq('month', new Date().toISOString().slice(0, 7)),
+    ]);
 
-      if ((flagsResult.count || 0) > 0 || (tasksResult.count || 0) > 0) {
-        institutionContext += `\nPending AML flags: ${flagsResult.count || 0}\nPending tasks this month: ${tasksResult.count || 0}`;
-      }
+    if ((flagsResult.count || 0) > 0 || (tasksResult.count || 0) > 0) {
+      institutionContext += `\nPending AML flags: ${flagsResult.count || 0}\nPending tasks this month: ${tasksResult.count || 0}`;
     }
 
     const openrouterKey = Deno.env.get('OPENROUTER_API_KEY');
     const model = Deno.env.get('OPENROUTER_MODEL') || 'meta-llama/llama-3.1-8b-instruct:free';
 
     if (!openrouterKey) {
-      console.error('OPENROUTER_API_KEY not set in Supabase secrets');
-      return new Response(JSON.stringify({ error: 'AI model not configured. Add OPENROUTER_API_KEY to Supabase Edge Function secrets.' }), {
+      console.error('OPENROUTER_API_KEY not set');
+      return new Response(JSON.stringify({ error: 'AI model not configured.' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const apiMessages = [
+      { role: 'system', content: SYSTEM_PROMPT + institutionContext },
       ...messages.map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
@@ -100,8 +114,8 @@ serve(async (req) => {
     console.log('=== AGENT CHAT REQUEST ===');
     console.log('Model:', model);
     console.log('Message count:', apiMessages.length);
-    console.log('Last message:', JSON.stringify(apiMessages[apiMessages.length - 1]));
-    console.log('=========================');
+    console.log('Conversation:', conversationId);
+    console.log('Last message:', JSON.stringify(apiMessages[apiMessages.length - 1]).slice(0, 200));
 
     const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -114,7 +128,6 @@ serve(async (req) => {
       body: JSON.stringify({
         model,
         messages: apiMessages,
-        system: SYSTEM_PROMPT + institutionContext,
         stream: true,
         max_tokens: 1200,
         temperature: 0.25,
@@ -124,7 +137,7 @@ serve(async (req) => {
     if (!openrouterResponse.ok) {
       const errorText = await openrouterResponse.text();
       console.error('OpenRouter error:', openrouterResponse.status, errorText);
-      return new Response(JSON.stringify({ error: `Model error: ${openrouterResponse.status}. ${errorText}` }), {
+      return new Response(JSON.stringify({ error: `Model error: ${openrouterResponse.status}` }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -140,7 +153,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Agent chat error:', error);
-    return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
+    const msg = error instanceof Error ? error.message : 'Internal server error';
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
