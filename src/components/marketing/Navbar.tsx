@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown, FileText, Shield, Activity, Users, Newspaper, ClipboardCheck } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
-const productLinks = [
-  { icon: FileText, label: 'Report Generation', sub: '17 mandatory returns automated', href: '/product' },
-  { icon: Activity, label: 'AML Monitoring', sub: 'Real-time transaction screening', href: '/product' },
-  { icon: Users, label: 'Customer 360', sub: 'Full customer intelligence', href: '/product' },
-  { icon: Shield, label: 'Sanctions Screening', sub: 'Five global lists, 3 seconds', href: '/product' },
-  { icon: Newspaper, label: 'Regulatory Intelligence', sub: 'CBN circulars and news feed', href: '/product' },
-  { icon: ClipboardCheck, label: 'Audit Tracker', sub: 'Examination findings, end to end', href: '/product' },
+const productItems = [
+  { label: 'Alert Triage', desc: 'Prioritize high-value compliance cases', href: '/product/alert-triage' },
+  { label: 'Identity Review', desc: 'Structured KYC and due diligence workflows', href: '/product/identity-review' },
+  { label: 'Sanctions Screening', desc: 'Coordinated PEP and sanctions checks', href: '/product/screening' },
+  { label: 'Case Management', desc: 'Route investigations through auditable workflows', href: '/product/case-management' },
+  { label: 'Reporting', desc: 'Consistent outputs for regulators and teams', href: '/product/reporting' },
+  { label: 'Audit Trail', desc: 'Preserve every decision for traceability', href: '/product/audit-trail' },
 ];
 
 export const Navbar = () => {
@@ -17,68 +17,55 @@ export const Navbar = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
+    const fn = () => setScrolled(window.scrollY > 4);
+    window.addEventListener('scroll', fn);
+    return () => window.removeEventListener('scroll', fn);
   }, []);
 
   useEffect(() => { setProductOpen(false); }, [location.pathname]);
 
-  useEffect(() => {
-    const close = () => setProductOpen(false);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
-  }, []);
-
   return (
     <header style={{
-      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
-      height: '56px',
-      background: scrolled ? 'rgba(255,255,255,0.96)' : '#FFFFFF',
-      backdropFilter: scrolled ? 'blur(12px)' : 'none',
-      borderBottom: `1px solid ${scrolled ? 'rgba(0,0,0,0.08)' : 'transparent'}`,
-      transition: 'border-color 0.2s, background 0.2s',
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 300,
+      height: '60px',
+      background: scrolled ? 'rgba(255,255,255,0.97)' : '#FFFFFF',
+      backdropFilter: 'blur(8px)',
+      borderBottom: scrolled ? '1px solid var(--n-70)' : '1px solid var(--n-40)',
+      transition: 'border-color 0.2s',
       display: 'flex', alignItems: 'center',
     }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="atl-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
 
-        <Link to="/" style={{ fontSize: '16px', fontWeight: '700', color: '#0A0A0A', textDecoration: 'none', letterSpacing: '-0.4px', flexShrink: 0 }}>
-          RegCo
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
+          <div style={{ width: '28px', height: '28px', background: 'var(--blue-800)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', fontFamily: 'var(--font-display)', letterSpacing: '-0.5px' }}>R</span>
+          </div>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--n-800)', fontFamily: 'var(--font-display)', letterSpacing: '-0.5px' }}>Regco</span>
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-          <div style={{ position: 'relative' }} onClick={e => e.stopPropagation()}>
+          <div style={{ position: 'relative' }}>
             <button
               onClick={() => setProductOpen(p => !p)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', border: 'none', background: 'transparent', fontSize: '14px', color: '#374151', cursor: 'pointer', borderRadius: '6px', fontFamily: 'inherit', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: 'var(--n-500)', fontFamily: 'var(--font-body)', borderRadius: 'var(--radius-md)', transition: 'background 0.12s, color 0.12s' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--n-30)'; el.style.color = 'var(--n-800)'; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--n-500)'; }}
             >
-              Product <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: productOpen ? 'rotate(180deg)' : 'none' }} />
+              Products <ChevronDown size={14} style={{ transition: 'transform 0.18s', transform: productOpen ? 'rotate(180deg)' : 'none' }} />
             </button>
 
             {productOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
-                width: '520px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.09)',
-                borderRadius: '12px', padding: '8px', boxShadow: '0 16px 64px rgba(0,0,0,0.10)',
-                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
-              }}>
-                <div style={{ gridColumn: '1/-1', padding: '8px 10px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: '2px' }}>
-                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Features</p>
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', width: '520px', background: '#FFFFFF', border: '1px solid var(--n-70)', borderRadius: '8px', padding: '16px', boxShadow: 'var(--shadow-xl)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px' }}>
+                <div style={{ gridColumn: '1/-1', paddingBottom: '10px', marginBottom: '6px', borderBottom: '1px solid var(--n-40)' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--n-200)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Platform features</p>
                 </div>
-                {productLinks.map(item => (
-                  <Link key={item.label} to={item.href} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px', borderRadius: '8px', textDecoration: 'none', transition: 'background 0.1s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F9FAFB'}
+                {productItems.map(item => (
+                  <Link key={item.label} to={item.href} style={{ display: 'flex', flexDirection: 'column', padding: '10px 12px', borderRadius: '6px', textDecoration: 'none', transition: 'background 0.12s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--n-30)'}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
                   >
-                    <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <item.icon size={14} color="#374151" strokeWidth={1.7} />
-                    </div>
-                    <div>
-                      <p style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A', margin: '0 0 1px' }}>{item.label}</p>
-                      <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{item.sub}</p>
-                    </div>
+                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--n-800)', marginBottom: '2px' }}>{item.label}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--n-400)' }}>{item.desc}</span>
                   </Link>
                 ))}
               </div>
@@ -86,14 +73,14 @@ export const Navbar = () => {
           </div>
 
           {[
+            { label: 'Why Regco', href: '/why-regco' },
+            { label: 'Enterprise', href: '/enterprise' },
             { label: 'Security', href: '/security' },
-            { label: 'Who We Serve', href: '/who-we-serve' },
-            { label: 'Company', href: '/company' },
-            { label: 'About', href: '/about' },
+            { label: 'Resources', href: '/resources' },
           ].map(link => (
-            <Link key={link.label} to={link.href} style={{ padding: '6px 12px', fontSize: '14px', color: '#374151', textDecoration: 'none', borderRadius: '6px', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+            <Link key={link.label} to={link.href} style={{ padding: '6px 14px', fontSize: '14px', fontWeight: 500, color: 'var(--n-500)', textDecoration: 'none', borderRadius: 'var(--radius-md)', transition: 'background 0.12s, color 0.12s' }}
+              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--n-30)'; el.style.color = 'var(--n-800)'; }}
+              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--n-500)'; }}
             >
               {link.label}
             </Link>
@@ -101,20 +88,19 @@ export const Navbar = () => {
         </nav>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <Link to="/login" style={{ fontSize: '14px', color: '#374151', textDecoration: 'none', padding: '6px 12px', borderRadius: '6px', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
+          <Link to="/login" style={{ padding: '6px 14px', fontSize: '14px', fontWeight: 500, color: 'var(--blue-800)', textDecoration: 'none', borderRadius: 'var(--radius-md)', transition: 'background 0.12s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--blue-50)'}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
           >
             Log in
           </Link>
-          <Link to="/book-demo" style={{ fontSize: '14px', fontWeight: '600', color: '#FFFFFF', background: '#16A34A', borderRadius: '7px', padding: '7px 18px', textDecoration: 'none', letterSpacing: '-0.1px', transition: 'background 0.15s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
-          >
-            Request a demo
+          <Link to="/book-demo" className="btn-primary" style={{ fontSize: '14px', padding: '8px 18px' }}>
+            Get it free
           </Link>
         </div>
       </div>
     </header>
   );
 };
+
+export default Navbar;
