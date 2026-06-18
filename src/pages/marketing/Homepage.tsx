@@ -86,7 +86,7 @@ const HeroSection = () => (
         <div className="screenshot-placeholder" style={{ minHeight: '480px' }}>
           <div style={{ fontSize: '32px' }}>🖥</div>
           <p style={{ fontWeight: 600, color: 'var(--n-400)', fontSize: '16px' }}>[ INSERT SCREENSHOT: Main Agent Dashboard ]</p>
-          <p className="ph-label">Upload to Lovable assets → replace this div with &lt;img src="..." style={{ width: '100%', display: 'block' }} /&gt;</p>
+          <p className="ph-label">{'Upload to Lovable assets → replace this div with <img src="..." style={{width:"100%",display:"block"}} />'}</p>
         </div>
       </motion.div>
     </div>
