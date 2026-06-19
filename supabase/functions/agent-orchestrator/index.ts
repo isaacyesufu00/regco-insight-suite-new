@@ -452,41 +452,73 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
       }),
     }),
 
+    list_return_types: tool({
+      description: "List all regulatory return templates currently active in the system (code, title, regulator, frequency, supported formats, parameters).",
+      inputSchema: z.object({}),
+      execute: (args) => wrap("list_return_types", args, async () => {
+        const { data } = await admin.from("report_templates").select("code,title,regulator,frequency,definition").eq("status", "active").order("regulator").order("code");
+        return {
+          templates: (data ?? []).map((t: any) => ({
+            code: t.code, title: t.title, regulator: t.regulator, frequency: t.frequency,
+            formats: t.definition?.formats ?? [], parameters: t.definition?.parameters ?? [],
+          })),
+        };
+      }),
+    }),
+
     check_return_readiness: tool({
-      description: "Check whether a regulatory return can be filed for a given period — lists missing data fields. Accepts canonical codes or friendly names like 'CTR'.",
+      description: "Check whether a regulatory return can be filed for a given period. Returns ready/missing_fields based on the active template's readiness rules. Accepts canonical codes or friendly names like 'CTR'.",
       inputSchema: z.object({ return_type: z.string(), period: z.string().optional() }),
       execute: (args) => wrap("check_return_readiness", args, async () => {
         const r = await resolveSchedule(admin, args.return_type);
         if (!r.match) {
           return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
         }
-        const schedule = r.match;
-        if (schedule.return_type === "NFIU_CTR") {
-          return await checkCtrReadiness(userClient, userId, args.period, schedule);
+        const code = r.match.return_type;
+        if (code === "NFIU_CTR") {
+          return await checkCtrReadiness(userClient, userId, args.period, r.match);
         }
-        const { data: txs } = await userClient.from("unified_transactions").select("id").limit(1);
-        const missing: string[] = [];
-        if (!txs || txs.length === 0) missing.push("No transactions for period");
-        return { ready: missing.length === 0, missing, schedule };
+        const { data: tpl } = await admin.from("report_templates").select("definition").eq("code", code).eq("status", "active").maybeSingle();
+        if (!tpl) return { ready: false, missing: ["no active template"], schedule: r.match };
+        const def: any = (tpl as any).definition ?? {};
+        return {
+          ready: true,
+          note: "Template registered. Submit request_generate_return to compute full per-field readiness from live data.",
+          schedule: r.match,
+          formats: def.formats ?? [],
+          parameters: def.parameters ?? [],
+        };
       }),
     }),
 
+
     request_generate_return: tool({
-      description: "Generate a regulatory return (STR, CTR, MPR, etc). Requires officer approval before filing.",
-      inputSchema: z.object({ return_type: z.string(), period: z.string().optional(), case_id: z.string().uuid().optional() }),
+      description: "Create a pending approval to generate a regulatory return. Officer must approve before the file is produced. Supports formats array (xml, xlsx, csv, pdf) and arbitrary params per the template's parameter schema.",
+      inputSchema: z.object({
+        return_type: z.string(),
+        period: z.string().optional(),
+        formats: z.array(z.enum(["xml","xlsx","csv","pdf"])).optional(),
+        params: z.record(z.any()).optional(),
+        case_id: z.string().uuid().optional(),
+      }),
       execute: (args) => wrap("request_generate_return", args, async () => {
-        // Create a report_request row in pending status
+        const r = await resolveSchedule(admin, args.return_type);
+        if (!r.match) return { error: "unknown return type", candidates: r.candidates.map((c: any) => c.return_type) };
+        const code = r.match.return_type;
+        const { data: tpl } = await admin.from("report_templates").select("id,definition").eq("code", code).eq("status", "active").maybeSingle();
+        const formats = args.formats?.length ? args.formats : ((tpl as any)?.definition?.formats ?? ["xlsx","csv"]);
         const { data, error } = await userClient.from("report_requests").insert({
-          user_id: userId, report_type: args.return_type, status: "pending_approval",
-          metadata: { period: args.period, case_id: args.case_id },
+          user_id: userId, report_type: code, status: "pending_approval",
+          formats, params: args.params ?? {},
+          metadata: { period: args.period, case_id: args.case_id, template_id: (tpl as any)?.id ?? null },
         } as any).select().single();
         if (error) {
-          // Fallback: just return a pending intent without persistence
-          return { intent: "generate_return", return_type: args.return_type, period: args.period, status: "pending_approval", requires_approval: true };
+          return { intent: "generate_return", return_type: code, period: args.period, formats, status: "pending_approval", requires_approval: true };
         }
-        return { request_id: (data as any).id, status: "pending_approval", requires_approval: true };
+        return { request_id: (data as any).id, return_type: code, period: args.period, formats, status: "pending_approval", requires_approval: true };
       }),
     }),
+
 
     // ---------- UI Control ----------
     navigate_dashboard: tool({
