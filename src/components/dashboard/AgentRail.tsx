@@ -399,17 +399,34 @@ function ToolChip({ part }: { part: any }) {
 
 function MutationApproval({ toolName, output }: { toolName: string; output: any }) {
   const [state, setState] = useState<"pending" | "approved" | "rejected" | "working">("pending");
+  const [urls, setUrls] = useState<Record<string, string> | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const approve = async () => {
     setState("working");
+    setErrorMsg(null);
     try {
       if (toolName === "request_account_freeze" && output.action_id) {
         await supabase.from("account_actions").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.action_id);
+        setState("approved");
       } else if (toolName === "request_generate_return" && output.request_id) {
-        await supabase.from("report_requests").update({ status: "approved" }).eq("id", output.request_id);
+        await supabase.from("report_requests").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.request_id);
+        const { data, error } = await supabase.functions.invoke("generate-return", { body: { request_id: output.request_id } });
+        if (error) throw error;
+        if (data?.ready === false) {
+          setErrorMsg("Missing data — see readiness output. Approve again to override.");
+          setState("pending");
+          return;
+        }
+        if (data?.urls) setUrls(data.urls);
+        setState("approved");
+      } else {
+        setState("approved");
       }
-      setState("approved");
-    } catch { setState("pending"); }
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "Failed");
+      setState("pending");
+    }
   };
   const reject = async () => {
     setState("working");
@@ -423,13 +440,31 @@ function MutationApproval({ toolName, output }: { toolName: string; output: any 
     } catch { setState("pending"); }
   };
 
-  if (state === "approved") return <p className="text-[11.5px] text-green-700 font-mono">✓ Approved</p>;
+  if (state === "approved") {
+    return (
+      <div className="space-y-1">
+        <p className="text-[11.5px] text-green-700 font-mono">✓ Approved</p>
+        {urls && (
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(urls).map(([k, href]) => (
+              <a key={k} href={href} target="_blank" rel="noreferrer" className="text-[11px] font-mono underline text-[var(--navy)]">
+                ⬇ {k.replace("_url", "").toUpperCase()}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
   if (state === "rejected") return <p className="text-[11.5px] text-[var(--ink-3)] font-mono">✕ Cancelled</p>;
 
   return (
-    <div className="flex items-center gap-2">
-      <button onClick={approve} disabled={state === "working"} className="text-[11px] font-mono px-2 py-1 rounded bg-[var(--navy)] text-white hover:opacity-90 disabled:opacity-40">Approve</button>
-      <button onClick={reject} disabled={state === "working"} className="text-[11px] font-mono px-2 py-1 rounded border border-[var(--rail-border)] text-[var(--ink)] hover:bg-black/[0.04] disabled:opacity-40">Cancel</button>
+    <div className="space-y-1">
+      <div className="flex items-center gap-2">
+        <button onClick={approve} disabled={state === "working"} className="text-[11px] font-mono px-2 py-1 rounded bg-[var(--navy)] text-white hover:opacity-90 disabled:opacity-40">Approve</button>
+        <button onClick={reject} disabled={state === "working"} className="text-[11px] font-mono px-2 py-1 rounded border border-[var(--rail-border)] text-[var(--ink)] hover:bg-black/[0.04] disabled:opacity-40">Cancel</button>
+      </div>
+      {errorMsg && <p className="text-[11px] font-mono text-red-700">{errorMsg}</p>}
     </div>
   );
 }
