@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import askDashboard from '@/assets/ask-dashboard.png.asset.json';
+import embedNotion from '@/assets/embed-notion.png.asset.json';
+import slackImg from '@/assets/slack.png.asset.json';
+import writebackImg from '@/assets/writeback.png.asset.json';
+import trustWorkbook from '@/assets/trust-workbook.png.asset.json';
 
 const COLORS = {
   pageBg: '#F5F2EC',
@@ -17,8 +22,17 @@ const COLORS = {
   heroInputBg: '#F9F7F4',
 };
 
-const serif: React.CSSProperties = { fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, letterSpacing: '-0.01em' };
+const HEADER_FONT = "'Arial Black', 'Helvetica Neue', Arial, sans-serif";
+const serif: React.CSSProperties = { fontFamily: HEADER_FONT, fontWeight: 900, letterSpacing: '-0.02em' };
 const sans: React.CSSProperties = { fontFamily: "'Inter', system-ui, sans-serif" };
+
+function ImageFill({ src, alt, height, bg = '#F0EDE8' }: { src: string; alt: string; height: number; bg?: string }) {
+  return (
+    <div style={{ width: '100%', height, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+    </div>
+  );
+}
 
 // ─── NAV ────────────────────────────────────────────────────────────────
 function Nav() {
