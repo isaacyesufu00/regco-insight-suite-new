@@ -475,23 +475,22 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
           return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
         }
         const code = r.match.return_type;
-        // Delegate to the generate-return engine in "preview" mode (no override_readiness).
-        const url = `${SUPABASE_URL}/functions/v1/generate-return`;
-        const resp = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${SERVICE_KEY}`, "x-impersonate-user": userId },
-          body: JSON.stringify({ template_code: code, period: args.period, formats: [], preview: true }),
-        }).catch(() => null);
-        // Fall back to legacy CTR-only path if the engine call isn't impersonation-aware.
         if (code === "NFIU_CTR") {
           return await checkCtrReadiness(userClient, userId, args.period, r.match);
         }
-        // Generic preview via direct readiness — use admin against the active template.
         const { data: tpl } = await admin.from("report_templates").select("definition").eq("code", code).eq("status", "active").maybeSingle();
         if (!tpl) return { ready: false, missing: ["no active template"], schedule: r.match };
-        return { ready: true, note: "Template registered; submit request_generate_return to compute full readiness.", schedule: r.match, formats: (tpl as any).definition?.formats ?? [], parameters: (tpl as any).definition?.parameters ?? [] };
+        const def: any = (tpl as any).definition ?? {};
+        return {
+          ready: true,
+          note: "Template registered. Submit request_generate_return to compute full per-field readiness from live data.",
+          schedule: r.match,
+          formats: def.formats ?? [],
+          parameters: def.parameters ?? [],
+        };
       }),
     }),
+
 
     request_generate_return: tool({
       description: "Create a pending approval to generate a regulatory return. Officer must approve before the file is produced. Supports formats array (xml, xlsx, csv, pdf) and arbitrary params per the template's parameter schema.",
