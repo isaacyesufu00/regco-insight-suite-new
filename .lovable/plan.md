@@ -1,121 +1,169 @@
-# Regulatory return generation — full pipeline
+# Schema-driven CBN report template system
 
-Build one unified, approval-gated pipeline that can produce **XML, XLSX, CSV, and PDF** for all 11 returns in the catalog, exposed from both the **agent rail** and a new **dashboard wizard**. Existing infrastructure (`generate-form-report`, `process-report`, `reports` table) is reused — not replaced.
+Replace per-return hand-coded TS modules with one **template-driven** generator. A return is defined as a row in a new `report_templates` table whose `definition` JSONB describes data sources, required fields, and output layout. Adding a new CBN form becomes a SQL insert + admin UI edit — no code change, no redeploy.
 
-## Architecture
+## Why
 
-```text
-┌──────────────────┐    ┌──────────────────────┐
-│ Agent rail       │    │ /dashboard/my-reports│
-│ (chat + chip)    │    │ "Generate return"    │
-└────────┬─────────┘    └─────────┬────────────┘
-         │                        │
-         │  request_generate_return / form submit
-         ▼                        ▼
-   ┌──────────────────────────────────────────┐
-   │ report_requests row (status='pending')   │  ← approval-gated
-   │   return_type · period · formats[] · params│
-   └────────────────────┬─────────────────────┘
-                        │ officer Approves
-                        ▼
-        ┌───────────────────────────────────┐
-        │ Edge fn: generate-return          │
-        │  1. resolveSchedule()             │
-        │  2. checkReadiness()  (per-type)  │
-        │  3. buildPayload()    (per-type)  │
-        │  4. renderXml/Xlsx/Csv/Pdf()      │
-        │  5. upload to reports bucket      │
-        │  6. insert reports row + URLs     │
-        │  7. case_events hash (audit)      │
-        └───────────────────────────────────┘
+The previous plan needed 11 TS modules × 4 formats. That doesn't scale to "any CBN form". A schema-driven engine lets compliance officers add or amend forms (the regulator changes them yearly) without an engineering cycle.
+
+## Template shape
+
+```jsonc
+// report_templates.definition (jsonb)
+{
+  "code": "CBN_MPR",
+  "title": "Monetary Policy Return",
+  "regulator": "CBN",
+  "frequency": "monthly",
+  "version": 1,
+  "period": { "kind": "month" },           // day | week | month | quarter | year | event
+  "parameters": [                          // user-supplied at request time
+    { "key": "car_pct",       "label": "Capital Adequacy Ratio (%)", "type": "number", "required": true },
+    { "key": "liquidity_pct", "label": "Liquidity Ratio (%)",        "type": "number", "required": true }
+  ],
+  "sources": [                              // declarative DB pulls; engine runs them, no SQL injection
+    {
+      "id": "tx",
+      "table": "unified_transactions",
+      "select": "id,amount,currency,transaction_type,channel,branch_code,customer_id,customer_name,account_number,transaction_date,narration,description",
+      "filters": [
+        { "col": "transaction_date", "op": "gte", "value": "${period.start}" },
+        { "col": "transaction_date", "op": "lt",  "value": "${period.end}"   }
+      ]
+    },
+    { "id": "customers", "table": "customers", "select": "id,bvn,date_of_birth,full_name", "join_on": { "source": "tx", "local": "id", "foreign": "customer_id" } }
+  ],
+  "readiness": [                            // missing-field rules, run against pulled data
+    { "rule": "field_present", "source": "tx",        "field": "branch_code",       "label": "branch_code" },
+    { "rule": "field_present", "source": "customers", "field": "bvn",               "label": "customer.bvn" },
+    { "rule": "min_rows",      "source": "tx",        "min": 1,                     "label": "transactions for period" }
+  ],
+  "layout": {                               // shared by xlsx/csv/pdf renderers
+    "cover": [
+      { "label": "Institution",   "value": "${institution.name}" },
+      { "label": "Period",        "value": "${period.label}" },
+      { "label": "CAR",           "value": "${params.car_pct}%" }
+    ],
+    "sections": [
+      {
+        "id": "transactions",
+        "title": "Cash Transactions",
+        "type": "table",
+        "source": "tx",
+        "columns": [
+          { "header": "Date",     "value": "${row.transaction_date|date}" },
+          { "header": "Branch",   "value": "${row.branch_code}" },
+          { "header": "Amount",   "value": "${row.amount|naira}" }
+        ]
+      }
+    ]
+  },
+  "xml": {                                  // optional regulator XML mapping (goAML/eFASS)
+    "root": "report",
+    "namespaces": { "xmlns": "http://goaml.unodc.org/" },
+    "elements": [
+      { "name": "report_code", "value": "CBN_MPR" },
+      { "name": "period",      "value": "${period.label}" },
+      { "name": "transactions",
+        "repeat_source": "tx",
+        "child": { "name": "transaction", "elements": [
+          { "name": "id",     "value": "${row.id}" },
+          { "name": "amount", "value": "${row.amount}" }
+        ]}
+      }
+    ]
+  },
+  "formats": ["xlsx", "csv", "pdf", "xml"]   // which renderers are enabled
+}
 ```
 
-### New edge function: `generate-return`
-- One entry point, dispatches per `return_type`.
-- Internal modules under `supabase/functions/generate-return/returns/<code>.ts`, each exporting:
-  - `requiredFields`, `readiness(ctx, period)` → `{ ready, missing_fields }`
-  - `buildPayload(ctx, period, params)` → strongly-typed object
-  - `renderXml(payload)`, `renderRows(payload)` (for xlsx/csv), `renderPdfSections(payload)`
-- Shared helpers:
-  - `formats/xml.ts` — handcrafted templates per regulator schema (NFIU goAML v4.0.2, CBN eFASS, NDIC, FIRS).
-  - `formats/xlsx.ts` — SheetJS / `xlsx` npm via Deno's `npm:` specifier.
-  - `formats/csv.ts` — plain text writer.
-  - `formats/pdf.ts` — `npm:pdfkit` (already proven works in Deno) with a shared cover page + signature block.
-  - `storage.ts` — upload to `reports` bucket, return 1h signed URLs.
+A tiny expression language — `${path|filter}` — is enough. Filters: `date`, `datetime`, `naira`, `upper`, `lower`, `default:<x>`. No arbitrary JS; the engine walks the JSON.
 
-### Return modules shipped in this pass (all 11 catalog entries)
+## Engine
 
-| Code | Format support | Notes |
-|---|---|---|
-| `NFIU_STR` | XML (goAML), PDF | Per-case; requires `case_id`. Maps `cases` + `unified_transactions` + `customers`. |
-| `NFIU_CTR` | XML (goAML), XLSX, CSV, PDF | Daily aggregation, ≥ NGN 5M individual / 10M corporate. Readiness already implemented — wire into payload. |
-| `CBN_MPR` | XLSX (eFASS template), PDF | Monthly. CAR, liquidity ratio, NPL ratio from `compliance_scores`/manual params. |
-| `CBN_FX`  | XLSX, CSV, PDF | Weekly FX position. |
-| `NDIC_PREM` | XLSX, PDF | Reuses existing `generate-form-report` SCUML/NDIC template engine for the text body, plus structured XLSX. |
-| `NDIC_SO` | XLSX, CSV, PDF | Single obligor; pulls aggregated exposure by `customer_id`. |
-| `SCUML_ANN` | PDF, XLSX | Reuses existing SCUML text template; wraps as PDF. |
-| `FIRS_VAT` / `FIRS_PAYE` / `FIRS_WHT` / `FIRS_CIT` | XLSX, CSV, PDF | Tax returns; XML deferred (FIRS portal accepts XLSX). |
+New edge function `generate-return` (single function, no per-return code):
 
-Each module has a strict `requiredFields` list. When `readiness()` returns gaps, the orchestrator reports them per-field (same shape as the CTR check already returns).
+```text
+template = report_templates.get(code)
+period   = resolvePeriod(template.period, requestedPeriod)
+data     = runSources(template.sources, period, ctx)      // typed Supabase calls, never raw SQL
+checks   = runReadiness(template.readiness, data)         // -> { ready, missing_fields[] }
+if (!checks.ready && !approveOverride) return checks
+out = {
+  xlsx: renderLayoutXlsx(template.layout, data, params, ctx),
+  csv:  renderLayoutCsv (template.layout, data, params, ctx),
+  pdf:  renderLayoutPdf (template.layout, data, params, ctx),
+  xml:  template.xml ? renderXml(template.xml, data, params, ctx) : undefined,
+}
+upload(out) -> reports row + signed URLs + case_events audit hash
+```
 
-### Approval gate (mandatory for every return)
-1. Officer triggers via chat or wizard → `report_requests` row inserted with `status='pending_approval'`, `metadata={ return_type, period, formats, params }`.
-2. Agent rail renders the existing `MutationApproval` chip showing return type, period, requested formats, and the readiness summary.
-3. On **Approve**, frontend calls `generate-return` edge function with `request_id`. The function re-verifies the row belongs to the caller, re-runs readiness, and only proceeds if `ready=true` (officer can still approve with warnings, recorded in audit).
-4. On success: `reports` row inserted with `pdf_url`/`xlsx_url`/`file_url` (XML) + `report_filename`; `case_events` hash chain extended with `{event_type:'return_generated', payload:{request_id, return_type, hashes}}`.
-5. Officer downloads from chat chip and from the My Reports table.
+All four renderers iterate the **same layout/xml object**, so adding a return type means inserting a template row and the generator produces every format automatically.
 
-### Dashboard wizard (`/dashboard/my-reports`)
-- New `GenerateReturnDialog` opened by a primary button.
-- Steps: **Return type** (grouped by regulator) → **Period** (picker matched to frequency) → **Formats** (multi-select, defaulted per return) → **Parameters** (return-specific fields: e.g. CBN_MPR asks for CAR/Liquidity/NPL overrides; NFIU_STR asks for `case_id`) → **Review readiness** (calls the same readiness check, shows missing fields) → **Submit for approval**.
-- Same backend path; submission lands in the agent rail's approval chip (and is also visible as a `pending_approval` row in the Returns table). Either surface can approve.
+## Filters and safety
 
-### Output formats — concretely
-- **XML**: per-regulator templates with strict element ordering. goAML for NFIU uses the published v4.0.2 schema. Each XML render is unit-tested with a sample payload (Deno.test under each module).
-- **XLSX**: workbook with a *Cover* sheet (institution, period, certifier) + one or more *Data* sheets matching the regulator template columns.
-- **CSV**: data sheet only, headers row 1.
-- **PDF**: cover page + structured tables + signature block. Generated with `npm:pdfkit`; for SCUML/NDIC the existing text template is rendered into the PDF body.
+The `filters[]` array is a whitelist: `eq | neq | gt | gte | lt | lte | ilike | in`. The engine maps these to `PostgrestFilterBuilder` calls — no string concatenation, no `rpc('execute_sql')`. Columns and tables are validated against a per-template allowlist before any query runs.
 
-## Database changes
+## Versioning
 
-Single migration:
-- `report_requests`: add `formats text[] not null default '{}'`, `params jsonb not null default '{}'`, `readiness jsonb`, `approved_at timestamptz`, `approved_by uuid`, `report_id uuid references public.reports(id)`. Index on `(user_id, status)`.
-- `reports`: add `return_type text`, `xml_url text`, `csv_url text` (pdf_url/xlsx_url/file_url already exist). Index on `(user_id, return_type, period_start)`.
-- RLS unchanged — both tables already user-scoped.
+`report_templates` rows are immutable per `(code, version)`. Edits create a new `version`; old generated reports keep a `template_version` pointer for audit reproducibility.
 
-## Files touched / added
+## Admin authoring UI
+
+`/dashboard/admin/templates` (admin-only, gated by `has_role('admin')`):
+- List of templates with `code`, `version`, regulator, status (`draft|active|archived`).
+- JSON editor (Monaco) with live schema validation against the template-schema Zod definition (so officers can't ship a broken template).
+- "Validate against sample data" button: runs the readiness + a renderer dry run and shows the resulting XLSX preview.
+- "Activate" promotes a draft to active; only one active version per code at a time.
+
+Officers without admin role pick from active templates only.
+
+## Database changes (single migration)
+
+- `report_templates`
+  - `id uuid pk`, `code text not null`, `version int not null default 1`, `regulator text`, `frequency text`,
+    `definition jsonb not null`, `status text not null default 'draft'` (`draft|active|archived`),
+    `created_by uuid`, `created_at`, `updated_at`,
+    `unique(code, version)`.
+- `reports`: add `template_id uuid references report_templates(id)`, `template_version int`.
+- Seed one template per row already in `filing_schedules` (11 starter templates, all `status='active'`, version 1). NFIU_CTR ships with the readiness rules from the existing check; the rest start minimal and are extended in the admin UI.
+- RLS:
+  - `report_templates`: `SELECT` to authenticated for `status='active'`; full CRUD only to `has_role(auth.uid(),'admin')`. `service_role` full.
+
+## Files
 
 **New**
-- `supabase/functions/generate-return/index.ts` — entry point + dispatcher.
-- `supabase/functions/generate-return/_shared/{readiness,storage,audit,periods}.ts`.
-- `supabase/functions/generate-return/formats/{xml,xlsx,csv,pdf}.ts`.
-- `supabase/functions/generate-return/returns/{nfiu_str,nfiu_ctr,cbn_mpr,cbn_fx,ndic_prem,ndic_so,scuml_ann,firs_vat,firs_paye,firs_wht,firs_cit}.ts`.
-- `src/components/reports/GenerateReturnDialog.tsx` + step components.
-- `src/hooks/useGenerateReturn.ts`.
+- `supabase/functions/generate-return/index.ts`
+- `supabase/functions/generate-return/engine/{expr.ts,sources.ts,readiness.ts,layout.ts,xml.ts,xlsx.ts,csv.ts,pdf.ts,upload.ts}`
+- `supabase/functions/_shared/template-schema.ts` (Zod schema for `definition`, shared by engine + admin UI validation via codegen or duplicated)
+- `src/pages/admin/Templates.tsx`, `src/components/admin/TemplateEditor.tsx`
+- `src/hooks/useReportTemplates.ts`
 
 **Edited**
-- `supabase/functions/agent-orchestrator/index.ts` — `request_generate_return` accepts `formats[]` + `params`; persists into `report_requests`. Add `list_return_types` tool so the agent can enumerate options. `check_return_readiness` delegates to the per-type modules so STR/MPR/etc. also return structured `missing_fields`.
-- `src/components/dashboard/AgentRail.tsx` — `MutationApproval` for `request_generate_return` posts to `generate-return` and renders the download links from the response.
-- `src/pages/dashboard/MyReports.tsx` (or equivalent) — "Generate return" button + pending-approval row state.
-
-## Out of scope (explicit follow-ups)
-- Direct portal submission (NFIU goAML upload, CBN eFASS upload). We produce the file; officer uploads.
-- Institution-level configuration of CTR thresholds, certifier names, branch lists — using sane defaults + per-request overrides for now.
-- FIRS XML (portal accepts XLSX today).
-- Multi-officer dual-approval workflow.
+- `supabase/functions/agent-orchestrator/index.ts`:
+  - `list_return_types` tool now reads `report_templates` where `status='active'`.
+  - `check_return_readiness` calls the engine's `runReadiness` (no per-type code).
+  - `request_generate_return` records the chosen `template_id` + `formats[]` + `params` into `report_requests`.
+- `src/components/dashboard/AgentRail.tsx`: approval chip invokes `generate-return` with `request_id`, renders download URLs.
+- `src/pages/dashboard/MyReports.tsx`: "Generate return" button → wizard reads parameter schema from `report_templates.definition.parameters` and renders the form dynamically (no per-return UI code).
 
 ## Verification
-- Per-module Deno tests with golden XML/XLSX/CSV fixtures.
-- End-to-end manual: in agent rail, "Generate CTR for yesterday in XML and XLSX" → chip → Approve → two files downloadable. Repeat from wizard with `CBN_MPR` for 2026-05.
-- Confirm `case_events` row created and `reports` row visible in My Reports.
 
-## Effort note
-This is a multi-step build (11 return modules × up to 4 formats + wizard + approval wiring). I will land it in this order so you have working value at each checkpoint:
-1. Migration + `generate-return` skeleton + shared format helpers.
-2. `NFIU_CTR` and `NFIU_STR` end-to-end (XML + XLSX + CSV + PDF) wired through agent rail.
-3. `CBN_MPR`, `CBN_FX`.
-4. `NDIC_PREM`, `NDIC_SO`, `SCUML_ANN` (reusing existing template engine).
-5. FIRS quartet.
-6. Dashboard wizard.
+- Deno tests for the engine with two fixture templates: one minimal (CTR), one with XML mapping.
+- Snapshot tests for `renderXml` and `renderLayoutCsv` against golden files.
+- Manual: insert a new "CBN_TEST" template via admin UI → it immediately appears in the agent's return list and the wizard, with no code change or redeploy.
 
-If you'd rather get the wizard earlier or trim coverage to ship faster, say so before I start.
+## Out of scope
+
+- Form *intake* for the regulator portal (we still produce the file; officer uploads).
+- Cross-period aggregations beyond `sum/count/min/max` filter values — handled in a later "computed sources" phase.
+- Multi-language templates.
+
+## Effort order
+
+1. Migration + seed 11 active templates from `filing_schedules`.
+2. Engine: expression/filter eval, sources, readiness, csv + xlsx renderers.
+3. Generic XML renderer + PDF renderer.
+4. `generate-return` edge function + agent wiring.
+5. Dashboard wizard reading from `report_templates`.
+6. Admin authoring UI (last — engine works without it; SQL inserts are a fallback).
