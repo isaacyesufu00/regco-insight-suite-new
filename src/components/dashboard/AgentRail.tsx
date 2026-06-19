@@ -148,7 +148,7 @@ export default function AgentRail() {
     <aside
       className="flex flex-col flex-shrink-0 h-screen sticky top-0"
       style={{
-        width: 280,
+        width: 360,
         background: "var(--rail-bg)",
         borderRight: "1px solid var(--rail-border)",
       }}
