@@ -1,104 +1,123 @@
-## Vision
+## Reset & new direction
 
-One unified redesign in the spirit of **anthropic.com**: warm off-white paper, near-black ink, a single rust accent, serif display + clean sans body, generous whitespace, quiet motion. Every surface — marketing, auth, app — speaks the same language.
+Strip the editorial "paper + rust" system. Replace with a strict **black / white / hairline-grey** system inspired by **harvey.ai** and **rogo.ai**. RegCo is repositioned as **four products**. Dashboard becomes a clean **two-pane** workspace: narrow AI agent rail on the left, dominant work canvas on the right with a top tab-router (Fraud · Identity · Returns). **No icon sidebar, no third column** — just the two panes.
 
-## Design system (built first, used everywhere)
+## Typography — Apple system stack everywhere
 
-**Palette (semantic tokens in `index.css`)**
-- `--paper` `#F5F3EE` (background)
-- `--paper-2` `#E8E4DD` (cards / dividers)
-- `--ink` `#0D0D0D` (text, primary)
-- `--ink-muted` `#5A5A57`
-- `--accent` `#C44A2F` (rust — used sparingly: CTAs, key marks, focus)
-- Status: success `#3F6B4A`, warn `#B8862A`, error `#9C2A1F` (muted, paper-friendly)
-
-**Type**
-- Display: **Instrument Serif** (hero, H1–H2) — Anthropic-style editorial serif
-- Body / UI: **Inter** (kept) at tight tracking
-- Mono accents: **JetBrains Mono** for stats, code, table figures
-- Installed via `@fontsource/*`, wired in `tailwind.config.ts`
-
-**Foundations**
-- Radius: 6px default, 10px cards, full on pills
-- Shadows: near-zero; rely on 1px `--paper-2` borders
-- Motion: 200–400ms ease-out, subtle fades + 8–12px lifts only
-
-## Phase 1 — Tokens & shell (foundation)
-
-1. Rewrite `src/index.css` tokens (light only; dark mode deferred).
-2. Update `tailwind.config.ts` colors + font families.
-3. Install `@fontsource/instrument-serif`, `@fontsource/jetbrains-mono`; import in `main.tsx`.
-4. Refactor shadcn Button, Card, Input, Badge variants to new tokens.
-5. New shared `Navbar` + `Footer` (paper, serif wordmark, thin underline links, single rust CTA).
-
-## Phase 2 — Marketing pages
-
-**Homepage (`src/pages/Index.tsx`)**
-- Hero: serif headline left, calm right-rail product still life; one rust CTA + ghost secondary
-- Trust strip (logos, monochrome)
-- "What RegCo does" — 3 editorial columns, serif sub-heads, hairline rules
-- Product preview — large bordered screenshot, captioned like a magazine
-- Outcomes (stats in mono)
-- Compliance coverage grid (CBN / NDIC / NFIU / SCUML / FIRS) — small cards, no gradients
-- Long-form CTA band on ink background
-
-**Product page** — anatomy-of-a-report walkthrough, alternating text + screenshot rows (zig-zag), captions in serif.
-
-**Who We Serve** — one section per institution type (Unit MFB, State MFB, National MFB, Commercial, Fintech, PMB), editorial layout with pull-quotes.
-
-**About** — mission essay style, single column max-w-2xl, founder note, footnotes.
-
-## Phase 3 — Auth & lead capture
-
-**Sign In / Sign Up / Forgot / Reset** — split layout: left paper panel with serif quote + wordmark, right white form panel. Inputs underlined (no boxes), rust submit, mono helper text.
-
-**Book a Demo** — same split, form questions feel like an interview (one prominent question at a time visually grouped), success state is a serif "Thank you." letter.
-
-## Phase 4 — Dashboard (full rethink)
-
-**Information architecture**
-```text
-┌─ Top bar: wordmark · workspace switcher · search · profile
-├─ Left rail (collapsible, icon+label):
-│   Overview · Reports · Calendar · Customers · Monitoring
-│   Intelligence · Agent · Settings
-└─ Workspace (paper bg, max-w-7xl, generous gutters)
+```css
+font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+             "Helvetica Neue", system-ui, sans-serif;
 ```
 
-**Overview (new home)**
-- Greeting + today's regulatory date in serif
-- Compliance score as a large editorial number with mono delta
-- "Due this week" card list (deadline, type, status pill)
-- Recent reports table (hairline rules, no zebra)
-- Right column: regulatory news ticker, agent shortcut
+Mono for KPI numbers: `ui-monospace, "SF Mono", Menlo, monospace`. Remove all webfont imports (`Instrument Serif`, `Inter`, `Lora`, `JetBrains Mono`) from `main.tsx` / `index.css`.
 
-**Reports** — table-first, filters as chip row, "New report" opens a focused full-screen 5-step flow (one question per screen, serif prompts).
+## Sizing & proportions (balanced)
 
-**Agent** — kept functional (edge function untouched); chat surface restyled: serif assistant name, mono timestamps, paper bubbles, no avatars; right rail shows referenced sources as footnotes.
+- Display h1: 56px / 1.05 / -0.02em · h2: 36px · h3: 22px · Body: 15px · Small: 13px · KPI number: 28px mono.
+- Page max-width 1200px, side padding 24px.
+- Section vertical padding 80px desktop / 56px mobile.
+- Cards: 20px padding, 8px radius, 1px `#E5E5E5` border, no shadow.
+- Buttons & inputs: 38px tall, 14px text, pill radius.
 
-**Calendar, Monitoring, Customers, Intelligence, Settings** — restyled to the same grammar; no business logic changes.
+## Design tokens
 
-## Phase 5 — Polish
+**Marketing (strict B/W)**
+- `--bg #FFFFFF` · `--bg-inverse #0A0A0A`
+- `--ink #0A0A0A` · `--ink-2 #3A3A3A` · `--ink-3 #6B6B6B` · `--ink-4 #A8A8A8`
+- `--line #E5E5E5` · `--line-2 #F0F0F0`
 
-- Replace marketing imagery with on-brand monochrome/duotone treatments of the existing PNGs
-- SEO pass on each marketing page (title <60, meta <160, single H1, JSON-LD for Organization)
-- Accessibility: AA contrast verified, focus states use rust ring
-- Remove now-unused legacy components (`eigen/*`, duplicate navbars/footers)
+**Dashboard adds**
+- `--navy #172B4D` · `--blue #0052CC` · `--green #00875A` · `--rail-bg #F4F5F7` · `--rail-border #DFE1E6`
 
-## Out of scope
+## What's removed
 
-- Backend / edge functions / DB schema (agent-chat stays as-is)
-- Dark mode (deferred)
-- Mobile app
+- All marketing mockups: `DashboardMock`, `DashboardShowcase`, `MockScreenshot`, `eigen/DashboardMockup`, `eigen/DashboardTutorialSection`, every faux screenshot.
+- Editorial italics, serif headings, rust accent, paper bg, `blue-underline`.
+- All webfont packages.
+- **The current dashboard sidebar (`DashboardSidebar.tsx`) entirely** — no icon nav, no labels nav.
+
+## Product positioning (four products)
+
+```text
+01 · Automated Returns          End-to-end CBN & NFIU filing
+02 · Live Client Screening      BVN, NIN, Sanctions, PEP, Adverse Media
+03 · Transaction Monitoring     Near-real-time fraud, AML, anomaly detection
+04 · Audit Trail & Case Mgmt    Chain of custody, case workflow
+```
+
+Marketing nav gets a Products dropdown listing all four.
+
+## Marketing pages (Harvey/Rogo, no imagery)
+
+- **Homepage** — hero (56px headline, two pill CTAs) → text trust strip → four product blocks stacked with `01–04` numerals → 3-column "How it works" → 4 mono stat tiles → black closing CTA band.
+- **Product** — intro + four anchored sections (`#returns`, `#screening`, `#monitoring`, `#audit`): kicker, h2, two-column body. No mockups.
+- **Who we serve, About, Pricing** — restyled to the new B/W sans system. Pricing = three hairline cards.
+- **Navbar + Footer** — minimal B/W replacements.
+
+## Auth & Book-a-demo
+
+Split shell, both panels white, hairline divider, underline-only inputs, solid black submit. No serif, no rust, no paper.
+
+## Dashboard — strict two-pane workspace
+
+No sidebar of any kind. Only two panes.
+
+```text
+┌─ Agent rail (280px, #F4F5F7) ┬─ Work canvas (flex-1) ────────────────────────────┐
+│                              │ [ Fraud & AML ] [ Identity ] [ Returns ]   user ▾ │
+│ Thought: Checking CBN Rule 4 │ ─────────────────────────────────────────────────  │
+│ Thought: Compiling NFIU XML  │                                                    │
+│ Output: 14 alerts triaged…   │  [ KPI · KPI · KPI · KPI ]                         │
+│                              │                                                    │
+│                              │  [ Dual-axis chart                            ]    │
+│                              │                                                    │
+│                              │  [ Risk ledger table                          ]    │
+│ ┌──────────────────────────┐ │                                                    │
+│ │ + What do you want to…  ↵│ │                                                    │
+│ └──────────────────────────┘ │                                                    │
+└──────────────────────────────┴────────────────────────────────────────────────────┘
+```
+
+**Left agent rail — 280px fixed**
+- Background `#F4F5F7`, right border `1px #DFE1E6`.
+- Small RegCo wordmark at top of the rail (so brand still appears without a sidebar).
+- Plain-text ledger stream, no bubbles: grey "Thought:" lines stacked above black output lines. 13px, 1.5 line-height.
+- Pinned composer at bottom: white container, subtle shadow, single `+` icon, placeholder **"What do you want to know?"**.
+- Conversation state held in a `useRef`-backed messages array (async-safe, prevents trailing-closure cuts during streaming). Backed by existing `agent-chat` edge function.
+
+**Right canvas (flex-1, dominant)**
+- Top bar = three tabs (**Fraud & AML**, **Identity & Screening**, **Regulatory Returns**) on the left; on the right a small user menu (profile, settings, sign out, calendar) — these replace what the sidebar used to expose.
+- Active tab = `#0052CC` underline, navy `#172B4D` text. Tabs are routable and AI-switchable.
+- Inner padding 24px, max content 1100px, KPI grid 4 × 20px gap.
+
+**Tab 1 — Fraud & AML (default)**
+KPIs: Processing Latency (ms), Alerts Triaged, False-Positive Ratio, Cleared Volume (₦). Recharts dual-axis area+bar. Smart Risk Ledger grid: Txn ID · Entity · Triggering Control · Risk Score 0.00–1.00.
+
+**Tab 2 — Identity & Screening**
+Corporate Alignment Matrix (beneficial owners ↔ CAC). Sanctions Verification Board across UN, US OFAC, EU, UK HM Treasury, CBN Watchlist.
+
+**Tab 3 — Regulatory Returns**
+Filing Schedule Checklist (daily / monthly / quarterly, status Draft / Validating / Submitted / Acknowledged) + one-click XML/JSON export widgets per return.
+
+## Out of scope (this round)
+
+- Real NFIU XML compilers / live sanctions feeds (UI + stubbed data only).
+- Trust-strip logos until provided.
+- Dark mode, mobile dashboard (desktop-first ≥1280px).
+- Admin pages beyond inheriting tokens.
 
 ## Deliverables order
 
-1. Tokens + fonts + shadcn variants + Navbar/Footer
-2. Homepage
-3. Product · Who We Serve · About
-4. Sign In · Sign Up · Forgot · Reset · Book Demo
-5. Dashboard IA + Overview
-6. Dashboard inner pages (Reports, Agent, Calendar, Monitoring, Customers, Intelligence, Settings)
-7. Cleanup, SEO, a11y pass
+1. Apple font stack + tokens + sizing scale in `index.css`; strip webfont imports; clean `tailwind.config.ts`.
+2. New minimal Navbar (with Products dropdown) + Footer.
+3. Rewrite Homepage around four products, no mockups.
+4. Rewrite Product page with four anchored sections.
+5. Restyle Who-we-serve, About, Pricing.
+6. Restyle Sign-in, Sign-up, Book-demo.
+7. New `DashboardLayout` = **only** 280px agent rail + flex-1 canvas. Delete `DashboardSidebar`.
+8. Canvas tab bar (Fraud / Identity / Returns) + user menu on the right.
+9. Build the three tab views with KPI strip + chart + grid each.
+10. Rebuild left rail as plain-text ledger stream + pinned composer; port `AgentCenter` chat logic.
+11. Delete dead components: marketing mockups, unused `eigen/*`, `regco/MockScreenshot`, legacy Navbar/Footer, `DashboardSidebar`.
 
-Approve and I'll start with Phase 1 (design system). If you want to see rendered direction options for the homepage hero before I commit the tokens, say "show directions" and I'll generate 3 Anthropic-style variants for you to pick from.
+Approve and I'll start building.
