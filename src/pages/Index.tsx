@@ -62,6 +62,15 @@ const stats = [
 ];
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [heroEmail, setHeroEmail] = useState("");
+
+  const handleHeroSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = heroEmail.trim() ? `?email=${encodeURIComponent(heroEmail.trim())}` : "";
+    navigate(`/book-demo${q}`);
+  };
+
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteNavbar />
