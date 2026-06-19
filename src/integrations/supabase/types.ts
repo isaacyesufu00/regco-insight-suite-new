@@ -1184,12 +1184,18 @@ export type Database = {
       }
       report_requests: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           data_source_id: string | null
           form_data: Json
+          formats: string[]
           id: string
           institution_name: string
+          params: Json
           rc_number: string | null
+          readiness: Json | null
+          report_id: string | null
           report_type: string
           reporting_period_end: string
           reporting_period_start: string
@@ -1198,12 +1204,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           data_source_id?: string | null
           form_data?: Json
+          formats?: string[]
           id?: string
           institution_name: string
+          params?: Json
           rc_number?: string | null
+          readiness?: Json | null
+          report_id?: string | null
           report_type: string
           reporting_period_end: string
           reporting_period_start: string
@@ -1212,12 +1224,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           data_source_id?: string | null
           form_data?: Json
+          formats?: string[]
           id?: string
           institution_name?: string
+          params?: Json
           rc_number?: string | null
+          readiness?: Json | null
+          report_id?: string | null
           report_type?: string
           reporting_period_end?: string
           reporting_period_start?: string
@@ -1225,7 +1243,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "report_requests_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       report_statuses: {
         Row: {
@@ -1259,6 +1285,7 @@ export type Database = {
           car_percentage: number | null
           content: string | null
           created_at: string
+          csv_url: string | null
           docx_url: string | null
           error_message: string | null
           error_type: string | null
@@ -1278,15 +1305,18 @@ export type Database = {
           report_url: string | null
           reporting_period_end: string | null
           reporting_period_start: string | null
+          return_type: string | null
           status: string
           user_id: string
           validation_passed: boolean | null
           xlsx_url: string | null
+          xml_url: string | null
         }
         Insert: {
           car_percentage?: number | null
           content?: string | null
           created_at?: string
+          csv_url?: string | null
           docx_url?: string | null
           error_message?: string | null
           error_type?: string | null
@@ -1306,15 +1336,18 @@ export type Database = {
           report_url?: string | null
           reporting_period_end?: string | null
           reporting_period_start?: string | null
+          return_type?: string | null
           status?: string
           user_id: string
           validation_passed?: boolean | null
           xlsx_url?: string | null
+          xml_url?: string | null
         }
         Update: {
           car_percentage?: number | null
           content?: string | null
           created_at?: string
+          csv_url?: string | null
           docx_url?: string | null
           error_message?: string | null
           error_type?: string | null
@@ -1334,10 +1367,12 @@ export type Database = {
           report_url?: string | null
           reporting_period_end?: string | null
           reporting_period_start?: string | null
+          return_type?: string | null
           status?: string
           user_id?: string
           validation_passed?: boolean | null
           xlsx_url?: string | null
+          xml_url?: string | null
         }
         Relationships: []
       }
