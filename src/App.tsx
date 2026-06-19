@@ -53,8 +53,7 @@ import DataProcessingPage from "./pages/legal/DataProcessingPage";
 import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
-import AgentPage from "./pages/dashboard/AgentPage";
-import DashboardOverview from "./pages/DashboardOverview";
+import DashboardWorkspace from "./pages/DashboardWorkspace";
 import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
 import Homepage from "./pages/marketing/Homepage";
 import SecurityPage from "./pages/marketing/SecurityPage";
@@ -111,14 +110,7 @@ const App = () => (
             {/* Redirect old public pages to homepage */}
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
             <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
-            <Route
-              path="/dashboard/agent"
-              element={
-                <ProtectedRoute>
-                  <AgentPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/dashboard/agent" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/dashboard"
               element={
@@ -127,7 +119,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardOverview />} />
+              <Route index element={<DashboardWorkspace />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="new-report" element={<NewReport />} />
               <Route path="data-sources" element={<Navigate to="/dashboard/transactions" replace />} />
