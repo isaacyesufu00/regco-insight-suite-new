@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const COLORS = {
   pageBg: '#F5F2EC',
@@ -16,11 +17,12 @@ const COLORS = {
   heroInputBg: '#F9F7F4',
 };
 
-const serif: React.CSSProperties = { fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400 };
+const serif: React.CSSProperties = { fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, letterSpacing: '-0.01em' };
 const sans: React.CSSProperties = { fontFamily: "'Inter', system-ui, sans-serif" };
 
 // ─── NAV ────────────────────────────────────────────────────────────────
 function Nav() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
@@ -62,7 +64,7 @@ function Nav() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         {!isMobile && (
           <>
-            <a href="/login" style={{ ...sans, fontSize: 15, color: COLORS.text, textDecoration: 'none', cursor: 'pointer' }}>Sign in</a>
+            <button onClick={() => navigate('/sign-in')} style={{ background: 'none', border: 'none', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 400, color: COLORS.text, cursor: 'pointer', padding: 0 }}>Sign in</button>
             <div style={{ display: 'flex', alignItems: 'center', borderRadius: 9999, border: `1px solid ${COLORS.border}`, background: COLORS.navInputBg, padding: '4px 4px 4px 16px', gap: 4 }}>
               <input type="email" placeholder="Enter email" style={{ ...sans, fontSize: 14, color: COLORS.text, background: 'transparent', border: 'none', outline: 'none', width: 140 }} />
               <CtaButton small>Get a demo</CtaButton>
@@ -142,9 +144,9 @@ function Hero() {
         } as React.CSSProperties} />
       ))}
 
-      <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: 900, margin: '0 auto', padding: '0 40px' }}>
-        <h1 style={{ ...serif, fontSize: isMobile ? 52 : 108, lineHeight: 1.05, color: COLORS.text, letterSpacing: '-0.02em', margin: 0 }}>
-          AI for the compliance<br />that can't be wrong.
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 900, margin: '0 auto', padding: isMobile ? '0 20px' : '0 40px' }}>
+        <h1 style={{ fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, fontSize: typeof window !== 'undefined' && window.innerWidth < 480 ? 40 : isMobile ? 48 : 80, lineHeight: 1.05, color: '#1A1A1A', letterSpacing: '-0.02em', textAlign: 'center', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', margin: 0 }}>
+          AI for the compliance that can't be wrong.
         </h1>
         <p style={{ ...sans, marginTop: 32, fontSize: isMobile ? 16 : 18, color: COLORS.body, lineHeight: 1.5, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
           Automate CBN and NFIU returns. Screen clients live. Catch fraud before it files.
