@@ -1,5 +1,7 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SiteNavbar from "@/components/site/SiteNavbar";
 import SiteFooter from "@/components/site/SiteFooter";
 
@@ -60,6 +62,15 @@ const stats = [
 ];
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [heroEmail, setHeroEmail] = useState("");
+
+  const handleHeroSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = heroEmail.trim() ? `?email=${encodeURIComponent(heroEmail.trim())}` : "";
+    navigate(`/book-demo${q}`);
+  };
+
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteNavbar />
@@ -74,20 +85,25 @@ export default function Index() {
             Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.
             Built for CBN-, NDIC-, NFIU-, SCUML-, and FIRS-licensed institutions.
           </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              to="/book-demo"
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium hover:bg-[#262626] transition-colors"
+          <form
+            onSubmit={handleHeroSubmit}
+            className="mt-10 flex items-center gap-1 rounded-full border border-[var(--line)] bg-white pl-5 pr-1 py-1 max-w-[440px] focus-within:border-ink/40 transition-colors"
+          >
+            <input
+              type="email"
+              required
+              value={heroEmail}
+              onChange={(e) => setHeroEmail(e.target.value)}
+              placeholder="Work email"
+              className="flex-1 h-10 bg-transparent outline-none text-[14px] text-ink placeholder:text-ink-3"
+            />
+            <button
+              type="submit"
+              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-full bg-ink text-white text-[13.5px] font-medium hover:bg-[#262626] transition-colors whitespace-nowrap"
             >
-              Book a demo <ArrowUpRight size={15} />
-            </Link>
-            <Link
-              to="/product"
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-full border border-[var(--line)] text-ink text-[14px] font-medium hover:bg-[#F5F5F5] transition-colors"
-            >
-              See the product <ArrowRight size={15} />
-            </Link>
-          </div>
+              Book a demo <ArrowUpRight size={14} />
+            </button>
+          </form>
         </div>
       </section>
 
@@ -195,6 +211,72 @@ export default function Index() {
                 Sign in
               </Link>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="section-pad border-t border-[var(--line)]">
+        <div className="container-site grid md:grid-cols-12 gap-10 md:gap-16">
+          <div className="md:col-span-4">
+            <p className="tag mb-3">Questions</p>
+            <h2 className="text-h2 text-ink">Frequently asked.</h2>
+            <p className="mt-5 text-[14.5px] leading-[1.6] text-ink-3 max-w-[36ch]">
+              Straight answers on coverage, integration, security, and what it takes to go live.
+            </p>
+          </div>
+          <div className="md:col-span-8">
+            <Accordion type="single" collapsible className="w-full">
+              {[
+                {
+                  q: "Which core banking systems does RegCo connect to?",
+                  a: "We integrate with T24, Finacle, Flexcube, Bankone, and Kachasi via direct read-only connectors. Institutions on bespoke or legacy cores can map through scheduled file drops — CSV, XML, or fixed-width — without changes to the core itself.",
+                },
+                {
+                  q: "Which regulators and returns are covered?",
+                  a: "CBN (daily, monthly, quarterly prudential and AML returns), NDIC (deposit and single-obligor), NFIU (CTR, STR, currency declarations), SCUML, FIRS (CIT, VAT, WHT, PAYE), and PENCOM. Seventeen mandatory schedules in total at the current release.",
+                },
+                {
+                  q: "Where is our data stored and how is it secured?",
+                  a: "Data is held in encrypted tenant-isolated stores hosted in-region. Row-level security enforces strict per-institution access, and every read or write is recorded in an immutable audit log. Independent penetration tests are conducted annually.",
+                },
+                {
+                  q: "How long does deployment take?",
+                  a: "A standard institution is live in two to four weeks: one week for connector configuration, one for schema mapping and a parallel-run reporting cycle, and the remainder for officer onboarding and sign-off.",
+                },
+                {
+                  q: "How is RegCo priced?",
+                  a: "An annual platform fee scoped to license category and transaction volume, plus optional modules for transaction monitoring and case management. Pricing is discussed under NDA during the demo.",
+                },
+                {
+                  q: "What support do clients receive?",
+                  a: "Every institution is assigned a named compliance engineer and a one-business-hour response SLA on filing-blocking issues. Regulatory schema changes are absorbed by RegCo without billable change requests.",
+                },
+              ].map((item, i) => {
+                const n = String(i + 1).padStart(2, "0");
+                return (
+                  <AccordionItem
+                    key={n}
+                    value={`q-${n}`}
+                    className="border-t border-[var(--line)] last:border-b"
+                  >
+                    <AccordionTrigger className="py-6 hover:no-underline group">
+                      <div className="flex items-start gap-6 text-left flex-1">
+                        <span className="font-mono text-[12px] text-ink-3 pt-1">{n}</span>
+                        <span className="text-[17px] leading-[1.4] text-ink font-medium tracking-tight">
+                          {item.q}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-6 pl-[calc(0.75rem+1.5rem+0.5rem)]">
+                      <p className="text-[14.5px] leading-[1.65] text-ink-3 max-w-[62ch]">
+                        {item.a}
+                      </p>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
           </div>
         </div>
       </section>

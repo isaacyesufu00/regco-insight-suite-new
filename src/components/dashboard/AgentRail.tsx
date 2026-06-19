@@ -148,7 +148,7 @@ export default function AgentRail() {
     <aside
       className="flex flex-col flex-shrink-0 h-screen sticky top-0"
       style={{
-        width: 360,
+        width: 370,
         background: "var(--rail-bg)",
         borderRight: "1px solid var(--rail-border)",
       }}
@@ -209,13 +209,13 @@ export default function AgentRail() {
         >
           <textarea
             ref={taRef}
-            rows={2}
+            rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
             disabled={busy}
             placeholder="What do you want to know?"
-            className="w-full px-3 pt-3 pb-1 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.5] font-sans"
+            className="w-full px-3 pt-2 pb-0.5 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.4] font-sans"
           />
           <div className="flex items-center justify-between px-2 pb-2">
             <button
