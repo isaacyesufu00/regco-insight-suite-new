@@ -41,6 +41,8 @@ CRITICAL BEHAVIORAL RULES:
 type AiMessage = { role: 'user' | 'assistant'; content: string };
 
 function extractAssistantText(payload: unknown): string {
+  if (!payload || typeof payload !== 'object') return '';
+
   const data = payload as {
     content?: Array<{ type?: string; text?: string } | string>;
     choices?: Array<{ message?: { content?: string }; delta?: { content?: string } }>;
@@ -337,7 +339,6 @@ export default function AgentPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
             model: AGENT_AI_MODEL,
