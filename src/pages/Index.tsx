@@ -22,6 +22,7 @@ const sans: React.CSSProperties = { fontFamily: "'Inter', system-ui, sans-serif"
 
 // ─── NAV ────────────────────────────────────────────────────────────────
 function Nav() {
+  const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
