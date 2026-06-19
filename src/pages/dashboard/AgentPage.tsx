@@ -98,6 +98,7 @@ export default function AgentPage() {
   const messagesRef = useRef<AgentMessage[]>([]);
   const activeConvIdRef = useRef<string | null>(null);
   const isLoadingRef = useRef(false);
+  const skipNextMessageLoadRef = useRef<string | null>(null);
 
   const { profile, institutionName, userInitial, userName } = useProfile();
   const navigate = useNavigate();
@@ -143,6 +144,10 @@ export default function AgentPage() {
       setMessagesAndRef([]);
       return;
     }
+    if (skipNextMessageLoadRef.current === activeConvId) {
+      skipNextMessageLoadRef.current = null;
+      return;
+    }
     supabase
       .from('agent_messages' as never)
       .select('*')
@@ -169,6 +174,7 @@ export default function AgentPage() {
   }, [activeConvId, setMessagesAndRef]);
 
   const createNewConversation = useCallback(() => {
+    skipNextMessageLoadRef.current = null;
     setActiveConvId(null);
     setMessagesAndRef([]);
     setInputValue('');
@@ -176,6 +182,7 @@ export default function AgentPage() {
   }, [setMessagesAndRef]);
 
   const selectConversation = useCallback((conv: AgentConversation) => {
+    skipNextMessageLoadRef.current = null;
     setActiveConvId(conv.id);
     setRightPanelItems([]);
   }, []);
@@ -267,6 +274,7 @@ export default function AgentPage() {
         const inserted = newConv as { id: string; title: string; updated_at: string } | null;
         if (inserted) {
           convId = inserted.id;
+          skipNextMessageLoadRef.current = convId;
           setActiveConvId(convId);
           activeConvIdRef.current = convId;
           const newRow: AgentConversation = {
