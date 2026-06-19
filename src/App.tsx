@@ -72,8 +72,8 @@ const App = () => (
         <AuthProvider>
           <ProfileProvider>
           <Routes>
-            <Route path="/" element={<Homepage />} />
-            <Route path="/home-legacy" element={<Index />} />
+            <Route path="/" element={<Index />} />
+            <Route path="/home-legacy" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
