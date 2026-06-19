@@ -159,7 +159,7 @@ function Hero() {
       ))}
 
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 900, margin: '0 auto', padding: isMobile ? '0 20px' : '0 40px' }}>
-        <h1 style={{ fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, fontSize: typeof window !== 'undefined' && window.innerWidth < 480 ? 40 : isMobile ? 48 : 80, lineHeight: 1.05, color: '#1A1A1A', letterSpacing: '-0.02em', textAlign: 'center', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', margin: 0 }}>
+        <h1 style={{ fontFamily: HEADER_FONT, fontWeight: 900, fontSize: typeof window !== 'undefined' && window.innerWidth < 480 ? 40 : isMobile ? 48 : 80, lineHeight: 1.05, color: '#1A1A1A', letterSpacing: '-0.02em', textAlign: 'center', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', margin: 0 }}>
           AI for the compliance that can't be wrong.
         </h1>
         <p style={{ ...sans, marginTop: 32, fontSize: isMobile ? 16 : 18, color: COLORS.body, lineHeight: 1.5, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
@@ -170,15 +170,7 @@ function Hero() {
         </div>
       </div>
 
-      <div style={{
-        marginTop: 96, paddingBottom: 64, width: '100%',
-        display: 'flex', justifyContent: 'center', alignItems: 'center',
-        gap: 80, flexWrap: 'wrap', position: 'relative', zIndex: 1,
-      }}>
-        {['CBN', 'NFIU', 'SCUML', 'NDIC', 'FIRS'].map(r => (
-          <span key={r} style={{ ...sans, fontSize: 18, fontWeight: 600, color: COLORS.text, letterSpacing: '0.02em', opacity: 0.75 }}>{r}</span>
-        ))}
-      </div>
+      <div style={{ marginTop: 96, paddingBottom: 64, width: '100%' }} />
     </section>
   );
 }
