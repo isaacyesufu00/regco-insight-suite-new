@@ -68,6 +68,7 @@ export default function AgentPage() {
   const skipNextMessageLoadRef = useRef<string | null>(null);
 
   const { profile, institutionName, userInitial, userName } = useProfile();
+  const { session } = useAuth();
   const navigate = useNavigate();
 
   const setMessagesAndRef = useCallback(
@@ -310,31 +311,33 @@ export default function AgentPage() {
           }
         }, 600);
 
+        if (!session?.access_token) {
+          throw new Error('Your session has expired. Please sign in again.');
+        }
+
         const response = await fetch(AGENT_AI_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
-            model: AGENT_AI_MODEL,
             system: systemContext,
             messages: apiMessages,
-            max_tokens: 1200,
-            temperature: 0.25,
           }),
         });
 
+        const payload = await response.json().catch(() => null) as { content?: string; error?: string } | null;
+
         if (!response.ok) {
-          const detail = await readAiError(response);
-          throw new Error(`AI request failed (${response.status}): ${detail}`);
+          throw new Error(payload?.error || `AI request failed (${response.status})`);
         }
 
-        const payload = await response.json().catch(() => null);
-        const accumulated = extractAssistantText(payload);
-
-        if (!accumulated) {
-          throw new Error('The AI gateway returned an unexpected response shape. Please retry.');
+        if (!payload || typeof payload.content !== 'string' || !payload.content.trim()) {
+          throw new Error(payload?.error || 'AI gateway returned no content');
         }
+
+        const accumulated = payload.content.trim();
 
         if (labelInterval) clearInterval(labelInterval);
 
@@ -425,7 +428,7 @@ export default function AgentPage() {
         setIsLoading(false);
       }
     },
-    [profile, institutionName, userName, setMessagesAndRef, fetchAndShowData],
+    [profile, institutionName, userName, session?.access_token, setMessagesAndRef, fetchAndShowData],
   );
 
   const handleReportSubmit = async (data: Record<string, unknown>) => {
