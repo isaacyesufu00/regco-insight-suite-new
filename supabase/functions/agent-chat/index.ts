@@ -1,10 +1,11 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { generateText } from 'npm:ai';
+import { createOpenAICompatible } from 'npm:@ai-sdk/openai-compatible';
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const ANTHROPIC_API_VERSION = '2023-06-01';
-const ANTHROPIC_MODEL = 'claude-3-sonnet-20240229';
+const AGENT_MODEL = 'google/gemini-3-flash-preview';
+const LOVABLE_AIG_RUN_ID_HEADER = 'X-Lovable-AIG-Run-ID';
 
 type AgentRole = 'user' | 'assistant';
 type AgentMessage = { role: AgentRole; content: string };
@@ -22,14 +23,25 @@ function isAgentMessage(value: unknown): value is AgentMessage {
   return (message.role === 'user' || message.role === 'assistant') && typeof message.content === 'string';
 }
 
-function extractAssistantText(payload: unknown): string {
-  if (!payload || typeof payload !== 'object') return '';
-  const data = payload as { content?: Array<{ type?: string; text?: string } | string> };
-  if (!Array.isArray(data.content)) return '';
-  return data.content
-    .map((part) => (typeof part === 'string' ? part : part.type === 'text' ? part.text ?? '' : ''))
-    .join('')
-    .trim();
+function createLovableGateway(lovableApiKey: string, initialRunId?: string) {
+  let runId = initialRunId?.trim() || undefined;
+  return createOpenAICompatible({
+    name: 'lovable',
+    baseURL: 'https://ai.gateway.lovable.dev/v1',
+    headers: {
+      'Lovable-API-Key': lovableApiKey,
+      'X-Lovable-AIG-SDK': 'vercel-ai-sdk',
+    },
+    fetch: async (input, init) => {
+      const headers = new Headers(init?.headers);
+      if (runId && !headers.has(LOVABLE_AIG_RUN_ID_HEADER)) {
+        headers.set(LOVABLE_AIG_RUN_ID_HEADER, runId);
+      }
+      const response = await fetch(input, { ...init, headers });
+      runId = response.headers.get(LOVABLE_AIG_RUN_ID_HEADER)?.trim() || runId;
+      return response;
+    },
+  });
 }
 
 serve(async (req) => {
@@ -47,15 +59,15 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('agent-chat missing Supabase auth configuration');
       return jsonResponse({ error: 'Agent service is not configured.' }, 500);
     }
 
-    if (!anthropicApiKey) {
-      console.error('agent-chat missing ANTHROPIC_API_KEY');
+    if (!lovableApiKey) {
+      console.error('agent-chat missing LOVABLE_API_KEY');
       return jsonResponse({ error: 'AI model is not configured.' }, 500);
     }
 
@@ -87,29 +99,16 @@ serve(async (req) => {
 
     console.log(`agent-chat validated request user=${userResult.user.id} messages=${messages.length}`);
 
-    const anthropicResponse = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': anthropicApiKey,
-        'anthropic-version': ANTHROPIC_API_VERSION,
-      },
-      body: JSON.stringify({
-        model: ANTHROPIC_MODEL,
-        max_tokens: 1200,
-        system,
-        messages,
-      }),
+    const gateway = createLovableGateway(lovableApiKey, req.headers.get(LOVABLE_AIG_RUN_ID_HEADER) ?? undefined);
+    const result = await generateText({
+      model: gateway(AGENT_MODEL),
+      system,
+      messages,
+      temperature: 0.25,
+      maxOutputTokens: 1200,
     });
 
-    if (!anthropicResponse.ok) {
-      const errorText = await anthropicResponse.text().catch(() => '');
-      console.error(`agent-chat provider error status=${anthropicResponse.status} body=${errorText.slice(0, 220)}`);
-      return jsonResponse({ error: `AI provider error (${anthropicResponse.status}).` }, 500);
-    }
-
-    const payload = await anthropicResponse.json().catch(() => null);
-    const content = extractAssistantText(payload);
+    const content = result.text.trim();
 
     if (!content) {
       console.error('agent-chat provider returned no text');
