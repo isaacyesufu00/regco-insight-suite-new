@@ -412,10 +412,11 @@ function MutationApproval({ toolName, output }: { toolName: string; output: any 
         setState("approved");
       } else if (toolName === "request_generate_return" && output.request_id) {
         await supabase.from("report_requests").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.request_id);
-        const { data, error } = await supabase.functions.invoke("generate-return", { body: { request_id: output.request_id } });
+        const { data, error } = await supabase.functions.invoke("generate-return", { body: { request_id: output.request_id, override_readiness: override } });
         if (error) throw error;
-        if (data?.ready === false) {
-          setErrorMsg("Missing data — see readiness output. Approve again to override.");
+        if (data?.ready === false && !override) {
+          setOverride(true);
+          setErrorMsg(`Missing: ${(data.readiness?.missing_fields ?? []).map((m: any) => m.field).join(", ") || "data"}. Approve again to override and generate anyway.`);
           setState("pending");
           return;
         }
