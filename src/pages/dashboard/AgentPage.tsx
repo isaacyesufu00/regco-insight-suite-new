@@ -12,7 +12,7 @@ import type { AgentMessage, AgentConversation, RightPanelItem, MissingInputDef }
 type RightTab = 'sources' | 'outputs' | 'reports' | 'uploads';
 
 const AGENT_AI_URL = 'https://api.anthropic.com/v1/messages';
-const AGENT_AI_MODEL = 'claude-sonnet-4-20250514';
+const AGENT_AI_MODEL = 'claude-sonnet-4-6';
 
 const SYSTEM_PROMPT = `You are RegCo Agent — a compliance command center for Nigerian licensed financial institutions regulated by the CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM.
 
