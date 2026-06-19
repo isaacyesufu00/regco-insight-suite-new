@@ -9,15 +9,14 @@ import {
   stepCountIs,
   convertToModelMessages,
   type UIMessage,
-} from "npm:ai@6";
-import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@2";
+} from "npm:ai@5.0.26";
+import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@1.0.19";
 import { z } from "npm:zod@3";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Expose-Headers": "X-Lovable-AIG-Run-ID",
 };
 
 // ------------ helpers ------------
@@ -31,13 +30,21 @@ function err(status: number, message: string) {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
-function makeProvider(key: string) {
+// Primary + fallback free models on OpenRouter
+const PRIMARY_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+const FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+
+function makeOpenRouterProvider(key: string) {
   return createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+    name: "openrouter",
+    baseURL: "https://openrouter.ai/api/v1",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "HTTP-Referer": "https://regco.lovable.app",
+      "X-Title": "RegCo Compliance Agent",
+    },
   });
 }
 
