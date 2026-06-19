@@ -34,6 +34,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import DownloadButton from "@/components/DownloadButton";
+import { GenerateReturnDialog } from "@/components/reports/GenerateReturnDialog";
 
 interface Report {
   id: string;
