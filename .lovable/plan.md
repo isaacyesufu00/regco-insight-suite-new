@@ -1,36 +1,41 @@
-# Fix "VITE_SUPABASE_URL is missing" + finish file-attachment work
+# Switch agent to Lovable AI Gateway (Gemini 3 Flash)
 
-## Root cause of the new error
-The `NOT_FOUND lhr1::...` page is served by Vercel/Lovable's published host, not Supabase. It appears because the **published build has no `VITE_SUPABASE_URL`**, so `AgentRail.tsx` falls back to an empty `FUNCTION_URL`, the agent POST hits a relative path, and the host returns its 404 page.
+You don't need to do anything — `LOVABLE_API_KEY` is already provisioned in your project. I'll swap the orchestrator over and you can send a new message in the agent rail to verify.
 
-Why it's missing in the published build: this is a classic Vite project where `.env` exists locally (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID` are all set) but `.env` is listed in `.gitignore` (line 25). The sandbox preview works because `.env` is on disk; the published deploy ships without it.
+## Change
 
-## Fix
-1. **Remove `.env` from `.gitignore`** so the Vite build at publish time embeds `VITE_SUPABASE_*` into the bundle. (Values are publishable anon keys, safe to commit — this is the standard Lovable + Vite pattern.)
-2. After the edit, **republish** from the Publish dialog so the new build picks them up. Sandbox preview keeps working as-is.
-3. No code changes to `AgentRail.tsx` for this fix — the existing env guard already shows the correct red banner; we just need the env to actually be present in prod.
+Edit `supabase/functions/agent-orchestrator/index.ts`:
 
-## Bundled with this: the original file-attachment feature
-Same scope as the previous plan, frontend-only edits to `src/components/dashboard/AgentRail.tsx`:
-
-- Remove the **calendar icon button** + `Calendar` import from the rail header (keep Settings).
-- Wire the **`+` button** to a hidden `<input type="file" multiple>` accepting `.pdf, .xlsx, .xls, .csv, .docx, .txt, .md, .json`.
-- Parse each file **client-side to text** and prepend it to the user's message before `sendMessage({ text })`:
-  - `pdfjs-dist` for PDFs (worker imported via `?url`)
-  - `xlsx` (SheetJS) for spreadsheets → CSV per sheet
-  - `mammoth` for `.docx`
-  - `file.text()` for `.txt/.md/.json/.csv`
-- Limits: max 5 files, 20 MB each, 40k chars per file (truncated with `…[truncated]`).
-- Attached files render as chips above the textarea with a × to remove; parsing shows a small spinner chip; submit disabled while parsing.
-- Errors (unsupported type, oversize, parser failure) render as red chips that auto-dismiss in 5s.
-- `bun add pdfjs-dist xlsx mammoth`.
+1. Add a Lovable AI Gateway provider alongside the existing OpenRouter one:
+   ```ts
+   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+   function makeLovableProvider(key: string) {
+     return createOpenAICompatible({
+       name: "lovable",
+       baseURL: "https://ai.gateway.lovable.dev/v1",
+       headers: {
+         "Lovable-API-Key": key,
+         "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+       },
+     });
+   }
+   ```
+2. Replace the model selection logic:
+   - Primary: Lovable Gateway + `google/gemini-3-flash-preview`
+   - Fallback (only if `LOVABLE_API_KEY` is missing): OpenRouter + `meta-llama/llama-3.3-70b-instruct:free` (real, tool-capable slug — replaces the broken `nvidia/nemotron-3-ultra-550b-a55b:free`)
+3. Update the startup guard from "missing OPENROUTER_API_KEY" to "missing LOVABLE_API_KEY (or OPENROUTER_API_KEY)".
+4. Add `onError` surfacing on the stream response so any future model issue shows in the UI red banner instead of spinning forever.
 
 ## Out of scope
-- No edge-function or DB changes.
-- No image/multimodal attachments (Nemotron is text-only).
-- No drag-and-drop.
 
-## Files touched
-- `.gitignore` — remove the `.env` line.
-- `src/components/dashboard/AgentRail.tsx` — remove calendar button, add attachment UI + parsers.
-- `package.json` / `bun.lock` — 3 new deps.
+- No frontend changes (`AgentRail.tsx` already handles errors and renders parts).
+- No DB / RLS / tools / system prompt changes.
+- No secret changes — `LOVABLE_API_KEY` is already set.
+
+## File touched
+
+- `supabase/functions/agent-orchestrator/index.ts`
+
+## After I apply it
+
+Just open the agent rail and send a message. Tool calls (screening, transactions, navigation, etc.) will work the same — Gemini 3 Flash supports the same tool-calling interface the code already uses. Lovable AI usage is billed against your workspace credits (visible in Settings → Plans & credits).
