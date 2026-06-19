@@ -76,6 +76,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/home-legacy" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
             <Route path="/contact" element={<Contact />} />
