@@ -252,8 +252,8 @@ function DeployCards() {
   }, []);
 
   const cards = [
-    { ph: '[ INSERT SCREENSHOT: RegCo scheduled compliance digest notification or board-level summary view ]', title: 'Brief your board', body: 'Scheduled compliance digests keep leadership informed automatically, with no last-minute report assembly from your team.' },
-    { ph: '[ INSERT SCREENSHOT: RegCo CBN/NFIU return submission interface showing portal-ready file and validation status ]', title: 'File with regulators', body: 'Push completed CBN and NFIU returns to submission-ready formats, validated and confirmed before every regulatory deadline.' },
+    { img: slackImg.url, alt: 'Scheduled compliance digest in team channel', title: 'Brief your board', body: 'Scheduled compliance digests keep leadership informed automatically, with no last-minute report assembly from your team.' },
+    { img: writebackImg.url, alt: 'Regulator return submission view', title: 'File with regulators', body: 'Push completed CBN and NFIU returns to submission-ready formats, validated and confirmed before every regulatory deadline.' },
   ];
 
   return (
