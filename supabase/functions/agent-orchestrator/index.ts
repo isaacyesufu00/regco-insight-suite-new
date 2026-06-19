@@ -61,6 +61,32 @@ function makeOpenRouterProvider(key: string) {
   });
 }
 
+// ------------ filing schedule resolver ------------
+async function resolveSchedule(admin: ReturnType<typeof createClient>, input: string): Promise<{ match: any | null; candidates: any[] }> {
+  const raw = (input ?? "").trim();
+  if (!raw) return { match: null, candidates: [] };
+  // 1. Exact code match (case-insensitive)
+  const { data: exact } = await admin.from("filing_schedules").select("*").ilike("return_type", raw).maybeSingle();
+  if (exact) return { match: exact, candidates: [exact] };
+  // 2. Fuzzy: ilike on code or title
+  const like = `%${raw.replace(/[%_]/g, "")}%`;
+  const { data: fuzzy } = await admin.from("filing_schedules").select("*").or(`return_type.ilike.${like},title.ilike.${like}`);
+  const list = fuzzy ?? [];
+  if (list.length === 1) return { match: list[0], candidates: list };
+  // 3. Friendly-name fallback (CTR/STR/MPR/FX/PREM/SO/SCUML/VAT/PAYE/WHT/CIT)
+  const upper = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  if (upper) {
+    const all = await admin.from("filing_schedules").select("*");
+    const matches = (all.data ?? []).filter((s: any) => {
+      const code = String(s.return_type).toUpperCase();
+      return code === upper || code.endsWith("_" + upper) || code.startsWith(upper + "_");
+    });
+    if (matches.length === 1) return { match: matches[0], candidates: matches };
+    if (matches.length > 1) return { match: null, candidates: matches };
+  }
+  return { match: null, candidates: list };
+}
+
 // ------------ tool factory ------------
 function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createClient>; admin: ReturnType<typeof createClient>; logTool: (n: string, args: unknown, summary: string, status?: string, err?: string) => Promise<void>; }) {
   const { userClient, admin, userId, logTool } = ctx;
@@ -340,21 +366,25 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
 
     // ---------- Automated Returns ----------
     get_filing_deadline: tool({
-      description: "Get the filing deadline and frequency for a given regulatory return type.",
+      description: "Get the filing deadline and frequency for a regulatory return. Accepts canonical codes (NFIU_CTR, NFIU_STR, CBN_MPR, CBN_FX, NDIC_PREM, NDIC_SO, SCUML_ANN, FIRS_VAT, FIRS_PAYE, FIRS_WHT, FIRS_CIT) or friendly names (CTR, STR, 'Currency Transaction Report').",
       inputSchema: z.object({ return_type: z.string() }),
       execute: (args) => wrap("get_filing_deadline", args, async () => {
-        const { data } = await admin.from("filing_schedules").select("*").eq("return_type", args.return_type).maybeSingle();
-        if (!data) return { found: false };
-        return { found: true, ...data };
+        const r = await resolveSchedule(admin, args.return_type);
+        if (r.match) return { found: true, ...r.match };
+        if (r.candidates.length) return { found: false, candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title, regulator: c.regulator })) };
+        return { found: false };
       }),
     }),
 
     check_return_readiness: tool({
-      description: "Check whether a regulatory return can be filed for a given period — lists missing data fields.",
+      description: "Check whether a regulatory return can be filed for a given period — lists missing data fields. Accepts canonical codes or friendly names like 'CTR'.",
       inputSchema: z.object({ return_type: z.string(), period: z.string().optional() }),
       execute: (args) => wrap("check_return_readiness", args, async () => {
-        const { data: schedule } = await admin.from("filing_schedules").select("*").eq("return_type", args.return_type).maybeSingle();
-        if (!schedule) return { ready: false, missing: ["unknown return type"] };
+        const r = await resolveSchedule(admin, args.return_type);
+        if (!r.match) {
+          return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
+        }
+        const schedule = r.match;
         const { data: txs } = await userClient.from("unified_transactions").select("id").limit(1);
         const missing: string[] = [];
         if (!txs || txs.length === 0) missing.push("No transactions for period");
@@ -412,7 +442,20 @@ You have tools to inspect transactions, screen entities, manage cases, draft nar
 - When the user asks to "show", "open", or "switch to" a view, call navigate_dashboard.
 - Mutating actions (open_case, request_account_freeze, request_generate_return) create a pending intent that requires officer approval — tell the user clearly.
 - Cite regulator + rule code when you explain alerts.
-- If a tool errors, explain in plain English what failed and suggest a next step.`;
+- If a tool errors, explain in plain English what failed and suggest a next step.
+
+Regulatory return catalog (use these canonical codes when calling get_filing_deadline / check_return_readiness / request_generate_return):
+- NFIU_STR — Suspicious Transaction Report (NFIU, per case, within 24h of detection)
+- NFIU_CTR — Currency Transaction Report (NFIU, daily, by 17:00 next business day)
+- CBN_MPR — Monetary Policy Return (CBN, monthly, by 10th of following month)
+- CBN_FX — Foreign Exchange Return (CBN, weekly)
+- NDIC_PREM — Premium Contribution Return (NDIC, quarterly)
+- NDIC_SO — Single Obligor Return (NDIC, quarterly)
+- SCUML_ANN — Annual SCUML Compliance Report (SCUML, annual, by 31 Jan)
+- FIRS_VAT / FIRS_PAYE / FIRS_WHT / FIRS_CIT — FIRS tax returns
+Map friendly names automatically: "CTR" → NFIU_CTR, "STR" → NFIU_STR, "MPR" → CBN_MPR, "FX return" → CBN_FX, "SCUML" → SCUML_ANN, "VAT" → FIRS_VAT, "PAYE" → FIRS_PAYE.
+
+Report-generation workflow: when the user asks to generate/file a return, (1) call navigate_dashboard({ view: "returns" }), (2) if the specific return or period is ambiguous, ask one short clarifying question, (3) call check_return_readiness with the canonical code, (4) if ready, call request_generate_return to surface the approval chip — never claim a return has been filed without an approved intent.`;
 
 // ------------ main handler ------------
 Deno.serve(async (req) => {
