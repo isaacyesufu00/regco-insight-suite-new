@@ -9,7 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/agent-orchestrator`;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const FUNCTION_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/agent-orchestrator` : "";
 
 // Friendly tool labels for the activity stream
 const TOOL_LABEL: Record<string, string> = {
