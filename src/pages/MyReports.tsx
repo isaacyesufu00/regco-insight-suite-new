@@ -259,7 +259,11 @@ const MyReports = () => {
       <BackButton to="/dashboard" />
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">My Reports</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-lg">My Reports</CardTitle>
+            <GenerateReturnDialog onGenerated={() => fetchReports()} />
+          </div>
+
 
           {/* Filter tabs */}
           <div className="flex flex-wrap gap-1.5 mt-3">
