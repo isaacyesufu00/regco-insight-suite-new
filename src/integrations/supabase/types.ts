@@ -1280,6 +1280,48 @@ export type Database = {
         }
         Relationships: []
       }
+      report_templates: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          definition: Json
+          frequency: string | null
+          id: string
+          regulator: string | null
+          status: string
+          title: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          definition: Json
+          frequency?: string | null
+          id?: string
+          regulator?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          definition?: Json
+          frequency?: string | null
+          id?: string
+          regulator?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       reports: {
         Row: {
           car_percentage: number | null
@@ -1307,6 +1349,8 @@ export type Database = {
           reporting_period_start: string | null
           return_type: string | null
           status: string
+          template_id: string | null
+          template_version: number | null
           user_id: string
           validation_passed: boolean | null
           xlsx_url: string | null
@@ -1338,6 +1382,8 @@ export type Database = {
           reporting_period_start?: string | null
           return_type?: string | null
           status?: string
+          template_id?: string | null
+          template_version?: number | null
           user_id: string
           validation_passed?: boolean | null
           xlsx_url?: string | null
@@ -1369,12 +1415,22 @@ export type Database = {
           reporting_period_start?: string | null
           return_type?: string | null
           status?: string
+          template_id?: string | null
+          template_version?: number | null
           user_id?: string
           validation_passed?: boolean | null
           xlsx_url?: string | null
           xml_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sanctions_entries: {
         Row: {
