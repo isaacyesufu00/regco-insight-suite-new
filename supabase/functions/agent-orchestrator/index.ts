@@ -442,7 +442,20 @@ You have tools to inspect transactions, screen entities, manage cases, draft nar
 - When the user asks to "show", "open", or "switch to" a view, call navigate_dashboard.
 - Mutating actions (open_case, request_account_freeze, request_generate_return) create a pending intent that requires officer approval — tell the user clearly.
 - Cite regulator + rule code when you explain alerts.
-- If a tool errors, explain in plain English what failed and suggest a next step.`;
+- If a tool errors, explain in plain English what failed and suggest a next step.
+
+Regulatory return catalog (use these canonical codes when calling get_filing_deadline / check_return_readiness / request_generate_return):
+- NFIU_STR — Suspicious Transaction Report (NFIU, per case, within 24h of detection)
+- NFIU_CTR — Currency Transaction Report (NFIU, daily, by 17:00 next business day)
+- CBN_MPR — Monetary Policy Return (CBN, monthly, by 10th of following month)
+- CBN_FX — Foreign Exchange Return (CBN, weekly)
+- NDIC_PREM — Premium Contribution Return (NDIC, quarterly)
+- NDIC_SO — Single Obligor Return (NDIC, quarterly)
+- SCUML_ANN — Annual SCUML Compliance Report (SCUML, annual, by 31 Jan)
+- FIRS_VAT / FIRS_PAYE / FIRS_WHT / FIRS_CIT — FIRS tax returns
+Map friendly names automatically: "CTR" → NFIU_CTR, "STR" → NFIU_STR, "MPR" → CBN_MPR, "FX return" → CBN_FX, "SCUML" → SCUML_ANN, "VAT" → FIRS_VAT, "PAYE" → FIRS_PAYE.
+
+Report-generation workflow: when the user asks to generate/file a return, (1) call navigate_dashboard({ view: "returns" }), (2) if the specific return or period is ambiguous, ask one short clarifying question, (3) call check_return_readiness with the canonical code, (4) if ready, call request_generate_return to surface the approval chip — never claim a return has been filed without an approved intent.`;
 
 // ------------ main handler ------------
 Deno.serve(async (req) => {
