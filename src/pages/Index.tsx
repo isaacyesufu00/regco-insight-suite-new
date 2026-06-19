@@ -17,7 +17,7 @@ const COLORS = {
   heroInputBg: '#F9F7F4',
 };
 
-const serif: React.CSSProperties = { fontFamily: "'DM Serif Display', Georgia, serif", fontWeight: 400 };
+const serif: React.CSSProperties = { fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, letterSpacing: '-0.01em' };
 const sans: React.CSSProperties = { fontFamily: "'Inter', system-ui, sans-serif" };
 
 // ─── NAV ────────────────────────────────────────────────────────────────
