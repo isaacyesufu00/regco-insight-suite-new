@@ -418,7 +418,9 @@ You have tools to inspect transactions, screen entities, manage cases, draft nar
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return err(405, "Method not allowed");
-  if (!OPENROUTER_API_KEY) return err(500, "AI service not configured (missing OPENROUTER_API_KEY)");
+  if (!LOVABLE_API_KEY && !OPENROUTER_API_KEY) {
+    return err(500, "AI service not configured (missing LOVABLE_API_KEY or OPENROUTER_API_KEY)");
+  }
 
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return err(401, "Unauthorized");
@@ -463,14 +465,20 @@ Deno.serve(async (req) => {
     });
   };
 
-  const provider = makeOpenRouterProvider(OPENROUTER_API_KEY);
+  // Pick provider: Lovable AI Gateway first, OpenRouter only as fallback.
+  const useLovable = !!LOVABLE_API_KEY;
+  const provider = useLovable
+    ? makeLovableProvider(LOVABLE_API_KEY!)
+    : makeOpenRouterProvider(OPENROUTER_API_KEY!);
+  const modelName = useLovable ? LOVABLE_MODEL : OPENROUTER_MODEL;
+  console.log(`agent using ${useLovable ? "lovable" : "openrouter"} model ${modelName}`);
+
   const tools = buildTools({ userId, userClient, admin, logTool });
 
-  // Try primary model, fall back to llama 3.3 70b if it errors (free tier rate limits / 503)
-  const runWith = (modelName: string) => streamText({
+  const result = streamText({
     model: provider(modelName),
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(body.messages!),
+    messages: convertToModelMessages(body.messages),
     tools,
     stopWhen: stepCountIs(50),
     temperature: 0.2,
@@ -488,15 +496,12 @@ Deno.serve(async (req) => {
     },
   });
 
-  let result;
-  try {
-    result = runWith(PRIMARY_MODEL);
-  } catch (e) {
-    console.warn("Primary model threw synchronously, falling back:", e);
-    result = runWith(FALLBACK_MODEL);
-  }
-
   return result.toUIMessageStreamResponse({
     headers: { ...corsHeaders, "X-Conversation-Id": conversationId ?? "" },
+    onError: (e) => {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("stream error:", msg);
+      return `AI service error: ${msg}`;
+    },
   });
 });
