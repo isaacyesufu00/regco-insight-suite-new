@@ -401,6 +401,7 @@ function MutationApproval({ toolName, output }: { toolName: string; output: any 
   const [state, setState] = useState<"pending" | "approved" | "rejected" | "working">("pending");
   const [urls, setUrls] = useState<Record<string, string> | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [override, setOverride] = useState(false);
 
   const approve = async () => {
     setState("working");
