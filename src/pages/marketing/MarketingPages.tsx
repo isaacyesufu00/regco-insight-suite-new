@@ -1,270 +1,136 @@
 import { Link } from "react-router-dom";
-import { HomepageNavbar, HomepageFooter } from "@/components/regco/HomepageChrome";
-import MockScreenshot from "@/components/regco/MockScreenshot";
-import { motion } from "framer-motion";
+import { ArrowUpRight, ArrowRight } from "lucide-react";
+import EditorialNavbar from "@/components/editorial/EditorialNavbar";
+import EditorialFooter from "@/components/editorial/EditorialFooter";
 
-const ScreenshotBlock = ({ variant }: { variant: "agent" | "reports" | "monitoring" | "screening" | "calendar" | "security" }) => (
-  <section style={{ padding: "40px 24px 80px", background: "#000000" }}>
-    <MockScreenshot variant={variant} />
-  </section>
-);
+const institutions = [
+  { code: "UMFB", name: "Unit Microfinance Banks",
+    body: "Three quarterly CBN returns, one NDIC premium filing, and an annual SCUML certification — handled in a single afternoon instead of a frantic week. RegCo's Starter tier is built for unit MFBs who can't afford a full compliance team.",
+    note: "Most-used: CBN MFB Quarterly Return · NDIC Premium" },
+  { code: "SMFB", name: "State Microfinance Banks",
+    body: "More branches, larger ledgers, tighter scrutiny. State MFBs use RegCo's Growth tier for multi-branch consolidation, single-obligor monitoring, and quarterly board packs that auditors actually trust.",
+    note: "Add-ons: Single-obligor · Customer 360 · Audit tracker" },
+  { code: "NMFB", name: "National Microfinance Banks",
+    body: "When your institution touches every state in Nigeria, the calendar never stops. National MFBs get dedicated onboarding, named support, and our full regulatory intelligence feed.",
+    note: "Enterprise · SLA-backed · Dedicated CSM" },
+  { code: "CMB",  name: "Commercial Banks",
+    body: "Run RegCo alongside your internal compliance stack as a second line of defense — or replace your spreadsheets entirely. Either way, the result is the same: nothing reaches the CBN late.",
+    note: "Custom · API integration · Sandbox available" },
+  { code: "FNT",  name: "Fintechs & Payment Service Banks",
+    body: "Lean compliance teams, fast-moving regulators. We keep pace so you don't have to read every CBN circular the day it drops.",
+    note: "Built for scale-ups · Webhook ingest · Audit log" },
+  { code: "PMB",  name: "Primary Mortgage Banks",
+    body: "PMB-specific return formats, single-obligor rules tailored to mortgage exposure, and quarterly reporting on the cycle your regulator expects.",
+    note: "PMB return suite · Real estate disclosures" },
+];
 
-interface ShellProps {
-  eyebrow: string;
-  title: React.ReactNode;
-  subtitle?: string;
-  children?: React.ReactNode;
-}
+const WhoWeServePage = () => (
+  <div className="min-h-screen bg-[var(--paper)] text-ink">
+    <EditorialNavbar />
 
-export const MarketingShell = ({ eyebrow, title, subtitle, children }: ShellProps) => (
-  <div style={{ background: "#000000", color: "#FFFFFF", minHeight: "100vh", fontFamily: "Inter, -apple-system, sans-serif" }}>
-    <HomepageNavbar />
-    <section style={{ padding: "160px 40px 80px", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-      <motion.p
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "0.14em", textTransform: "uppercase", marginBottom: 24 }}
-      >
-        {eyebrow}
-      </motion.p>
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-        style={{
-          fontSize: "clamp(48px, 7vw, 80px)",
-          fontWeight: 700,
-          color: "#FFFFFF",
-          letterSpacing: "-2.5px",
-          lineHeight: 1.05,
-          margin: 0,
-          maxWidth: 900,
-          marginInline: "auto",
-        }}
-      >
-        {title}
-      </motion.h1>
-      {subtitle && (
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ fontSize: 18, color: "rgba(255,255,255,0.5)", maxWidth: 580, margin: "28px auto 0", lineHeight: 1.65 }}
-        >
-          {subtitle}
-        </motion.p>
-      )}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        style={{ marginTop: 36, display: "flex", justifyContent: "center", gap: 12 }}
-      >
-        <Link
-          to="/book-demo"
-          style={{ background: "#FFFFFF", color: "#000000", fontSize: 15, fontWeight: 600, padding: "12px 28px", borderRadius: 8, textDecoration: "none", letterSpacing: "-0.2px" }}
-        >
-          Request a Demo
-        </Link>
-      </motion.div>
+    <section className="pt-36 pb-16 md:pt-44 md:pb-20">
+      <div className="container-editorial">
+        <p className="tag mb-6">Who we serve</p>
+        <h1 className="font-serif text-[44px] md:text-[68px] leading-[1.04]">
+          Six classes of institution.<br />
+          <span className="italic text-ink-muted">One regulatory standard.</span>
+        </h1>
+        <p className="mt-8 max-w-2xl text-[17px] text-ink-muted leading-relaxed">
+          RegCo is built specifically for institutions licensed by the Central Bank of Nigeria. Whether you have three branches or three hundred, the regulator's calendar is the same — and so is our commitment to keeping you ahead of it.
+        </p>
+      </div>
     </section>
-    <main>{children}</main>
-    <HomepageFooter />
+
+    <section className="container-editorial pb-24">
+      {institutions.map((inst, i) => (
+        <article key={inst.code} className="grid md:grid-cols-12 gap-10 py-16 border-t border-ink-10">
+          <div className="md:col-span-3">
+            <p className="font-mono text-[12px] text-ink-muted">{String(i + 1).padStart(2, "0")}</p>
+            <p className="mt-4 font-serif text-5xl text-ink">{inst.code}</p>
+            <p className="mt-2 text-[14px] text-ink-muted">{inst.name}</p>
+          </div>
+          <div className="md:col-span-7">
+            <p className="font-serif text-[24px] md:text-[26px] leading-[1.35] text-ink">{inst.body}</p>
+            <p className="mt-6 text-[12px] tracking-[0.18em] uppercase text-ink-muted">{inst.note}</p>
+          </div>
+          <div className="md:col-span-2 flex md:justify-end items-start">
+            <Link to="/book-demo" className="text-[13.5px] text-ink hover:text-rust transition-colors inline-flex items-center gap-1">
+              See a demo <ArrowRight size={14} />
+            </Link>
+          </div>
+        </article>
+      ))}
+      <div className="border-t border-ink-10" />
+    </section>
+
+    <section className="bg-ink text-[var(--paper)]">
+      <div className="container-editorial py-24 md:py-32 grid md:grid-cols-12 gap-12 items-center">
+        <h2 className="md:col-span-7 font-serif text-4xl md:text-6xl leading-[1.05] text-[var(--paper)]">
+          Find out what RegCo looks like for your institution.
+        </h2>
+        <div className="md:col-span-5 md:pl-12">
+          <p className="text-[15.5px] text-[var(--paper)]/70 leading-relaxed">
+            A twenty-minute walkthrough tailored to your license category and your reporting cycle.
+          </p>
+          <Link to="/book-demo" className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--rust)] text-white text-[14.5px] font-medium hover:bg-[var(--rust-dark)] transition-colors">
+            Book a demo <ArrowUpRight size={16} />
+          </Link>
+        </div>
+      </div>
+    </section>
+
+    <EditorialFooter />
   </div>
 );
 
-export const ProductPage = () => (
-  <MarketingShell
-    eyebrow="THE REGCO AGENT"
-    title={<>An AI compliance copilot, not another dashboard.</>}
-    subtitle="Speak to RegCo Agent the way you'd brief a senior compliance officer. It reads your CBS file, drafts the return, screens the customer, and surfaces the AML flag — then asks you to confirm before filing."
-  >
-    <ScreenshotBlock variant="agent" />
-    <Sections
-      groups={[
-        {
-          title: "Regulatory filings, on request",
-          rows: [
-            "All 16 mandatory Nigerian returns — CBN, NFIU, SCUML, NDIC, FIRS, PENCOM",
-            "Reads any CBS export — FlexCube, T24, NCube, BankOne, custom Excel",
-            "Validates CAR, liquidity, NPL, and PDR against the latest CBN thresholds",
-            "Outputs in the regulator's prescribed format, ready for submission",
-          ],
-        },
-        {
-          title: "AML monitoring you don't run — it runs you",
-          rows: [
-            "CBN's 6 AML rules applied to every transaction in real time",
-            "Critical flags surfaced as soon as they happen",
-            "Structuring, velocity, CTR thresholds, dormant-account anomalies",
-            "One-click STR drafting from any flagged transaction",
-          ],
-        },
-        {
-          title: "Customer screening, before onboarding",
-          rows: [
-            "UN, OFAC, EU, UK HM Treasury, CBN watchlist — checked simultaneously",
-            "Nigerian PEP database with relatives and close associates",
-            "Adverse-media search with named-entity matching",
-            "Audit-ready screening certificate for every check",
-          ],
-        },
-      ]}
-    />
-  </MarketingShell>
-);
-
-export const WhoWeServePage = () => (
-  <MarketingShell
-    eyebrow="WHO WE SERVE"
-    title={<>Built for every Nigerian licensed financial institution.</>}
-    subtitle="Microfinance Banks. Primary Mortgage Banks. Commercial Banks. Finance Companies. Payment Service Providers. If you file with the CBN, RegCo is for you."
-  >
-    <ScreenshotBlock variant="reports" />
-    <Sections
-      groups={[
-        { title: "Microfinance Banks (Tier 1–3)", rows: ["MFB Regulatory Returns", "PDR calculation", "Liquidity ratio reporting", "Tier-specific compliance thresholds"] },
-        { title: "Primary Mortgage Banks", rows: ["PMB-specific CBN returns", "Loan classification reports", "Real estate exposure tracking", "NHF compliance"] },
-        { title: "Commercial Banks", rows: ["Full CBN return suite", "FX position reporting", "NDIC premium computation", "Group-level consolidation"] },
-        { title: "Finance Companies", rows: ["FC Regulatory Returns", "Lending portfolio analytics", "Customer concentration limits", "Quarterly CBN reporting"] },
-      ]}
-    />
-  </MarketingShell>
-);
-
-export const PricingPage = () => (
-  <MarketingShell eyebrow="PRICING" title={<>Simple, tier-aligned pricing.</>} subtitle="Pay for the regulatory scope your licence requires. Every plan includes the RegCo Agent, the dashboard, and CBN-grade security.">
-    <section style={{ padding: "80px 40px" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        {[
-          { name: "Starter", price: "Contact us", desc: "For Tier 1 MFBs and small finance companies.", features: ["All 16 mandatory returns", "AML monitoring", "Sanctions screening", "Email support"] },
-          { name: "Growth", price: "Contact us", desc: "For Tier 2/3 MFBs, PMBs, and mid-sized institutions.", features: ["Everything in Starter", "Customer 360", "Board pack generation", "Priority support", "Up to 10 users"], featured: true },
-          { name: "Enterprise", price: "Contact us", desc: "For commercial banks and groups with multiple subsidiaries.", features: ["Everything in Growth", "Multi-entity consolidation", "SSO + custom roles", "Dedicated compliance partner", "Unlimited users"] },
-        ].map((t) => (
-          <div
-            key={t.name}
-            style={{
-              background: t.featured ? "#FFFFFF" : "rgba(255,255,255,0.04)",
-              color: t.featured ? "#000000" : "#FFFFFF",
-              border: `1px solid ${t.featured ? "transparent" : "rgba(255,255,255,0.1)"}`,
-              borderRadius: 14,
-              padding: 28,
-            }}
-          >
-            <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, opacity: 0.7 }}>{t.name}</p>
-            <p style={{ fontSize: 32, fontWeight: 700, letterSpacing: "-1px", margin: "8px 0 12px" }}>{t.price}</p>
-            <p style={{ fontSize: 13, opacity: 0.6, marginBottom: 20, lineHeight: 1.6 }}>{t.desc}</p>
-            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px" }}>
-              {t.features.map((f) => (
-                <li key={f} style={{ fontSize: 13, padding: "6px 0", opacity: 0.85 }}>
-                  ✓ {f}
-                </li>
-              ))}
-            </ul>
-            <Link
-              to="/book-demo"
-              style={{
-                display: "block",
-                textAlign: "center",
-                background: t.featured ? "#000000" : "#FFFFFF",
-                color: t.featured ? "#FFFFFF" : "#000000",
-                padding: "10px 16px",
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                textDecoration: "none",
-              }}
-            >
-              Talk to sales
-            </Link>
-          </div>
-        ))}
-      </div>
-    </section>
-  </MarketingShell>
-);
-
-export const CompanyPage = () => (
-  <MarketingShell
-    eyebrow="COMPANY"
-    title={<>The future state of Nigerian compliance.</>}
-    subtitle="We're building the AI compliance partner Nigerian financial institutions deserve. Bank-grade. Locally aware. Built in Abuja, for the CBN's regulatory reality."
-  >
-    <ScreenshotBlock variant="calendar" />
-    <Sections
-      groups={[
-        {
-          title: "Our mission",
-          rows: [
-            "Make CBN compliance as fast as it is correct",
-            "Free compliance officers from manual data entry",
-            "Bring world-class tools to every Nigerian licensed institution",
-            "Help regulators raise the bar without raising the cost",
-          ],
-        },
-        { title: "Where we're based", rows: ["Headquartered in Abuja, Nigeria", "Founded in 2024", "RegCo Technologies Limited (RC pending publication)"] },
-      ]}
-    />
-  </MarketingShell>
-);
-
-export const SecurityMarketingPage = () => (
-  <MarketingShell
-    eyebrow="SECURITY"
-    title={
-      <>
-        Safe, Secure,
-        <br />
-        And Private.
-      </>
-    }
-    subtitle="RegCo secures your institution's data with bank-grade security, NDPA-compliant data handling, and full audit visibility for every action the agent takes."
-  >
-    <ScreenshotBlock variant="security" />
-    <section style={{ padding: "80px 40px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }}>
-        {[
-          { title: "No training on your data", desc: "We never use your institution's data to train, fine-tune, or update any AI model. Your data stays yours, full stop." },
-          { title: "Private data stays private", desc: "Each institution's data is stored in an isolated environment with row-level security. Cross-institution access is impossible by design." },
-          { title: "Full audit visibility", desc: "Every action the agent takes is logged with timestamp, user, regulation cited, and outcome. NDPC and CBN examination ready." },
-          { title: "Encryption everywhere", desc: "TLS 1.3 in transit. AES-256 at rest. Encrypted backups. Keys managed in HSM-backed infrastructure." },
-          { title: "NDPA 2023 compliant", desc: "Registered with the Nigeria Data Protection Commission. Data residency in compliant African and EU regions only." },
-          { title: "Bring-your-own controls", desc: "SSO, custom role hierarchies, IP allow-listing, and forced session timeouts for institutions with stricter policies." },
-        ].map((item) => (
-          <div key={item.title} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 24 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, color: "#FFFFFF", marginBottom: 10, letterSpacing: "-0.3px" }}>{item.title}</h3>
-            <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.7, margin: 0 }}>{item.desc}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  </MarketingShell>
-);
-
-const Sections = ({ groups }: { groups: { title: string; rows: string[] }[] }) => (
-  <section style={{ padding: "80px 40px" }}>
-    <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-      {groups.map((g, gi) => (
-        <motion.div
-          key={g.title}
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          style={{ padding: "48px 0", borderBottom: gi < groups.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none" }}
-        >
-          <h2 style={{ fontSize: 32, fontWeight: 700, color: "#FFFFFF", letterSpacing: "-1px", lineHeight: 1.15, marginBottom: 28 }}>{g.title}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 16 }}>
-            {g.rows.map((r) => (
-              <div key={r} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80", marginTop: 8, flexShrink: 0 }} />
-                <p style={{ fontSize: 15, color: "rgba(255,255,255,0.75)", lineHeight: 1.65, margin: 0 }}>{r}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      ))}
+// PricingPage retained as named export for App.tsx compatibility — restyled minimally.
+const PricingTier = ({ name, price, cycle, body, features, cta, to, featured = false }: any) => (
+  <div className={`p-8 border ${featured ? "border-ink bg-white" : "border-ink-10 bg-[var(--paper)]"} rounded-md`}>
+    <p className="tag mb-4">{name}</p>
+    <div className="flex items-baseline gap-1">
+      <span className="font-serif text-5xl text-ink">{price}</span>
+      <span className="text-[13px] text-ink-muted">{cycle}</span>
     </div>
-  </section>
+    <p className="mt-4 text-[14px] text-ink-muted leading-relaxed">{body}</p>
+    <ul className="mt-6 space-y-2 text-[13.5px] text-ink">
+      {features.map((f: string) => <li key={f} className="flex gap-2"><span className="text-rust">·</span>{f}</li>)}
+    </ul>
+    <Link to={to} className={`mt-8 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13.5px] font-medium transition-colors ${featured ? "bg-ink text-[var(--paper)] hover:bg-[var(--rust)]" : "border border-ink-15 text-ink hover:bg-ink/[0.04]"}`}>
+      {cta} <ArrowUpRight size={14} />
+    </Link>
+  </div>
 );
+
+const PricingPage = () => (
+  <div className="min-h-screen bg-[var(--paper)] text-ink">
+    <EditorialNavbar />
+    <section className="pt-36 pb-16 md:pt-44">
+      <div className="container-editorial">
+        <p className="tag mb-6">Pricing</p>
+        <h1 className="font-serif text-[44px] md:text-[64px] leading-[1.04]">
+          Priced by license category.<br />
+          <span className="italic text-ink-muted">Never by the number of returns.</span>
+        </h1>
+      </div>
+    </section>
+    <section className="container-editorial pb-32">
+      <div className="grid md:grid-cols-3 gap-6">
+        <PricingTier name="Starter · Unit MFB" price="₦150K" cycle="/month"
+          body="For unit microfinance banks running a single branch."
+          features={["All CBN MFB returns", "NDIC Premium", "Email support", "Single user"]}
+          cta="Book a demo" to="/book-demo" />
+        <PricingTier name="Growth · State MFB" price="₦450K" cycle="/month" featured
+          body="For multi-branch state MFBs needing consolidation and oversight."
+          features={["Everything in Starter", "Single-obligor monitoring", "Customer 360", "Audit tracker", "5 users"]}
+          cta="Book a demo" to="/book-demo" />
+        <PricingTier name="Enterprise" price="Custom" cycle=""
+          body="National MFBs, commercial banks, PMBs, fintechs."
+          features={["Everything in Growth", "API & webhook ingest", "Dedicated CSM", "SLA-backed", "Unlimited users"]}
+          cta="Contact sales" to="/contact/partnerships" />
+      </div>
+    </section>
+    <EditorialFooter />
+  </div>
+);
+
+export { WhoWeServePage, PricingPage };
