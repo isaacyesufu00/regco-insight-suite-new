@@ -238,7 +238,7 @@ function UseCases() {
         ))}
       </div>
       <div style={{ marginTop: 64, width: '100%', borderRadius: 12, border: `1px solid ${COLORS.border}`, overflow: 'hidden', background: '#FFFFFF' }}>
-        <Placeholder height={560} text="[ INSERT REGCO AGENT SCREENSHOT: left AI chat panel with compliance thought labels + right transaction monitoring or filing dashboard ]" />
+        <ImageFill src={embedNotion.url} alt="Pipeline overview report" height={560} />
       </div>
     </section>
   );
