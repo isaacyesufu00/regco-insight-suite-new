@@ -64,7 +64,7 @@ function Nav() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         {!isMobile && (
           <>
-            <a href="/login" style={{ ...sans, fontSize: 15, color: COLORS.text, textDecoration: 'none', cursor: 'pointer' }}>Sign in</a>
+            <button onClick={() => navigate('/sign-in')} style={{ background: 'none', border: 'none', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 400, color: COLORS.text, cursor: 'pointer', padding: 0 }}>Sign in</button>
             <div style={{ display: 'flex', alignItems: 'center', borderRadius: 9999, border: `1px solid ${COLORS.border}`, background: COLORS.navInputBg, padding: '4px 4px 4px 16px', gap: 4 }}>
               <input type="email" placeholder="Enter email" style={{ ...sans, fontSize: 14, color: COLORS.text, background: 'transparent', border: 'none', outline: 'none', width: 140 }} />
               <CtaButton small>Get a demo</CtaButton>
