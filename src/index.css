@@ -3,118 +3,172 @@
 @tailwind utilities;
 
 /* ============================================================
-   RegCo — Editorial Paper design system
-   Inspired by anthropic.com: warm paper, near-black ink, rust accent.
-   All values are HSL so `hsl(var(--token))` works in Tailwind.
+   RegCo — Black & White system (Harvey / Rogo inspired)
+   Apple system font stack across the board. No webfonts.
+   Marketing = strict B/W + hairline grey.
+   Dashboard adds Atlassian operational accents.
    ============================================================ */
 
 @layer base {
   :root {
-    /* Paper & ink */
-    --background: 42 22% 94%;          /* #F5F3EE paper */
-    --foreground: 0 0% 5%;             /* #0D0D0D ink */
+    /* shadcn semantic tokens (HSL components) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
 
-    --card: 42 22% 97%;
-    --card-foreground: 0 0% 5%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
+    --popover-foreground: 0 0% 4%;
 
-    /* Rust accent */
-    --primary: 12 62% 47%;             /* #C44A2F rust */
-    --primary-foreground: 42 30% 97%;
+    --primary: 0 0% 4%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 36 16% 89%;           /* #E8E4DD paper-2 */
-    --secondary-foreground: 0 0% 5%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 4%;
 
-    --muted: 36 16% 89%;
-    --muted-foreground: 30 4% 35%;     /* #5A5A57 ink-muted */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
 
-    --accent: 12 62% 47%;
-    --accent-foreground: 42 30% 97%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 4%;
 
-    --destructive: 8 65% 36%;          /* #9C2A1F */
-    --destructive-foreground: 42 30% 97%;
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 8% 82%;
-    --input: 30 8% 78%;
-    --ring: 12 62% 47%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 4%;
 
-    --radius: 0.375rem;
+    --radius: 0.5rem;
 
-    --success: 138 25% 33%;            /* #3F6B4A */
-    --success-foreground: 42 30% 97%;
-    --warning: 39 65% 44%;             /* #B8862A */
-    --warning-foreground: 42 30% 97%;
-    --info: 12 62% 47%;
-    --info-foreground: 42 30% 97%;
+    --success: 152 60% 28%;
+    --success-foreground: 0 0% 100%;
+    --warning: 36 80% 40%;
+    --warning-foreground: 0 0% 100%;
+    --info: 215 100% 40%;
+    --info-foreground: 0 0% 100%;
 
-    /* Sidebar (dashboard) */
-    --sidebar-background: 42 22% 94%;
-    --sidebar-foreground: 0 0% 5%;
-    --sidebar-primary: 12 62% 47%;
-    --sidebar-primary-foreground: 42 30% 97%;
-    --sidebar-accent: 36 16% 89%;
-    --sidebar-accent-foreground: 0 0% 5%;
-    --sidebar-border: 30 8% 82%;
-    --sidebar-ring: 12 62% 47%;
+    /* Sidebar (kept for shadcn compat — same B/W palette) */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 0 0% 4%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 4%;
 
-    /* Convenience hex tokens (use sparingly via inline style) */
-    --paper: #F5F3EE;
-    --paper-2: #E8E4DD;
-    --ink: #0D0D0D;
-    --ink-muted: #5A5A57;
-    --rust: #C44A2F;
-    --rust-dark: #9C3A22;
+    /* Marketing palette (strict B/W) */
+    --bg:        #FFFFFF;
+    --bg-inverse:#0A0A0A;
+    --ink:       #0A0A0A;
+    --ink-2:     #3A3A3A;
+    --ink-3:     #6B6B6B;
+    --ink-4:     #A8A8A8;
+    --line:      #E5E5E5;
+    --line-2:    #F0F0F0;
+
+    /* Dashboard operational accents */
+    --navy:        #172B4D;
+    --blue:        #0052CC;
+    --blue-soft:   #DEEBFF;
+    --green:       #00875A;
+    --green-soft:  #E3FCEF;
+    --red:         #BF2600;
+    --red-soft:    #FFEBE6;
+    --rail-bg:     #F4F5F7;
+    --rail-border: #DFE1E6;
+
+    /* Apple system font stack */
+    --font-sans:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+                    "Helvetica Neue", "Segoe UI", Roboto, system-ui, sans-serif;
+    --font-mono:    ui-monospace, "SF Mono", "Menlo", "Monaco", "Cascadia Mono", monospace;
+
+    /* ---------- Legacy compatibility shims ---------- */
+    /* Older pages reference these tokens; map them onto the new B/W palette
+       so nothing breaks while we migrate. */
+    --paper:    #FFFFFF;
+    --paper-2:  #F5F5F5;
+    --ink-muted:#6B6B6B;
+    --rust:     #0A0A0A;          /* CTA hover used to flip to rust — now stays ink */
+    --rust-dark:#000000;
   }
 }
 
 @layer base {
   * { @apply border-border; }
 
-  html { font-feature-settings: "ss01", "cv11"; }
-
+  html,
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    @apply bg-background text-foreground antialiased;
-    font-feature-settings: "ss01";
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
   }
 
-  h1, h2, h3, .font-display {
-    font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
-    font-weight: 400;
-    letter-spacing: -0.01em;
+  body {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display, .font-serif {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
 @layer utilities {
-  .font-serif    { font-family: 'Instrument Serif', Georgia, serif; }
-  .font-sans     { font-family: 'Inter', system-ui, sans-serif; }
-  .font-mono     { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+  /* Font helpers — all map to the Apple stack, mono stays mono. */
+  .font-sans  { font-family: var(--font-sans); }
+  .font-serif { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.02em; }
+  .font-mono  { font-family: var(--font-mono); }
 
-  .bg-paper      { background-color: var(--paper); }
-  .bg-paper-2    { background-color: var(--paper-2); }
-  .bg-ink        { background-color: var(--ink); }
-  .text-ink      { color: var(--ink); }
-  .text-ink-muted{ color: var(--ink-muted); }
-  .text-rust     { color: var(--rust); }
-  .border-paper-2{ border-color: var(--paper-2); }
-  .border-ink-10 { border-color: rgba(13,13,13,0.10); }
-  .border-ink-15 { border-color: rgba(13,13,13,0.15); }
+  /* Surface helpers */
+  .bg-paper       { background-color: #FFFFFF; }
+  .bg-paper-2     { background-color: #F5F5F5; }
+  .bg-ink         { background-color: var(--ink); }
+  .text-ink       { color: var(--ink); }
+  .text-ink-2     { color: var(--ink-2); }
+  .text-ink-3     { color: var(--ink-3); }
+  .text-ink-muted { color: var(--ink-3); }
+  .text-rust      { color: var(--ink); }
+  .border-paper-2 { border-color: #E5E5E5; }
+  .border-ink-10  { border-color: #E5E5E5; }
+  .border-ink-15  { border-color: #E0E0E0; }
 
-  .hairline      { border-top: 1px solid rgba(13,13,13,0.10); }
+  .hairline       { border-top: 1px solid var(--line); }
 
-  .container-editorial { max-width: 1200px; margin-inline: auto; padding-inline: 1.5rem; }
-  .container-narrow    { max-width: 720px;  margin-inline: auto; padding-inline: 1.5rem; }
+  /* Containers (balanced — 1200 max, 24px gutter) */
+  .container-site    { max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+  .container-narrow  { max-width: 720px;  margin-inline: auto; padding-inline: 24px; }
+  /* Back-compat aliases */
+  .container-editorial { max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+
+  /* Type scale */
+  .text-display { font-size: clamp(40px, 5.6vw, 56px); line-height: 1.05; letter-spacing: -0.02em; font-weight: 600; }
+  .text-h2      { font-size: clamp(28px, 3.4vw, 36px); line-height: 1.15; letter-spacing: -0.015em; font-weight: 600; }
+  .text-h3      { font-size: 22px; line-height: 1.3;  letter-spacing: -0.01em; font-weight: 600; }
+  .text-body    { font-size: 15px; line-height: 1.55; }
+  .text-small   { font-size: 13px; line-height: 1.5; }
+  .text-kpi     { font-family: var(--font-mono); font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; }
+
+  /* Sections */
+  .section-pad   { padding-block: 56px; }
+  @media (min-width: 768px) { .section-pad { padding-block: 80px; } }
 }
 
-/* Quiet motion */
+/* Motion */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.animate-fade-up { animation: fade-up 0.5s ease-out both; }
+.animate-fade-up { animation: fade-up 0.4s ease-out both; }
 
 @keyframes marquee-left {
   0% { transform: translateX(0); } 100% { transform: translateX(-50%); }
@@ -122,115 +176,112 @@
 .animate-marquee-left { animation: marquee-left 45s linear infinite; }
 
 /* ============================================================
-   Legacy compatibility shims
-   Older components still reference Atlassian-era tokens and class
-   names. We map them to the new editorial palette so existing
-   pages render in the new system without per-component edits.
+   Legacy class shims (Atlassian-era + Apple-era components)
+   Mapped onto the new B/W palette so we don't have to touch
+   every old component during the rewrite.
    ============================================================ */
 :root {
-  --font-serif: 'Instrument Serif', Georgia, serif;
-  --font-sans:  'Inter', system-ui, sans-serif;
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-body:  'Inter', system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
 
-  --blue-900: #0D0D0D;
-  --blue-800: #C44A2F;
-  --blue-700: #C44A2F;
-  --blue-600: #C44A2F;
-  --blue-400: #D87560;
-  --blue-200: #E8C9C0;
-  --blue-100: #F2DED7;
-  --blue-50:  #F8ECE7;
+  --blue-900: #0A0A0A;
+  --blue-800: #0A0A0A;
+  --blue-700: #0A0A0A;
+  --blue-600: #0A0A0A;
+  --blue-400: #3A3A3A;
+  --blue-200: #E5E5E5;
+  --blue-100: #F0F0F0;
+  --blue-50:  #F7F7F7;
 
-  --n-900: #0D0D0D;
-  --n-800: #1A1A1A;
-  --n-700: #2A2A28;
-  --n-600: #3A3A37;
-  --n-500: #5A5A57;
-  --n-400: #6E6E6A;
-  --n-300: #8A8A85;
-  --n-200: #B0B0AB;
-  --n-100: #C8C5BE;
-  --n-70:  #D8D4CC;
-  --n-40:  #E8E4DD;
-  --n-30:  #EFEBE3;
-  --n-20:  #F5F3EE;
+  --n-900: #0A0A0A;
+  --n-800: #171717;
+  --n-700: #262626;
+  --n-600: #404040;
+  --n-500: #6B6B6B;
+  --n-400: #8A8A8A;
+  --n-300: #A8A8A8;
+  --n-200: #C8C8C8;
+  --n-100: #D8D8D8;
+  --n-70:  #E5E5E5;
+  --n-40:  #EFEFEF;
+  --n-30:  #F5F5F5;
+  --n-20:  #F9F9F9;
   --n-0:   #FFFFFF;
 
-  --green-500: #3F6B4A;
-  --green-100: #E3ECE5;
-  --orange-500: #C44A2F;
-  --purple-500: #6E5A4A;
-  --teal-500:   #4A6E68;
+  --green-500: #00875A;
+  --green-100: #E3FCEF;
+  --orange-500: #0A0A0A;
+  --purple-500: #0A0A0A;
+  --teal-500:   #0A0A0A;
 
-  --shadow-sm: 0 1px 0 rgba(13,13,13,0.05);
-  --shadow-md: 0 1px 2px rgba(13,13,13,0.06);
-  --shadow-lg: 0 2px 8px rgba(13,13,13,0.08);
-  --shadow-xl: 0 8px 24px rgba(13,13,13,0.10);
+  --shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
+  --shadow-md: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-xl: 0 8px 24px rgba(0,0,0,0.08);
 
   --radius-sm: 4px;
   --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 
-  --apple-bg: #F5F3EE;
-  --apple-white: #FFFFFF;
-  --apple-dark: #0D0D0D;
-  --apple-black: #0D0D0D;
-  --apple-text: #0D0D0D;
-  --apple-text-secondary: #5A5A57;
-  --apple-text-tertiary: #8A8A85;
-  --apple-link: #C44A2F;
-  --apple-border: rgba(13,13,13,0.10);
-  --apple-radius-card: 10px;
-  --apple-radius-large: 14px;
-  --apple-radius-pill: 999px;
-  --apple-shadow: 0 1px 2px rgba(13,13,13,0.06);
-  --apple-shadow-hover: 0 4px 16px rgba(13,13,13,0.10);
-  --apple-transition: all 0.25s ease;
-  --apple-green: #3F6B4A;
-  --apple-orange: #C44A2F;
-  --apple-red: #9C2A1F;
-  --apple-grey: #8A8A85;
+  --apple-bg:               #FFFFFF;
+  --apple-white:            #FFFFFF;
+  --apple-dark:             #0A0A0A;
+  --apple-black:            #0A0A0A;
+  --apple-text:             #0A0A0A;
+  --apple-text-secondary:   #6B6B6B;
+  --apple-text-tertiary:    #A8A8A8;
+  --apple-link:             #0A0A0A;
+  --apple-border:           #E5E5E5;
+  --apple-radius-card:      8px;
+  --apple-radius-large:     12px;
+  --apple-radius-pill:      999px;
+  --apple-shadow:           none;
+  --apple-shadow-hover:     0 2px 8px rgba(0,0,0,0.06);
+  --apple-transition:       all 0.2s ease;
+  --apple-green:            #00875A;
+  --apple-orange:           #0A0A0A;
+  --apple-red:              #BF2600;
+  --apple-grey:             #A8A8A8;
 }
 
 .atl-blue-underline, .blue-underline {
   position: relative; display: inline-block; white-space: nowrap; color: var(--ink);
-  font-style: italic;
+  font-style: normal; font-weight: 600;
 }
 .atl-blue-underline::after, .blue-underline::after {
   content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
-  height: 2px; background: var(--rust); border-radius: 1px;
+  height: 2px; background: var(--ink); border-radius: 1px;
 }
 
-.atl-section    { padding: 96px 0; }
-.atl-section-sm { padding: 64px 0; }
-.atl-section-lg { padding: 120px 0; }
+.atl-section    { padding: 80px 0; }
+.atl-section-sm { padding: 56px 0; }
+.atl-section-lg { padding: 96px 0; }
 .atl-container  { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 
 .btn-primary {
-  display: inline-flex; align-items: center; gap: 8px;
-  background: var(--rust); color: #fff;
-  font-family: var(--font-body); font-size: 14.5px; font-weight: 500;
-  padding: 11px 22px; border-radius: 999px; border: none; cursor: pointer; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  padding: 0 18px; height: 38px; border-radius: 999px; border: none; cursor: pointer; text-decoration: none;
   transition: background 0.2s; letter-spacing: 0;
 }
-.btn-primary:hover { background: var(--rust-dark); }
+.btn-primary:hover { background: #262626; }
 
 .btn-secondary {
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   background: transparent; color: var(--ink);
-  font-family: var(--font-body); font-size: 14.5px; font-weight: 500;
-  padding: 10px 22px; border-radius: 999px;
-  border: 1px solid rgba(13,13,13,0.15); cursor: pointer; text-decoration: none;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  padding: 0 18px; height: 38px; border-radius: 999px;
+  border: 1px solid var(--line); cursor: pointer; text-decoration: none;
   transition: background 0.2s, border-color 0.2s;
 }
-.btn-secondary:hover { background: rgba(13,13,13,0.04); border-color: rgba(13,13,13,0.3); }
+.btn-secondary:hover { background: #F5F5F5; border-color: #BFBFBF; }
 
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 4px;
   background: transparent; color: var(--ink);
-  font-size: 14.5px; font-weight: 500;
+  font-size: 14px; font-weight: 500;
   border: none; cursor: pointer; text-decoration: none;
   padding: 8px 0; border-bottom: 1px solid transparent;
   transition: border-color 0.15s;
@@ -239,33 +290,23 @@
 
 .tag {
   display: inline-flex; align-items: center;
-  background: transparent; color: var(--ink-muted);
+  background: transparent; color: var(--ink-3);
   font-size: 11px; font-weight: 500;
   padding: 4px 0; border-radius: 0;
   letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: var(--font-mono);
 }
 
 .product-icon {
-  width: 40px; height: 40px;
-  border-radius: 8px;
+  width: 36px; height: 36px;
+  border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; font-weight: 500; flex-shrink: 0;
-  background: var(--paper-2); color: var(--ink);
+  font-size: 16px; font-weight: 600; flex-shrink: 0;
+  background: #F5F5F5; color: var(--ink);
 }
 
-.screenshot-placeholder {
-  width: 100%;
-  background: var(--paper-2);
-  border: 1px solid rgba(13,13,13,0.10);
-  border-radius: 8px;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 6px; color: var(--ink-muted);
-  font-size: 13px; font-weight: 400;
-  font-family: var(--font-body);
-  text-align: center; padding: 20px;
-}
-.screenshot-placeholder .ph-label { font-size: 11px; color: var(--ink-muted); margin-top: 4px; letter-spacing: 0.1em; text-transform: uppercase; }
+/* Mockup placeholders are deliberately hidden — no faux screenshots on marketing. */
+.screenshot-placeholder { display: none !important; }
 
-.hero-gradient { background: var(--paper); }
-.card-elevated { background: #fff; border: 1px solid rgba(13,13,13,0.08); box-shadow: none; }
+.hero-gradient { background: #FFFFFF; }
+.card-elevated { background: #fff; border: 1px solid var(--line); box-shadow: none; }

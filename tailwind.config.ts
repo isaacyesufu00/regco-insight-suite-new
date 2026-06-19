@@ -1,5 +1,26 @@
 import type { Config } from "tailwindcss";
 
+const appleStack = [
+  "-apple-system",
+  "BlinkMacSystemFont",
+  '"SF Pro Text"',
+  '"SF Pro Display"',
+  '"Helvetica Neue"',
+  '"Segoe UI"',
+  "Roboto",
+  "system-ui",
+  "sans-serif",
+];
+
+const monoStack = [
+  "ui-monospace",
+  '"SF Mono"',
+  "Menlo",
+  "Monaco",
+  '"Cascadia Mono"',
+  "monospace",
+];
+
 export default {
   darkMode: ["class"],
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
@@ -12,10 +33,10 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans:    ['Inter', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'sans-serif'],
-        serif:   ['"Instrument Serif"', 'Georgia', 'serif'],
-        display: ['"Instrument Serif"', 'Georgia', 'serif'],
-        mono:    ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        sans:    appleStack,
+        serif:   appleStack,   // serif alias preserved for legacy components, mapped to Apple stack
+        display: appleStack,
+        mono:    monoStack,
       },
       colors: {
         border: "hsl(var(--border))",
@@ -54,12 +75,12 @@ export default {
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up":   { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
-        "fade-up":        { from: { opacity: "0", transform: "translateY(8px)" }, to: { opacity: "1", transform: "translateY(0)" } },
+        "fade-up":        { from: { opacity: "0", transform: "translateY(6px)" }, to: { opacity: "1", transform: "translateY(0)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up":   "accordion-up 0.2s ease-out",
-        "fade-up":        "fade-up 0.5s ease-out both",
+        "fade-up":        "fade-up 0.4s ease-out both",
       },
     },
   },
