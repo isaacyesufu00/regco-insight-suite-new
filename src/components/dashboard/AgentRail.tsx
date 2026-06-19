@@ -130,6 +130,12 @@ export default function AgentRail() {
           </div>
         )}
 
+        {!FUNCTION_URL && (
+          <div className="text-[12px] text-red-600 border border-red-200 rounded p-2 bg-red-50">
+            Agent backend not configured: VITE_SUPABASE_URL is missing.
+          </div>
+        )}
+
         {error && (
           <div className="text-[12px] text-red-600 border border-red-200 rounded p-2 bg-red-50">
             Something went wrong: {error.message}
