@@ -1,41 +1,30 @@
-# Switch agent to Lovable AI Gateway (Gemini 3 Flash)
+# Fix: agent says "Switching view" but URL doesn't change
 
-You don't need to do anything — `LOVABLE_API_KEY` is already provisioned in your project. I'll swap the orchestrator over and you can send a new message in the agent rail to verify.
+## Root cause
 
-## Change
+In `src/components/dashboard/AgentRail.tsx`, the navigation effect checks:
 
-Edit `supabase/functions/agent-orchestrator/index.ts`:
+```ts
+p.toolName === "navigate_dashboard" && p.state === "output-available"
+```
 
-1. Add a Lovable AI Gateway provider alongside the existing OpenRouter one:
-   ```ts
-   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-   function makeLovableProvider(key: string) {
-     return createOpenAICompatible({
-       name: "lovable",
-       baseURL: "https://ai.gateway.lovable.dev/v1",
-       headers: {
-         "Lovable-API-Key": key,
-         "X-Lovable-AIG-SDK": "vercel-ai-sdk",
-       },
-     });
-   }
-   ```
-2. Replace the model selection logic:
-   - Primary: Lovable Gateway + `google/gemini-3-flash-preview`
-   - Fallback (only if `LOVABLE_API_KEY` is missing): OpenRouter + `meta-llama/llama-3.3-70b-instruct:free` (real, tool-capable slug — replaces the broken `nvidia/nemotron-3-ultra-550b-a55b:free`)
-3. Update the startup guard from "missing OPENROUTER_API_KEY" to "missing LOVABLE_API_KEY (or OPENROUTER_API_KEY)".
-4. Add `onError` surfacing on the stream response so any future model issue shows in the UI red banner instead of spinning forever.
+In AI SDK v5 UI message parts, tool parts look like `{ type: "tool-navigate_dashboard", state, input, output }` — there is **no `toolName` field on the part**. So that condition is always false and `navigate(path)` never fires, even though the tool ran successfully on the server and produced `{ ui_action: "navigate", path: "/dashboard/my-reports", ... }`.
+
+The `ToolChip` component already works around this with `part.toolName ?? part.type?.replace(/^tool-/, "")` — the navigation effect just missed the same fallback.
+
+## Fix
+
+One small edit in `src/components/dashboard/AgentRail.tsx` (the `useEffect` that watches `messages` for navigation):
+
+- Derive the tool name from `part.type` (`tool-<name>`) instead of relying on `part.toolName`.
+- Keep the `state === "output-available"` and `ui_action === "navigate"` guards so it only fires once per completed call.
 
 ## Out of scope
 
-- No frontend changes (`AgentRail.tsx` already handles errors and renders parts).
-- No DB / RLS / tools / system prompt changes.
-- No secret changes — `LOVABLE_API_KEY` is already set.
+- No edge-function/tool changes — the server-side `navigate_dashboard` tool is correct.
+- No route map changes (`returns` → `/dashboard/my-reports` is intentional; if you want a different destination for CBN returns, tell me which page and I'll remap it).
+- No styling, no new tools.
 
-## File touched
+## File
 
-- `supabase/functions/agent-orchestrator/index.ts`
-
-## After I apply it
-
-Just open the agent rail and send a message. Tool calls (screening, transactions, navigation, etc.) will work the same — Gemini 3 Flash supports the same tool-calling interface the code already uses. Lovable AI usage is billed against your workspace credits (visible in Settings → Plans & credits).
+- `src/components/dashboard/AgentRail.tsx` — fix the tool-part detection in the navigation `useEffect`.
