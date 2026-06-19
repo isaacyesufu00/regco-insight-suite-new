@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import askDashboard from '@/assets/ask-dashboard.png.asset.json';
+import embedNotion from '@/assets/embed-notion.png.asset.json';
+import slackImg from '@/assets/slack.png.asset.json';
+import writebackImg from '@/assets/writeback.png.asset.json';
+import trustWorkbook from '@/assets/trust-workbook.png.asset.json';
 
 const COLORS = {
   pageBg: '#F5F2EC',
@@ -17,8 +22,17 @@ const COLORS = {
   heroInputBg: '#F9F7F4',
 };
 
-const serif: React.CSSProperties = { fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, letterSpacing: '-0.01em' };
+const HEADER_FONT = "'Arial Black', 'Helvetica Neue', Arial, sans-serif";
+const serif: React.CSSProperties = { fontFamily: HEADER_FONT, fontWeight: 900, letterSpacing: '-0.02em' };
 const sans: React.CSSProperties = { fontFamily: "'Inter', system-ui, sans-serif" };
+
+function ImageFill({ src, alt, height, bg = '#F0EDE8' }: { src: string; alt: string; height: number; bg?: string }) {
+  return (
+    <div style={{ width: '100%', height, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      <img src={src} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block' }} />
+    </div>
+  );
+}
 
 // ─── NAV ────────────────────────────────────────────────────────────────
 function Nav() {
@@ -145,7 +159,7 @@ function Hero() {
       ))}
 
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: 900, margin: '0 auto', padding: isMobile ? '0 20px' : '0 40px' }}>
-        <h1 style={{ fontFamily: "'Barlow Condensed', 'Arial Narrow', sans-serif", fontWeight: 700, fontSize: typeof window !== 'undefined' && window.innerWidth < 480 ? 40 : isMobile ? 48 : 80, lineHeight: 1.05, color: '#1A1A1A', letterSpacing: '-0.02em', textAlign: 'center', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', margin: 0 }}>
+        <h1 style={{ fontFamily: HEADER_FONT, fontWeight: 900, fontSize: typeof window !== 'undefined' && window.innerWidth < 480 ? 40 : isMobile ? 48 : 80, lineHeight: 1.05, color: '#1A1A1A', letterSpacing: '-0.02em', textAlign: 'center', maxWidth: 840, marginLeft: 'auto', marginRight: 'auto', margin: 0 }}>
           AI for the compliance that can't be wrong.
         </h1>
         <p style={{ ...sans, marginTop: 32, fontSize: isMobile ? 16 : 18, color: COLORS.body, lineHeight: 1.5, maxWidth: 560, marginLeft: 'auto', marginRight: 'auto' }}>
@@ -156,15 +170,7 @@ function Hero() {
         </div>
       </div>
 
-      <div style={{
-        marginTop: 96, paddingBottom: 64, width: '100%',
-        display: 'flex', justifyContent: 'center', alignItems: 'center',
-        gap: 80, flexWrap: 'wrap', position: 'relative', zIndex: 1,
-      }}>
-        {['CBN', 'NFIU', 'SCUML', 'NDIC', 'FIRS'].map(r => (
-          <span key={r} style={{ ...sans, fontSize: 18, fontWeight: 600, color: COLORS.text, letterSpacing: '0.02em', opacity: 0.75 }}>{r}</span>
-        ))}
-      </div>
+      <div style={{ marginTop: 96, paddingBottom: 64, width: '100%' }} />
     </section>
   );
 }
@@ -200,11 +206,7 @@ function ComplianceRecord() {
     <section style={{ background: COLORS.pageBg, paddingTop: 96, padding: '96px 40px 0', maxWidth: 1200, margin: '0 auto' }}>
       <HeadlinePair step="1. MONITOR" primary="A single compliance record for the entire institution." secondary="Same obligation. Same answer." />
       <div style={{ marginTop: 48, width: '100%', borderRadius: 12, border: `1px solid ${COLORS.border}`, overflow: 'hidden', background: '#FFFFFF' }}>
-        <div style={{ height: 520, background: '#F0EDE8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <span style={{ ...sans, fontSize: 14, color: COLORS.muted, textAlign: 'center' }}>
-            [ INSERT REGCO DASHBOARD SCREENSHOT: split-pane agent + AML monitoring table ]
-          </span>
-        </div>
+        <ImageFill src={askDashboard.url} alt="Regco compliance dashboard with AI agent panel" height={520} />
       </div>
     </section>
   );
@@ -236,7 +238,7 @@ function UseCases() {
         ))}
       </div>
       <div style={{ marginTop: 64, width: '100%', borderRadius: 12, border: `1px solid ${COLORS.border}`, overflow: 'hidden', background: '#FFFFFF' }}>
-        <Placeholder height={560} text="[ INSERT REGCO AGENT SCREENSHOT: left AI chat panel with compliance thought labels + right transaction monitoring or filing dashboard ]" />
+        <ImageFill src={embedNotion.url} alt="Pipeline overview report" height={560} />
       </div>
     </section>
   );
@@ -250,8 +252,8 @@ function DeployCards() {
   }, []);
 
   const cards = [
-    { ph: '[ INSERT SCREENSHOT: RegCo scheduled compliance digest notification or board-level summary view ]', title: 'Brief your board', body: 'Scheduled compliance digests keep leadership informed automatically, with no last-minute report assembly from your team.' },
-    { ph: '[ INSERT SCREENSHOT: RegCo CBN/NFIU return submission interface showing portal-ready file and validation status ]', title: 'File with regulators', body: 'Push completed CBN and NFIU returns to submission-ready formats, validated and confirmed before every regulatory deadline.' },
+    { img: slackImg.url, alt: 'Scheduled compliance digest in team channel', title: 'Brief your board', body: 'Scheduled compliance digests keep leadership informed automatically, with no last-minute report assembly from your team.' },
+    { img: writebackImg.url, alt: 'Regulator return submission view', title: 'File with regulators', body: 'Push completed CBN and NFIU returns to submission-ready formats, validated and confirmed before every regulatory deadline.' },
   ];
 
   return (
@@ -260,7 +262,7 @@ function DeployCards() {
       <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {cards.map((c, i) => (
           <div key={i} style={{ background: COLORS.cardBg, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.cardBorder}` }}>
-            <Placeholder height={isMobile ? 260 : 380} text={c.ph} />
+            <ImageFill src={c.img} alt={c.alt} height={isMobile ? 260 : 380} />
             <div style={{ padding: '28px 28px 32px' }}>
               <div style={{ ...sans, fontSize: 20, fontWeight: 700, color: COLORS.text, marginBottom: 10 }}>{c.title}</div>
               <p style={{ ...sans, fontSize: 16, color: COLORS.body, lineHeight: 1.65, margin: 0 }}>{c.body}</p>
@@ -280,8 +282,8 @@ function FeaturePair() {
   }, []);
 
   const cards = [
-    { ph: "[ INSERT SCREENSHOT: RegCo agent interface showing a compliance question with a tabulated answer — e.g. 'Which accounts are high risk this week?' with response table ]", title: 'Ask your compliance data', body: 'Ask follow-up questions about any alert, return, or screening result and get answers backed by governed compliance logic.' },
-    { ph: '[ INSERT SCREENSHOT: RegCo audit summary or case record export view — document-style output with timestamps and reviewer identities ]', title: 'Audit trail and case management', body: 'Every alert, review, decision, and filing is logged with timestamp, reviewer identity, and outcome — always ready for examination.' },
+    { img: askDashboard.url, alt: 'Ask the compliance data — agent answer with table', title: 'Ask your compliance data', body: 'Ask follow-up questions about any alert, return, or screening result and get answers backed by governed compliance logic.' },
+    { img: trustWorkbook.url, alt: 'Approved audit workbook with reviewer stamp', title: 'Audit trail and case management', body: 'Every alert, review, decision, and filing is logged with timestamp, reviewer identity, and outcome — always ready for examination.' },
   ];
 
   return (
@@ -289,7 +291,7 @@ function FeaturePair() {
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {cards.map((c, i) => (
           <div key={i} style={{ background: COLORS.cardBg, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.cardBorder}` }}>
-            <Placeholder height={isMobile ? 220 : 340} text={c.ph} />
+            <ImageFill src={c.img} alt={c.alt} height={isMobile ? 220 : 340} />
             <div style={{ padding: '24px 24px 28px' }}>
               <div style={{ ...sans, fontSize: 20, fontWeight: 700, color: COLORS.text, marginBottom: 8 }}>{c.title}</div>
               <p style={{ ...sans, fontSize: 16, color: COLORS.body, lineHeight: 1.65, margin: 0 }}>{c.body}</p>
