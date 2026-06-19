@@ -9,7 +9,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
-const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/agent-orchestrator`;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const FUNCTION_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/agent-orchestrator` : "";
 
 // Friendly tool labels for the activity stream
 const TOOL_LABEL: Record<string, string> = {
@@ -45,7 +46,10 @@ export default function AgentRail() {
 
   const transport = useMemo(() => new DefaultChatTransport({
     api: FUNCTION_URL,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(SUPABASE_PUBLISHABLE_KEY ? { apikey: SUPABASE_PUBLISHABLE_KEY } : {}),
+    },
   }), [accessToken]);
 
   const { messages, sendMessage, status, error } = useChat({
@@ -123,6 +127,12 @@ export default function AgentRail() {
           <div className="font-mono text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5">
             <Loader2 size={11} className="animate-spin" />
             {status === "submitted" ? "Thinking…" : "Responding…"}
+          </div>
+        )}
+
+        {!FUNCTION_URL && (
+          <div className="text-[12px] text-red-600 border border-red-200 rounded p-2 bg-red-50">
+            Agent backend not configured: VITE_SUPABASE_URL is missing.
           </div>
         )}
 

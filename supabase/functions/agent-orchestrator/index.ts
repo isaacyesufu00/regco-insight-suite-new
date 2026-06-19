@@ -9,15 +9,14 @@ import {
   stepCountIs,
   convertToModelMessages,
   type UIMessage,
-} from "npm:ai@6";
-import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@2";
+} from "npm:ai@5.0.26";
+import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@1.0.19";
 import { z } from "npm:zod@3";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Expose-Headers": "X-Lovable-AIG-Run-ID",
 };
 
 // ------------ helpers ------------
@@ -31,13 +30,21 @@ function err(status: number, message: string) {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
-function makeProvider(key: string) {
+// Primary + fallback free models on OpenRouter
+const PRIMARY_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
+const FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+
+function makeOpenRouterProvider(key: string) {
   return createOpenAICompatible({
-    name: "lovable",
-    baseURL: "https://ai.gateway.lovable.dev/v1",
-    headers: { "Lovable-API-Key": key, "X-Lovable-AIG-SDK": "vercel-ai-sdk" },
+    name: "openrouter",
+    baseURL: "https://openrouter.ai/api/v1",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "HTTP-Referer": "https://regco.lovable.app",
+      "X-Title": "RegCo Compliance Agent",
+    },
   });
 }
 
@@ -398,7 +405,7 @@ You have tools to inspect transactions, screen entities, manage cases, draft nar
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return err(405, "Method not allowed");
-  if (!LOVABLE_API_KEY) return err(500, "AI service not configured");
+  if (!OPENROUTER_API_KEY) return err(500, "AI service not configured (missing OPENROUTER_API_KEY)");
 
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return err(401, "Unauthorized");
@@ -443,13 +450,14 @@ Deno.serve(async (req) => {
     });
   };
 
-  const provider = makeProvider(LOVABLE_API_KEY);
+  const provider = makeOpenRouterProvider(OPENROUTER_API_KEY);
   const tools = buildTools({ userId, userClient, admin, logTool });
 
-  const result = streamText({
-    model: provider("google/gemini-3-flash-preview"),
+  // Try primary model, fall back to llama 3.3 70b if it errors (free tier rate limits / 503)
+  const runWith = (modelName: string) => streamText({
+    model: provider(modelName),
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(body.messages),
+    messages: convertToModelMessages(body.messages!),
     tools,
     stopWhen: stepCountIs(50),
     temperature: 0.2,
@@ -462,7 +470,18 @@ Deno.serve(async (req) => {
         await admin.from("agent_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
       }
     },
+    onError: ({ error }) => {
+      console.error(`model ${modelName} error:`, error);
+    },
   });
+
+  let result;
+  try {
+    result = runWith(PRIMARY_MODEL);
+  } catch (e) {
+    console.warn("Primary model threw synchronously, falling back:", e);
+    result = runWith(FALLBACK_MODEL);
+  }
 
   return result.toUIMessageStreamResponse({
     headers: { ...corsHeaders, "X-Conversation-Id": conversationId ?? "" },
