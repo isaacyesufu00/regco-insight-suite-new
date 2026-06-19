@@ -262,7 +262,7 @@ function DeployCards() {
       <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {cards.map((c, i) => (
           <div key={i} style={{ background: COLORS.cardBg, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.cardBorder}` }}>
-            <Placeholder height={isMobile ? 260 : 380} text={c.ph} />
+            <ImageFill src={c.img} alt={c.alt} height={isMobile ? 260 : 380} />
             <div style={{ padding: '28px 28px 32px' }}>
               <div style={{ ...sans, fontSize: 20, fontWeight: 700, color: COLORS.text, marginBottom: 10 }}>{c.title}</div>
               <p style={{ ...sans, fontSize: 16, color: COLORS.body, lineHeight: 1.65, margin: 0 }}>{c.body}</p>
