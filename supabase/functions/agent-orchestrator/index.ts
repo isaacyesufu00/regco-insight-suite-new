@@ -340,21 +340,25 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
 
     // ---------- Automated Returns ----------
     get_filing_deadline: tool({
-      description: "Get the filing deadline and frequency for a given regulatory return type.",
+      description: "Get the filing deadline and frequency for a regulatory return. Accepts canonical codes (NFIU_CTR, NFIU_STR, CBN_MPR, CBN_FX, NDIC_PREM, NDIC_SO, SCUML_ANN, FIRS_VAT, FIRS_PAYE, FIRS_WHT, FIRS_CIT) or friendly names (CTR, STR, 'Currency Transaction Report').",
       inputSchema: z.object({ return_type: z.string() }),
       execute: (args) => wrap("get_filing_deadline", args, async () => {
-        const { data } = await admin.from("filing_schedules").select("*").eq("return_type", args.return_type).maybeSingle();
-        if (!data) return { found: false };
-        return { found: true, ...data };
+        const r = await resolveSchedule(admin, args.return_type);
+        if (r.match) return { found: true, ...r.match };
+        if (r.candidates.length) return { found: false, candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title, regulator: c.regulator })) };
+        return { found: false };
       }),
     }),
 
     check_return_readiness: tool({
-      description: "Check whether a regulatory return can be filed for a given period — lists missing data fields.",
+      description: "Check whether a regulatory return can be filed for a given period — lists missing data fields. Accepts canonical codes or friendly names like 'CTR'.",
       inputSchema: z.object({ return_type: z.string(), period: z.string().optional() }),
       execute: (args) => wrap("check_return_readiness", args, async () => {
-        const { data: schedule } = await admin.from("filing_schedules").select("*").eq("return_type", args.return_type).maybeSingle();
-        if (!schedule) return { ready: false, missing: ["unknown return type"] };
+        const r = await resolveSchedule(admin, args.return_type);
+        if (!r.match) {
+          return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
+        }
+        const schedule = r.match;
         const { data: txs } = await userClient.from("unified_transactions").select("id").limit(1);
         const missing: string[] = [];
         if (!txs || txs.length === 0) missing.push("No transactions for period");
