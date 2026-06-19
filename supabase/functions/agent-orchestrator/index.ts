@@ -405,7 +405,7 @@ You have tools to inspect transactions, screen entities, manage cases, draft nar
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return err(405, "Method not allowed");
-  if (!LOVABLE_API_KEY) return err(500, "AI service not configured");
+  if (!OPENROUTER_API_KEY) return err(500, "AI service not configured (missing OPENROUTER_API_KEY)");
 
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) return err(401, "Unauthorized");
@@ -450,13 +450,14 @@ Deno.serve(async (req) => {
     });
   };
 
-  const provider = makeProvider(LOVABLE_API_KEY);
+  const provider = makeOpenRouterProvider(OPENROUTER_API_KEY);
   const tools = buildTools({ userId, userClient, admin, logTool });
 
-  const result = streamText({
-    model: provider("google/gemini-3-flash-preview"),
+  // Try primary model, fall back to llama 3.3 70b if it errors (free tier rate limits / 503)
+  const runWith = (modelName: string) => streamText({
+    model: provider(modelName),
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(body.messages),
+    messages: convertToModelMessages(body.messages!),
     tools,
     stopWhen: stepCountIs(50),
     temperature: 0.2,
@@ -469,7 +470,18 @@ Deno.serve(async (req) => {
         await admin.from("agent_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
       }
     },
+    onError: ({ error }) => {
+      console.error(`model ${modelName} error:`, error);
+    },
   });
+
+  let result;
+  try {
+    result = runWith(PRIMARY_MODEL);
+  } catch (e) {
+    console.warn("Primary model threw synchronously, falling back:", e);
+    result = runWith(FALLBACK_MODEL);
+  }
 
   return result.toUIMessageStreamResponse({
     headers: { ...corsHeaders, "X-Conversation-Id": conversationId ?? "" },
