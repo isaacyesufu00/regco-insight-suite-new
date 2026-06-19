@@ -324,7 +324,13 @@ export default function AgentPage() {
         const agentPayload = payload as { content?: string; error?: string } | null;
 
         if (invokeError) {
-          throw new Error(agentPayload?.error || invokeError.message || 'AI request failed');
+          let backendError = agentPayload?.error;
+          const response = 'context' in invokeError ? invokeError.context as Response | undefined : undefined;
+          if (!backendError && response) {
+            const errorPayload = await response.clone().json().catch(() => null) as { error?: string } | null;
+            backendError = errorPayload?.error;
+          }
+          throw new Error(backendError || invokeError.message || 'AI request failed');
         }
 
         if (!agentPayload || typeof agentPayload.content !== 'string' || !agentPayload.content.trim()) {
