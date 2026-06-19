@@ -61,6 +61,32 @@ function makeOpenRouterProvider(key: string) {
   });
 }
 
+// ------------ filing schedule resolver ------------
+async function resolveSchedule(admin: ReturnType<typeof createClient>, input: string): Promise<{ match: any | null; candidates: any[] }> {
+  const raw = (input ?? "").trim();
+  if (!raw) return { match: null, candidates: [] };
+  // 1. Exact code match (case-insensitive)
+  const { data: exact } = await admin.from("filing_schedules").select("*").ilike("return_type", raw).maybeSingle();
+  if (exact) return { match: exact, candidates: [exact] };
+  // 2. Fuzzy: ilike on code or title
+  const like = `%${raw.replace(/[%_]/g, "")}%`;
+  const { data: fuzzy } = await admin.from("filing_schedules").select("*").or(`return_type.ilike.${like},title.ilike.${like}`);
+  const list = fuzzy ?? [];
+  if (list.length === 1) return { match: list[0], candidates: list };
+  // 3. Friendly-name fallback (CTR/STR/MPR/FX/PREM/SO/SCUML/VAT/PAYE/WHT/CIT)
+  const upper = raw.toUpperCase().replace(/[^A-Z]/g, "");
+  if (upper) {
+    const all = await admin.from("filing_schedules").select("*");
+    const matches = (all.data ?? []).filter((s: any) => {
+      const code = String(s.return_type).toUpperCase();
+      return code === upper || code.endsWith("_" + upper) || code.startsWith(upper + "_");
+    });
+    if (matches.length === 1) return { match: matches[0], candidates: matches };
+    if (matches.length > 1) return { match: null, candidates: matches };
+  }
+  return { match: null, candidates: list };
+}
+
 // ------------ tool factory ------------
 function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createClient>; admin: ReturnType<typeof createClient>; logTool: (n: string, args: unknown, summary: string, status?: string, err?: string) => Promise<void>; }) {
   const { userClient, admin, userId, logTool } = ctx;
