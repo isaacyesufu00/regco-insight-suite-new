@@ -46,7 +46,10 @@ export default function AgentRail() {
 
   const transport = useMemo(() => new DefaultChatTransport({
     api: FUNCTION_URL,
-    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      ...(SUPABASE_PUBLISHABLE_KEY ? { apikey: SUPABASE_PUBLISHABLE_KEY } : {}),
+    },
   }), [accessToken]);
 
   const { messages, sendMessage, status, error } = useChat({
