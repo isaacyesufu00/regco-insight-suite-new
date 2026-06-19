@@ -87,6 +87,82 @@ async function resolveSchedule(admin: ReturnType<typeof createClient>, input: st
   return { match: null, candidates: list };
 }
 
+
+// ------------ CTR readiness ------------
+const CTR_THRESHOLD = 5_000_000; // NGN, individual baseline; corporate 10M handled below
+
+function resolveCtrPeriod(period: string | undefined): { label: string; start: string; end: string } {
+  const now = new Date();
+  const p = (period ?? "today").trim().toLowerCase();
+  const startOfDay = (d: Date) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  let start: Date, end: Date, label: string;
+  if (p === "today" || p === "") { start = startOfDay(now); end = new Date(start.getTime() + 86_400_000); label = start.toISOString().slice(0, 10); }
+  else if (p === "yesterday") { end = startOfDay(now); start = new Date(end.getTime() - 86_400_000); label = start.toISOString().slice(0, 10); }
+  else if (/^\d{4}-\d{2}-\d{2}$/.test(p)) { start = new Date(p + "T00:00:00Z"); end = new Date(start.getTime() + 86_400_000); label = p; }
+  else if (/^\d{4}-\d{2}$/.test(p)) {
+    const [y, m] = p.split("-").map(Number);
+    start = new Date(Date.UTC(y, m - 1, 1));
+    end = new Date(Date.UTC(y, m, 1));
+    label = p;
+  } else { start = startOfDay(now); end = new Date(start.getTime() + 86_400_000); label = start.toISOString().slice(0, 10); }
+  return { label, start: start.toISOString(), end: end.toISOString() };
+}
+
+async function checkCtrReadiness(userClient: ReturnType<typeof createClient>, userId: string, period: string | undefined, schedule: any) {
+  const { label, start, end } = resolveCtrPeriod(period);
+  const { data: txs, error } = await userClient
+    .from("unified_transactions")
+    .select("id,customer_id,customer_name,account_number,transaction_date,amount,currency,transaction_type,channel,branch_code,counterparty,narration,description")
+    .gte("transaction_date", start).lt("transaction_date", end)
+    .or("channel.ilike.cash%,transaction_type.ilike.%cash%");
+  if (error) return { ready: false, return_type: "NFIU_CTR", period: label, missing: [`query failed: ${error.message}`], schedule };
+  const rows = txs ?? [];
+  if (rows.length === 0) {
+    return { ready: false, return_type: "NFIU_CTR", period: label, total_count: 0, reportable_count: 0, missing: [`No cash transactions found for ${label}`], missing_fields: [], schedule };
+  }
+  const reportable = rows.filter((t: any) => Number(t.amount ?? 0) >= CTR_THRESHOLD);
+  const gaps: Record<string, string[]> = {};
+  const add = (field: string, id: string) => { (gaps[field] ??= []).push(id); };
+  for (const t of reportable) {
+    if (!t.customer_id) add("customer_id", t.id);
+    if (!t.customer_name) add("customer_name", t.id);
+    if (!t.account_number) add("account_number", t.id);
+    if (!t.transaction_date) add("transaction_date", t.id);
+    if (t.amount == null) add("amount", t.id);
+    if (!t.currency) add("currency", t.id);
+    if (!t.transaction_type) add("transaction_type", t.id);
+    if (!t.branch_code) add("branch_code", t.id);
+    if (!t.counterparty) add("counterparty", t.id);
+    if (!t.narration && !t.description) add("narration", t.id);
+  }
+  // KYC: customers must have BVN + DOB
+  const custIds = [...new Set(reportable.map((t: any) => t.customer_id).filter(Boolean))];
+  if (custIds.length) {
+    const { data: customers } = await userClient.from("customers").select("id,bvn,date_of_birth").in("id", custIds);
+    const byId = new Map((customers ?? []).map((c: any) => [c.id, c]));
+    for (const t of reportable) {
+      if (!t.customer_id) continue;
+      const c = byId.get(t.customer_id);
+      if (!c || !c.bvn) add("customer.bvn", t.id);
+      if (!c || !c.date_of_birth) add("customer.date_of_birth", t.id);
+    }
+  }
+  const missing_fields = Object.entries(gaps).map(([field, ids]) => ({ field, count: ids.length, sample_tx_ids: ids.slice(0, 5) }));
+  const missing = missing_fields.map(({ field, count }) => `${count} reportable transaction${count === 1 ? "" : "s"} missing ${field}`);
+  if (reportable.length === 0) missing.push(`No transactions at/above NGN ${CTR_THRESHOLD.toLocaleString()} threshold for ${label}`);
+  return {
+    ready: missing.length === 0,
+    return_type: "NFIU_CTR",
+    period: label,
+    threshold_ngn: CTR_THRESHOLD,
+    total_count: rows.length,
+    reportable_count: reportable.length,
+    missing,
+    missing_fields,
+    schedule,
+  };
+}
+
 // ------------ tool factory ------------
 function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createClient>; admin: ReturnType<typeof createClient>; logTool: (n: string, args: unknown, summary: string, status?: string, err?: string) => Promise<void>; }) {
   const { userClient, admin, userId, logTool } = ctx;
@@ -385,6 +461,9 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
           return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
         }
         const schedule = r.match;
+        if (schedule.return_type === "NFIU_CTR") {
+          return await checkCtrReadiness(userClient, userId, args.period, schedule);
+        }
         const { data: txs } = await userClient.from("unified_transactions").select("id").limit(1);
         const missing: string[] = [];
         if (!txs || txs.length === 0) missing.push("No transactions for period");
