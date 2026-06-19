@@ -125,7 +125,8 @@ export default function AgentRail() {
     if (!last || last.role !== "assistant") return;
     for (const part of (last.parts ?? [])) {
       const p = part as { type?: string; toolName?: string; output?: { ui_action?: string; path?: string }; state?: string };
-      if (p.type?.startsWith("tool-") && p.toolName === "navigate_dashboard" && p.state === "output-available" && p.output?.ui_action === "navigate" && p.output.path) {
+      const toolName = p.toolName ?? (p.type?.startsWith("tool-") ? p.type.slice(5) : undefined);
+      if (toolName === "navigate_dashboard" && p.state === "output-available" && p.output?.ui_action === "navigate" && p.output.path) {
         navigate(p.output.path);
       }
     }
