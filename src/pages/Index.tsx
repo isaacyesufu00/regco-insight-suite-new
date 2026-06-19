@@ -85,20 +85,25 @@ export default function Index() {
             Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.
             Built for CBN-, NDIC-, NFIU-, SCUML-, and FIRS-licensed institutions.
           </p>
-          <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Link
-              to="/book-demo"
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-ink text-white text-[14px] font-medium hover:bg-[#262626] transition-colors"
+          <form
+            onSubmit={handleHeroSubmit}
+            className="mt-10 flex items-center gap-1 rounded-full border border-[var(--line)] bg-white pl-5 pr-1 py-1 max-w-[440px] focus-within:border-ink/40 transition-colors"
+          >
+            <input
+              type="email"
+              required
+              value={heroEmail}
+              onChange={(e) => setHeroEmail(e.target.value)}
+              placeholder="Work email"
+              className="flex-1 h-10 bg-transparent outline-none text-[14px] text-ink placeholder:text-ink-3"
+            />
+            <button
+              type="submit"
+              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-full bg-ink text-white text-[13.5px] font-medium hover:bg-[#262626] transition-colors whitespace-nowrap"
             >
-              Book a demo <ArrowUpRight size={15} />
-            </Link>
-            <Link
-              to="/product"
-              className="h-10 px-5 inline-flex items-center gap-2 rounded-full border border-[var(--line)] text-ink text-[14px] font-medium hover:bg-[#F5F5F5] transition-colors"
-            >
-              See the product <ArrowRight size={15} />
-            </Link>
-          </div>
+              Book a demo <ArrowUpRight size={14} />
+            </button>
+          </form>
         </div>
       </section>
 
