@@ -385,6 +385,9 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
           return { ready: false, missing: ["unknown return type"], candidates: r.candidates.map((c: any) => ({ return_type: c.return_type, title: c.title })) };
         }
         const schedule = r.match;
+        if (schedule.return_type === "NFIU_CTR") {
+          return await checkCtrReadiness(userClient, userId, args.period, schedule);
+        }
         const { data: txs } = await userClient.from("unified_transactions").select("id").limit(1);
         const missing: string[] = [];
         if (!txs || txs.length === 0) missing.push("No transactions for period");
