@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { AgentSidebar } from '@/components/agent/AgentSidebar';
 import { AgentCenter } from '@/components/agent/AgentCenter';
 import { AgentRightPanel } from '@/components/agent/AgentRightPanel';
@@ -11,8 +12,7 @@ import type { AgentMessage, AgentConversation, RightPanelItem, MissingInputDef }
 
 type RightTab = 'sources' | 'outputs' | 'reports' | 'uploads';
 
-const AGENT_AI_URL = 'https://api.anthropic.com/v1/messages';
-const AGENT_AI_MODEL = 'claude-sonnet-4-6';
+const AGENT_AI_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
 
 const SYSTEM_PROMPT = `You are RegCo Agent — a compliance command center for Nigerian licensed financial institutions regulated by the CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM.
 
@@ -39,39 +39,6 @@ CRITICAL BEHAVIORAL RULES:
 9. Always vary your responses — do not give the same opening sentence twice in a conversation.`;
 
 type AiMessage = { role: 'user' | 'assistant'; content: string };
-
-function extractAssistantText(payload: unknown): string {
-  if (!payload || typeof payload !== 'object') return '';
-
-  const data = payload as {
-    content?: Array<{ type?: string; text?: string } | string>;
-    choices?: Array<{ message?: { content?: string }; delta?: { content?: string } }>;
-    message?: { content?: string };
-    output_text?: string;
-  };
-
-  if (Array.isArray(data.content)) {
-    return data.content
-      .map((part) => (typeof part === 'string' ? part : part.type === 'text' ? part.text || '' : ''))
-      .join('')
-      .trim();
-  }
-
-  const choiceText = data.choices?.[0]?.message?.content || data.choices?.[0]?.delta?.content;
-  return (choiceText || data.message?.content || data.output_text || '').trim();
-}
-
-async function readAiError(response: Response): Promise<string> {
-  const text = await response.text().catch(() => '');
-  if (!text) return `HTTP ${response.status}`;
-  try {
-    const parsed = JSON.parse(text) as { error?: { message?: string } | string; message?: string };
-    if (typeof parsed.error === 'string') return parsed.error;
-    return parsed.error?.message || parsed.message || text.slice(0, 220);
-  } catch {
-    return text.slice(0, 220);
-  }
-}
 
 function getTimeLabel(dateString: string): string {
   const date = new Date(dateString);
