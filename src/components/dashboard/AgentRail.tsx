@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUp, LogOut, Calendar, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Plus, ArrowUp, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -12,7 +12,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 const FUNCTION_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/agent-orchestrator` : "";
 
-// Friendly tool labels for the activity stream
 const TOOL_LABEL: Record<string, string> = {
   list_transactions: "Pulling transactions",
   get_account_velocity: "Computing velocity",
@@ -35,13 +34,77 @@ const TOOL_LABEL: Record<string, string> = {
 
 const MUTATING_TOOLS = new Set(["request_account_freeze", "request_generate_return", "open_case"]);
 
+const ACCEPT = ".pdf,.xlsx,.xls,.csv,.docx,.txt,.md,.json";
+const MAX_FILES = 5;
+const MAX_BYTES = 20 * 1024 * 1024;
+const MAX_CHARS_PER_FILE = 40_000;
+
+type Attachment = {
+  id: string;
+  name: string;
+  size: number;
+  text: string;
+  parsing: boolean;
+  error?: string;
+};
+
+function fmtSize(b: number) {
+  if (b < 1024) return `${b} B`;
+  if (b < 1024 * 1024) return `${(b / 1024).toFixed(1)} KB`;
+  return `${(b / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function truncate(s: string) {
+  if (s.length <= MAX_CHARS_PER_FILE) return s;
+  return s.slice(0, MAX_CHARS_PER_FILE) + "\n…[truncated]";
+}
+
+async function parseFile(file: File): Promise<string> {
+  const name = file.name.toLowerCase();
+  if (name.endsWith(".pdf")) {
+    const pdfjs: any = await import("pdfjs-dist");
+    const workerSrc = (await import("pdfjs-dist/build/pdf.worker.min.mjs?url")).default;
+    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+    const buf = await file.arrayBuffer();
+    const doc = await pdfjs.getDocument({ data: buf }).promise;
+    let out = "";
+    for (let i = 1; i <= doc.numPages; i++) {
+      const page = await doc.getPage(i);
+      const tc = await page.getTextContent();
+      out += tc.items.map((it: any) => it.str).join(" ") + "\n\n";
+      if (out.length > MAX_CHARS_PER_FILE) break;
+    }
+    return out.trim();
+  }
+  if (name.endsWith(".xlsx") || name.endsWith(".xls") || name.endsWith(".csv")) {
+    const XLSX: any = await import("xlsx");
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    const parts: string[] = [];
+    for (const sheetName of wb.SheetNames) {
+      const csv = XLSX.utils.sheet_to_csv(wb.Sheets[sheetName]);
+      parts.push(`=== Sheet: ${sheetName} ===\n${csv}`);
+    }
+    return parts.join("\n\n");
+  }
+  if (name.endsWith(".docx")) {
+    const mammoth: any = await import("mammoth");
+    const buf = await file.arrayBuffer();
+    const { value } = await mammoth.extractRawText({ arrayBuffer: buf });
+    return value;
+  }
+  return await file.text();
+}
+
 export default function AgentRail() {
   const { session, signOut } = useAuth();
   const { userInitial, userName } = useProfile();
   const navigate = useNavigate();
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const accessToken = session?.access_token;
 
   const transport = useMemo(() => new DefaultChatTransport({
@@ -57,7 +120,6 @@ export default function AgentRail() {
     onError: (e) => console.error("agent error", e),
   });
 
-  // Auto-navigate when the agent calls navigate_dashboard
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last || last.role !== "assistant") return;
@@ -69,59 +131,115 @@ export default function AgentRail() {
     }
   }, [messages, navigate]);
 
-  // Auto-scroll
   useEffect(() => {
     if (streamRef.current) streamRef.current.scrollTop = streamRef.current.scrollHeight;
   }, [messages, status]);
 
-  // Auto-grow textarea
   useEffect(() => {
     const ta = taRef.current;
     if (ta) { ta.style.height = "auto"; ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`; }
   }, [input]);
 
-  const send = useCallback(() => {
-    const text = input.trim();
-    if (!text || status === "submitted" || status === "streaming") return;
-    sendMessage({ text });
-    setInput("");
-    requestAnimationFrame(() => taRef.current?.focus());
-  }, [input, sendMessage, status]);
+  // Auto-dismiss error attachments
+  useEffect(() => {
+    const errored = attachments.filter(a => a.error);
+    if (!errored.length) return;
+    const t = setTimeout(() => {
+      setAttachments(prev => prev.filter(a => !a.error));
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [attachments]);
 
-  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
-  };
+  const addFiles = useCallback(async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    const incoming = Array.from(files);
+    const slots = MAX_FILES - attachments.filter(a => !a.error).length;
+    const accepted: File[] = [];
+    const errors: Attachment[] = [];
+
+    for (const f of incoming) {
+      if (accepted.length >= slots) {
+        errors.push({ id: crypto.randomUUID(), name: f.name, size: f.size, text: "", parsing: false, error: `Max ${MAX_FILES} files` });
+        continue;
+      }
+      if (f.size > MAX_BYTES) {
+        errors.push({ id: crypto.randomUUID(), name: f.name, size: f.size, text: "", parsing: false, error: "Over 20MB" });
+        continue;
+      }
+      const lower = f.name.toLowerCase();
+      const ok = ACCEPT.split(",").some(ext => lower.endsWith(ext.trim()));
+      if (!ok) {
+        errors.push({ id: crypto.randomUUID(), name: f.name, size: f.size, text: "", parsing: false, error: "Unsupported type" });
+        continue;
+      }
+      accepted.push(f);
+    }
+
+    const pending: Attachment[] = accepted.map(f => ({
+      id: crypto.randomUUID(), name: f.name, size: f.size, text: "", parsing: true,
+    }));
+    setAttachments(prev => [...prev, ...pending, ...errors]);
+
+    for (let i = 0; i < accepted.length; i++) {
+      const file = accepted[i];
+      const id = pending[i].id;
+      try {
+        const text = truncate(await parseFile(file));
+        setAttachments(prev => prev.map(a => a.id === id ? { ...a, text, parsing: false } : a));
+      } catch (e: any) {
+        setAttachments(prev => prev.map(a => a.id === id ? { ...a, parsing: false, error: e?.message || "Parse failed" } : a));
+      }
+    }
+  }, [attachments]);
+
+  const removeAttachment = (id: string) => setAttachments(prev => prev.filter(a => a.id !== id));
+
+  const parsingAny = attachments.some(a => a.parsing);
+  const validAtt = attachments.filter(a => !a.error && !a.parsing);
 
   const handleSignOut = async () => { await signOut(); navigate("/sign-in"); };
 
   const busy = status === "submitted" || status === "streaming";
+
+  const send = useCallback(() => {
+    const text = input.trim();
+    if ((!text && !validAtt.length) || busy || parsingAny) return;
+    let payload = text;
+    if (validAtt.length) {
+      const blocks = validAtt.map(a => `--- ${a.name} ---\n${a.text}`).join("\n\n");
+      payload = `[Attached files]\n\n${blocks}\n\n---\n${text}`;
+    }
+    sendMessage({ text: payload });
+    setInput("");
+    setAttachments([]);
+    requestAnimationFrame(() => taRef.current?.focus());
+  }, [input, sendMessage, busy, parsingAny, validAtt]);
+
+  const onKey = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  };
 
   return (
     <aside
       className="flex flex-col flex-shrink-0 h-screen sticky top-0"
       style={{ width: 370, background: "var(--rail-bg)", borderRight: "1px solid var(--rail-border)" }}
     >
-      {/* Header */}
       <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--rail-border)]">
         <span className="text-[15px] font-semibold text-[var(--navy)] tracking-tight">RegCo</span>
         <div className="flex items-center gap-1 text-[var(--ink-3)]">
-          <button onClick={() => navigate("/dashboard/calendar")} title="Calendar" className="p-1.5 rounded hover:bg-black/[0.04]"><Calendar size={14} /></button>
           <button onClick={() => navigate("/dashboard/settings")} title="Settings" className="p-1.5 rounded hover:bg-black/[0.04]"><SettingsIcon size={14} /></button>
         </div>
       </div>
 
-      {/* Conversation stream */}
       <div ref={streamRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {messages.length === 0 && (
           <div className="text-[12.5px] text-[var(--ink-3)] leading-[1.55] font-mono">
             <p>Idle.</p>
-            <p className="mt-3">Ask RegCo to screen a customer, explain an alert, draft an investigation summary, or pull velocity for an account. Say things like "show me screening" to switch dashboards.</p>
+            <p className="mt-3">Ask RegCo to screen a customer, explain an alert, draft an investigation summary, or pull velocity for an account. Attach a PDF, spreadsheet, or document with the + button.</p>
           </div>
         )}
 
-        {messages.map((m) => (
-          <MessageBlock key={m.id} message={m} />
-        ))}
+        {messages.map((m) => (<MessageBlock key={m.id} message={m} />))}
 
         {busy && (
           <div className="font-mono text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5">
@@ -143,9 +261,31 @@ export default function AgentRail() {
         )}
       </div>
 
-      {/* Composer */}
       <div className="p-3">
         <div className="bg-white rounded-lg overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px var(--rail-border)" }}>
+          {attachments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 px-2 pt-2">
+              {attachments.map(a => (
+                <div
+                  key={a.id}
+                  className={`inline-flex items-center gap-1.5 text-[11px] rounded-full px-2 py-1 border ${
+                    a.error ? "text-red-600 border-red-200 bg-red-50"
+                    : a.parsing ? "text-[var(--ink-3)] border-[var(--rail-border)] bg-black/[0.03]"
+                    : "text-[var(--ink)] border-[var(--rail-border)] bg-black/[0.03]"
+                  }`}
+                  title={a.error || a.name}
+                >
+                  {a.parsing ? <Loader2 size={10} className="animate-spin" /> : <FileText size={10} />}
+                  <span className="max-w-[140px] truncate">{a.name}</span>
+                  {a.error
+                    ? <span className="opacity-70">· {a.error}</span>
+                    : !a.parsing && <span className="opacity-60">· {fmtSize(a.size)}</span>}
+                  <button onClick={() => removeAttachment(a.id)} className="ml-0.5 opacity-60 hover:opacity-100"><X size={10} /></button>
+                </div>
+              ))}
+            </div>
+          )}
+
           <textarea
             ref={taRef}
             rows={1}
@@ -157,8 +297,26 @@ export default function AgentRail() {
             className="w-full px-3 pt-2 pb-0.5 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.4] font-sans"
           />
           <div className="flex items-center justify-between px-2 pb-2">
-            <button title="Attach" className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04]"><Plus size={14} /></button>
-            <button onClick={send} disabled={!input.trim() || busy} className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--navy)] text-white disabled:opacity-30">
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              accept={ACCEPT}
+              className="hidden"
+              onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ""; }}
+            />
+            <button
+              title="Attach PDF, Excel, CSV, Word, or text file"
+              onClick={() => fileRef.current?.click()}
+              className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04]"
+            >
+              <Plus size={14} />
+            </button>
+            <button
+              onClick={send}
+              disabled={(!input.trim() && !validAtt.length) || busy || parsingAny}
+              className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--navy)] text-white disabled:opacity-30"
+            >
               <ArrowUp size={13} />
             </button>
           </div>
@@ -180,10 +338,19 @@ function MessageBlock({ message }: { message: any }) {
   const toolParts = (message.parts ?? []).filter((p: any) => typeof p.type === "string" && p.type.startsWith("tool-"));
 
   if (isUser) {
+    // Hide huge attached-files block from the visible bubble
+    const display = text.startsWith("[Attached files]")
+      ? (() => {
+          const idx = text.lastIndexOf("\n---\n");
+          const tail = idx >= 0 ? text.slice(idx + 5).trim() : "";
+          const fileCount = (text.match(/\n--- .+? ---\n/g) ?? []).length;
+          return `${tail || "(no message)"}\n\n📎 ${fileCount} attached file${fileCount === 1 ? "" : "s"}`;
+        })()
+      : text;
     return (
-      <div className="text-[13px] text-[var(--ink)] leading-[1.5]">
+      <div className="text-[13px] text-[var(--ink)] leading-[1.5] whitespace-pre-wrap">
         <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--ink-3)] block mb-1">You</span>
-        {text}
+        {display}
       </div>
     );
   }
