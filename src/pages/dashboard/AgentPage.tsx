@@ -11,6 +11,68 @@ import type { AgentMessage, AgentConversation, RightPanelItem, MissingInputDef }
 
 type RightTab = 'sources' | 'outputs' | 'reports' | 'uploads';
 
+const AGENT_AI_URL = 'https://api.anthropic.com/v1/messages';
+const AGENT_AI_MODEL = 'claude-sonnet-4-6';
+
+const SYSTEM_PROMPT = `You are RegCo Agent — a compliance command center for Nigerian licensed financial institutions regulated by the CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM.
+
+You serve compliance officers at Microfinance Banks (Unit, State, National), Primary Mortgage Banks, Finance Companies, and Commercial Banks.
+
+DOMAIN EXPERTISE:
+- All 17 mandatory regulatory returns: CBN (MFB Regulatory, Monetary Policy, Prudential, Forex, Board Governance, Consumer Protection), NFIU (AML/CFT Quarterly, Regulatory Return, International Transfers), SCUML Annual Compliance, NDIC (Premium Return at 0.40%, Single Obligor Quarterly), FIRS (VAT at 7.5%, PAYE with pension deductions of 8% employee + NHF 2.5% + NHIS 1.67%, WHT by payment type, CIT at 30% large / 20% medium / 0% small), PENCOM pension (18% total: 8% employee + 10% employer)
+- AML/CFT: CTR threshold NGN 5,000,000, structuring detection, 24-hour velocity threshold NGN 10,000,000, dormant account triggers, narration mismatch
+- CBN CAMEL loan classification: Pass (0% provision), Watch List (5%), Substandard (25%), Doubtful (50%), Loss (100%)
+- KYC/CDD: tiered KYC under CBN guidelines, BVN verification requirements
+- STR/CTR filing obligations and NFIU reporting formats
+- Sanctions: UN Security Council, OFAC SDN, EU Consolidated, UK HM Treasury, CBN Watchlist
+- PEP identification under Nigerian political context
+
+CRITICAL BEHAVIORAL RULES:
+1. ALWAYS respond to the most recent user message. NEVER repeat a previous answer. Check what was just asked and respond to THAT.
+2. Before every response, read the full conversation history above and confirm you are answering the LATEST message only.
+3. If you need a specific piece of information to complete a task, ask for exactly ONE thing. End your message with this exact tag on a new line: [NEED_INPUT:field_key:Human-readable label:Short explanation of why you need this]
+4. When you have enough information to generate a regulatory return, end with: [GENERATE_REPORT:report_type_key] where report_type_key is one of: mfb_regulatory, monetary_policy, prudential_return, forex_return, vat_return, paye, wht_return, cit_return, ndic_premium, ndic_single_obligor, scuml_annual, nfiu_amlcft, nfiu_regulatory, nfiu_international, pencom, board_governance, consumer_protection
+5. When retrieving data like AML flags, reports, or customer info, end with: [SHOW_DATA:data_type] where data_type is one of: aml_flags, reports, customers, audit_issues, screening_results
+6. Never pretend a task is done unless the tool confirms it.
+7. Keep explanations to 2-3 sentences. Be direct.
+8. Do not use emojis. Professional tone only.
+9. Always vary your responses — do not give the same opening sentence twice in a conversation.`;
+
+type AiMessage = { role: 'user' | 'assistant'; content: string };
+
+function extractAssistantText(payload: unknown): string {
+  if (!payload || typeof payload !== 'object') return '';
+
+  const data = payload as {
+    content?: Array<{ type?: string; text?: string } | string>;
+    choices?: Array<{ message?: { content?: string }; delta?: { content?: string } }>;
+    message?: { content?: string };
+    output_text?: string;
+  };
+
+  if (Array.isArray(data.content)) {
+    return data.content
+      .map((part) => (typeof part === 'string' ? part : part.type === 'text' ? part.text || '' : ''))
+      .join('')
+      .trim();
+  }
+
+  const choiceText = data.choices?.[0]?.message?.content || data.choices?.[0]?.delta?.content;
+  return (choiceText || data.message?.content || data.output_text || '').trim();
+}
+
+async function readAiError(response: Response): Promise<string> {
+  const text = await response.text().catch(() => '');
+  if (!text) return `HTTP ${response.status}`;
+  try {
+    const parsed = JSON.parse(text) as { error?: { message?: string } | string; message?: string };
+    if (typeof parsed.error === 'string') return parsed.error;
+    return parsed.error?.message || parsed.message || text.slice(0, 220);
+  } catch {
+    return text.slice(0, 220);
+  }
+}
+
 function getTimeLabel(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -35,6 +97,8 @@ export default function AgentPage() {
 
   const messagesRef = useRef<AgentMessage[]>([]);
   const activeConvIdRef = useRef<string | null>(null);
+  const isLoadingRef = useRef(false);
+  const skipNextMessageLoadRef = useRef<string | null>(null);
 
   const { profile, institutionName, userInitial, userName } = useProfile();
   const navigate = useNavigate();
@@ -80,6 +144,10 @@ export default function AgentPage() {
       setMessagesAndRef([]);
       return;
     }
+    if (skipNextMessageLoadRef.current === activeConvId) {
+      skipNextMessageLoadRef.current = null;
+      return;
+    }
     supabase
       .from('agent_messages' as never)
       .select('*')
@@ -106,6 +174,7 @@ export default function AgentPage() {
   }, [activeConvId, setMessagesAndRef]);
 
   const createNewConversation = useCallback(() => {
+    skipNextMessageLoadRef.current = null;
     setActiveConvId(null);
     setMessagesAndRef([]);
     setInputValue('');
@@ -113,6 +182,7 @@ export default function AgentPage() {
   }, [setMessagesAndRef]);
 
   const selectConversation = useCallback((conv: AgentConversation) => {
+    skipNextMessageLoadRef.current = null;
     setActiveConvId(conv.id);
     setRightPanelItems([]);
   }, []);
@@ -171,17 +241,21 @@ export default function AgentPage() {
 
   const handleSubmit = useCallback(
     async (userMessage: string, injectedContext?: string) => {
-      if (!userMessage.trim() || isLoading || !profile?.id) return;
+      if (!userMessage.trim() || isLoadingRef.current || !profile?.id) return;
+      isLoadingRef.current = true;
 
       const finalMessage = injectedContext
         ? `${userMessage}\n\nAdditional context provided: ${injectedContext}`
         : userMessage;
 
       const userMsgId = `user-${Date.now()}`;
-      setMessagesAndRef((prev) => [
-        ...prev,
+      const priorMessages = messagesRef.current.filter((m) => !m.streaming && m.content.trim());
+      const optimisticMessages: AgentMessage[] = [
+        ...priorMessages,
         { id: userMsgId, role: 'user', content: finalMessage, timestamp: new Date() },
-      ]);
+      ];
+      messagesRef.current = optimisticMessages;
+      setMessagesAndRef(optimisticMessages);
       setInputValue('');
       setIsLoading(true);
       setMissingInput(null);
@@ -200,6 +274,7 @@ export default function AgentPage() {
         const inserted = newConv as { id: string; title: string; updated_at: string } | null;
         if (inserted) {
           convId = inserted.id;
+          skipNextMessageLoadRef.current = convId;
           setActiveConvId(convId);
           activeConvIdRef.current = convId;
           const newRow: AgentConversation = {
@@ -225,15 +300,19 @@ export default function AgentPage() {
           .eq('id', convId);
       }
 
-      const currentMessages = messagesRef.current;
-      const apiMessages = currentMessages
-        .filter((m) => m.role === 'user' || (m.role === 'assistant' && m.content && m.content.length > 0))
-        .map((m) => ({ role: m.role, content: m.content }));
+      const apiMessages = optimisticMessages.reduce<AiMessage[]>((acc, message) => {
+        const content = message.content.trim();
+        if (!content) return acc;
 
-      const lastMsg = apiMessages[apiMessages.length - 1];
-      if (!lastMsg || lastMsg.content !== finalMessage) {
-        apiMessages.push({ role: 'user', content: finalMessage });
-      }
+        const role = message.role;
+        const previous = acc[acc.length - 1];
+        if (previous?.role === role) {
+          previous.content = `${previous.content}\n\n${content}`;
+        } else {
+          acc.push({ role, content });
+        }
+        return acc;
+      }, []);
 
       const thinkingId = `thinking-${Date.now()}`;
       setMessagesAndRef((prev) => [
@@ -251,30 +330,8 @@ export default function AgentPage() {
       let labelInterval: ReturnType<typeof setInterval> | null = null;
 
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) throw new Error('No auth session');
+        const systemContext = `${SYSTEM_PROMPT}\n\nCURRENT USER CONTEXT:\nInstitution: ${institutionName || 'Unknown'}\nLicense Type: ${profile.cbn_license_category || 'Unknown'}\nCompliance Officer: ${userName || 'Unknown'}`;
 
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify({ messages: apiMessages, conversationId: convId }),
-          },
-        );
-
-        if (!response.ok) {
-          const errorJson = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
-          throw new Error(errorJson.error || `Request failed with status ${response.status}`);
-        }
-        if (!response.body) throw new Error('No response body from agent');
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = '';
         const thinkingLabels = ['Reading your request…', 'Checking compliance context…', 'Preparing response…'];
         let labelIndex = 0;
         labelInterval = setInterval(() => {
@@ -286,31 +343,30 @@ export default function AgentPage() {
           }
         }, 600);
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split('\n');
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed || !trimmed.startsWith('data: ')) continue;
-            const data = trimmed.slice(6).trim();
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              const delta = parsed.choices?.[0]?.delta?.content;
-              if (delta) {
-                accumulated += delta;
-                setMessagesAndRef((prev) =>
-                  prev.map((m) =>
-                    m.id === thinkingId ? { ...m, content: accumulated, thinkingLabel: undefined } : m,
-                  ),
-                );
-              }
-            } catch {
-              // skip malformed SSE
-            }
-          }
+        const response = await fetch(AGENT_AI_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: AGENT_AI_MODEL,
+            system: systemContext,
+            messages: apiMessages,
+            max_tokens: 1200,
+            temperature: 0.25,
+          }),
+        });
+
+        if (!response.ok) {
+          const detail = await readAiError(response);
+          throw new Error(`AI request failed (${response.status}): ${detail}`);
+        }
+
+        const payload = await response.json().catch(() => null);
+        const accumulated = extractAssistantText(payload);
+
+        if (!accumulated) {
+          throw new Error('The AI gateway returned an unexpected response shape. Please retry.');
         }
 
         if (labelInterval) clearInterval(labelInterval);
@@ -398,10 +454,11 @@ export default function AgentPage() {
             }),
         );
       } finally {
+        isLoadingRef.current = false;
         setIsLoading(false);
       }
     },
-    [isLoading, profile?.id, setMessagesAndRef, fetchAndShowData],
+    [profile, institutionName, userName, setMessagesAndRef, fetchAndShowData],
   );
 
   const handleReportSubmit = async (data: Record<string, unknown>) => {
