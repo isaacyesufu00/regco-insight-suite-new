@@ -54,6 +54,7 @@ import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
 import AgentPage from "./pages/dashboard/AgentPage";
+import DashboardOverview from "./pages/DashboardOverview";
 import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
 import Homepage from "./pages/marketing/Homepage";
 import SecurityPage from "./pages/marketing/SecurityPage";
@@ -75,7 +76,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home-legacy" element={<Homepage />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Navigate to="/sign-in" replace />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
@@ -126,7 +127,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard/agent" replace />} />
+              <Route index element={<DashboardOverview />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="new-report" element={<NewReport />} />
               <Route path="data-sources" element={<Navigate to="/dashboard/transactions" replace />} />

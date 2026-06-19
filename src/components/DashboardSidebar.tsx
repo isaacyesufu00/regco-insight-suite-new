@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
-  Shield, BarChart2, FileCheck, ClipboardCheck, Newspaper,
-  Calendar, Settings, HelpCircle,
+  Shield, FileCheck, ClipboardCheck, Newspaper,
+  Calendar, Settings, HelpCircle, MessageSquare,
   PanelLeftClose, PanelLeft, LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,9 +11,25 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import type { FeatureSet } from "@/config/featureTiers";
 
-interface DashboardSidebarProps {
-  companyName?: string | null;
-}
+interface DashboardSidebarProps { companyName?: string | null; }
+
+type NavItem = { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean; group: string };
+
+const ITEMS: NavItem[] = [
+  { path: "/dashboard",                          label: "Overview",           icon: LayoutDashboard, feature: null,                       exact: true, group: "Workspace" },
+  { path: "/dashboard/agent",                    label: "Agent",              icon: MessageSquare,   feature: null,                                    group: "Workspace" },
+  { path: "/dashboard/reports",                  label: "Reports",            icon: FileText,        feature: null,                                    group: "Reporting" },
+  { path: "/dashboard/new-report",               label: "New report",         icon: FilePlus,        feature: "reportGeneration",                      group: "Reporting" },
+  { path: "/dashboard/calendar",                 label: "Calendar",           icon: Calendar,        feature: null,                                    group: "Reporting" },
+  { path: "/dashboard/customers",                label: "Customers",          icon: Users,           feature: "customerIntelligence",                  group: "Intelligence" },
+  { path: "/dashboard/transactions",             label: "Monitoring",         icon: Activity,        feature: "transactionMonitor",                    group: "Intelligence" },
+  { path: "/dashboard/screening",                label: "Screening",          icon: Shield,          feature: "sanctionsScreening",                    group: "Intelligence" },
+  { path: "/dashboard/board-pack",               label: "Board pack",         icon: FileCheck,       feature: "boardPack",                             group: "Governance" },
+  { path: "/dashboard/audit-tracker",            label: "Audit",              icon: ClipboardCheck,  feature: "auditTracker",                          group: "Governance" },
+  { path: "/dashboard/regulatory-intelligence",  label: "Intelligence",       icon: Newspaper,       feature: "regulatoryIntelligence",                group: "Governance" },
+  { path: "/dashboard/settings",                 label: "Settings",           icon: Settings,        feature: null,                                    group: "Account" },
+  { path: "/dashboard/tutorial",                 label: "Help",               icon: HelpCircle,      feature: null,                                    group: "Account" },
+];
 
 export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const location = useLocation();
@@ -23,214 +39,106 @@ export function DashboardSidebar({ companyName }: DashboardSidebarProps) {
   const { canAccess } = useFeatureAccess();
 
   const [collapsed, setCollapsed] = useState(() => {
-    try { return localStorage.getItem("regco_sidebar_collapsed") === "true"; }
-    catch { return false; }
+    try { return localStorage.getItem("regco_sidebar_collapsed") === "true"; } catch { return false; }
   });
+  useEffect(() => { try { localStorage.setItem("regco_sidebar_collapsed", String(collapsed)); } catch {} }, [collapsed]);
 
-  useEffect(() => {
-    try { localStorage.setItem("regco_sidebar_collapsed", String(collapsed)); }
-    catch {}
-  }, [collapsed]);
+  const items = ITEMS.filter((i) => !i.feature || canAccess(i.feature));
+  const groups = Array.from(new Set(items.map((i) => i.group)));
 
-  const toggle = () => setCollapsed((p) => !p);
-
-  const navItems: { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean }[] = ([
-    { path: "/dashboard",                       label: "Dashboard",       icon: LayoutDashboard,  feature: null,                     exact: true },
-    { path: "/dashboard/reports",               label: "My Reports",      icon: FileText,         feature: null },
-    { path: "/dashboard/new-report",            label: "Create Report",   icon: FilePlus,         feature: "reportGeneration" },
-    { path: "/dashboard/customers",             label: "Customer 360",    icon: Users,            feature: "customerIntelligence" },
-    { path: "/dashboard/transactions",          label: "Transactions",    icon: Activity,         feature: "transactionMonitor" },
-    { path: "/dashboard/screening",             label: "Risk Screening",  icon: Shield,           feature: "sanctionsScreening" },
-    { path: "/dashboard/board-pack",            label: "Board Pack",      icon: FileCheck,        feature: "boardPack" },
-    { path: "/dashboard/audit-tracker",         label: "Audit Tracker",   icon: ClipboardCheck,   feature: "auditTracker" },
-    { path: "/dashboard/regulatory-intelligence", label: "Regulatory Intel", icon: Newspaper,     feature: "regulatoryIntelligence" },
-    { path: "/dashboard/calendar",              label: "Calendar",        icon: Calendar,         feature: null },
-    { path: "/dashboard/settings",              label: "Settings",        icon: Settings,         feature: null },
-    { path: "/dashboard/tutorial",              label: "How to Use RegCo",icon: HelpCircle,       feature: null },
-  ] as { path: string; label: string; icon: any; feature: keyof FeatureSet | null; exact?: boolean }[]).filter((i) => !i.feature || canAccess(i.feature));
-
-  const isActive = (item: { path: string; exact?: boolean }) =>
+  const isActive = (item: NavItem) =>
     item.exact ? location.pathname === item.path : location.pathname.startsWith(item.path);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/login");
-  };
-
+  const handleSignOut = async () => { await signOut(); navigate("/sign-in"); };
   const shownCompany = companyName || institutionName;
 
   return (
     <aside
+      className="flex flex-col flex-shrink-0 sticky top-0"
       style={{
-        width: collapsed ? 56 : 220,
-        minHeight: "100vh",
-        background: "#FAFAF8",
-        borderRight: "1px solid rgba(0,0,0,0.07)",
-        display: "flex",
-        flexDirection: "column",
-        transition: "width 0.22s ease",
-        overflow: "hidden",
-        flexShrink: 0,
-        position: "sticky",
-        top: 0,
+        width: collapsed ? 64 : 248,
         height: "100vh",
-        fontFamily: "Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+        background: "var(--paper)",
+        borderRight: "1px solid rgba(13,13,13,0.08)",
+        transition: "width 0.22s ease",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Logo */}
-      <div
-        style={{
-          height: 52,
-          display: "flex",
-          alignItems: "center",
-          padding: collapsed ? "0 12px" : "0 16px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          flexShrink: 0,
-          overflow: "hidden",
-          transition: "padding 0.22s ease",
-        }}
-      >
+      {/* Wordmark */}
+      <div className="flex items-center px-5 h-16 border-b border-ink-10 overflow-hidden">
         {collapsed ? (
-          <div style={{
-            width: 28, height: 28, borderRadius: 7, background: "#0A0A0A",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            color: "#FFFFFF", fontSize: 13, fontWeight: 800,
-          }}>R</div>
+          <span className="font-serif text-2xl text-ink">R</span>
         ) : (
-          <span style={{ fontSize: 16, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.4px", whiteSpace: "nowrap" }}>
-            RegCo
+          <span className="font-serif text-2xl text-ink whitespace-nowrap">
+            Reg<span className="text-rust">Co</span>
           </span>
         )}
       </div>
 
-      {/* Institution pill */}
-      {!collapsed && (
-        <div style={{
-          margin: "12px 10px 4px", padding: "8px 10px",
-          background: "rgba(0,0,0,0.04)", borderRadius: 8, flexShrink: 0,
-        }}>
-          <p style={{ fontSize: 9, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>
-            INSTITUTION
-          </p>
-          <p style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", margin: "2px 0 0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {shownCompany || "RegCo"}
-          </p>
+      {/* Institution */}
+      {!collapsed && shownCompany && (
+        <div className="px-5 pt-5 pb-3 border-b border-ink-10">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted">Institution</p>
+          <p className="mt-1 text-[13.5px] text-ink truncate font-serif">{shownCompany}</p>
         </div>
-      )}
-
-      {!collapsed && (
-        <p style={{ fontSize: 9, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", padding: "12px 14px 4px", margin: 0 }}>
-          MENU
-        </p>
       )}
 
       {/* Nav */}
-      <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: collapsed ? "6px 6px" : "0 8px" }}>
-        {navItems.map((item) => {
-          const active = isActive(item);
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.exact}
-              title={collapsed ? item.label : undefined}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: collapsed ? "center" : "flex-start",
-                gap: collapsed ? 0 : 9,
-                padding: collapsed ? "9px 0" : "8px 10px",
-                borderRadius: 8,
-                marginBottom: 1,
-                background: active ? (collapsed ? "rgba(0,0,0,0.07)" : "#FFFFFF") : "transparent",
-                boxShadow: active && !collapsed ? "0 1px 3px rgba(0,0,0,0.07)" : "none",
-                textDecoration: "none",
-                transition: "background 0.15s, box-shadow 0.15s",
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
-              {active && !collapsed && (
-                <div style={{
-                  position: "absolute", left: 0, top: "20%", bottom: "20%",
-                  width: 2, borderRadius: 999, background: "#0A0A0A",
-                }} />
-              )}
-              <Icon size={15} strokeWidth={active ? 2.2 : 1.8} color={active ? "#0A0A0A" : "#6B6B6B"} style={{ flexShrink: 0 }} />
-              {!collapsed && (
-                <span style={{
-                  fontSize: 13, fontWeight: active ? 600 : 400,
-                  color: active ? "#0A0A0A" : "#525252",
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1,
-                }}>
-                  {item.label}
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto py-4 px-2">
+        {groups.map((group) => (
+          <div key={group} className="mb-5">
+            {!collapsed && (
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted px-3 mb-1.5">{group}</p>
+            )}
+            {items.filter((i) => i.group === group).map((item) => {
+              const active = isActive(item);
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  end={item.exact}
+                  title={collapsed ? item.label : undefined}
+                  className={`relative flex items-center ${collapsed ? "justify-center px-0" : "gap-3 px-3"} py-2 rounded-md text-[13.5px] transition-colors
+                    ${active ? "text-ink bg-[var(--paper-2)]" : "text-ink-muted hover:text-ink hover:bg-[var(--paper-2)]/60"}`}
+                >
+                  {active && !collapsed && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-full bg-[var(--rust)]" />
+                  )}
+                  <Icon size={15} strokeWidth={1.6} />
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </NavLink>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
-      {/* Bottom: user + collapse */}
-      <div style={{
-        borderTop: "1px solid rgba(0,0,0,0.06)",
-        padding: collapsed ? "8px 6px" : "8px",
-        flexShrink: 0,
-      }}>
-        {/* User */}
-        <div style={{
-          display: "flex", alignItems: "center",
-          gap: collapsed ? 0 : 9,
-          justifyContent: collapsed ? "center" : "flex-start",
-          padding: collapsed ? "6px 0" : "6px 8px",
-          borderRadius: 8, marginBottom: 4,
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%", background: "#0A0A0A",
-            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-            color: "#FFFFFF", fontSize: 12, fontWeight: 700,
-          }}>
+      {/* User + collapse */}
+      <div className="border-t border-ink-10 p-3">
+        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3 px-2"} py-2`}>
+          <div className="w-7 h-7 rounded-full bg-ink text-[var(--paper)] flex items-center justify-center text-[12px] font-medium flex-shrink-0">
             {userInitial}
           </div>
           {!collapsed && (
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {userName}
-              </p>
-              <p style={{ fontSize: 10, color: "#9B9B9B", margin: 0 }}>Compliance Officer</p>
-            </div>
-          )}
-          {!collapsed && (
-            <button
-              onClick={handleSignOut}
-              title="Sign out"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, display: "flex", alignItems: "center", color: "#9B9B9B" }}
-            >
-              <LogOut size={14} />
-            </button>
+            <>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12.5px] text-ink truncate">{userName}</p>
+                <p className="text-[10.5px] text-ink-muted">Compliance officer</p>
+              </div>
+              <button onClick={handleSignOut} title="Sign out" className="text-ink-muted hover:text-rust transition-colors p-1">
+                <LogOut size={14} />
+              </button>
+            </>
           )}
         </div>
 
-        {/* Collapse toggle */}
         <button
-          onClick={toggle}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          style={{
-            width: "100%", height: 32,
-            display: "flex", alignItems: "center",
-            justifyContent: collapsed ? "center" : "flex-start",
-            gap: 8,
-            padding: collapsed ? 0 : "0 10px",
-            borderRadius: 7, border: "none",
-            background: "transparent", cursor: "pointer",
-            transition: "background 0.15s", color: "#9B9B9B",
-            fontSize: 12, fontWeight: 500,
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+          onClick={() => setCollapsed((p) => !p)}
+          title={collapsed ? "Expand" : "Collapse"}
+          className={`mt-2 w-full flex items-center ${collapsed ? "justify-center" : "gap-2 px-2"} py-2 rounded-md text-[11.5px] text-ink-muted hover:text-ink hover:bg-[var(--paper-2)]/60 transition-colors`}
         >
-          {collapsed ? <PanelLeft size={14} /> : (<><PanelLeftClose size={14} /><span>Collapse</span></>)}
+          {collapsed ? <PanelLeft size={13} /> : (<><PanelLeftClose size={13} /><span>Collapse</span></>)}
         </button>
       </div>
     </aside>
