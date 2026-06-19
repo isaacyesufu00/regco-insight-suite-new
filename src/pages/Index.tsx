@@ -206,11 +206,7 @@ function ComplianceRecord() {
     <section style={{ background: COLORS.pageBg, paddingTop: 96, padding: '96px 40px 0', maxWidth: 1200, margin: '0 auto' }}>
       <HeadlinePair step="1. MONITOR" primary="A single compliance record for the entire institution." secondary="Same obligation. Same answer." />
       <div style={{ marginTop: 48, width: '100%', borderRadius: 12, border: `1px solid ${COLORS.border}`, overflow: 'hidden', background: '#FFFFFF' }}>
-        <div style={{ height: 520, background: '#F0EDE8', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <span style={{ ...sans, fontSize: 14, color: COLORS.muted, textAlign: 'center' }}>
-            [ INSERT REGCO DASHBOARD SCREENSHOT: split-pane agent + AML monitoring table ]
-          </span>
-        </div>
+        <ImageFill src={askDashboard.url} alt="Regco compliance dashboard with AI agent panel" height={520} />
       </div>
     </section>
   );
