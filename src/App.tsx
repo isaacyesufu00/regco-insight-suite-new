@@ -75,7 +75,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/home-legacy" element={<Homepage />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Navigate to="/sign-in" replace />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
