@@ -30,11 +30,24 @@ function err(status: number, message: string) {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
-// Primary + fallback free models on OpenRouter
-const PRIMARY_MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free";
-const FALLBACK_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+// Primary: Lovable AI Gateway (Gemini 3 Flash — strong tool-calling, no extra setup).
+// Fallback: OpenRouter free Llama 3.3 70b if Lovable key is missing.
+const LOVABLE_MODEL = "google/gemini-3-flash-preview";
+const OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+
+function makeLovableProvider(key: string) {
+  return createOpenAICompatible({
+    name: "lovable",
+    baseURL: "https://ai.gateway.lovable.dev/v1",
+    headers: {
+      "Lovable-API-Key": key,
+      "X-Lovable-AIG-SDK": "vercel-ai-sdk",
+    },
+  });
+}
 
 function makeOpenRouterProvider(key: string) {
   return createOpenAICompatible({
