@@ -14,6 +14,89 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_actions: {
+        Row: {
+          account_number: string
+          action: string
+          approved_at: string | null
+          approved_by: string | null
+          case_id: string | null
+          created_at: string
+          id: string
+          reason: string | null
+          requested_by: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_number: string
+          action: string
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_number?: string
+          action?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          case_id?: string | null
+          created_at?: string
+          id?: string
+          reason?: string | null
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_actions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      adverse_media_cache: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          query: string
+          query_hash: string
+          result: Json
+          years: number
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          query: string
+          query_hash: string
+          result: Json
+          years: number
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          query?: string
+          query_hash?: string
+          result?: Json
+          years?: number
+        }
+        Relationships: []
+      }
       agent_conversations: {
         Row: {
           created_at: string
@@ -54,6 +137,7 @@ export type Database = {
           conversation_id: string
           created_at: string
           id: string
+          parts: Json | null
           role: string
           user_id: string
         }
@@ -64,6 +148,7 @@ export type Database = {
           conversation_id: string
           created_at?: string
           id?: string
+          parts?: Json | null
           role: string
           user_id: string
         }
@@ -74,6 +159,7 @@ export type Database = {
           conversation_id?: string
           created_at?: string
           id?: string
+          parts?: Json | null
           role?: string
           user_id?: string
         }
@@ -93,6 +179,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      agent_tool_invocations: {
+        Row: {
+          args: Json | null
+          conversation_id: string | null
+          created_at: string
+          error: string | null
+          id: string
+          latency_ms: number | null
+          message_id: string | null
+          result_summary: string | null
+          status: string
+          tool_name: string
+          user_id: string
+        }
+        Insert: {
+          args?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_id?: string | null
+          result_summary?: string | null
+          status?: string
+          tool_name: string
+          user_id: string
+        }
+        Update: {
+          args?: Json | null
+          conversation_id?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_id?: string | null
+          result_summary?: string | null
+          status?: string
+          tool_name?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       audit_issues: {
         Row: {
@@ -159,6 +287,156 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      case_artifacts: {
+        Row: {
+          body: string | null
+          case_id: string
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json | null
+          storage_path: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          case_id: string
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json | null
+          storage_path?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          case_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json | null
+          storage_path?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_artifacts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_events: {
+        Row: {
+          actor_id: string | null
+          actor_kind: string
+          case_id: string
+          created_at: string
+          event_type: string
+          hash: string
+          id: string
+          payload: Json
+          prev_hash: string | null
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_kind?: string
+          case_id: string
+          created_at?: string
+          event_type: string
+          hash: string
+          id?: string
+          payload?: Json
+          prev_hash?: string | null
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_kind?: string
+          case_id?: string
+          created_at?: string
+          event_type?: string
+          hash?: string
+          id?: string
+          payload?: Json
+          prev_hash?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cases: {
+        Row: {
+          assignee_id: string | null
+          closed_at: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          opened_at: string
+          severity: string
+          status: string
+          summary: string | null
+          title: string
+          trigger_id: string | null
+          trigger_kind: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          opened_at?: string
+          severity?: string
+          status?: string
+          summary?: string | null
+          title: string
+          trigger_id?: string | null
+          trigger_kind?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assignee_id?: string | null
+          closed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          opened_at?: string
+          severity?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          trigger_id?: string | null
+          trigger_kind?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       compliance_messages: {
         Row: {
@@ -414,6 +692,7 @@ export type Database = {
         Row: {
           account_number: string | null
           address: string | null
+          agent_notes: Json | null
           bvn: string | null
           created_at: string
           customer_segment: string | null
@@ -428,6 +707,7 @@ export type Database = {
         Insert: {
           account_number?: string | null
           address?: string | null
+          agent_notes?: Json | null
           bvn?: string | null
           created_at?: string
           customer_segment?: string | null
@@ -442,6 +722,7 @@ export type Database = {
         Update: {
           account_number?: string | null
           address?: string | null
+          agent_notes?: Json | null
           bvn?: string | null
           created_at?: string
           customer_segment?: string | null
@@ -542,6 +823,39 @@ export type Database = {
           reporting_period?: string
           sent_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      filing_schedules: {
+        Row: {
+          created_at: string
+          due_rule: string
+          frequency: string
+          id: string
+          notes: string | null
+          regulator: string
+          return_type: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          due_rule: string
+          frequency: string
+          id?: string
+          notes?: string | null
+          regulator: string
+          return_type: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          due_rule?: string
+          frequency?: string
+          id?: string
+          notes?: string | null
+          regulator?: string
+          return_type?: string
+          title?: string
         }
         Relationships: []
       }
@@ -832,6 +1146,39 @@ export type Database = {
           tags?: string[] | null
           title?: string
           url?: string
+        }
+        Relationships: []
+      }
+      regulatory_rules: {
+        Row: {
+          citation: string | null
+          created_at: string
+          description: string
+          id: string
+          regulator: string
+          rule_code: string
+          threshold: Json | null
+          title: string
+        }
+        Insert: {
+          citation?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          regulator: string
+          rule_code: string
+          threshold?: Json | null
+          title: string
+        }
+        Update: {
+          citation?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          regulator?: string
+          rule_code?: string
+          threshold?: Json | null
+          title?: string
         }
         Relationships: []
       }
