@@ -282,8 +282,8 @@ function FeaturePair() {
   }, []);
 
   const cards = [
-    { ph: "[ INSERT SCREENSHOT: RegCo agent interface showing a compliance question with a tabulated answer — e.g. 'Which accounts are high risk this week?' with response table ]", title: 'Ask your compliance data', body: 'Ask follow-up questions about any alert, return, or screening result and get answers backed by governed compliance logic.' },
-    { ph: '[ INSERT SCREENSHOT: RegCo audit summary or case record export view — document-style output with timestamps and reviewer identities ]', title: 'Audit trail and case management', body: 'Every alert, review, decision, and filing is logged with timestamp, reviewer identity, and outcome — always ready for examination.' },
+    { img: askDashboard.url, alt: 'Ask the compliance data — agent answer with table', title: 'Ask your compliance data', body: 'Ask follow-up questions about any alert, return, or screening result and get answers backed by governed compliance logic.' },
+    { img: trustWorkbook.url, alt: 'Approved audit workbook with reviewer stamp', title: 'Audit trail and case management', body: 'Every alert, review, decision, and filing is logged with timestamp, reviewer identity, and outcome — always ready for examination.' },
   ];
 
   return (
@@ -291,7 +291,7 @@ function FeaturePair() {
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {cards.map((c, i) => (
           <div key={i} style={{ background: COLORS.cardBg, borderRadius: 12, overflow: 'hidden', border: `1px solid ${COLORS.cardBorder}` }}>
-            <Placeholder height={isMobile ? 220 : 340} text={c.ph} />
+            <ImageFill src={c.img} alt={c.alt} height={isMobile ? 220 : 340} />
             <div style={{ padding: '24px 24px 28px' }}>
               <div style={{ ...sans, fontSize: 20, fontWeight: 700, color: COLORS.text, marginBottom: 8 }}>{c.title}</div>
               <p style={{ ...sans, fontSize: 16, color: COLORS.body, lineHeight: 1.65, margin: 0 }}>{c.body}</p>
