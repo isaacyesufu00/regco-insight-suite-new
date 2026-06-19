@@ -12,8 +12,6 @@ import type { AgentMessage, AgentConversation, RightPanelItem, MissingInputDef }
 
 type RightTab = 'sources' | 'outputs' | 'reports' | 'uploads';
 
-const AGENT_AI_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`;
-
 const SYSTEM_PROMPT = `You are RegCo Agent — a compliance command center for Nigerian licensed financial institutions regulated by the CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM.
 
 You serve compliance officers at Microfinance Banks (Unit, State, National), Primary Mortgage Banks, Finance Companies, and Commercial Banks.
@@ -315,29 +313,25 @@ export default function AgentPage() {
           throw new Error('Your session has expired. Please sign in again.');
         }
 
-        const response = await fetch(AGENT_AI_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.access_token}`,
-          },
-          body: JSON.stringify({
+        const { data: payload, error: invokeError } = await supabase.functions.invoke('agent-chat', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: {
             system: systemContext,
             messages: apiMessages,
-          }),
+          },
         });
 
-        const payload = await response.json().catch(() => null) as { content?: string; error?: string } | null;
+        const agentPayload = payload as { content?: string; error?: string } | null;
 
-        if (!response.ok) {
-          throw new Error(payload?.error || `AI request failed (${response.status})`);
+        if (invokeError) {
+          throw new Error(agentPayload?.error || invokeError.message || 'AI request failed');
         }
 
-        if (!payload || typeof payload.content !== 'string' || !payload.content.trim()) {
-          throw new Error(payload?.error || 'AI gateway returned no content');
+        if (!agentPayload || typeof agentPayload.content !== 'string' || !agentPayload.content.trim()) {
+          throw new Error(agentPayload?.error || 'AI gateway returned no content');
         }
 
-        const accumulated = payload.content.trim();
+        const accumulated = agentPayload.content.trim();
 
         if (labelInterval) clearInterval(labelInterval);
 
