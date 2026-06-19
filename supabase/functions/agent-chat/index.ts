@@ -77,12 +77,13 @@ serve(async (req) => {
       max_tokens: 1200,
     };
 
+    console.log(`agent-chat calling Lovable AI Gateway url=${LOVABLE_GATEWAY_URL}`);
+
     const aiResponse = await fetch(LOVABLE_GATEWAY_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${lovableApiKey}`,
-        'X-Lovable-AIG-SDK': 'edge-function-direct',
+        'Lovable-API-Key': lovableApiKey,
       },
       body: JSON.stringify(payload),
     });
@@ -90,21 +91,26 @@ serve(async (req) => {
     if (!aiResponse.ok) {
       const errText = await aiResponse.text().catch(() => '');
       console.error(`agent-chat gateway error status=${aiResponse.status} body=${errText.slice(0, 500)}`);
+      const shortMessage = errText.replace(/\s+/g, ' ').trim().slice(0, 240) || aiResponse.statusText || 'Unknown AI backend failure';
       if (aiResponse.status === 429) {
         return jsonResponse({ error: 'AI rate limit reached. Please try again shortly.' }, 500);
       }
       if (aiResponse.status === 402) {
         return jsonResponse({ error: 'AI credits exhausted. Please top up your workspace.' }, 500);
       }
-      return jsonResponse({ error: `AI request failed (upstream ${aiResponse.status}).` }, 500);
+      return jsonResponse({ error: `AI backend error (${aiResponse.status}): ${shortMessage}` }, 500);
     }
 
     const data = await aiResponse.json().catch(() => null) as
-      | { choices?: Array<{ message?: { content?: string } }>; content?: string }
+      | { choices?: Array<{ message?: { content?: string } }>; content?: string | Array<{ type?: string; text?: string }> }
       | null;
 
+    const arrayContent = Array.isArray(data?.content)
+      ? data.content.map((part) => typeof part?.text === 'string' ? part.text : '').join('').trim()
+      : '';
     const content =
       data?.choices?.[0]?.message?.content?.trim() ||
+      arrayContent ||
       (typeof data?.content === 'string' ? data.content.trim() : '');
 
     if (!content) {
