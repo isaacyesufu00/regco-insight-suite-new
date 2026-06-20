@@ -1,169 +1,99 @@
-# Schema-driven CBN report template system
 
-Replace per-return hand-coded TS modules with one **template-driven** generator. A return is defined as a row in a new `report_templates` table whose `definition` JSONB describes data sources, required fields, and output layout. Adding a new CBN form becomes a SQL insert + admin UI edit — no code change, no redeploy.
+## 1. Switch AI Gateway: Lovable → OpenRouter
 
-## Why
+Replaces the "Payment Required" (402) issue, since OpenRouter is billed on your own OpenRouter account, not Lovable credits.
 
-The previous plan needed 11 TS modules × 4 formats. That doesn't scale to "any CBN form". A schema-driven engine lets compliance officers add or amend forms (the regulator changes them yearly) without an engineering cycle.
+**Secrets already present:** `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` ✅ — no new secrets needed.
 
-## Template shape
+**Changes**
+- Update every edge function that currently calls `ai.gateway.lovable.dev` (primarily `agent-orchestrator`, plus any helper that uses `LOVABLE_API_KEY` for chat) to call OpenRouter instead:
+  - Endpoint: `https://openrouter.ai/api/v1/chat/completions`
+  - Headers: `Authorization: Bearer ${OPENROUTER_API_KEY}`, `HTTP-Referer: <site url>`, `X-Title: RegCo`
+  - Model: read `Deno.env.get("OPENROUTER_MODEL")`, fallback to a sensible default (e.g. `google/gemini-2.5-flash`).
+- Keep request/response shape (OpenAI-compatible) so tool-calling, streaming, and message format don't need rewrites.
+- Map errors in the chat UI:
+  - 401 → "AI gateway not configured" (key issue).
+  - 402 / "insufficient credits" → "OpenRouter credits exhausted — top up at openrouter.ai/credits".
+  - 429 → "Rate limited, retry in a moment".
+- Leave `LOVABLE_API_KEY` in place but unused by chat (it's still needed for non-AI Lovable services if any).
+- Note: Lovable's image-generation / embedding helpers, if used anywhere, can stay on Lovable AI or also move to OpenRouter — confirm before touching those. Default: only migrate the chatbot.
 
-```jsonc
-// report_templates.definition (jsonb)
-{
-  "code": "CBN_MPR",
-  "title": "Monetary Policy Return",
-  "regulator": "CBN",
-  "frequency": "monthly",
-  "version": 1,
-  "period": { "kind": "month" },           // day | week | month | quarter | year | event
-  "parameters": [                          // user-supplied at request time
-    { "key": "car_pct",       "label": "Capital Adequacy Ratio (%)", "type": "number", "required": true },
-    { "key": "liquidity_pct", "label": "Liquidity Ratio (%)",        "type": "number", "required": true }
-  ],
-  "sources": [                              // declarative DB pulls; engine runs them, no SQL injection
-    {
-      "id": "tx",
-      "table": "unified_transactions",
-      "select": "id,amount,currency,transaction_type,channel,branch_code,customer_id,customer_name,account_number,transaction_date,narration,description",
-      "filters": [
-        { "col": "transaction_date", "op": "gte", "value": "${period.start}" },
-        { "col": "transaction_date", "op": "lt",  "value": "${period.end}"   }
-      ]
-    },
-    { "id": "customers", "table": "customers", "select": "id,bvn,date_of_birth,full_name", "join_on": { "source": "tx", "local": "id", "foreign": "customer_id" } }
-  ],
-  "readiness": [                            // missing-field rules, run against pulled data
-    { "rule": "field_present", "source": "tx",        "field": "branch_code",       "label": "branch_code" },
-    { "rule": "field_present", "source": "customers", "field": "bvn",               "label": "customer.bvn" },
-    { "rule": "min_rows",      "source": "tx",        "min": 1,                     "label": "transactions for period" }
-  ],
-  "layout": {                               // shared by xlsx/csv/pdf renderers
-    "cover": [
-      { "label": "Institution",   "value": "${institution.name}" },
-      { "label": "Period",        "value": "${period.label}" },
-      { "label": "CAR",           "value": "${params.car_pct}%" }
-    ],
-    "sections": [
-      {
-        "id": "transactions",
-        "title": "Cash Transactions",
-        "type": "table",
-        "source": "tx",
-        "columns": [
-          { "header": "Date",     "value": "${row.transaction_date|date}" },
-          { "header": "Branch",   "value": "${row.branch_code}" },
-          { "header": "Amount",   "value": "${row.amount|naira}" }
-        ]
-      }
-    ]
-  },
-  "xml": {                                  // optional regulator XML mapping (goAML/eFASS)
-    "root": "report",
-    "namespaces": { "xmlns": "http://goaml.unodc.org/" },
-    "elements": [
-      { "name": "report_code", "value": "CBN_MPR" },
-      { "name": "period",      "value": "${period.label}" },
-      { "name": "transactions",
-        "repeat_source": "tx",
-        "child": { "name": "transaction", "elements": [
-          { "name": "id",     "value": "${row.id}" },
-          { "name": "amount", "value": "${row.amount}" }
-        ]}
-      }
-    ]
-  },
-  "formats": ["xlsx", "csv", "pdf", "xml"]   // which renderers are enabled
-}
-```
+## 2. Admin: Report Template Builder (no SQL)
 
-A tiny expression language — `${path|filter}` — is enough. Filters: `date`, `datetime`, `naira`, `upper`, `lower`, `default:<x>`. No arbitrary JS; the engine walks the JSON.
+New admin section to author/edit `report_templates` end-to-end via UI.
 
-## Engine
+**Routes:** `/admin/templates` (list) and `/admin/templates/:id` (editor), linked from the admin sidebar.
 
-New edge function `generate-return` (single function, no per-return code):
+**List page** — table grouped by `code` (latest version first): title, regulator, frequency, status badge (draft/active/archived), version, updated. Actions: New, Edit, Duplicate as new version, Activate, Archive, Delete (drafts only).
+
+**Editor (tabbed form)**
 
 ```text
-template = report_templates.get(code)
-period   = resolvePeriod(template.period, requestedPeriod)
-data     = runSources(template.sources, period, ctx)      // typed Supabase calls, never raw SQL
-checks   = runReadiness(template.readiness, data)         // -> { ready, missing_fields[] }
-if (!checks.ready && !approveOverride) return checks
-out = {
-  xlsx: renderLayoutXlsx(template.layout, data, params, ctx),
-  csv:  renderLayoutCsv (template.layout, data, params, ctx),
-  pdf:  renderLayoutPdf (template.layout, data, params, ctx),
-  xml:  template.xml ? renderXml(template.xml, data, params, ctx) : undefined,
-}
-upload(out) -> reports row + signed URLs + case_events audit hash
+┌─ Header: code | version | title | regulator | frequency | status ─┐
+├─ Tab 1  Fields & Parameters   (definition.parameters[])           │
+├─ Tab 2  Data Sources/Mappings (definition.sources[])              │
+├─ Tab 3  Validators            (definition.readiness[])            │
+├─ Tab 4  Layout & Formats      (definition.layout, formats[])      │
+├─ Tab 5  Defaults & Period     (definition.period, defaults)       │
+└─ Tab 6  JSON Preview / Test readiness ────────────────────────────┘
 ```
 
-All four renderers iterate the **same layout/xml object**, so adding a return type means inserting a template row and the generator produces every format automatically.
+- **Fields/Parameters** — repeater rows: key, label, type (text/number/date/select/boolean), required, default, options, help.
+- **Mappings (sources)** — repeater rows: source key, table (dropdown of known tables), columns (multi-select), filters (column / op / value or `${param.x}`), order_by, limit.
+- **Validators (readiness)** — rules: type (min_rows / required_column / non_null / regex), source key, column, threshold/value, error message.
+- **Layout** — type (table/form/sectioned), column order, header labels.
+- **Formats** — checkbox group (xlsx / csv / xml / pdf).
+- **JSON Preview tab** — live read-only view; "Test readiness" button calls new edge function `template-test-readiness` to run rules against current data.
 
-## Filters and safety
+**Persistence**
+- Save Draft → upsert with `status='draft'`.
+- Activate → new edge function `template-activate` (service-role) flips target to `active` and demotes other versions of the same `code` to `archived`.
+- All writes guarded by admin-only RLS already in place.
 
-The `filters[]` array is a whitelist: `eq | neq | gt | gte | lt | lte | ilike | in`. The engine maps these to `PostgrestFilterBuilder` calls — no string concatenation, no `rpc('execute_sql')`. Columns and tables are validated against a per-template allowlist before any query runs.
+## 3. Reactive Dashboard with Real Data
 
-## Versioning
+Today `DashboardHome` reads from `compliance_scores`, `user_stats`, `report_statuses` seeded once by `handle_new_user`. Make it reflect live activity.
 
-`report_templates` rows are immutable per `(code, version)`. Edits create a new `version`; old generated reports keep a `template_version` pointer for audit reproducibility.
+- **Recompute on event**: triggers on `reports`, `report_requests`, `case_events` that update `compliance_scores` and `user_stats` for the owning user.
+- **Live status feed**: replace static `report_statuses` rows with a query over `reports` + `filing_schedules` (due / overdue / ready / submitted). Stop seeding fake rows in `handle_new_user`.
+- **Realtime UI**: subscribe via Supabase Realtime on `reports`, `compliance_scores`, `user_stats` inside `DashboardHome` (proper `useEffect` + `removeChannel`).
+- **Empty states**: when a user has no activity, show "No reports filed yet" instead of fake "24 filed / 98% on-time".
+- **Score formula** (in code): `100 − (overdue × 10) − (failed × 5)`, floored at 0; on-time rate = on-time submissions / total submissions.
 
-## Admin authoring UI
+## 4. Dedicated Pages per Product Dropdown Item
 
-`/dashboard/admin/templates` (admin-only, gated by `has_role('admin')`):
-- List of templates with `code`, `version`, regulator, status (`draft|active|archived`).
-- JSON editor (Monaco) with live schema validation against the template-schema Zod definition (so officers can't ship a broken template).
-- "Validate against sample data" button: runs the readiness + a renderer dry run and shows the resulting XLSX preview.
-- "Activate" promotes a draft to active; only one active version per code at a time.
+Current navbar dropdown links to `#anchors` on `/product`. Replace with four real routes that match the existing site theme (`SiteNavbar` + site tokens, ink/line palette, no purple gradients):
 
-Officers without admin role pick from active templates only.
+| Dropdown item | New route |
+|---|---|
+| Automated Returns | `/product/automated-returns` |
+| Live Client Screening | `/product/live-screening` |
+| Transaction Monitoring | `/product/transaction-monitoring` |
+| Audit Trail & Case Mgmt | `/product/audit-trail` |
 
-## Database changes (single migration)
+Each page reuses existing site primitives and contains:
+1. Hero — headline, sub, primary "Book a demo" + secondary "See pricing".
+2. The problem (regulator-specific pain, 1–2 sentences).
+3. Capabilities grid (4–6 cards, lucide icons, hairline borders).
+4. Workflow (3 steps, reused pattern).
+5. Benefits with metric chips (e.g. "−85% prep time").
+6. Compliance/regulator badges row.
+7. FAQ (3–4 Q&A).
+8. CTA footer band.
 
-- `report_templates`
-  - `id uuid pk`, `code text not null`, `version int not null default 1`, `regulator text`, `frequency text`,
-    `definition jsonb not null`, `status text not null default 'draft'` (`draft|active|archived`),
-    `created_by uuid`, `created_at`, `updated_at`,
-    `unique(code, version)`.
-- `reports`: add `template_id uuid references report_templates(id)`, `template_version int`.
-- Seed one template per row already in `filing_schedules` (11 starter templates, all `status='active'`, version 1). NFIU_CTR ships with the readiness rules from the existing check; the rest start minimal and are extended in the admin UI.
-- RLS:
-  - `report_templates`: `SELECT` to authenticated for `status='active'`; full CRUD only to `has_role(auth.uid(),'admin')`. `service_role` full.
+SEO per page: unique `<title>` <60 chars, meta description <160, single H1, JSON-LD `SoftwareApplication`. Update `SiteNavbar.products` to point to the new routes; keep `/product` as the overview that links to all four.
 
-## Files
+## Technical notes
 
-**New**
-- `supabase/functions/generate-return/index.ts`
-- `supabase/functions/generate-return/engine/{expr.ts,sources.ts,readiness.ts,layout.ts,xml.ts,xlsx.ts,csv.ts,pdf.ts,upload.ts}`
-- `supabase/functions/_shared/template-schema.ts` (Zod schema for `definition`, shared by engine + admin UI validation via codegen or duplicated)
-- `src/pages/admin/Templates.tsx`, `src/components/admin/TemplateEditor.tsx`
-- `src/hooks/useReportTemplates.ts`
+- **Edge function changes:** `agent-orchestrator` (and any AI helper) switched to OpenRouter; new `template-activate` and `template-test-readiness`.
+- **Migrations:** triggers + functions to recompute `compliance_scores` / `user_stats`; enable Realtime publication for `reports`, `compliance_scores`, `user_stats`; remove fake seeds from `handle_new_user`.
+- **New admin pages:** `AdminTemplates.tsx`, `AdminTemplateEditor.tsx` (subcomponents per tab).
+- **New marketing pages:** `ProductAutomatedReturns.tsx`, `ProductLiveScreening.tsx`, `ProductTransactionMonitoring.tsx`, `ProductAuditTrail.tsx`; routed in `App.tsx`.
+- **Chat error mapping** in chat client/`AgentRail`: 401 / 402 / 429 messages.
 
-**Edited**
-- `supabase/functions/agent-orchestrator/index.ts`:
-  - `list_return_types` tool now reads `report_templates` where `status='active'`.
-  - `check_return_readiness` calls the engine's `runReadiness` (no per-type code).
-  - `request_generate_return` records the chosen `template_id` + `formats[]` + `params` into `report_requests`.
-- `src/components/dashboard/AgentRail.tsx`: approval chip invokes `generate-return` with `request_id`, renders download URLs.
-- `src/pages/dashboard/MyReports.tsx`: "Generate return" button → wizard reads parameter schema from `report_templates.definition.parameters` and renders the form dynamically (no per-return UI code).
+## Out of scope (ask before doing)
 
-## Verification
-
-- Deno tests for the engine with two fixture templates: one minimal (CTR), one with XML mapping.
-- Snapshot tests for `renderXml` and `renderLayoutCsv` against golden files.
-- Manual: insert a new "CBN_TEST" template via admin UI → it immediately appears in the agent's return list and the wizard, with no code change or redeploy.
-
-## Out of scope
-
-- Form *intake* for the regulator portal (we still produce the file; officer uploads).
-- Cross-period aggregations beyond `sum/count/min/max` filter values — handled in a later "computed sources" phase.
-- Multi-language templates.
-
-## Effort order
-
-1. Migration + seed 11 active templates from `filing_schedules`.
-2. Engine: expression/filter eval, sources, readiness, csv + xlsx renderers.
-3. Generic XML renderer + PDF renderer.
-4. `generate-return` edge function + agent wiring.
-5. Dashboard wizard reading from `report_templates`.
-6. Admin authoring UI (last — engine works without it; SQL inserts are a fallback).
+- Migrating image generation / embeddings to OpenRouter (only the chatbot is moved).
+- Drag-and-drop visual schema editor (form repeaters are enough for v1).
+- Custom JS expression validators (rule-based only).
+- Redesigning the existing `/product` overview page.
