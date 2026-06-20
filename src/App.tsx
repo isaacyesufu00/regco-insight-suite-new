@@ -60,6 +60,12 @@ import SecurityPage from "./pages/marketing/SecurityPage";
 import NewProductPage from "./pages/marketing/ProductPage";
 import NewCompanyPage from "./pages/marketing/CompanyPage";
 import AboutPage from "./pages/marketing/AboutPage";
+import ProductAutomatedReturns from "./pages/marketing/ProductAutomatedReturns";
+import ProductLiveScreening from "./pages/marketing/ProductLiveScreening";
+import ProductTransactionMonitoring from "./pages/marketing/ProductTransactionMonitoring";
+import ProductAuditTrail from "./pages/marketing/ProductAuditTrail";
+import AdminTemplates from "./pages/AdminTemplates";
+import AdminTemplateEditor from "./pages/AdminTemplateEditor";
 
 const queryClient = new QueryClient();
 
@@ -89,6 +95,10 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPage />} />
             <Route path="/product" element={<NewProductPage />} />
+            <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
+            <Route path="/product/live-screening" element={<ProductLiveScreening />} />
+            <Route path="/product/transaction-monitoring" element={<ProductTransactionMonitoring />} />
+            <Route path="/product/audit-trail" element={<ProductAuditTrail />} />
             <Route path="/who-we-serve" element={<WhoWeServePage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/company" element={<NewCompanyPage />} />
@@ -147,6 +157,8 @@ const App = () => (
               <Route path="clients/:id" element={<AdminClientDetail />} />
               <Route path="onboard" element={<AdminOnboard />} />
               <Route path="demos" element={<AdminDemos />} />
+              <Route path="templates" element={<AdminTemplates />} />
+              <Route path="templates/:id" element={<AdminTemplateEditor />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
