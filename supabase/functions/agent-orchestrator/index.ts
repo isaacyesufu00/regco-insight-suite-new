@@ -33,10 +33,10 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
 
-// Primary: Lovable AI Gateway (Gemini 3 Flash — strong tool-calling, no extra setup).
-// Fallback: OpenRouter free Llama 3.3 70b if Lovable key is missing.
+// Primary: OpenRouter (billed on the customer's own OpenRouter account).
+// Fallback: Lovable AI Gateway if OPENROUTER_API_KEY is missing.
 const LOVABLE_MODEL = "google/gemini-3-flash-preview";
-const OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free";
+const OPENROUTER_MODEL = Deno.env.get("OPENROUTER_MODEL") || "google/gemini-2.5-flash";
 
 function makeLovableProvider(key: string) {
   return createOpenAICompatible({
@@ -619,13 +619,13 @@ Deno.serve(async (req) => {
     });
   };
 
-  // Pick provider: Lovable AI Gateway first, OpenRouter only as fallback.
-  const useLovable = !!LOVABLE_API_KEY;
-  const provider = useLovable
-    ? makeLovableProvider(LOVABLE_API_KEY!)
-    : makeOpenRouterProvider(OPENROUTER_API_KEY!);
-  const modelName = useLovable ? LOVABLE_MODEL : OPENROUTER_MODEL;
-  console.log(`agent using ${useLovable ? "lovable" : "openrouter"} model ${modelName}`);
+  // Pick provider: OpenRouter first (billed on the customer's own account), Lovable as fallback.
+  const useOpenRouter = !!OPENROUTER_API_KEY;
+  const provider = useOpenRouter
+    ? makeOpenRouterProvider(OPENROUTER_API_KEY!)
+    : makeLovableProvider(LOVABLE_API_KEY!);
+  const modelName = useOpenRouter ? OPENROUTER_MODEL : LOVABLE_MODEL;
+  console.log(`agent using ${useOpenRouter ? "openrouter" : "lovable"} model ${modelName}`);
 
   const tools = buildTools({ userId, userClient, admin, logTool });
 
