@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 const products = [
-  { to: "/product#returns",    name: "Automated Returns",    desc: "End-to-end CBN & NFIU filing" },
-  { to: "/product#screening",  name: "Live Client Screening", desc: "BVN, NIN, sanctions, PEP, adverse media" },
-  { to: "/product#monitoring", name: "Transaction Monitoring", desc: "Near-real-time fraud & AML detection" },
-  { to: "/product#audit",      name: "Audit Trail & Case Mgmt", desc: "Chain of custody, case workflow" },
+  { to: "/product/automated-returns",      name: "Automated Returns",      desc: "End-to-end CBN & NFIU filing" },
+  { to: "/product/live-screening",         name: "Live Client Screening",  desc: "BVN, NIN, sanctions, PEP, adverse media" },
+  { to: "/product/transaction-monitoring", name: "Transaction Monitoring", desc: "Near-real-time fraud & AML detection" },
+  { to: "/product/audit-trail",            name: "Audit Trail & Case Mgmt", desc: "Chain of custody, case workflow" },
 ];
 
 const links = [
