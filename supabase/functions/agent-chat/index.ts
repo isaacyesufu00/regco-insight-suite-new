@@ -1,8 +1,10 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
-const AGENT_MODEL = 'google/gemini-3-flash-preview';
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const LOVABLE_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
+const DEFAULT_OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') || 'google/gemini-2.5-flash';
+const LOVABLE_MODEL = 'google/gemini-3-flash-preview';
 
 const corsHeaders: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
@@ -36,14 +38,15 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_PUBLISHABLE_KEY');
+    const openRouterKey = Deno.env.get('OPENROUTER_API_KEY');
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
 
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('agent-chat missing Supabase auth configuration');
       return jsonResponse({ error: 'Agent service is not configured.' }, 500);
     }
-    if (!lovableApiKey) {
-      console.error('agent-chat missing LOVABLE_API_KEY');
+    if (!openRouterKey && !lovableApiKey) {
+      console.error('agent-chat missing AI provider key');
       return jsonResponse({ error: 'AI model is not configured.' }, 500);
     }
 
@@ -64,11 +67,24 @@ serve(async (req) => {
     if (!system) return jsonResponse({ error: 'System prompt is required.' }, 400);
     if (messages.length === 0) return jsonResponse({ error: 'At least one message is required.' }, 400);
 
-    console.log(`agent-chat validated user=${userResult.user.id} msgs=${messages.length}`);
+    // Prefer OpenRouter (customer's own billing); fall back to Lovable gateway only if no OR key.
+    const useOpenRouter = !!openRouterKey;
+    const url = useOpenRouter ? OPENROUTER_URL : LOVABLE_GATEWAY_URL;
+    const model = useOpenRouter ? DEFAULT_OPENROUTER_MODEL : LOVABLE_MODEL;
+    const headers: Record<string, string> = useOpenRouter
+      ? {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openRouterKey}`,
+          'HTTP-Referer': 'https://regco.lovable.app',
+          'X-Title': 'RegCo Compliance Agent',
+        }
+      : {
+          'Content-Type': 'application/json',
+          'Lovable-API-Key': lovableApiKey!,
+        };
 
-    // Build OpenAI-compatible payload — Lovable AI Gateway accepts this shape.
     const payload = {
-      model: AGENT_MODEL,
+      model,
       messages: [
         { role: 'system', content: system },
         ...messages.map((m) => ({ role: m.role, content: m.content })),
@@ -77,27 +93,27 @@ serve(async (req) => {
       max_tokens: 1200,
     };
 
-    console.log(`agent-chat calling Lovable AI Gateway url=${LOVABLE_GATEWAY_URL}`);
+    console.log(`agent-chat calling ${useOpenRouter ? 'OpenRouter' : 'Lovable'} model=${model}`);
 
-    const aiResponse = await fetch(LOVABLE_GATEWAY_URL, {
+    const aiResponse = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Lovable-API-Key': lovableApiKey,
-      },
+      headers,
       body: JSON.stringify(payload),
     });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text().catch(() => '');
       console.error(`agent-chat gateway error status=${aiResponse.status} body=${errText.slice(0, 500)}`);
-      const shortMessage = errText.replace(/\s+/g, ' ').trim().slice(0, 240) || aiResponse.statusText || 'Unknown AI backend failure';
+      if (aiResponse.status === 401) {
+        return jsonResponse({ error: 'AI gateway authentication failed. Check the OpenRouter API key in Supabase secrets.' }, 500);
+      }
       if (aiResponse.status === 429) {
         return jsonResponse({ error: 'AI rate limit reached. Please try again shortly.' }, 500);
       }
       if (aiResponse.status === 402) {
-        return jsonResponse({ error: 'AI credits exhausted. Please top up your workspace.' }, 500);
+        return jsonResponse({ error: 'OpenRouter credits exhausted. Top up at openrouter.ai/credits.' }, 500);
       }
+      const shortMessage = errText.replace(/\s+/g, ' ').trim().slice(0, 240) || aiResponse.statusText || 'Unknown AI backend failure';
       return jsonResponse({ error: `AI backend error (${aiResponse.status}): ${shortMessage}` }, 500);
     }
 
