@@ -1,14 +1,9 @@
 import type { Config } from "tailwindcss";
 
-const appleStack = [
-  "-apple-system",
-  "BlinkMacSystemFont",
-  '"SF Pro Text"',
-  '"SF Pro Display"',
+const helveticaStack = [
   '"Helvetica Neue"',
-  '"Segoe UI"',
-  "Roboto",
-  "system-ui",
+  "Helvetica",
+  "Arial",
   "sans-serif",
 ];
 
