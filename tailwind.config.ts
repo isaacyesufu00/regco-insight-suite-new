@@ -28,9 +28,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans:    appleStack,
-        serif:   appleStack,   // serif alias preserved for legacy components, mapped to Apple stack
-        display: appleStack,
+        sans:    helveticaStack,
+        serif:   helveticaStack,
+        display: helveticaStack,
         mono:    monoStack,
       },
       colors: {
