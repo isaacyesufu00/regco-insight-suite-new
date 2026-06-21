@@ -1,99 +1,85 @@
+## What's done vs. not (vs. your client checklist)
 
-## 1. Switch AI Gateway: Lovable → OpenRouter
+**Already built (Phases A–G partial)**
+- A: profiles, user_roles, customers, customer_accounts/kyc, unified_transactions, transaction_reviews (alerts), cases, case_events (hash-chained), case_artifacts, sanctions_entries, pep_entries, screening_results, audit_issues, filing_schedules, report_templates, reports, agent_conversations/messages/tool_invocations — all with RLS by user_id. ✅
+- B partial: `receive-transaction` edge function (HMAC + API key), `provision-webhook-key`. No `/ingest/customers`, `/ingest/batch`, `/health`, SFTP poller. ❌
+- C partial: AML hooks exist in `receive-transaction`; `screen-customer`, `adverse-media-scan`, `sync-sanctions(-lists)`, `kyc-reminders` exist. Dedicated rules engine (Rules 1–8) not split out. No BVN/NIN (Dojah) verifier. ❌
+- D: Dashboard already reads live data via Supabase Realtime (compliance scores, report counts). Smart Risk Ledger / vs-anomaly chart not wired to live AML alerts yet. ⚠️ partial
+- E: Cases table exists, no `/dashboard/cases` UI or Customer 360 page. (And you've now asked these to live inside the Agent surface, not new pages.) ❌
+- F: No STR filing flow. ❌
+- G partial: Agent has a tool registry (orchestrator). Intent router → real data exists for tools but the dashboard rail still shows "Thinking…" and never resolves.
 
-Replaces the "Payment Required" (402) issue, since OpenRouter is billed on your own OpenRouter account, not Lovable credits.
+---
 
-**Secrets already present:** `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` ✅ — no new secrets needed.
+## Plan
 
-**Changes**
-- Update every edge function that currently calls `ai.gateway.lovable.dev` (primarily `agent-orchestrator`, plus any helper that uses `LOVABLE_API_KEY` for chat) to call OpenRouter instead:
-  - Endpoint: `https://openrouter.ai/api/v1/chat/completions`
-  - Headers: `Authorization: Bearer ${OPENROUTER_API_KEY}`, `HTTP-Referer: <site url>`, `X-Title: RegCo`
-  - Model: read `Deno.env.get("OPENROUTER_MODEL")`, fallback to a sensible default (e.g. `google/gemini-2.5-flash`).
-- Keep request/response shape (OpenAI-compatible) so tool-calling, streaming, and message format don't need rewrites.
-- Map errors in the chat UI:
-  - 401 → "AI gateway not configured" (key issue).
-  - 402 / "insufficient credits" → "OpenRouter credits exhausted — top up at openrouter.ai/credits".
-  - 429 → "Rate limited, retry in a moment".
-- Leave `LOVABLE_API_KEY` in place but unused by chat (it's still needed for non-AI Lovable services if any).
-- Note: Lovable's image-generation / embedding helpers, if used anywhere, can stay on Lovable AI or also move to OpenRouter — confirm before touching those. Default: only migrate the chatbot.
+### 1. Fix the "thinking forever" bug (root cause)
+The dashboard rail uses `agent-orchestrator` (streaming via AI SDK `useChat`); the full Agent page uses `agent-chat` (non-stream). The rail hang is in the orchestrator's stream — OpenRouter responses sometimes return a tool-call loop with no `stopWhen` resolution, or the stream never finalizes because `toUIMessageStreamResponse` isn't wrapping errors. Fix:
+- Return `result.toUIMessageStreamResponse({ headers: corsHeaders, onError: e => msg })` so client gets a final part on any backend failure.
+- Set `stopWhen: stepCountIs(8)` and a `maxOutputTokens` cap so it can't infinite-loop on tool calls.
+- Add 60s timeout + explicit error surface for 402/429.
+- Mirror these into `agent-chat` so the standalone page handles errors identically.
 
-## 2. Admin: Report Template Builder (no SQL)
+### 2. Agent surface upgrade (this is where every new feature lives)
+Per your direction, **no new pages**. All new functionality is inside the existing dashboard Agent rail (`AgentRail.tsx`):
 
-New admin section to author/edit `report_templates` end-to-end via UI.
+**(a) Bubble redesign — match the reference**
+- User messages: right-aligned, soft grey bubble (rounded with one squared corner), Helvetica.
+- Assistant messages: left-aligned plain text (no bubble, no avatar background), markdown rendered.
+- Thinking indicator: small italic label + animated dots, replaced by streamed text the moment the first token arrives.
 
-**Routes:** `/admin/templates` (list) and `/admin/templates/:id` (editor), linked from the admin sidebar.
+**(b) "+" quick-actions popover above the composer**
+Floating menu (anchored to the input, 8px above the + button) with:
+- Import a file
+- Generate a return
+- Check a customer (Customer 360)
+- File an STR
+- Review an alert
+- Find missing data
+- Explain a rule
+Selecting an item either: opens the file picker, or injects a pre-filled prompt + auto-submits so the agent runs the right tool (`request_generate_return`, `get_customer_360`, `explain_alert`, etc.).
 
-**List page** — table grouped by `code` (latest version first): title, regulator, frequency, status badge (draft/active/archived), version, updated. Actions: New, Edit, Duplicate as new version, Activate, Archive, Delete (drafts only).
+**(c) Real consequences for actions**
+Wire each quick-action to an existing/new orchestrator tool so the user sees a result, not just chat:
+- *File an STR* → new `file_str` tool: creates a `case_events` entry with `event_type='str_filed'`, generates STR text via the model, stores it in `case_artifacts`, replies with a download link.
+- *Check a customer* → existing `get_customer_360` returns a compact inline card (customer name, BVN/NIN status, risk, open cases) rendered in the assistant bubble.
+- *Review an alert* → `list_transactions` filtered by review_status='pending' + `explain_alert`, renders an inline alert card with Approve / Escalate buttons that call `add_case_note` + status update.
+- *Generate a return* → existing `request_generate_return` (already opens dialog).
+- *Find missing data* → new `check_return_readiness` reuses the validator output to list missing fields.
+- *Import file* → already supported by the rail; after upload, agent receives parsed text in context.
 
-**Editor (tabbed form)**
+### 3. Product / marketing pages redesign
+Restructure the 4 feature pages (`ProductAutomatedReturns`, `ProductLiveScreening`, `ProductTransactionMonitoring`, `ProductAuditTrail`) to match the Medusa reference:
+- **No cards anywhere.** White background end-to-end (matches homepage).
+- Layout = repeated split-row sections: left = `<h2>` headline + supporting paragraph; right = a clean product visual (mock UI screenshot or labelled table, no card chrome, divider line only).
+- Same RegCo navbar/footer, same typography scale; just swap the card grid for these split rows.
+- Keep current SEO (title/meta/JSON-LD) per page.
+- Delete `FeaturePageTemplate.tsx` card-based primitives or replace its primitives with the split-row primitive.
 
-```text
-┌─ Header: code | version | title | regulator | frequency | status ─┐
-├─ Tab 1  Fields & Parameters   (definition.parameters[])           │
-├─ Tab 2  Data Sources/Mappings (definition.sources[])              │
-├─ Tab 3  Validators            (definition.readiness[])            │
-├─ Tab 4  Layout & Formats      (definition.layout, formats[])      │
-├─ Tab 5  Defaults & Period     (definition.period, defaults)       │
-└─ Tab 6  JSON Preview / Test readiness ────────────────────────────┘
-```
+### 4. Typography → Helvetica
+- Update `tailwind.config.ts` `fontFamily.sans` to `['Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif']`.
+- Update `index.css` `body` font + remove the Lora serif h1 inside `AgentCenter` (keep Helvetica everywhere, including dashboard).
+- This affects marketing site + dashboard uniformly per your request.
 
-- **Fields/Parameters** — repeater rows: key, label, type (text/number/date/select/boolean), required, default, options, help.
-- **Mappings (sources)** — repeater rows: source key, table (dropdown of known tables), columns (multi-select), filters (column / op / value or `${param.x}`), order_by, limit.
-- **Validators (readiness)** — rules: type (min_rows / required_column / non_null / regex), source key, column, threshold/value, error message.
-- **Layout** — type (table/form/sectioned), column order, header labels.
-- **Formats** — checkbox group (xlsx / csv / xml / pdf).
-- **JSON Preview tab** — live read-only view; "Test readiness" button calls new edge function `template-test-readiness` to run rules against current data.
+### 5. Light-touch DB additions only where needed
+Single migration:
+- `str_filings` table (case_id, customer_id, narrative text, status, submitted_by, created_at) + RLS by user_id + GRANTs.
+- Add `priority` enum check + `assigned_to` already exist on cases; nothing else needed for now.
+No PII migrations for ingestion endpoints in this pass — that's Phase B/C scope and you said be careful; I'll flag it as the next chunk.
 
-**Persistence**
-- Save Draft → upsert with `status='draft'`.
-- Activate → new edge function `template-activate` (service-role) flips target to `active` and demotes other versions of the same `code` to `archived`.
-- All writes guarded by admin-only RLS already in place.
+### 6. Explicitly deferred (next plan, not this one)
+- `/ingest/customers`, `/ingest/batch`, `/health`, SFTP poller
+- Standalone AML rules engine split-out + Dojah BVN/NIN
+- Daily sanctions re-screening cron
+- Smart Risk Ledger + Volume-vs-Anomaly chart rebind to live AML alerts (current dashboard is reactive but on different tables)
 
-## 3. Reactive Dashboard with Real Data
+---
 
-Today `DashboardHome` reads from `compliance_scores`, `user_stats`, `report_statuses` seeded once by `handle_new_user`. Make it reflect live activity.
+### Technical notes
+- Files touched: `supabase/functions/agent-orchestrator/index.ts`, `supabase/functions/agent-chat/index.ts`, `src/components/dashboard/AgentRail.tsx`, `src/components/agent/AgentCenter.tsx` (font only), `src/pages/marketing/FeaturePageTemplate.tsx` + 4 product pages, `tailwind.config.ts`, `src/index.css`, new `supabase/functions/file-str/` (or inline tool), one migration for `str_filings`.
+- New orchestrator tools: `file_str`, `check_return_readiness` (if not already present), `approve_alert`, `escalate_alert`.
+- Quick-action popover = small uncontrolled component inside `AgentRail`, no new route.
+- Helvetica is a system font; no Google Fonts fetch needed.
 
-- **Recompute on event**: triggers on `reports`, `report_requests`, `case_events` that update `compliance_scores` and `user_stats` for the owning user.
-- **Live status feed**: replace static `report_statuses` rows with a query over `reports` + `filing_schedules` (due / overdue / ready / submitted). Stop seeding fake rows in `handle_new_user`.
-- **Realtime UI**: subscribe via Supabase Realtime on `reports`, `compliance_scores`, `user_stats` inside `DashboardHome` (proper `useEffect` + `removeChannel`).
-- **Empty states**: when a user has no activity, show "No reports filed yet" instead of fake "24 filed / 98% on-time".
-- **Score formula** (in code): `100 − (overdue × 10) − (failed × 5)`, floored at 0; on-time rate = on-time submissions / total submissions.
-
-## 4. Dedicated Pages per Product Dropdown Item
-
-Current navbar dropdown links to `#anchors` on `/product`. Replace with four real routes that match the existing site theme (`SiteNavbar` + site tokens, ink/line palette, no purple gradients):
-
-| Dropdown item | New route |
-|---|---|
-| Automated Returns | `/product/automated-returns` |
-| Live Client Screening | `/product/live-screening` |
-| Transaction Monitoring | `/product/transaction-monitoring` |
-| Audit Trail & Case Mgmt | `/product/audit-trail` |
-
-Each page reuses existing site primitives and contains:
-1. Hero — headline, sub, primary "Book a demo" + secondary "See pricing".
-2. The problem (regulator-specific pain, 1–2 sentences).
-3. Capabilities grid (4–6 cards, lucide icons, hairline borders).
-4. Workflow (3 steps, reused pattern).
-5. Benefits with metric chips (e.g. "−85% prep time").
-6. Compliance/regulator badges row.
-7. FAQ (3–4 Q&A).
-8. CTA footer band.
-
-SEO per page: unique `<title>` <60 chars, meta description <160, single H1, JSON-LD `SoftwareApplication`. Update `SiteNavbar.products` to point to the new routes; keep `/product` as the overview that links to all four.
-
-## Technical notes
-
-- **Edge function changes:** `agent-orchestrator` (and any AI helper) switched to OpenRouter; new `template-activate` and `template-test-readiness`.
-- **Migrations:** triggers + functions to recompute `compliance_scores` / `user_stats`; enable Realtime publication for `reports`, `compliance_scores`, `user_stats`; remove fake seeds from `handle_new_user`.
-- **New admin pages:** `AdminTemplates.tsx`, `AdminTemplateEditor.tsx` (subcomponents per tab).
-- **New marketing pages:** `ProductAutomatedReturns.tsx`, `ProductLiveScreening.tsx`, `ProductTransactionMonitoring.tsx`, `ProductAuditTrail.tsx`; routed in `App.tsx`.
-- **Chat error mapping** in chat client/`AgentRail`: 401 / 402 / 429 messages.
-
-## Out of scope (ask before doing)
-
-- Migrating image generation / embeddings to OpenRouter (only the chatbot is moved).
-- Drag-and-drop visual schema editor (form repeaters are enough for v1).
-- Custom JS expression validators (rule-based only).
-- Redesigning the existing `/product` overview page.
+### One thing I want to confirm before building
+For the **assistant bubbles**, your reference shows tiny action icons (download / regen / copy) under each assistant message. Want those wired now (copy + regenerate), or skip and just match the bubble shapes?
