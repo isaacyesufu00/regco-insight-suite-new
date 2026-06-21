@@ -1,14 +1,9 @@
 import type { Config } from "tailwindcss";
 
-const appleStack = [
-  "-apple-system",
-  "BlinkMacSystemFont",
-  '"SF Pro Text"',
-  '"SF Pro Display"',
+const helveticaStack = [
   '"Helvetica Neue"',
-  '"Segoe UI"',
-  "Roboto",
-  "system-ui",
+  "Helvetica",
+  "Arial",
   "sans-serif",
 ];
 
@@ -33,9 +28,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans:    appleStack,
-        serif:   appleStack,   // serif alias preserved for legacy components, mapped to Apple stack
-        display: appleStack,
+        sans:    helveticaStack,
+        serif:   helveticaStack,
+        display: helveticaStack,
         mono:    monoStack,
       },
       colors: {

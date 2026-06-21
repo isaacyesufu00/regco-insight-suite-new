@@ -72,7 +72,7 @@ export const AgentCenter = ({
           </div>
 
           <div style={{ marginTop: '40px', marginBottom: '20px' }}>
-            <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 'clamp(40px, 5.5vw, 64px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', margin: 0, lineHeight: 1, textAlign: 'center' }}>
+            <h1 style={{ fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: 'clamp(40px, 5.5vw, 64px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', margin: 0, lineHeight: 1, textAlign: 'center' }}>
               {institutionName || 'RegCo'}
             </h1>
           </div>

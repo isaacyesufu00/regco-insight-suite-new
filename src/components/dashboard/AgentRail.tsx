@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowUp, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X } from "lucide-react";
+import {
+  Plus, ArrowUp, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
+  Upload, FileSignature, UserSearch, AlertTriangle, FileBarChart, SearchX, BookOpen,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -105,6 +108,7 @@ export default function AgentRail() {
   const streamRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [quickOpen, setQuickOpen] = useState(false);
   const accessToken = session?.access_token;
 
   const transport = useMemo(() => new DefaultChatTransport({
@@ -202,8 +206,8 @@ export default function AgentRail() {
 
   const busy = status === "submitted" || status === "streaming";
 
-  const send = useCallback(() => {
-    const text = input.trim();
+  const send = useCallback((overrideText?: string) => {
+    const text = (overrideText ?? input).trim();
     if ((!text && !validAtt.length) || busy || parsingAny) return;
     let payload = text;
     if (validAtt.length) {
@@ -220,6 +224,27 @@ export default function AgentRail() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
+  const QUICK_ACTIONS: { icon: typeof Upload; label: string; run: () => void }[] = [
+    { icon: Upload,         label: "Import a file",     run: () => { setQuickOpen(false); fileRef.current?.click(); } },
+    { icon: FileBarChart,   label: "Generate a return", run: () => { setQuickOpen(false); send("Generate a regulatory return — list which returns are due this cycle and ask me which one to prepare."); } },
+    { icon: UserSearch,     label: "Check a customer",  run: () => { setQuickOpen(false); send("Open Customer 360 — ask me for the customer name or BVN, then pull their identity, accounts, screening status, and any open cases."); } },
+    { icon: FileSignature,  label: "File an STR",       run: () => { setQuickOpen(false); send("Help me file a Suspicious Transaction Report. Ask which case or transaction it relates to, then draft the NFIU narrative and log a case event."); } },
+    { icon: AlertTriangle,  label: "Review an alert",   run: () => { setQuickOpen(false); send("Show my pending AML alerts ordered by priority, explain the top one, and recommend whether to approve, escalate, or close it."); } },
+    { icon: SearchX,        label: "Find missing data", run: () => { setQuickOpen(false); send("Run a readiness check on my upcoming returns and list any missing or incomplete data fields I need to fix before filing."); } },
+    { icon: BookOpen,       label: "Explain a rule",    run: () => { setQuickOpen(false); send("Explain a compliance rule — ask me which rule (CTR threshold, structuring, CAR, single obligor, etc.) and give a 3-sentence plain-English explanation with the citation."); } },
+  ];
+
+  // Close popover on outside click
+  useEffect(() => {
+    if (!quickOpen) return;
+    const h = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest?.("[data-quick-popover]") && !t.closest?.("[data-quick-trigger]")) setQuickOpen(false);
+    };
+    window.addEventListener("mousedown", h);
+    return () => window.removeEventListener("mousedown", h);
+  }, [quickOpen]);
+
   return (
     <aside
       className="flex flex-col flex-shrink-0 h-screen sticky top-0"
@@ -232,18 +257,18 @@ export default function AgentRail() {
         </div>
       </div>
 
-      <div ref={streamRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div ref={streamRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {messages.length === 0 && (
-          <div className="text-[12.5px] text-[var(--ink-3)] leading-[1.55] font-mono">
-            <p>Idle.</p>
-            <p className="mt-3">Ask RegCo to screen a customer, explain an alert, draft an investigation summary, or pull velocity for an account. Attach a PDF, spreadsheet, or document with the + button.</p>
+          <div className="text-[12.5px] text-[var(--ink-3)] leading-[1.55] px-1">
+            <p>Hi, how can I help today?</p>
+            <p className="mt-3">Ask RegCo to screen a customer, explain an alert, draft an investigation summary, or pull velocity for an account. Use the + button for quick actions.</p>
           </div>
         )}
 
         {messages.map((m) => (<MessageBlock key={m.id} message={m} />))}
 
         {busy && (
-          <div className="font-mono text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5">
+          <div className="text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5 px-1 pt-2">
             <Loader2 size={11} className="animate-spin" />
             {status === "submitted" ? "Thinking…" : "Responding…"}
           </div>
@@ -262,8 +287,33 @@ export default function AgentRail() {
         )}
       </div>
 
-      <div className="p-3">
-        <div className="bg-white rounded-lg overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px var(--rail-border)" }}>
+      <div className="p-3 relative">
+        {/* Quick-action popover, anchored above + button */}
+        {quickOpen && (
+          <div
+            data-quick-popover
+            className="absolute bottom-[calc(100%-4px)] left-3 right-3 bg-white border border-[var(--rail-border)] rounded-xl shadow-lg overflow-hidden z-30"
+          >
+            <div className="px-3 py-2 text-[10.5px] uppercase tracking-[0.15em] text-[var(--ink-3)] border-b border-[var(--rail-border)]">
+              Quick actions
+            </div>
+            {QUICK_ACTIONS.map((a) => {
+              const Icon = a.icon;
+              return (
+                <button
+                  key={a.label}
+                  onClick={a.run}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--ink)] hover:bg-black/[0.04] text-left"
+                >
+                  <Icon size={14} className="text-[var(--ink-3)]" />
+                  {a.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px var(--rail-border)" }}>
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5 px-2 pt-2">
               {attachments.map(a => (
@@ -294,8 +344,8 @@ export default function AgentRail() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={onKey}
             disabled={busy}
-            placeholder="What do you want to know?"
-            className="w-full px-3 pt-2 pb-0.5 text-[13px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.4] font-sans"
+            placeholder="How can I help you?"
+            className="w-full px-3 pt-3 pb-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.45]"
           />
           <div className="flex items-center justify-between px-2 pb-2">
             <input
@@ -307,16 +357,17 @@ export default function AgentRail() {
               onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ""; }}
             />
             <button
-              title="Attach PDF, Excel, CSV, Word, or text file"
-              onClick={() => fileRef.current?.click()}
-              className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04]"
+              data-quick-trigger
+              title="Quick actions"
+              onClick={() => setQuickOpen(v => !v)}
+              className={`p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04] transition-transform ${quickOpen ? "rotate-45" : ""}`}
             >
-              <Plus size={14} />
+              <Plus size={15} />
             </button>
             <button
-              onClick={send}
+              onClick={() => send()}
               disabled={(!input.trim() && !validAtt.length) || busy || parsingAny}
-              className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--navy)] text-white disabled:opacity-30"
+              className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30"
             >
               <ArrowUp size={13} />
             </button>
@@ -325,13 +376,14 @@ export default function AgentRail() {
       </div>
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-[var(--rail-border)]">
-        <div className="w-6 h-6 rounded-full bg-[var(--navy)] text-white flex items-center justify-center text-[11px] font-medium">{userInitial}</div>
+        <div className="w-6 h-6 rounded-full bg-[var(--ink)] text-white flex items-center justify-center text-[11px] font-medium">{userInitial}</div>
         <div className="min-w-0 flex-1"><p className="text-[12px] text-[var(--ink)] truncate">{userName || "Officer"}</p></div>
         <button onClick={handleSignOut} title="Sign out" className="p-1.5 text-[var(--ink-3)] hover:text-[var(--ink)]"><LogOut size={13} /></button>
       </div>
     </aside>
   );
 }
+
 
 function MessageBlock({ message }: { message: any }) {
   const isUser = message.role === "user";
@@ -349,24 +401,31 @@ function MessageBlock({ message }: { message: any }) {
         })()
       : text;
     return (
-      <div className="text-[13px] text-[var(--ink)] leading-[1.5] whitespace-pre-wrap">
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--ink-3)] block mb-1">You</span>
-        {display}
+      <div className="flex justify-end my-2.5">
+        <div
+          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2"
+          style={{
+            background: "#EFEFEC",
+            borderRadius: "14px 14px 4px 14px",
+          }}
+        >
+          {display}
+        </div>
       </div>
     );
   }
   return (
-    <div className="pt-2 pb-3 border-b border-[var(--rail-border)] space-y-2">
-      <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--ink-3)] block">RegCo</span>
+    <div className="my-3 space-y-2 pr-6">
       {toolParts.map((p: any, i: number) => <ToolChip key={i} part={p} />)}
       {text && (
-        <div className="text-[13px] text-[var(--ink)] leading-[1.55] prose prose-sm max-w-none prose-p:my-1 prose-strong:font-semibold">
+        <div className="text-[13.5px] text-[var(--ink)] leading-[1.6] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       )}
     </div>
   );
 }
+
 
 function ToolChip({ part }: { part: any }) {
   const toolName: string = part.toolName ?? part.type?.replace(/^tool-/, "") ?? "tool";

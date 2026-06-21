@@ -629,14 +629,21 @@ Deno.serve(async (req) => {
 
   const tools = buildTools({ userId, userClient, admin, logTool });
 
+  // 60s hard timeout so the stream never hangs forever
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), 60_000);
+
   const result = streamText({
     model: provider(modelName),
     system: SYSTEM_PROMPT,
     messages: convertToModelMessages(body.messages),
     tools,
-    stopWhen: stepCountIs(50),
+    stopWhen: stepCountIs(8),
     temperature: 0.2,
+    maxOutputTokens: 1500,
+    abortSignal: abortController.signal,
     onFinish: async ({ text }) => {
+      clearTimeout(timeoutId);
       if (conversationId && text) {
         await admin.from("agent_messages").insert({
           conversation_id: conversationId, user_id: userId, role: "assistant",
@@ -646,6 +653,7 @@ Deno.serve(async (req) => {
       }
     },
     onError: ({ error }) => {
+      clearTimeout(timeoutId);
       console.error(`model ${modelName} error:`, error);
     },
   });
@@ -655,6 +663,15 @@ Deno.serve(async (req) => {
     onError: (e) => {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("stream error:", msg);
+      if (msg.includes("402") || msg.toLowerCase().includes("payment")) {
+        return "AI credits exhausted. Top up at openrouter.ai/credits.";
+      }
+      if (msg.includes("429") || msg.toLowerCase().includes("rate")) {
+        return "Rate limited. Please try again in a moment.";
+      }
+      if (msg.toLowerCase().includes("abort")) {
+        return "The model took too long to respond. Please retry with a shorter request.";
+      }
       return `AI service error: ${msg}`;
     },
   });

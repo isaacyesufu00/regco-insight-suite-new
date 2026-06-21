@@ -80,10 +80,9 @@
     --rail-bg:     #F4F5F7;
     --rail-border: #DFE1E6;
 
-    /* Apple system font stack */
-    --font-sans:    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
-                    "Helvetica Neue", "Segoe UI", Roboto, system-ui, sans-serif;
-    --font-mono:    ui-monospace, "SF Mono", "Menlo", "Monaco", "Cascadia Mono", monospace;
+    /* Helvetica everywhere */
+    --font-sans:    "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-mono:    ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
 
     /* ---------- Legacy compatibility shims ---------- */
     /* Older pages reference these tokens; map them onto the new B/W palette
