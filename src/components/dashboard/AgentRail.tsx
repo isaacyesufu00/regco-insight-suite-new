@@ -401,24 +401,31 @@ function MessageBlock({ message }: { message: any }) {
         })()
       : text;
     return (
-      <div className="text-[13px] text-[var(--ink)] leading-[1.5] whitespace-pre-wrap">
-        <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--ink-3)] block mb-1">You</span>
-        {display}
+      <div className="flex justify-end my-2.5">
+        <div
+          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2"
+          style={{
+            background: "#EFEFEC",
+            borderRadius: "14px 14px 4px 14px",
+          }}
+        >
+          {display}
+        </div>
       </div>
     );
   }
   return (
-    <div className="pt-2 pb-3 border-b border-[var(--rail-border)] space-y-2">
-      <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-[var(--ink-3)] block">RegCo</span>
+    <div className="my-3 space-y-2 pr-6">
       {toolParts.map((p: any, i: number) => <ToolChip key={i} part={p} />)}
       {text && (
-        <div className="text-[13px] text-[var(--ink)] leading-[1.55] prose prose-sm max-w-none prose-p:my-1 prose-strong:font-semibold">
+        <div className="text-[13.5px] text-[var(--ink)] leading-[1.6] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       )}
     </div>
   );
 }
+
 
 function ToolChip({ part }: { part: any }) {
   const toolName: string = part.toolName ?? part.type?.replace(/^tool-/, "") ?? "tool";
