@@ -61,8 +61,6 @@ const stats = [
 ];
 
 export default function Index() {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteNavbar />
