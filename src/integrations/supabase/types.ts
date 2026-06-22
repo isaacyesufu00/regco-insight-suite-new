@@ -67,6 +67,48 @@ export type Database = {
           },
         ]
       }
+      accounts: {
+        Row: {
+          account_type: string
+          balance: number
+          created_at: string
+          customer_id: string
+          id: string
+          institution_id: string
+        }
+        Insert: {
+          account_type: string
+          balance?: number
+          created_at?: string
+          customer_id: string
+          id?: string
+          institution_id?: string
+        }
+        Update: {
+          account_type?: string
+          balance?: number
+          created_at?: string
+          customer_id?: string
+          id?: string
+          institution_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accounts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       adverse_media_cache: {
         Row: {
           created_at: string
@@ -222,6 +264,39 @@ export type Database = {
         }
         Relationships: []
       }
+      aml_jobs: {
+        Row: {
+          created_at: string
+          error_log: Json | null
+          id: string
+          institution_id: string
+          payload_size_kb: number | null
+          processed_count: number | null
+          status: Database["public"]["Enums"]["aml_job_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          error_log?: Json | null
+          id?: string
+          institution_id?: string
+          payload_size_kb?: number | null
+          processed_count?: number | null
+          status?: Database["public"]["Enums"]["aml_job_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          error_log?: Json | null
+          id?: string
+          institution_id?: string
+          payload_size_kb?: number | null
+          processed_count?: number | null
+          status?: Database["public"]["Enums"]["aml_job_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_issues: {
         Row: {
           category: string | null
@@ -287,6 +362,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          actor_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          institution_id: string
+          payload: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          institution_id?: string
+          payload?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          institution_id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       case_artifacts: {
         Row: {
@@ -428,12 +544,61 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
+        Relationships: []
+      }
+      compiled_returns: {
+        Row: {
+          created_at: string
+          error_log: Json | null
+          id: string
+          institution_id: string
+          raw_xml: string | null
+          record_count: number | null
+          reporting_period_end: string
+          reporting_period_start: string
+          status: string
+          submitted_at: string | null
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_log?: Json | null
+          id?: string
+          institution_id?: string
+          raw_xml?: string | null
+          record_count?: number | null
+          reporting_period_end: string
+          reporting_period_start: string
+          status?: string
+          submitted_at?: string | null
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          error_log?: Json | null
+          id?: string
+          institution_id?: string
+          raw_xml?: string | null
+          record_count?: number | null
+          reporting_period_end?: string
+          reporting_period_start?: string
+          status?: string
+          submitted_at?: string | null
+          template_id?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "cases_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "fk_institution_return"
+            columns: ["institution_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_template"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "return_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -616,15 +781,7 @@ export type Database = {
           status?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "customer_accounts_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       customer_kyc: {
         Row: {
@@ -678,63 +835,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "customer_kyc_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: true
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       customers: {
         Row: {
-          account_number: string | null
-          address: string | null
-          agent_notes: Json | null
-          bvn: string | null
           created_at: string
-          customer_segment: string | null
-          date_of_birth: string | null
-          email: string | null
+          email_hash: string | null
           full_name: string
           id: string
-          phone_number: string | null
-          updated_at: string
-          user_id: string
+          institution_id: string
+          raw_pii_jsonb: Json | null
         }
         Insert: {
-          account_number?: string | null
-          address?: string | null
-          agent_notes?: Json | null
-          bvn?: string | null
           created_at?: string
-          customer_segment?: string | null
-          date_of_birth?: string | null
-          email?: string | null
+          email_hash?: string | null
           full_name: string
           id?: string
-          phone_number?: string | null
-          updated_at?: string
-          user_id: string
+          institution_id?: string
+          raw_pii_jsonb?: Json | null
         }
         Update: {
-          account_number?: string | null
-          address?: string | null
-          agent_notes?: Json | null
-          bvn?: string | null
           created_at?: string
-          customer_segment?: string | null
-          date_of_birth?: string | null
-          email?: string | null
+          email_hash?: string | null
           full_name?: string
           id?: string
-          phone_number?: string | null
-          updated_at?: string
-          user_id?: string
+          institution_id?: string
+          raw_pii_jsonb?: Json | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customers_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       data_sources: {
         Row: {
@@ -885,34 +1021,78 @@ export type Database = {
       }
       institution_users: {
         Row: {
-          admin_user_id: string
           created_at: string
           id: string
-          invited_email: string
-          invited_name: string | null
+          institution_id: string
           role: string
-          status: string
-          updated_at: string
+          user_id: string
         }
         Insert: {
-          admin_user_id: string
           created_at?: string
           id?: string
-          invited_email: string
-          invited_name?: string | null
-          role?: string
-          status?: string
-          updated_at?: string
+          institution_id: string
+          role: string
+          user_id: string
         }
         Update: {
-          admin_user_id?: string
           created_at?: string
           id?: string
-          invited_email?: string
-          invited_name?: string | null
+          institution_id?: string
           role?: string
-          status?: string
-          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_users_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institutions: {
+        Row: {
+          cbn_code: string | null
+          compliance_email: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          license_type: string | null
+          metadata: Json | null
+          name: string
+          ndpa_residency_verified: boolean | null
+          rc_number: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cbn_code?: string | null
+          compliance_email?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          license_type?: string | null
+          metadata?: Json | null
+          name: string
+          ndpa_residency_verified?: boolean | null
+          rc_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cbn_code?: string | null
+          compliance_email?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          license_type?: string | null
+          metadata?: Json | null
+          name?: string
+          ndpa_residency_verified?: boolean | null
+          rc_number?: string | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1432,6 +1612,41 @@ export type Database = {
           },
         ]
       }
+      return_templates: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          regulatory_body: string
+          report_type: string
+          schema_definition: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          regulatory_body: string
+          report_type: string
+          schema_definition: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          regulatory_body?: string
+          report_type?: string
+          schema_definition?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_institution"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sanctions_entries: {
         Row: {
           active: boolean | null
@@ -1669,6 +1884,63 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          currency: string | null
+          direction: string | null
+          id: string
+          institution_id: string
+          receiver_name: string | null
+          sender_name: string | null
+          status: string
+          transaction_type: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          currency?: string | null
+          direction?: string | null
+          id?: string
+          institution_id?: string
+          receiver_name?: string | null
+          sender_name?: string | null
+          status?: string
+          transaction_type?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          direction?: string | null
+          id?: string
+          institution_id?: string
+          receiver_name?: string | null
+          sender_name?: string | null
+          status?: string
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unified_transactions: {
         Row: {
           account_number: string | null
@@ -1751,15 +2023,7 @@ export type Database = {
           transaction_type?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "unified_transactions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1809,6 +2073,89 @@ export type Database = {
         }
         Relationships: []
       }
+      watchlist_entities: {
+        Row: {
+          created_at: string
+          entity_type: string | null
+          full_name: string
+          id: string
+          institution_id: string
+          is_global: boolean | null
+          metadata: Json | null
+          risk_level: string | null
+          search_vector: unknown
+          source_provider: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_type?: string | null
+          full_name: string
+          id?: string
+          institution_id?: string
+          is_global?: boolean | null
+          metadata?: Json | null
+          risk_level?: string | null
+          search_vector?: unknown
+          source_provider?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string | null
+          full_name?: string
+          id?: string
+          institution_id?: string
+          is_global?: boolean | null
+          metadata?: Json | null
+          risk_level?: string | null
+          search_vector?: unknown
+          source_provider?: string | null
+        }
+        Relationships: []
+      }
+      watchlist_matches: {
+        Row: {
+          created_at: string | null
+          id: string
+          institution_id: string
+          match_score: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          transaction_id: string
+          watchlist_entity_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          match_score: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transaction_id: string
+          watchlist_entity_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          match_score?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          transaction_id?: string
+          watchlist_entity_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_institution"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_api_keys: {
         Row: {
           active: boolean
@@ -1844,6 +2191,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      compile_returns_to_xml: {
+        Args: {
+          p_period_end: string
+          p_period_start: string
+          p_template_id: string
+        }
+        Returns: string
+      }
+      get_institution_id: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1851,8 +2207,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
+      aml_job_status: "queued" | "processing" | "completed" | "failed"
       app_role: "admin" | "user" | "compliance_lead"
     }
     CompositeTypes: {
@@ -1981,6 +2340,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      aml_job_status: ["queued", "processing", "completed", "failed"],
       app_role: ["admin", "user", "compliance_lead"],
     },
   },
