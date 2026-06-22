@@ -342,16 +342,27 @@ export default function AgentRail() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px var(--rail-border)" }}>
+        {/* Pill composer — matches reference */}
+        <div className="relative">
+          {/* Soft halo behind pill */}
+          <div
+            aria-hidden
+            className="absolute -inset-x-4 -top-6 h-12 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at center, rgba(140,170,255,0.22), rgba(180,210,255,0.10) 45%, transparent 70%)",
+              filter: "blur(8px)",
+            }}
+          />
+
           {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 px-2 pt-2">
+            <div className="flex flex-wrap gap-1.5 mb-2">
               {attachments.map(a => (
                 <div
                   key={a.id}
                   className={`inline-flex items-center gap-1.5 text-[11px] rounded-full px-2 py-1 border ${
                     a.error ? "text-red-600 border-red-200 bg-red-50"
-                    : a.parsing ? "text-[var(--ink-3)] border-[var(--rail-border)] bg-black/[0.03]"
-                    : "text-[var(--ink)] border-[var(--rail-border)] bg-black/[0.03]"
+                    : a.parsing ? "text-[var(--ink-3)] border-[var(--rail-border)] bg-white"
+                    : "text-[var(--ink)] border-[var(--rail-border)] bg-white"
                   }`}
                   title={a.error || a.name}
                 >
@@ -366,17 +377,12 @@ export default function AgentRail() {
             </div>
           )}
 
-          <textarea
-            ref={taRef}
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKey}
-            disabled={busy}
-            placeholder="How can I help you?"
-            className="w-full px-3 pt-3 pb-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.45]"
-          />
-          <div className="flex items-center justify-between px-2 pb-2">
+          <div
+            className="relative flex items-center gap-1 bg-white rounded-full pl-2 pr-1.5 py-1.5"
+            style={{
+              boxShadow: "0 1px 0 rgba(0,0,0,0.04), 0 6px 24px rgba(80,120,255,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+            }}
+          >
             <input
               ref={fileRef}
               type="file"
@@ -385,24 +391,57 @@ export default function AgentRail() {
               className="hidden"
               onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ""; }}
             />
+
             <button
               data-quick-trigger
               title="Quick actions"
               onClick={() => setQuickOpen(v => !v)}
-              className={`p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04] transition-transform ${quickOpen ? "rotate-45" : ""}`}
+              className={`shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05] transition-transform ${quickOpen ? "rotate-45" : ""}`}
             >
               <Plus size={15} />
             </button>
+
+            <div className="w-px h-4 bg-black/[0.08] mx-0.5" />
+
+            <textarea
+              ref={taRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey}
+              disabled={busy}
+              placeholder="Forming…"
+              className="flex-1 min-w-0 px-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.5] max-h-[120px]"
+            />
+
+            <button title="Context" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <BookMarked size={13} />
+            </button>
+            <button title="Options" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <ChevronUp size={14} />
+            </button>
+            <button title="Voice" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <Mic size={13} />
+            </button>
+
             <button
               onClick={() => send()}
-              disabled={(!input.trim() && !validAtt.length) || busy || parsingAny}
-              className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30"
+              disabled={(!input.trim() && !validAtt.length) || parsingAny}
+              className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30 hover:opacity-90"
+              title={busy ? "Streaming" : "Send"}
             >
-              <ArrowUp size={13} />
+              {busy ? <Square size={10} fill="currentColor" /> : <ArrowUp size={14} />}
             </button>
           </div>
         </div>
       </div>
+
+      <DocumentPreviewModal
+        open={preview.open}
+        title={preview.title}
+        content={preview.content}
+        onClose={() => setPreview({ open: false, content: "" })}
+      />
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-[var(--rail-border)]">
         <div className="w-6 h-6 rounded-full bg-[var(--ink)] text-white flex items-center justify-center text-[11px] font-medium">{userInitial}</div>
