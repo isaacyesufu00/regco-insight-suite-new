@@ -274,9 +274,28 @@ export default function AgentRail() {
           </div>
         )}
 
-        {messages.map((m) => (<MessageBlock key={m.id} message={m} />))}
+        {messages.map((m, i) => (
+          <MessageBlock
+            key={m.id}
+            message={m}
+            isLast={i === messages.length - 1}
+            busy={busy && i === messages.length - 1}
+            onRegenerate={() => {
+              // find the previous user message and resend it
+              for (let j = i - 1; j >= 0; j--) {
+                const prev = messages[j];
+                if (prev.role === "user") {
+                  const t = (prev.parts ?? []).filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
+                  if (t) sendMessage({ text: t });
+                  break;
+                }
+              }
+            }}
+            onPreview={(content, title) => setPreview({ open: true, content, title })}
+          />
+        ))}
 
-        {busy && (
+        {busy && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5 px-1 pt-2">
             <Loader2 size={11} className="animate-spin" />
             {status === "submitted" ? "Thinking…" : "Responding…"}
