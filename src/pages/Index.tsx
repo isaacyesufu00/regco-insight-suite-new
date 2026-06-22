@@ -63,49 +63,66 @@ const stats = [
 
 export default function Index() {
   const navigate = useNavigate();
-  const [heroEmail, setHeroEmail] = useState("");
-
-  const handleHeroSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = heroEmail.trim() ? `?email=${encodeURIComponent(heroEmail.trim())}` : "";
-    navigate(`/book-demo${q}`);
-  };
 
   return (
     <div className="min-h-screen bg-white text-ink">
       <SiteNavbar />
 
-      {/* Hero */}
-      <section className="pt-32 pb-20 md:pt-40 md:pb-28">
-        <div className="container-site">
-          <h1 className="text-display max-w-[20ch] text-ink">
-            The compliance operating system for Nigerian finance.
-          </h1>
-          <p className="mt-6 max-w-[58ch] text-[17px] leading-[1.55] text-ink-3">
-            Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.
-            Built for CBN-, NDIC-, NFIU-, SCUML-, and FIRS-licensed institutions.
-          </p>
-          <form
-            onSubmit={handleHeroSubmit}
-            className="mt-10 flex items-center gap-1 rounded-full border border-[var(--line)] bg-white pl-5 pr-1 py-1 max-w-[440px] focus-within:border-ink/40 transition-colors"
+      {/* Hero — bottom-left anchored, white background */}
+      <section
+        className="relative w-full"
+        style={{ minHeight: "100vh", background: "#FFFFFF" }}
+      >
+        <div className="container-site relative h-full" style={{ minHeight: "100vh" }}>
+          {/* Bottom-left anchored content */}
+          <div
+            className="absolute left-0 right-0"
+            style={{ bottom: "10vh", paddingLeft: 0, paddingRight: 0 }}
           >
-            <input
-              type="email"
-              required
-              value={heroEmail}
-              onChange={(e) => setHeroEmail(e.target.value)}
-              placeholder="Work email"
-              className="flex-1 h-10 bg-transparent outline-none text-[14px] text-ink placeholder:text-ink-3"
-            />
-            <button
-              type="submit"
-              className="h-9 px-4 inline-flex items-center gap-1.5 rounded-full bg-ink text-white text-[13.5px] font-medium hover:bg-[#262626] transition-colors whitespace-nowrap"
-            >
-              Book a demo <ArrowUpRight size={14} />
-            </button>
-          </form>
+            <div className="max-w-[680px]">
+              <h1
+                className="text-ink"
+                style={{
+                  fontFamily: "'Instrument Serif', 'Cormorant Garamond', Georgia, serif",
+                  fontWeight: 400,
+                  fontSize: "clamp(48px, 7vw, 88px)",
+                  lineHeight: 1.02,
+                  letterSpacing: "-0.02em",
+                }}
+              >
+                The compliance operating<br />
+                system for Nigerian finance.
+              </h1>
+              <p
+                className="mt-6 text-ink-3"
+                style={{ fontSize: 16, lineHeight: 1.55, maxWidth: 460 }}
+              >
+                Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.
+              </p>
+              <div className="mt-8">
+                <Link
+                  to="/book-demo"
+                  className="inline-flex items-center"
+                  style={{
+                    background: "#F5F0E6",
+                    color: "#1A1A1A",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    padding: "12px 22px",
+                    borderRadius: 4,
+                    textDecoration: "none",
+                  }}
+                >
+                  Book a demo
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+
 
       {/* Trust strip — text only */}
       <section className="border-y border-[var(--line)]">
