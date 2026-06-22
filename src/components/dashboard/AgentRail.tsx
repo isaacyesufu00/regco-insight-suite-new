@@ -453,13 +453,20 @@ export default function AgentRail() {
 }
 
 
-function MessageBlock({ message }: { message: any }) {
+type MessageBlockProps = {
+  message: any;
+  isLast?: boolean;
+  busy?: boolean;
+  onRegenerate?: () => void;
+  onPreview?: (content: string, title?: string) => void;
+};
+
+function MessageBlock({ message, isLast, busy, onRegenerate, onPreview }: MessageBlockProps) {
   const isUser = message.role === "user";
   const text = (message.parts ?? []).filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
   const toolParts = (message.parts ?? []).filter((p: any) => typeof p.type === "string" && p.type.startsWith("tool-"));
 
   if (isUser) {
-    // Hide huge attached-files block from the visible bubble
     const display = text.startsWith("[Attached files]")
       ? (() => {
           const idx = text.lastIndexOf("\n---\n");
@@ -471,9 +478,9 @@ function MessageBlock({ message }: { message: any }) {
     return (
       <div className="flex justify-end my-2.5">
         <div
-          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2"
+          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2 border border-black/[0.04]"
           style={{
-            background: "#EFEFEC",
+            background: "#F4F4F2",
             borderRadius: "14px 14px 4px 14px",
           }}
         >
@@ -482,12 +489,79 @@ function MessageBlock({ message }: { message: any }) {
       </div>
     );
   }
+
+  // Build step list from tool parts
+  const steps: AgentStep[] = toolParts.map((p: any, i: number) => {
+    const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "tool";
+    const label = TOOL_LABEL[name] ?? name;
+    const state: string = p.state ?? "input-streaming";
+    const active = state === "input-streaming" || state === "input-available";
+    return {
+      id: `${name}-${i}`,
+      kind: active ? "thinking" : "found",
+      label: active ? `${label}…` : label,
+      state: active ? "active" : (state === "output-error" ? "error" : "done"),
+    } as AgentStep;
+  });
+
+  if (busy && !text) {
+    steps.push({ id: "thinking", kind: "thinking", label: "Thinking through the process…", state: "active" });
+  }
+
+  // Detect long-form content suitable for preview (>800 chars or contains a fenced block)
+  const hasLong = text && (text.length > 800 || /```/.test(text));
+
+  const mutationParts = toolParts.filter((p: any) => {
+    const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "";
+    return MUTATING_TOOLS.has(name) && (p.output?.requires_approval);
+  });
+
   return (
-    <div className="my-3 space-y-2 pr-6">
-      {toolParts.map((p: any, i: number) => <ToolChip key={i} part={p} />)}
+    <div className="my-3 space-y-2 pr-2">
+      {steps.length > 0 && <AgentSteps steps={steps} />}
+
+      {mutationParts.map((p: any, i: number) => {
+        const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "";
+        return <MutationApproval key={`m-${i}`} toolName={name} output={p.output ?? {}} />;
+      })}
+
       {text && (
-        <div className="text-[13.5px] text-[var(--ink)] leading-[1.6] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
+        <div className="text-[13.5px] text-[var(--ink)] leading-[1.65] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
           <ReactMarkdown>{text}</ReactMarkdown>
+        </div>
+      )}
+
+      {text && isLast && !busy && (
+        <div className="flex items-center gap-0.5 -ml-1 pt-0.5">
+          <button title="Share" className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]">
+            <Share2 size={13} />
+          </button>
+          <button
+            title="Regenerate"
+            onClick={() => onRegenerate?.()}
+            className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+          >
+            <RefreshCw size={13} />
+          </button>
+          <button
+            title="Copy"
+            onClick={() => navigator.clipboard?.writeText(text)}
+            className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+          >
+            <Copy size={13} />
+          </button>
+          {hasLong && (
+            <button
+              title="View as document"
+              onClick={() => onPreview?.(text, "Agent response")}
+              className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+            >
+              <Eye size={13} />
+            </button>
+          )}
+          <button title="More" className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]">
+            <MoreHorizontal size={13} />
+          </button>
         </div>
       )}
     </div>
