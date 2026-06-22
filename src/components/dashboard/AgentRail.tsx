@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Plus, ArrowUp, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
+  Plus, ArrowUp, Square, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
   Upload, FileSignature, UserSearch, AlertTriangle, FileBarChart, SearchX, BookOpen,
+  ChevronUp, Mic, BookMarked, Copy, RefreshCw, Share2, MoreHorizontal, Eye,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import AgentSteps, { type AgentStep } from "./AgentSteps";
+import DocumentPreviewModal from "./DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -109,6 +112,7 @@ export default function AgentRail() {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [preview, setPreview] = useState<{ open: boolean; content: string; title?: string }>({ open: false, content: "" });
   const accessToken = session?.access_token;
 
   const transport = useMemo(() => new DefaultChatTransport({
@@ -224,14 +228,20 @@ export default function AgentRail() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
+  const preload = useCallback((text: string) => {
+    setQuickOpen(false);
+    setInput(text);
+    requestAnimationFrame(() => taRef.current?.focus());
+  }, []);
+
   const QUICK_ACTIONS: { icon: typeof Upload; label: string; run: () => void }[] = [
     { icon: Upload,         label: "Import a file",     run: () => { setQuickOpen(false); fileRef.current?.click(); } },
-    { icon: FileBarChart,   label: "Generate a return", run: () => { setQuickOpen(false); send("Generate a regulatory return — list which returns are due this cycle and ask me which one to prepare."); } },
-    { icon: UserSearch,     label: "Check a customer",  run: () => { setQuickOpen(false); send("Open Customer 360 — ask me for the customer name or BVN, then pull their identity, accounts, screening status, and any open cases."); } },
-    { icon: FileSignature,  label: "File an STR",       run: () => { setQuickOpen(false); send("Help me file a Suspicious Transaction Report. Ask which case or transaction it relates to, then draft the NFIU narrative and log a case event."); } },
-    { icon: AlertTriangle,  label: "Review an alert",   run: () => { setQuickOpen(false); send("Show my pending AML alerts ordered by priority, explain the top one, and recommend whether to approve, escalate, or close it."); } },
-    { icon: SearchX,        label: "Find missing data", run: () => { setQuickOpen(false); send("Run a readiness check on my upcoming returns and list any missing or incomplete data fields I need to fix before filing."); } },
-    { icon: BookOpen,       label: "Explain a rule",    run: () => { setQuickOpen(false); send("Explain a compliance rule — ask me which rule (CTR threshold, structuring, CAR, single obligor, etc.) and give a 3-sentence plain-English explanation with the citation."); } },
+    { icon: FileBarChart,   label: "Generate a return", run: () => preload("Generate a regulatory return — list which returns are due this cycle and ask me which one to prepare.") },
+    { icon: UserSearch,     label: "Check a customer",  run: () => preload("Open Customer 360 — ask me for the customer name or BVN, then pull their identity, accounts, screening status, and any open cases.") },
+    { icon: FileSignature,  label: "File an STR",       run: () => preload("Help me file a Suspicious Transaction Report. Ask which case or transaction it relates to, then draft the NFIU narrative and log a case event.") },
+    { icon: AlertTriangle,  label: "Review an alert",   run: () => preload("Show my pending AML alerts ordered by priority, explain the top one, and recommend whether to approve, escalate, or close it.") },
+    { icon: SearchX,        label: "Find missing data", run: () => preload("Run a readiness check on my upcoming returns and list any missing or incomplete data fields I need to fix before filing.") },
+    { icon: BookOpen,       label: "Explain a rule",    run: () => preload("Explain a compliance rule — ask me which rule (CTR threshold, structuring, CAR, single obligor, etc.) and give a 3-sentence plain-English explanation with the citation.") },
   ];
 
   // Close popover on outside click
@@ -265,9 +275,28 @@ export default function AgentRail() {
           </div>
         )}
 
-        {messages.map((m) => (<MessageBlock key={m.id} message={m} />))}
+        {messages.map((m, i) => (
+          <MessageBlock
+            key={m.id}
+            message={m}
+            isLast={i === messages.length - 1}
+            busy={busy && i === messages.length - 1}
+            onRegenerate={() => {
+              // find the previous user message and resend it
+              for (let j = i - 1; j >= 0; j--) {
+                const prev = messages[j];
+                if (prev.role === "user") {
+                  const t = (prev.parts ?? []).filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
+                  if (t) sendMessage({ text: t });
+                  break;
+                }
+              }
+            }}
+            onPreview={(content, title) => setPreview({ open: true, content, title })}
+          />
+        ))}
 
-        {busy && (
+        {busy && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="text-[11.5px] text-[var(--ink-3)] flex items-center gap-1.5 px-1 pt-2">
             <Loader2 size={11} className="animate-spin" />
             {status === "submitted" ? "Thinking…" : "Responding…"}
@@ -313,16 +342,27 @@ export default function AgentRail() {
           </div>
         )}
 
-        <div className="bg-white rounded-xl overflow-hidden" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 0 0 1px var(--rail-border)" }}>
+        {/* Pill composer — matches reference */}
+        <div className="relative">
+          {/* Soft halo behind pill */}
+          <div
+            aria-hidden
+            className="absolute -inset-x-4 -top-6 h-12 pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse at center, rgba(140,170,255,0.22), rgba(180,210,255,0.10) 45%, transparent 70%)",
+              filter: "blur(8px)",
+            }}
+          />
+
           {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 px-2 pt-2">
+            <div className="flex flex-wrap gap-1.5 mb-2">
               {attachments.map(a => (
                 <div
                   key={a.id}
                   className={`inline-flex items-center gap-1.5 text-[11px] rounded-full px-2 py-1 border ${
                     a.error ? "text-red-600 border-red-200 bg-red-50"
-                    : a.parsing ? "text-[var(--ink-3)] border-[var(--rail-border)] bg-black/[0.03]"
-                    : "text-[var(--ink)] border-[var(--rail-border)] bg-black/[0.03]"
+                    : a.parsing ? "text-[var(--ink-3)] border-[var(--rail-border)] bg-white"
+                    : "text-[var(--ink)] border-[var(--rail-border)] bg-white"
                   }`}
                   title={a.error || a.name}
                 >
@@ -337,17 +377,12 @@ export default function AgentRail() {
             </div>
           )}
 
-          <textarea
-            ref={taRef}
-            rows={1}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onKey}
-            disabled={busy}
-            placeholder="How can I help you?"
-            className="w-full px-3 pt-3 pb-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.45]"
-          />
-          <div className="flex items-center justify-between px-2 pb-2">
+          <div
+            className="relative flex items-center gap-1 bg-white rounded-full pl-2 pr-1.5 py-1.5"
+            style={{
+              boxShadow: "0 1px 0 rgba(0,0,0,0.04), 0 6px 24px rgba(80,120,255,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
+            }}
+          >
             <input
               ref={fileRef}
               type="file"
@@ -356,24 +391,57 @@ export default function AgentRail() {
               className="hidden"
               onChange={(e) => { addFiles(e.target.files); if (fileRef.current) fileRef.current.value = ""; }}
             />
+
             <button
               data-quick-trigger
               title="Quick actions"
               onClick={() => setQuickOpen(v => !v)}
-              className={`p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.04] transition-transform ${quickOpen ? "rotate-45" : ""}`}
+              className={`shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05] transition-transform ${quickOpen ? "rotate-45" : ""}`}
             >
               <Plus size={15} />
             </button>
+
+            <div className="w-px h-4 bg-black/[0.08] mx-0.5" />
+
+            <textarea
+              ref={taRef}
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={onKey}
+              disabled={busy}
+              placeholder="Forming…"
+              className="flex-1 min-w-0 px-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.5] max-h-[120px]"
+            />
+
+            <button title="Context" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <BookMarked size={13} />
+            </button>
+            <button title="Options" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <ChevronUp size={14} />
+            </button>
+            <button title="Voice" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
+              <Mic size={13} />
+            </button>
+
             <button
               onClick={() => send()}
-              disabled={(!input.trim() && !validAtt.length) || busy || parsingAny}
-              className="h-7 w-7 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30"
+              disabled={(!input.trim() && !validAtt.length) || parsingAny}
+              className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30 hover:opacity-90"
+              title={busy ? "Streaming" : "Send"}
             >
-              <ArrowUp size={13} />
+              {busy ? <Square size={10} fill="currentColor" /> : <ArrowUp size={14} />}
             </button>
           </div>
         </div>
       </div>
+
+      <DocumentPreviewModal
+        open={preview.open}
+        title={preview.title}
+        content={preview.content}
+        onClose={() => setPreview({ open: false, content: "" })}
+      />
 
       <div className="flex items-center gap-2 px-4 py-3 border-t border-[var(--rail-border)]">
         <div className="w-6 h-6 rounded-full bg-[var(--ink)] text-white flex items-center justify-center text-[11px] font-medium">{userInitial}</div>
@@ -385,13 +453,20 @@ export default function AgentRail() {
 }
 
 
-function MessageBlock({ message }: { message: any }) {
+type MessageBlockProps = {
+  message: any;
+  isLast?: boolean;
+  busy?: boolean;
+  onRegenerate?: () => void;
+  onPreview?: (content: string, title?: string) => void;
+};
+
+function MessageBlock({ message, isLast, busy, onRegenerate, onPreview }: MessageBlockProps) {
   const isUser = message.role === "user";
   const text = (message.parts ?? []).filter((p: any) => p.type === "text").map((p: any) => p.text).join("");
   const toolParts = (message.parts ?? []).filter((p: any) => typeof p.type === "string" && p.type.startsWith("tool-"));
 
   if (isUser) {
-    // Hide huge attached-files block from the visible bubble
     const display = text.startsWith("[Attached files]")
       ? (() => {
           const idx = text.lastIndexOf("\n---\n");
@@ -403,9 +478,9 @@ function MessageBlock({ message }: { message: any }) {
     return (
       <div className="flex justify-end my-2.5">
         <div
-          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2"
+          className="max-w-[78%] text-[13px] leading-[1.5] text-[var(--ink)] whitespace-pre-wrap px-3.5 py-2 border border-black/[0.04]"
           style={{
-            background: "#EFEFEC",
+            background: "#F4F4F2",
             borderRadius: "14px 14px 4px 14px",
           }}
         >
@@ -414,12 +489,79 @@ function MessageBlock({ message }: { message: any }) {
       </div>
     );
   }
+
+  // Build step list from tool parts
+  const steps: AgentStep[] = toolParts.map((p: any, i: number) => {
+    const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "tool";
+    const label = TOOL_LABEL[name] ?? name;
+    const state: string = p.state ?? "input-streaming";
+    const active = state === "input-streaming" || state === "input-available";
+    return {
+      id: `${name}-${i}`,
+      kind: active ? "thinking" : "found",
+      label: active ? `${label}…` : label,
+      state: active ? "active" : (state === "output-error" ? "error" : "done"),
+    } as AgentStep;
+  });
+
+  if (busy && !text) {
+    steps.push({ id: "thinking", kind: "thinking", label: "Thinking through the process…", state: "active" });
+  }
+
+  // Detect long-form content suitable for preview (>800 chars or contains a fenced block)
+  const hasLong = text && (text.length > 800 || /```/.test(text));
+
+  const mutationParts = toolParts.filter((p: any) => {
+    const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "";
+    return MUTATING_TOOLS.has(name) && (p.output?.requires_approval);
+  });
+
   return (
-    <div className="my-3 space-y-2 pr-6">
-      {toolParts.map((p: any, i: number) => <ToolChip key={i} part={p} />)}
+    <div className="my-3 space-y-2 pr-2">
+      {steps.length > 0 && <AgentSteps steps={steps} />}
+
+      {mutationParts.map((p: any, i: number) => {
+        const name: string = p.toolName ?? p.type?.replace(/^tool-/, "") ?? "";
+        return <MutationApproval key={`m-${i}`} toolName={name} output={p.output ?? {}} />;
+      })}
+
       {text && (
-        <div className="text-[13.5px] text-[var(--ink)] leading-[1.6] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
+        <div className="text-[13.5px] text-[var(--ink)] leading-[1.65] prose prose-sm max-w-none prose-p:my-1.5 prose-strong:font-semibold">
           <ReactMarkdown>{text}</ReactMarkdown>
+        </div>
+      )}
+
+      {text && isLast && !busy && (
+        <div className="flex items-center gap-0.5 -ml-1 pt-0.5">
+          <button title="Share" className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]">
+            <Share2 size={13} />
+          </button>
+          <button
+            title="Regenerate"
+            onClick={() => onRegenerate?.()}
+            className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+          >
+            <RefreshCw size={13} />
+          </button>
+          <button
+            title="Copy"
+            onClick={() => navigator.clipboard?.writeText(text)}
+            className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+          >
+            <Copy size={13} />
+          </button>
+          {hasLong && (
+            <button
+              title="View as document"
+              onClick={() => onPreview?.(text, "Agent response")}
+              className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]"
+            >
+              <Eye size={13} />
+            </button>
+          )}
+          <button title="More" className="p-1.5 rounded text-[var(--ink-3)] hover:bg-black/[0.05] hover:text-[var(--ink)]">
+            <MoreHorizontal size={13} />
+          </button>
         </div>
       )}
     </div>
