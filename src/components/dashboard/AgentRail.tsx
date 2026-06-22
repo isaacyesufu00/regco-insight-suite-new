@@ -112,6 +112,7 @@ export default function AgentRail() {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [quickOpen, setQuickOpen] = useState(false);
+  const [preview, setPreview] = useState<{ open: boolean; content: string; title?: string }>({ open: false, content: "" });
   const accessToken = session?.access_token;
 
   const transport = useMemo(() => new DefaultChatTransport({
