@@ -227,14 +227,20 @@ export default function AgentRail() {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
   };
 
+  const preload = useCallback((text: string) => {
+    setQuickOpen(false);
+    setInput(text);
+    requestAnimationFrame(() => taRef.current?.focus());
+  }, []);
+
   const QUICK_ACTIONS: { icon: typeof Upload; label: string; run: () => void }[] = [
     { icon: Upload,         label: "Import a file",     run: () => { setQuickOpen(false); fileRef.current?.click(); } },
-    { icon: FileBarChart,   label: "Generate a return", run: () => { setQuickOpen(false); send("Generate a regulatory return — list which returns are due this cycle and ask me which one to prepare."); } },
-    { icon: UserSearch,     label: "Check a customer",  run: () => { setQuickOpen(false); send("Open Customer 360 — ask me for the customer name or BVN, then pull their identity, accounts, screening status, and any open cases."); } },
-    { icon: FileSignature,  label: "File an STR",       run: () => { setQuickOpen(false); send("Help me file a Suspicious Transaction Report. Ask which case or transaction it relates to, then draft the NFIU narrative and log a case event."); } },
-    { icon: AlertTriangle,  label: "Review an alert",   run: () => { setQuickOpen(false); send("Show my pending AML alerts ordered by priority, explain the top one, and recommend whether to approve, escalate, or close it."); } },
-    { icon: SearchX,        label: "Find missing data", run: () => { setQuickOpen(false); send("Run a readiness check on my upcoming returns and list any missing or incomplete data fields I need to fix before filing."); } },
-    { icon: BookOpen,       label: "Explain a rule",    run: () => { setQuickOpen(false); send("Explain a compliance rule — ask me which rule (CTR threshold, structuring, CAR, single obligor, etc.) and give a 3-sentence plain-English explanation with the citation."); } },
+    { icon: FileBarChart,   label: "Generate a return", run: () => preload("Generate a regulatory return — list which returns are due this cycle and ask me which one to prepare.") },
+    { icon: UserSearch,     label: "Check a customer",  run: () => preload("Open Customer 360 — ask me for the customer name or BVN, then pull their identity, accounts, screening status, and any open cases.") },
+    { icon: FileSignature,  label: "File an STR",       run: () => preload("Help me file a Suspicious Transaction Report. Ask which case or transaction it relates to, then draft the NFIU narrative and log a case event.") },
+    { icon: AlertTriangle,  label: "Review an alert",   run: () => preload("Show my pending AML alerts ordered by priority, explain the top one, and recommend whether to approve, escalate, or close it.") },
+    { icon: SearchX,        label: "Find missing data", run: () => preload("Run a readiness check on my upcoming returns and list any missing or incomplete data fields I need to fix before filing.") },
+    { icon: BookOpen,       label: "Explain a rule",    run: () => preload("Explain a compliance rule — ask me which rule (CTR threshold, structuring, CAR, single obligor, etc.) and give a 3-sentence plain-English explanation with the citation.") },
   ];
 
   // Close popover on outside click
