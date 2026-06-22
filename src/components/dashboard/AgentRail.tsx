@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Plus, ArrowUp, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
+  Plus, ArrowUp, Square, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
   Upload, FileSignature, UserSearch, AlertTriangle, FileBarChart, SearchX, BookOpen,
+  ChevronUp, Mic, BookMarked, Copy, RefreshCw, Share2, MoreHorizontal, Eye,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
+import AgentSteps, { type AgentStep } from "./AgentSteps";
+import DocumentPreviewModal from "./DocumentPreviewModal";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
