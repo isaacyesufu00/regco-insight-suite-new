@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Plus, ArrowUp, Square, LogOut, Settings as SettingsIcon, CheckCircle2, XCircle, Loader2, FileText, X,
   Upload, FileSignature, UserSearch, AlertTriangle, FileBarChart, SearchX, BookOpen,
-  ChevronUp, Mic, BookMarked, Copy, RefreshCw, Share2, MoreHorizontal, Eye,
+  Copy, RefreshCw, Share2, MoreHorizontal, Eye,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useChat } from "@ai-sdk/react";
@@ -146,7 +146,7 @@ export default function AgentRail() {
 
   useEffect(() => {
     const ta = taRef.current;
-    if (ta) { ta.style.height = "auto"; ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`; }
+    if (ta) { ta.style.height = "auto"; ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`; }
   }, [input]);
 
   // Auto-dismiss error attachments
@@ -378,7 +378,7 @@ export default function AgentRail() {
           )}
 
           <div
-            className="relative flex items-center gap-1 bg-white rounded-full pl-2 pr-1.5 py-1.5"
+            className="relative flex items-end gap-1 bg-white rounded-3xl pl-2 pr-1.5 py-1.5"
             style={{
               boxShadow: "0 1px 0 rgba(0,0,0,0.04), 0 6px 24px rgba(80,120,255,0.10), 0 0 0 1px rgba(0,0,0,0.06)",
             }}
@@ -396,12 +396,10 @@ export default function AgentRail() {
               data-quick-trigger
               title="Quick actions"
               onClick={() => setQuickOpen(v => !v)}
-              className={`shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05] transition-transform ${quickOpen ? "rotate-45" : ""}`}
+              className={`shrink-0 h-8 w-8 mb-0.5 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05] transition-transform ${quickOpen ? "rotate-45" : ""}`}
             >
-              <Plus size={15} />
+              <Plus size={16} />
             </button>
-
-            <div className="w-px h-4 bg-black/[0.08] mx-0.5" />
 
             <textarea
               ref={taRef}
@@ -410,24 +408,14 @@ export default function AgentRail() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onKey}
               disabled={busy}
-              placeholder="Forming…"
-              className="flex-1 min-w-0 px-1 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.5] max-h-[120px]"
+              placeholder="Ask anything"
+              className="flex-1 min-w-0 px-1 py-1.5 text-[13.5px] text-[var(--ink)] placeholder:text-[var(--ink-3)] bg-transparent outline-none resize-none leading-[1.5] max-h-[200px]"
             />
-
-            <button title="Context" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
-              <BookMarked size={13} />
-            </button>
-            <button title="Options" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
-              <ChevronUp size={14} />
-            </button>
-            <button title="Voice" className="shrink-0 h-7 w-7 inline-flex items-center justify-center rounded-full text-[var(--ink-3)] hover:bg-black/[0.05]">
-              <Mic size={13} />
-            </button>
 
             <button
               onClick={() => send()}
               disabled={(!input.trim() && !validAtt.length) || parsingAny}
-              className="shrink-0 h-8 w-8 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30 hover:opacity-90"
+              className="shrink-0 h-8 w-8 mb-0.5 inline-flex items-center justify-center rounded-full bg-[var(--ink)] text-white disabled:opacity-30 hover:opacity-90"
               title={busy ? "Streaming" : "Send"}
             >
               {busy ? <Square size={10} fill="currentColor" /> : <ArrowUp size={14} />}
@@ -435,6 +423,7 @@ export default function AgentRail() {
           </div>
         </div>
       </div>
+
 
       <DocumentPreviewModal
         open={preview.open}
