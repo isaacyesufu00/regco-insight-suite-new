@@ -68,7 +68,7 @@ const MobileWhoWeServe = () => (
   <section id="who-we-serve" style={{ background: "#0A0A0A", color: "#FFFFFF", padding: "80px 24px" }}>
     <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 14 }}>WHO WE SERVE</p>
     <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1.2px", lineHeight: 1.05, marginBottom: 28 }}>
-      Every licensed<br />institution in<br />Nigeria.
+      Every licensed<br />institution in<br />your region.
     </h2>
     <svg viewBox="2 4 13 10" style={{ width: "100%", maxWidth: 280, height: "auto", marginBottom: 32, opacity: 0.5 }}>
       <polygon points={NIGERIA_POLYGON[0].map(p => `${p[0]},${15 - p[1]}`).join(" ")} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.08" />
@@ -228,7 +228,7 @@ const WhoWeServeSection = () => {
             WHO WE SERVE
           </p>
           <h2 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 800, letterSpacing: "-2px", lineHeight: 1.05, margin: 0 }}>
-            Every licensed<br />institution in Nigeria.
+            Every licensed<br />institution in your region.
           </h2>
         </motion.div>
 
@@ -241,7 +241,7 @@ const WhoWeServeSection = () => {
         >
           <p style={{ fontSize: 12, margin: 0, letterSpacing: "0.04em" }}>9.0820°N · 8.6753°E</p>
           <p style={{ fontSize: 10, margin: "4px 0 0", color: "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>
-            FEDERAL REPUBLIC OF NIGERIA
+            REGULATED JURISDICTION
           </p>
         </motion.div>
 
@@ -257,7 +257,7 @@ const WhoWeServeSection = () => {
           <p style={{ fontSize: 22, fontWeight: 700, margin: "4px 0 0", letterSpacing: "-0.02em" }}>{zoomNumber}x</p>
         </motion.div>
 
-        {/* NIGERIA LABEL */}
+        {/* REGION LABEL */}
         <motion.div
           style={{
             position: "absolute", top: "38%", left: 0, right: 0, textAlign: "center",
@@ -265,10 +265,10 @@ const WhoWeServeSection = () => {
           }}
         >
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: "rgba(255,255,255,0.6)", margin: 0 }}>
-            FEDERAL REPUBLIC OF
+            REGULATED
           </p>
           <p style={{ fontSize: "clamp(56px, 9vw, 120px)", fontWeight: 800, letterSpacing: "-3px", margin: "8px 0 12px", lineHeight: 1 }}>
-            Nigeria
+            Jurisdiction
           </p>
           <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.4)", margin: "0 auto 12px" }} />
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0, letterSpacing: "0.04em" }}>
@@ -287,7 +287,7 @@ const WhoWeServeSection = () => {
           }}
         >
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 28 }}>
-            LICENSED INSTITUTION CATEGORIES — NIGERIA
+            LICENSED INSTITUTION CATEGORIES
           </p>
 
           {/* Timeline bar */}

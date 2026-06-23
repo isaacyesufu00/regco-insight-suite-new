@@ -38,7 +38,7 @@ const products: Product[] = [
     features: [
       "BVN and NIN verification against NIBSS and NIMC",
       "Sanctions: UN Security Council · OFAC SDN · EU Consolidated · UK HMT · CBN Watchlist",
-      "PEP and adverse-media screening with name-matching tuned for Nigerian naming conventions",
+      "PEP and adverse-media screening with name-matching tuned for local naming conventions",
       "Continuous re-screening with status change alerts",
       "Per-customer evidence packet, retrievable on demand",
     ],
@@ -49,7 +49,7 @@ const products: Product[] = [
     kicker: "Transaction Monitoring",
     name: "Near-real-time fraud, AML, and anomaly detection.",
     lede:
-      "Rules tuned to Nigerian thresholds — CTR ₦5M, 24-hour velocity ₦10M, structuring, dormancy triggers, narration mismatches — running across every transaction your CBS produces. Cases route straight into the queue with the evidence already attached.",
+      "Rules tuned to regulatory thresholds — CTR ₦5M, 24-hour velocity ₦10M, structuring, dormancy triggers, narration mismatches — running across every transaction your CBS produces. Cases route straight into the queue with the evidence already attached.",
     features: [
       "Sub-100ms median screening latency at production tier",
       "CTR, structuring, velocity, dormancy, counter-party risk rules out of the box",
@@ -89,7 +89,7 @@ export default function ProductPage() {
           </h1>
           <p className="mt-6 max-w-[60ch] text-[17px] leading-[1.55] text-ink-3">
             RegCo replaces the spreadsheets, consultants, and last-minute scrambles with a single
-            system that owns returns, screening, monitoring, and audit for licensed Nigerian financial
+            system that owns returns, screening, monitoring, and audit for licensed regulated financial
             institutions.
           </p>
 

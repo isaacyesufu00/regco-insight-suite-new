@@ -106,7 +106,7 @@ const Contact = () => {
               </a>
               <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
                 <MapPin className="w-4 h-4" />
-                Abuja, Nigeria
+                our headquarters city
               </span>
             </div>
 

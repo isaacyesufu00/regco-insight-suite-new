@@ -54,7 +54,7 @@ const BestInClassSection = () => (
             Best in class CBN compliance
           </h2>
           <p style={{ fontSize: 14, color: "#6B6B6B", maxWidth: 480, margin: "12px auto 0", lineHeight: 1.6 }}>
-            Processes regulatory returns for Nigerian institutions with pinpoint CBN accuracy.
+            Processes regulatory returns for regulated institutions with pinpoint CBN accuracy.
             Production-ready output quality.
           </p>
         </div>
@@ -76,7 +76,7 @@ const BestInClassSection = () => (
             <div style={{ fontSize: 48, fontWeight: 700, color: "#0A0A0A", lineHeight: 1, margin: "0 0 8px" }}>16</div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>Full compliance coverage</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.55, margin: 0 }}>
-              All 16 returns across 5 regulators. Every mandatory filing for Nigerian licensed institutions.
+              All 16 returns across 5 regulators. Every mandatory filing for regulated licensed institutions.
             </p>
           </div>
         </ScrollReveal>
@@ -85,7 +85,7 @@ const BestInClassSection = () => (
             <Shield size={32} color="#0A0A0A" style={{ marginBottom: 8 }} />
             <h3 style={{ fontSize: 16, fontWeight: 700, color: "#1A1A1A", margin: "0 0 6px" }}>On-premise ready and enterprise-grade</h3>
             <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.55, margin: 0 }}>
-              Bank-grade security. Your data never leaves Nigeria. Supabase PostgreSQL with row-level security.
+              Bank-grade security. Your data stays inside your jurisdiction. Supabase PostgreSQL with row-level security.
             </p>
           </div>
         </ScrollReveal>

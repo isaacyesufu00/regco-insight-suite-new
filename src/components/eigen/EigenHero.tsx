@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import DashboardMockup from "./DashboardMockup";
 
 const trustedNames = [
-  "Central Bank of Nigeria", "NFIU", "SCUML", "NDIC", "FIRS",
+  "the Central Bank", "NFIU", "SCUML", "NDIC", "FIRS",
   "Nakdnx MFB", "FlexCube Compatible", "Ncube Compatible",
 ];
 
@@ -30,7 +30,7 @@ const EigenHero = () => (
               border: "1px solid rgba(0,0,0,0.2)",
             }}
           >
-            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#0A0A0A", marginRight: 8, verticalAlign: "middle" }} /> Trusted by Nigerian Financial Institutions
+            <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: "#0A0A0A", marginRight: 8, verticalAlign: "middle" }} /> Trusted by Regulated Financial Institutions
           </div>
           <h1
             style={{
@@ -43,7 +43,7 @@ const EigenHero = () => (
               margin: 0,
             }}
           >
-            End-to-end<br />compliance automation<br />for Nigerian banks.
+            End-to-end<br />compliance automation<br />for regulated banks.
           </h1>
         </motion.div>
 

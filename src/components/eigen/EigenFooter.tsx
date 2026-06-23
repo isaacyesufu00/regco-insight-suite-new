@@ -26,7 +26,7 @@ const EigenFooter = () => (
         <div>
           <p style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", marginBottom: 12 }}>RegCo</p>
           <p style={{ fontSize: 13, color: "#6B6B6B", lineHeight: 1.6, maxWidth: 240 }}>
-            Automated regulatory reporting for Nigerian licensed financial institutions.
+            Automated regulatory reporting for licensed financial institutions.
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
             <a href="#" style={{ fontSize: 13, color: "#9B9B9B", textDecoration: "none" }}>𝕏</a>
@@ -49,7 +49,7 @@ const EigenFooter = () => (
 
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.07)", padding: "16px 0", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
         <p style={{ fontSize: 12, color: "#9B9B9B", margin: 0 }}>RegCo Technologies Limited · © 2026 · All rights reserved.</p>
-        <p style={{ fontSize: 12, color: "#9B9B9B", margin: 0 }}>Built in Abuja, Nigeria.</p>
+        <p style={{ fontSize: 12, color: "#9B9B9B", margin: 0 }}>Built in our headquarters city.</p>
       </div>
     </div>
 

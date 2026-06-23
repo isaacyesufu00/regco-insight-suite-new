@@ -331,7 +331,7 @@ const FeaturesSection = () => (
         Everything a compliance<br />team needs.
       </h2>
       <p style={{ fontSize: 15, color: "#6B6B6B", textAlign: "center", maxWidth: 480, margin: "0 auto 80px", lineHeight: 1.65 }}>
-        Built specifically for Nigerian licensed financial institutions. Every feature designed around CBN, NFIU, SCUML, NDIC and FIRS requirements.
+        Built specifically for licensed financial institutions. Every feature designed around CBN, NFIU, SCUML, NDIC and FIRS requirements.
       </p>
 
       {features.map((f, i) => (

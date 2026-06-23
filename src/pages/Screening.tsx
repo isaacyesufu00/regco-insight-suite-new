@@ -50,7 +50,7 @@ const LISTS_CHECKED = [
   "OFAC SDN",
   "EU Consolidated",
   "UK HM Treasury",
-  "Nigerian PEP Database",
+  "Domestic PEP Database",
 ];
 
 const riskColor = (r: string) => {

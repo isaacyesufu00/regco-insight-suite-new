@@ -12,14 +12,14 @@ export default function AboutPage() {
         <div className="container-narrow">
           <p className="tag mb-4">About RegCo</p>
           <h1 className="text-display">
-            We are building the regulatory infrastructure Nigerian finance has been waiting for.
+            We are building the regulatory infrastructure regulated finance has been waiting for.
           </h1>
         </div>
       </section>
 
       <article className="container-narrow pb-20 md:pb-28 space-y-7 text-[16.5px] leading-[1.7] text-ink">
         <p>
-          Every quarter, compliance officers at hundreds of Nigerian banks and microfinance institutions spend days — sometimes weeks — manually compiling regulatory returns, screening new customers against five sanctions lists, and re-reading the same CBN circulars to make sure nothing changed since the last cycle. They pull data from core banking systems, reformat it into templates the CBN, NDIC, NFIU, SCUML and FIRS each require, cross-check arithmetic by hand, and pray nothing was missed before the deadline.
+          Every quarter, compliance officers at hundreds of regulated banks and microfinance institutions spend days — sometimes weeks — manually compiling regulatory returns, screening new customers against five sanctions lists, and re-reading the same CBN circulars to make sure nothing changed since the last cycle. They pull data from core banking systems, reformat it into templates the CBN, NDIC, NFIU, SCUML and FIRS each require, cross-check arithmetic by hand, and pray nothing was missed before the deadline.
         </p>
         <p>
           When something does go wrong — a missed deadline, a missed sanctions hit, a single transposed figure — the consequences are severe. Penalties start at ₦2,000,000 and escalate quickly. For a unit microfinance bank, one sanction can erase a quarter of operating revenue.
@@ -30,7 +30,7 @@ export default function AboutPage() {
 
         <h2 className="text-h2 mt-12 text-ink">A note on independence.</h2>
         <p>
-          RegCo is an independent technology company. We are not affiliated with the Central Bank of Nigeria, the NDIC, the NFIU, SCUML, or FIRS. We do not represent any regulator. We build the tools institutions use to comply with them.
+          RegCo is an independent technology company. We are not affiliated with the the Central Bank, the NDIC, the NFIU, SCUML, or FIRS. We do not represent any regulator. We build the tools institutions use to comply with them.
         </p>
 
         <h2 className="text-h2 mt-12 text-ink">What we believe.</h2>

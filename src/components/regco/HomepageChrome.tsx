@@ -112,7 +112,7 @@ export const HomepageFooter = () => {
         <div>
           <p style={{ fontSize: 18, fontWeight: 700, color: "#0A0A0A", margin: "0 0 12px", letterSpacing: "-0.3px" }}>RegCo</p>
           <p style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", lineHeight: 1.65, maxWidth: 240, margin: 0 }}>
-            AI compliance agent for Nigerian licensed financial institutions.
+            AI compliance agent for licensed financial institutions.
           </p>
         </div>
         {cols.map((c) => (
@@ -130,7 +130,7 @@ export const HomepageFooter = () => {
       </div>
       <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", paddingTop: 24, display: "flex", justifyContent: "space-between", maxWidth: 1200, margin: "0 auto" }}>
         <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", margin: 0 }}>RegCo Technologies Limited · © 2026 · All rights reserved.</p>
-        <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", margin: 0 }}>Built in Abuja, Nigeria.</p>
+        <p style={{ fontSize: 12, color: "rgba(0,0,0,0.4)", margin: 0 }}>Built in our headquarters city.</p>
       </div>
     </footer>
   );

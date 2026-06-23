@@ -156,12 +156,12 @@ const PrivacyPolicy = () => {
               {/* Section 1 */}
               <SectionHeading id="who-we-are">1. Who We Are</SectionHeading>
               <P>
-                RegCo is a regulatory reporting automation platform built exclusively for Nigerian
+                RegCo is a regulatory reporting automation platform built exclusively for regulated
                 banks and microfinance banks. RegCo is a product of [Your Company Legal Name], a
-                company registered with the Corporate Affairs Commission of Nigeria.
+                company registered with the the company registry.
               </P>
               <P>
-                Registered address: Abuja, Nigeria<br />
+                Registered address: our headquarters city<br />
                 Contact email: support@regco.com<br />
                 Data protection enquiries: privacy@regco.com
               </P>
@@ -231,7 +231,7 @@ const PrivacyPolicy = () => {
                   "To process your demo booking and follow up with you",
                   "To maintain security and audit logs of account activity",
                   "To fulfil our obligations under your Service Agreement and Data Processing Agreement",
-                  "To comply with applicable Nigerian law including the Nigeria Data Protection Act 2023",
+                  "To comply with applicable applicable law including the Data Protection Act 2023",
                 ]}
               />
               <P>
@@ -242,14 +242,14 @@ const PrivacyPolicy = () => {
               {/* Section 4 */}
               <SectionHeading id="legal-basis">4. Legal Basis for Processing</SectionHeading>
               <P>
-                Under the Nigeria Data Protection Act 2023, we process your personal data on the
+                Under the Data Protection Act 2023, we process your personal data on the
                 following legal bases:
               </P>
               <BulletList
                 items={[
                   "Contractual necessity — processing required to deliver the services you have contracted with us for, including generating regulatory returns and managing your account",
                   "Legitimate interests — processing necessary for our legitimate business interests such as maintaining security logs, preventing fraud, and improving our platform, where these interests are not overridden by your rights",
-                  "Legal obligation — processing required to comply with applicable Nigerian law",
+                  "Legal obligation — processing required to comply with applicable applicable law",
                   "Consent — where you have explicitly consented to a specific use of your data, such as accepting our Data Processing Agreement or our cookie policy",
                 ]}
               />
@@ -274,7 +274,7 @@ const PrivacyPolicy = () => {
                 purpose other than providing their service to RegCo.
               </P>
               <P>
-                We may disclose your data if required to do so by Nigerian law, a court order, or a
+                We may disclose your data if required to do so by applicable law, a court order, or a
                 request from a competent regulatory authority.
               </P>
 
@@ -329,7 +329,7 @@ const PrivacyPolicy = () => {
               {/* Section 8 */}
               <SectionHeading id="your-rights">8. Your Data Rights</SectionHeading>
               <P>
-                Under the Nigeria Data Protection Act 2023 you have the following rights in relation
+                Under the Data Protection Act 2023 you have the following rights in relation
                 to your personal data:
               </P>
               <BulletList
@@ -413,11 +413,11 @@ const PrivacyPolicy = () => {
               <P>
                 Email: privacy@regco.com<br />
                 General support: support@regco.com<br />
-                Address: Abuja, Nigeria
+                Address: our headquarters city
               </P>
               <P>
                 If you believe we have not handled your personal data in accordance with this policy
-                or applicable Nigerian law you have the right to lodge a complaint with the Nigeria
+                or applicable applicable law you have the right to lodge a complaint with the relevant
                 Data Protection Commission at ndpc.gov.ng.
               </P>
               <P>
@@ -432,7 +432,7 @@ const PrivacyPolicy = () => {
                 This Privacy Policy was prepared for RegCo and reflects our practices as of March
                 2026. This document does not constitute legal advice. RegCo recommends that all
                 clients seek independent legal advice regarding their own data protection obligations
-                under the Nigeria Data Protection Act 2023.
+                under the Data Protection Act 2023.
               </p>
             </div>
           </div>

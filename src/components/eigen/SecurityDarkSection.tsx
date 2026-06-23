@@ -4,7 +4,7 @@ import { Lock, Shield, FileCheck, KeyRound } from "lucide-react";
 
 const badges = [
   { icon: Lock, title: "CBN Data Guidelines", sub: "Compliant with CBN data security circulars" },
-  { icon: Shield, title: "NDPC Registered", sub: "Nigeria Data Protection Commission" },
+  { icon: Shield, title: "NDPC Registered", sub: "Data Protection Commission" },
   { icon: FileCheck, title: "NDPC Compliant", sub: "Data Protection Regulation" },
   { icon: KeyRound, title: "Row Level Security", sub: "Each institution's data fully isolated" },
 ];

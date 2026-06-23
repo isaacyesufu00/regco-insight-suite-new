@@ -14,7 +14,7 @@ const toc = [
 
 const sections: Record<string, { heading: string; lead: string; rows?: string[][]; bullets?: string[] }> = {
   cbn: {
-    heading: "CBN — Central Bank of Nigeria",
+    heading: "CBN — the Central Bank",
     lead: "Every CBN-licensed institution must file between 6 and 10 mandatory returns to the CBN per year. These cover your institution's financial position, capital adequacy, foreign exchange transactions, and governance standards.",
     rows: [
       ["MFB Regulatory Return", "Monthly", "Balance sheet, deposits, loans, CAR", "₦2,000,000"],
@@ -26,7 +26,7 @@ const sections: Record<string, { heading: string; lead: string; rows?: string[][
     ],
   },
   nfiu: {
-    heading: "NFIU — Nigerian Financial Intelligence Unit",
+    heading: "NFIU — Financial Intelligence Unit",
     lead: "All financial institutions must file AML/CFT compliance returns to the NFIU and report suspicious transactions in real time.",
     rows: [
       ["AML/CFT Compliance Report", "Quarterly", "STRs, CTRs, training", "₦2,500,000"],
@@ -43,7 +43,7 @@ const sections: Record<string, { heading: string; lead: string; rows?: string[][
     ],
   },
   ndic: {
-    heading: "NDIC — Nigeria Deposit Insurance Corporation",
+    heading: "NDIC — Deposit Insurance Corporation",
     lead: "Every deposit-taking institution must file premium returns and large exposure reports with the NDIC.",
     rows: [
       ["NDIC Premium Return", "Annual", "Insured deposits, premium computation", "₦2,000,000"],
@@ -71,7 +71,7 @@ const sections: Record<string, { heading: string; lead: string; rows?: string[][
   },
   penalties: {
     heading: "Common Penalties",
-    lead: "Nigerian regulators publish their penalty schedules — the most common are listed below.",
+    lead: "regulators publish their penalty schedules — the most common are listed below.",
     bullets: [
       "Late filing: minimum ₦2,000,000 per return",
       "Incorrect filing: ₦500,000 to ₦2,000,000 depending on severity",
@@ -143,7 +143,7 @@ const ComplianceGuide = () => {
 
   return (
     <PageShell>
-      <PageHero label="COMPLIANCE GUIDE" title="Nigerian Regulatory Filing Guide" subtitle="Everything a compliance officer needs to know about mandatory regulatory returns in Nigeria." />
+      <PageHero label="COMPLIANCE GUIDE" title="Regulatory Filing Guide" subtitle="Everything a compliance officer needs to know about mandatory regulatory returns in our market." />
       <section style={{ padding: "64px 24px" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "220px 1fr", gap: 56 }} className="guide-grid">
           <aside style={{ position: "sticky", top: 100, alignSelf: "start", display: "none" }} className="guide-toc">

@@ -46,7 +46,7 @@ const institutions: Institution[] = [
     name: "State Microfinance Banks",
     tagline: "More branches. More data. More deadlines.",
     stat: "126",
-    statLabel: "State MFBs in Nigeria",
+    statLabel: "State MFBs",
     description:
       "State MFBs operate across an entire state — multiple branches, thousands of customers, and a compliance team that is still surprisingly small relative to the filing workload.\n\nThe challenge isn't just filing returns — it's consolidating data from 5, 10, or 20 branches into one report. Each branch exports separately. Someone has to stitch it all together in Excel. Then validate it. Then format it to CBN's exact template. Every. Single. Month.",
     pain: "Consolidating branch data from multiple locations into one unified regulatory return.",
@@ -66,7 +66,7 @@ const institutions: Institution[] = [
     name: "National Microfinance Banks",
     tagline: "Nationwide scale. Nationwide scrutiny.",
     stat: "8",
-    statLabel: "National MFBs in Nigeria",
+    statLabel: "National MFBs",
     description:
       "National MFBs are the largest category of microfinance institutions — operating in every state, with tens of thousands of customers and a compliance obligation that rivals commercial banks in complexity.\n\nAt this scale, a missed filing isn't just a fine. It's a headline. CBN examiners show up. Board members ask questions. The compliance team is under constant pressure to produce clean, accurate returns across all 5 regulators on time, every time.",
     pain: "Managing 16 mandatory returns across 5 regulators with a compliance team that can never be large enough.",
@@ -89,7 +89,7 @@ const institutions: Institution[] = [
     stat: "34",
     statLabel: "PMBs licensed by CBN",
     description:
-      "Primary Mortgage Banks exist to help Nigerians buy homes. Their loan books are more complex than MFBs — longer tenors, larger amounts, stricter collateral requirements — and CBN watches them closely.\n\nThe CBN prudential return for PMBs requires detailed loan classification by sector, days-past-due, and collateral type. Getting it wrong means CBN questions your capital adequacy. Getting it right manually means a compliance officer spending days cross-referencing loan ledgers.",
+      "Primary Mortgage Banks exist to help customers buy homes. Their loan books are more complex than MFBs — longer tenors, larger amounts, stricter collateral requirements — and CBN watches them closely.\n\nThe CBN prudential return for PMBs requires detailed loan classification by sector, days-past-due, and collateral type. Getting it wrong means CBN questions your capital adequacy. Getting it right manually means a compliance officer spending days cross-referencing loan ledgers.",
     pain: "Generating accurate loan portfolio classification and CBN prudential returns from complex mortgage data.",
     solution:
       "Upload your loan portfolio data and RegCo classifies every borrower using CBN's CAMEL framework automatically. Provisions calculated at CBN-prescribed rates. Prudential return generated in minutes.",
@@ -107,9 +107,9 @@ const institutions: Institution[] = [
     name: "Finance Companies & Fintechs",
     tagline: "Fast growth. Complex obligations.",
     stat: "150+",
-    statLabel: "Finance companies in Nigeria",
+    statLabel: "Finance companies",
     description:
-      "Nigeria's finance companies and licensed fintechs are the fastest-growing category of financial institution. Some have millions of customers and billions in transaction volume — but their compliance teams are lean, their processes are newer, and the regulators are catching up fast.\n\nFIRS wants your VAT, PAYE, and CIT. SCUML wants your annual compliance report. NFIU wants your AML returns. CBN may be watching too. Most fintechs handle these in silos — one person for FIRS, another for SCUML, spreadsheets everywhere.",
+      "Domestic finance companies and licensed fintechs are the fastest-growing category of financial institution. Some have millions of customers and billions in transaction volume — but their compliance teams are lean, their processes are newer, and the regulators are catching up fast.\n\nFIRS wants your VAT, PAYE, and CIT. SCUML wants your annual compliance report. NFIU wants your AML returns. CBN may be watching too. Most fintechs handle these in silos — one person for FIRS, another for SCUML, spreadsheets everywhere.",
     pain: "Coordinating compliance across FIRS, SCUML, and NFIU with a small team and no unified system.",
     solution:
       "RegCo brings every obligation into one dashboard. Generate your FIRS VAT return and your SCUML annual compliance report from the same platform on the same day.",
@@ -334,7 +334,7 @@ const UseCasesSection = () => (
         className="who-stats-bar"
       >
         {[
-          { n: "1,000+", l: "Licensed institutions in Nigeria" },
+          { n: "1,000+", l: "Licensed institutions" },
           { n: "16", l: "Mandatory returns per institution per year" },
           { n: "₦2M", l: "Minimum CBN fine per late filing" },
         ].map((s) => (

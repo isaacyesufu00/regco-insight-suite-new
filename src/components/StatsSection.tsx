@@ -6,7 +6,7 @@ const StatsSection = () => (
       <AnimateIn>
         <p style={{ fontSize: 23, maxWidth: 700, lineHeight: 1.75 }}>
           <span style={{ color: "#6E6E73" }}>Introducing </span>
-          <span style={{ color: "#1D1D1F", fontWeight: 700 }}>the only compliance platform built exclusively for Nigerian financial institutions.</span>
+          <span style={{ color: "#1D1D1F", fontWeight: 700 }}>the only compliance platform built exclusively for regulated financial institutions.</span>
           <span style={{ color: "#6E6E73" }}> We automate every return you file — to the CBN, NFIU, SCUML, NDIC, and FIRS — so your compliance team spends their time on decisions, </span>
           <span style={{ color: "#1D1D1F", fontWeight: 700 }}>not data entry.</span>
         </p>

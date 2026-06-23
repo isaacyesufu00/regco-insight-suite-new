@@ -1,8 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
 import { ArrowUpRight, ArrowRight } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SiteNavbar from "@/components/site/SiteNavbar";
 import SiteFooter from "@/components/site/SiteFooter";
+
+const HELVETICA = '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 const products = [
   {
@@ -10,28 +13,28 @@ const products = [
     name: "Automated Returns",
     desc:
       "Generate, validate, and file every CBN and NFIU return your institution owes. Schemas, arithmetic, and deadlines handled end-to-end — your team approves, RegCo files.",
-    href: "/product#returns",
+    href: "/product/automated-returns",
   },
   {
     n: "02",
     name: "Live Client Screening",
     desc:
       "BVN, NIN, sanctions (UN, OFAC, EU, HMT, CBN), PEP and adverse media — checked in real time at onboarding and continuously thereafter. One verdict per customer, with the audit trail attached.",
-    href: "/product#screening",
+    href: "/product/live-screening",
   },
   {
     n: "03",
     name: "Transaction Monitoring",
     desc:
       "Near-real-time detection across structuring, velocity, dormancy, narration mismatches, and counter-party risk. Fraud and AML cases flow straight into your case queue.",
-    href: "/product#monitoring",
+    href: "/product/transaction-monitoring",
   },
   {
     n: "04",
     name: "Audit Trail & Case Mgmt",
     desc:
       "A single chain of custody for every decision: alert raised, analyst assigned, evidence attached, outcome recorded. Export an examiner-ready packet in one click.",
-    href: "/product#audit",
+    href: "/product/audit-trail",
   },
 ];
 
@@ -61,60 +64,98 @@ const stats = [
 ];
 
 export default function Index() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+
+  const submitEmail = (e: FormEvent) => {
+    e.preventDefault();
+    const v = email.trim();
+    navigate(v ? `/book-demo?email=${encodeURIComponent(v)}` : "/book-demo");
+  };
+
   return (
-    <div className="min-h-screen bg-white text-ink">
+    <div className="min-h-screen bg-white text-ink" style={{ fontFamily: HELVETICA }}>
       <SiteNavbar />
 
-      {/* Hero — bottom-left anchored, white background */}
+      {/* Hero — compact text column, room for image on the right */}
       <section
         className="relative w-full"
         style={{ minHeight: "100vh", background: "#FFFFFF" }}
       >
-        <div className="container-site relative h-full" style={{ minHeight: "100vh" }}>
-          {/* Bottom-left anchored content */}
+        <div className="container-site relative" style={{ minHeight: "100vh" }}>
           <div
             className="absolute left-0 right-0"
-            style={{ bottom: "10vh", paddingLeft: 0, paddingRight: 0 }}
+            style={{ bottom: "12vh" }}
           >
-            <div className="max-w-[680px]">
+            <div style={{ maxWidth: 520 }}>
               <h1
                 className="text-ink"
                 style={{
-                  fontFamily: "'Instrument Serif', 'Cormorant Garamond', Georgia, serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(48px, 7vw, 88px)",
-                  lineHeight: 1.02,
-                  letterSpacing: "-0.02em",
+                  fontFamily: HELVETICA,
+                  fontWeight: 600,
+                  fontSize: "clamp(34px, 3.6vw, 46px)",
+                  lineHeight: 1.1,
+                  letterSpacing: "-0.01em",
                 }}
               >
-                The compliance operating<br />
-                system for Nigerian finance.
+                Automating regulatory<br />
+                compliance for regulated banks.
               </h1>
               <p
-                className="mt-6 text-ink-3"
-                style={{ fontSize: 16, lineHeight: 1.55, maxWidth: 460 }}
+                className="mt-5 text-ink-3"
+                style={{ fontFamily: HELVETICA, fontSize: 14, lineHeight: 1.55, maxWidth: 480 }}
               >
-                Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.
+                Connect your CBS, screen customers live, monitor transactions in real time, and file CBN, NFIU, SCUML and NDIC returns from one audited workspace.
               </p>
-              <div className="mt-8">
-                <Link
-                  to="/book-demo"
-                  className="inline-flex items-center"
+
+              <form
+                onSubmit={submitEmail}
+                className="mt-6 flex items-center"
+                style={{
+                  maxWidth: 480,
+                  background: "#FFFFFF",
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 999,
+                  padding: "4px 4px 4px 18px",
+                  boxShadow: "0 1px 0 rgba(0,0,0,0.02)",
+                }}
+              >
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Work email"
                   style={{
-                    background: "#F5F0E6",
+                    flex: 1,
+                    minWidth: 0,
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontFamily: HELVETICA,
+                    fontSize: 14,
                     color: "#1A1A1A",
-                    fontSize: 12,
-                    fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    padding: "12px 22px",
-                    borderRadius: 4,
-                    textDecoration: "none",
+                    padding: "10px 0",
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    flexShrink: 0,
+                    background: "#0A0A0A",
+                    color: "#FFFFFF",
+                    fontFamily: HELVETICA,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    padding: "10px 20px",
+                    borderRadius: 999,
+                    border: "none",
+                    cursor: "pointer",
                   }}
                 >
-                  Book a demo
-                </Link>
-              </div>
+                  Request access
+                </button>
+              </form>
             </div>
           </div>
         </div>
@@ -125,7 +166,7 @@ export default function Index() {
       <section className="border-y border-[var(--line)]">
         <div className="container-site py-6 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-8">
           <p className="text-[12px] uppercase tracking-[0.18em] text-ink-3 font-mono">
-            Trusted by Nigerian financial institutions
+            Trusted by regulated financial institutions
           </p>
           <p className="text-[13px] text-ink-3">
             Microfinance Banks · Primary Mortgage Banks · Finance Companies · Commercial Banks · Fintechs
@@ -139,9 +180,10 @@ export default function Index() {
           <div className="max-w-[60ch] mb-12">
             <p className="tag mb-3">Four products. One system.</p>
             <h2 className="text-h2 text-ink">
-              Everything a Nigerian compliance desk does — under one license.
+              Everything the compliance desk does — under one license.
             </h2>
           </div>
+
 
           <div>
             {products.map((p) => (

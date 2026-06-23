@@ -83,7 +83,7 @@ export default function SignUp() {
   return (
     <EditorialAuthShell
       title="Create your account."
-      subtitle="Built for licensed Nigerian financial institutions."
+      subtitle="Built for licensed regulated financial institutions."
       footer={
         <>
           Already have an account?{" "}

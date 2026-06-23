@@ -110,7 +110,7 @@ export default function RegulatoryIntelligence() {
     { id: 'cbn', label: 'CBN' },
     { id: 'regulation', label: 'Regulation' },
     { id: 'banking', label: 'Banking' },
-    { id: 'nigeria-banking', label: 'Industry' },
+    { id: 'industry-banking', label: 'Industry' },
   ];
 
   const filtered = filter === 'all' ? articles : articles.filter((a) => a.category === filter);
