@@ -10,7 +10,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SERVICE_ROLE_KEY =
   Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? ''
-const AI_MODEL_ID = Deno.env.get('AI_MODEL_ID') ?? 'google/gemini-2-flash:free'
+const AI_MODEL_ID = Deno.env.get('AI_MODEL_ID') ?? 'google/gemini-2.0-flash-001:free'
 
 if (!SUPABASE_URL || !SERVICE_ROLE_KEY || !OPENROUTER_API_KEY) {
   throw new Error('Missing SUPABASE_URL, SERVICE_ROLE_KEY, or OPENROUTER_API_KEY')
