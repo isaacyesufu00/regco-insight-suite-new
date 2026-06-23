@@ -7,8 +7,7 @@ const corsHeaders = {
 }
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
-const SERVICE_ROLE_KEY =
-  Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+const SERVICE_ROLE_KEY = Deno.env.get('SERVICE_ROLE_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const OPENROUTER_API_KEY = Deno.env.get('OPENROUTER_API_KEY') ?? ''
 const AI_MODEL_ID = Deno.env.get('AI_MODEL_ID') ?? 'google/gemini-2.0-flash-001:free'
 
@@ -76,7 +75,7 @@ serve(async (req) => {
       .maybeSingle()
 
     if (txErr) throw txErr
-    if (!transaction) return json(404, { error: 'Transaction not found'})
+    if (!transaction) return json(404, { error: 'Transaction not found' })
 
     let customer: any = null
     if (transaction.customer_id) {
@@ -134,7 +133,7 @@ serve(async (req) => {
     const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: Bearer ${OPENROUTER_API_KEY},
+        Authorization: 'Bearer ' + OPENROUTER_API_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -159,7 +158,7 @@ serve(async (req) => {
 
     if (!aiRes.ok) {
       const text = await aiRes.text()
-      throw new Error(AI request failed: ${aiRes.status} ${text})
+      throw new Error('AI request failed: ' + aiRes.status + ' ' + text)
     }
 
     const aiJson = await aiRes.json()
@@ -191,7 +190,7 @@ serve(async (req) => {
     if (openCase) {
       const { error: caseErr } = await supabase.from('cases').insert({
         institution_id: signal.institution_id,
-        title: Automated Risk Alert: ${recommendedAction} - ${customer?.full_name ?? 'Unknown'},
+        title: 'Automated Risk Alert: ' + recommendedAction + ' - ' + (customer?.full_name ?? 'Unknown'),
         description: reasoning,
         status: 'pending_review',
         priority: riskScore >= 75 ? 'high' : 'medium',
