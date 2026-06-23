@@ -76,7 +76,7 @@ serve(async (req) => {
       .maybeSingle()
 
     if (txErr) throw txErr
-    if (!transaction) return json(404, { error: 'Transaction not found' })
+    if (!transaction) return json(404, { error: 'Transaction not found'})
 
     let customer: any = null
     if (transaction.customer_id) {
