@@ -25,11 +25,11 @@ const regulators: Regulator[] = [
   {
     id: "cbn",
     name: "CBN",
-    fullName: "Central Bank of Nigeria",
-    tagline: "The most important filing deadline in Nigerian banking.",
+    fullName: "the Central Bank",
+    tagline: "The most important filing deadline in regulated banking.",
     bg: "#F5F5F0",
     description:
-      "The CBN is Nigeria's apex financial regulator. Every licensed bank and MFB reports directly to the CBN every single month. The CBN uses these returns to monitor the health of the Nigerian financial system — your balance sheet, your loans, your capital, your foreign exchange exposure.\n\nMiss a CBN return and the fine is immediate. Miss two and examiners arrive. Miss three and your license is at risk. There is no grace period and no negotiation.",
+      "The CBN is the apex financial regulator. Every licensed bank and MFB reports directly to the CBN every single month. The CBN uses these returns to monitor the health of the regulated financial system — your balance sheet, your loans, your capital, your foreign exchange exposure.\n\nMiss a CBN return and the fine is immediate. Miss two and examiners arrive. Miss three and your license is at risk. There is no grace period and no negotiation.",
     returns: [
       { name: "MFB Regulatory Return", freq: "Monthly", desc: "Your complete balance sheet, deposits, loans, and capital adequacy ratio submitted monthly" },
       { name: "Monetary Policy Return", freq: "Monthly", desc: "Interest rates, monetary aggregates, and credit data for CBN's monetary policy analysis" },
@@ -44,11 +44,11 @@ const regulators: Regulator[] = [
   {
     id: "nfiu",
     name: "NFIU",
-    fullName: "Nigerian Financial Intelligence Unit",
+    fullName: "Financial Intelligence Unit",
     tagline: "Fighting money laundering. One return at a time.",
     bg: "#FFFFFF",
     description:
-      "The NFIU is Nigeria's financial intelligence agency — the equivalent of FinCEN in the US or UKFIU in the UK. They track money laundering, terrorism financing, and financial crime across the Nigerian banking system.\n\nEvery financial institution must tell NFIU what suspicious transactions they spotted, how many Suspicious Transaction Reports they filed, and how their AML programme is working. Failure to file is treated as potential complicity in financial crime.",
+      "The NFIU is the financial intelligence agency — the equivalent of FinCEN in the US or UKFIU in the UK. They track money laundering, terrorism financing, and financial crime across the regulated banking system.\n\nEvery financial institution must tell NFIU what suspicious transactions they spotted, how many Suspicious Transaction Reports they filed, and how their AML programme is working. Failure to file is treated as potential complicity in financial crime.",
     returns: [
       { name: "AML/CFT Compliance Report", freq: "Quarterly", desc: "Your anti-money laundering programme effectiveness — staff trained, transactions monitored, STRs filed" },
       { name: "NFIU Regulatory Return", freq: "Quarterly", desc: "Compliance infrastructure, regulatory examination outcomes, international transaction data" },
@@ -61,7 +61,7 @@ const regulators: Regulator[] = [
     id: "scuml",
     name: "SCUML",
     fullName: "Special Control Unit Against Money Laundering",
-    tagline: "Nigeria's anti-money laundering watchdog.",
+    tagline: "The anti-money laundering watchdog.",
     bg: "#0A0A0A",
     description:
       "SCUML operates under the Economic and Financial Crimes Commission (EFCC) and focuses specifically on Designated Non-Financial Businesses and financial institutions. Every institution must register with SCUML and file an annual compliance report proving their AML/CFT programme is real — not just a document that sits in a drawer.\n\nSCUML examiners visit institutions. They ask for training records. They review your customer files. They check your transaction monitoring system. Your annual compliance report is their first line of assessment.",
@@ -74,11 +74,11 @@ const regulators: Regulator[] = [
   {
     id: "ndic",
     name: "NDIC",
-    fullName: "Nigeria Deposit Insurance Corporation",
+    fullName: "Deposit Insurance Corporation",
     tagline: "The insurance that protects your depositors.",
     bg: "#F5F5F0",
     description:
-      "The NDIC provides deposit insurance to Nigerian bank customers — if your bank fails, NDIC pays depositors up to ₦500,000 each. To fund this, every insured institution pays an annual premium calculated from their total insured deposits.\n\nBeyond the premium, NDIC also tracks large borrowers. If one customer owes you more than a certain percentage of your capital, NDIC wants to know — because if that customer defaults, it could bring down the institution and trigger a payout.",
+      "The NDIC provides deposit insurance to bank customers — if your bank fails, NDIC pays depositors up to ₦500,000 each. To fund this, every insured institution pays an annual premium calculated from their total insured deposits.\n\nBeyond the premium, NDIC also tracks large borrowers. If one customer owes you more than a certain percentage of your capital, NDIC wants to know — because if that customer defaults, it could bring down the institution and trigger a payout.",
     returns: [
       { name: "NDIC Premium Return", freq: "Annual", desc: "Annual insurance premium computation — total insured deposits × 0.40% = your premium payable to NDIC" },
       { name: "Single Obligor Report", freq: "Quarterly", desc: "All borrowers whose exposure exceeds 5% of your capital base — NDIC's large exposure monitoring" },
@@ -265,7 +265,7 @@ const RegulatoryReturnsSection = () => (
             Every return.<br />Every regulator.
           </h2>
           <p style={{ fontSize: 17, color: "#525252", lineHeight: 1.6, maxWidth: 620, margin: "0 auto" }}>
-            Nigerian financial institutions must file 16 mandatory returns across 5 separate regulators. RegCo automates all of them.
+            regulated financial institutions must file 16 mandatory returns across 5 separate regulators. RegCo automates all of them.
           </p>
         </motion.div>
       </div>

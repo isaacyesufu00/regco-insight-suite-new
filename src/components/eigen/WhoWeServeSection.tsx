@@ -68,7 +68,7 @@ const MobileWhoWeServe = () => (
   <section id="who-we-serve" style={{ background: "#0A0A0A", color: "#FFFFFF", padding: "80px 24px" }}>
     <p style={{ fontSize: 10, letterSpacing: "0.18em", color: "rgba(255,255,255,0.4)", fontWeight: 700, marginBottom: 14 }}>WHO WE SERVE</p>
     <h2 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-1.2px", lineHeight: 1.05, marginBottom: 28 }}>
-      Every licensed<br />institution in<br />Nigeria.
+      Every licensed<br />institution in<br />your region.
     </h2>
     <svg viewBox="2 4 13 10" style={{ width: "100%", maxWidth: 280, height: "auto", marginBottom: 32, opacity: 0.5 }}>
       <polygon points={NIGERIA_POLYGON[0].map(p => `${p[0]},${15 - p[1]}`).join(" ")} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="0.08" />
@@ -228,7 +228,7 @@ const WhoWeServeSection = () => {
             WHO WE SERVE
           </p>
           <h2 style={{ fontSize: "clamp(40px, 6vw, 72px)", fontWeight: 800, letterSpacing: "-2px", lineHeight: 1.05, margin: 0 }}>
-            Every licensed<br />institution in Nigeria.
+            Every licensed<br />institution in your region.
           </h2>
         </motion.div>
 
@@ -241,7 +241,7 @@ const WhoWeServeSection = () => {
         >
           <p style={{ fontSize: 12, margin: 0, letterSpacing: "0.04em" }}>9.0820°N · 8.6753°E</p>
           <p style={{ fontSize: 10, margin: "4px 0 0", color: "rgba(255,255,255,0.45)", letterSpacing: "0.06em" }}>
-            FEDERAL REPUBLIC OF NIGERIA
+            REGULATED JURISDICTION
           </p>
         </motion.div>
 

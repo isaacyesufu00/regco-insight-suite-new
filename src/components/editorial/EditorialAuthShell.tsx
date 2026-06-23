@@ -20,7 +20,7 @@ export default function EditorialAuthShell({ title, subtitle, children, footer }
 
         <div className="max-w-md">
           <p className="text-[28px] leading-[1.15] font-semibold tracking-tight text-ink">
-            Regulatory infrastructure for Nigerian financial institutions.
+            Regulatory infrastructure for regulated financial institutions.
           </p>
           <p className="mt-4 text-[13.5px] text-ink-3 leading-relaxed">
             Returns, screening, monitoring, and audit — in one system, on the regulator's calendar.

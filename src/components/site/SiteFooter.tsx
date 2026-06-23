@@ -23,7 +23,7 @@ export default function SiteFooter() {
           <div className="md:col-span-4">
             <Link to="/" className="text-[18px] font-semibold text-ink">RegCo</Link>
             <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-ink-3">
-              Regulatory infrastructure for Nigerian financial institutions. Returns, screening, monitoring, and audit — in one system.
+              Regulatory infrastructure for regulated financial institutions. Returns, screening, monitoring, and audit — in one system.
             </p>
           </div>
 
@@ -56,7 +56,7 @@ export default function SiteFooter() {
         </div>
 
         <div className="hairline mt-14 pt-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-          <p className="text-[12px] text-ink-3">© {new Date().getFullYear()} RegCo. Abuja, Nigeria.</p>
+          <p className="text-[12px] text-ink-3">© {new Date().getFullYear()} RegCo. our headquarters city.</p>
           <p className="text-[10px] tracking-[0.2em] uppercase text-ink-3 font-mono">
             Independent · Not affiliated with the CBN
           </p>

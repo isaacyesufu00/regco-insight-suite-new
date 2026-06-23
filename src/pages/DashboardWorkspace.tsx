@@ -57,7 +57,7 @@ const ledgerRows = [
   { id: "TXN-92038", entity: "Okonkwo, C.",            rule: "Velocity > ₦10M in 24h",          score: 0.81 },
   { id: "TXN-92033", entity: "Sunrise Trading Co.",    rule: "Counter-party in OFAC SDN",       score: 0.97 },
   { id: "TXN-92027", entity: "Mensah, A.",             rule: "Narration mismatch — invoice",    score: 0.64 },
-  { id: "TXN-92019", entity: "Globalpay Nigeria",      rule: "Structuring — 11 sub-CTR debits", score: 0.88 },
+  { id: "TXN-92019", entity: "Globalpay Holdings",      rule: "Structuring — 11 sub-CTR debits", score: 0.88 },
   { id: "TXN-92014", entity: "Bola Estates Ltd",       rule: "Dormant account reactivation",    score: 0.45 },
 ];
 
@@ -127,7 +127,7 @@ const FraudView = () => (
 // ─── Tab 2: Identity & Screening ───────────────────────────────────────
 const owners = [
   { name: "Adebayo Holdings Ltd",  cac: "RC-1284091", ubo: "Adebayo, T.",   stake: "62%", verified: true },
-  { name: "Globalpay Nigeria Ltd", cac: "RC-3041928", ubo: "Okeke, F.",     stake: "100%", verified: true },
+  { name: "Globalpay Holdings Ltd", cac: "RC-3041928", ubo: "Okeke, F.",     stake: "100%", verified: true },
   { name: "Bola Estates Ltd",      cac: "RC-1990842", ubo: "Bola, J.",      stake: "55%", verified: false },
   { name: "Sunrise Trading Co.",   cac: "RC-2811209", ubo: "Ahmed, K.",     stake: "70%", verified: true },
 ];

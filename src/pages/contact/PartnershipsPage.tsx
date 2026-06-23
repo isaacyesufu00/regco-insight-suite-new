@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageShell, PageHero, ContentSection } from "@/components/eigen/PageShell";
 
 const tiers = [
-  { title: "Referral Partners", body: "Are you a compliance consultant, chartered accountant, or financial advisor serving Nigerian MFBs and banks? Refer your clients to RegCo and earn a referral commission for every successful onboarding.", cta: "Become a referral partner →", href: "mailto:partnerships@regco.com.ng?subject=Referral%20Partner%20Enquiry" },
-  { title: "CBS Vendors", body: "Do you provide core banking software to Nigerian financial institutions? Integrate RegCo into your platform so your clients can generate regulatory returns directly from their CBS dashboard.", cta: "Technical integration enquiry →", href: "mailto:partnerships@regco.com.ng?subject=CBS%20Integration%20Enquiry" },
+  { title: "Referral Partners", body: "Are you a compliance consultant, chartered accountant, or financial advisor serving MFBs and banks? Refer your clients to RegCo and earn a referral commission for every successful onboarding.", cta: "Become a referral partner →", href: "mailto:partnerships@regco.com.ng?subject=Referral%20Partner%20Enquiry" },
+  { title: "CBS Vendors", body: "Do you provide core banking software to regulated financial institutions? Integrate RegCo into your platform so your clients can generate regulatory returns directly from their CBS dashboard.", cta: "Technical integration enquiry →", href: "mailto:partnerships@regco.com.ng?subject=CBS%20Integration%20Enquiry" },
   { title: "Regulatory Consultants", body: "Are you a compliance firm or legal practice specialising in CBN, NFIU, or FIRS regulatory matters? White-label RegCo's report generation for your clients under your brand.", cta: "White-label enquiry →", href: "mailto:partnerships@regco.com.ng?subject=White-label%20Enquiry" },
 ];
 
@@ -60,7 +60,7 @@ const PartnershipsPage = () => {
 
   return (
     <PageShell>
-      <PageHero label="PARTNERSHIPS" title="Partner with RegCo" subtitle="We work with accounting firms, compliance consultants, and CBS vendors serving Nigerian financial institutions." />
+      <PageHero label="PARTNERSHIPS" title="Partner with RegCo" subtitle="We work with accounting firms, compliance consultants, and CBS vendors serving regulated financial institutions." />
       <ContentSection>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 24, marginBottom: 80 }}>
           {tiers.map((t, i) => <TierCard key={t.title} t={t} i={i} />)}

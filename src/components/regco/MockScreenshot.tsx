@@ -201,7 +201,7 @@ const ScreeningMock = () => (
         <div style={{ background: PALETTE.panel, border: `1px solid ${PALETTE.border}`, borderRadius: 10, padding: 14, marginBottom: 16 }}>
           <p style={{ fontSize: 11, color: PALETTE.faint, margin: "0 0 8px" }}>Lists checked</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {["UN Consolidated", "OFAC SDN", "EU Sanctions", "UK HM Treasury", "CBN Watchlist", "Nigerian PEPs"].map((l) => (
+            {["UN Consolidated", "OFAC SDN", "EU Sanctions", "UK HM Treasury", "CBN Watchlist", "Domestic PEPs"].map((l) => (
               <span key={l} style={{ fontSize: 11, padding: "4px 10px", border: `1px solid ${PALETTE.border}`, borderRadius: 999, color: PALETTE.muted }}>✓ {l}</span>
             ))}
           </div>

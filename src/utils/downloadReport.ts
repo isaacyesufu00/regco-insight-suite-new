@@ -55,7 +55,7 @@ const buildFallbackContent = (report: ReportData): string => {
     ? new Date(report.generated_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
     : new Date().toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  return `CENTRAL BANK OF NIGERIA
+  return `CENTRAL BANK
 MICROFINANCE BANK REGULATORY RETURN
 =====================================
 

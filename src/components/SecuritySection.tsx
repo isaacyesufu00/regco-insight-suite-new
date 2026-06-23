@@ -6,7 +6,7 @@ const items = [
   { icon: Cloud, title: "Secure Cloud Infrastructure", desc: "Hosted on enterprise-grade, SOC 2 compliant infrastructure." },
   { icon: ScrollText, title: "Full Audit Logs", desc: "Tamper-proof logs for every action in your account." },
   { icon: Database, title: "Data Isolation Per Client", desc: "Strict tenant isolation ensures complete data privacy." },
-  { icon: Scale, title: "NDPR-Aligned Data Handling", desc: "Compliant with Nigerian Data Protection Regulation standards." },
+  { icon: Scale, title: "NDPR-Aligned Data Handling", desc: "Compliant with regulated Data Protection Regulation standards." },
 ];
 
 const fadeUp = {

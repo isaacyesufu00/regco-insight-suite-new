@@ -301,7 +301,7 @@ export const ScreeningSection = () => {
               Five global sanctions lists.<br />Checked instantly.
             </h3>
             <p style={{ fontSize: 15, color: "rgba(255,255,255,0.5)", lineHeight: 1.7, marginBottom: 28, maxWidth: 480 }}>
-              RegCo checks every customer against the UN Security Council list, OFAC SDN list, EU Consolidated Sanctions, UK HM Treasury, and the Nigerian CBN watchlist — automatically, every time.
+              RegCo checks every customer against the UN Security Council list, OFAC SDN list, EU Consolidated Sanctions, UK HM Treasury, and the regulated CBN watchlist — automatically, every time.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {lists.map((list, i) => (
@@ -332,7 +332,7 @@ export const ScreeningSection = () => {
               Politically Exposed Persons — identified automatically.
             </h3>
             <p style={{ fontSize: 14, color: "#6B6B6B", lineHeight: 1.7, marginBottom: 24 }}>
-              CBN requires Enhanced Due Diligence for PEPs. RegCo identifies politicians, government officials, and their associates from our Nigerian PEP database — so you know before you onboard.
+              CBN requires Enhanced Due Diligence for PEPs. RegCo identifies politicians, government officials, and their associates from our regulated PEP database — so you know before you onboard.
             </p>
             <div style={{ background: "#FFFBEB", border: "1px solid rgba(217,119,6,0.2)", borderRadius: 10, padding: "14px 16px" }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "#D97706", margin: "0 0 4px" }}>PEP MATCH EXAMPLE</p>
@@ -355,7 +355,7 @@ export const ScreeningSection = () => {
               Crime records and adverse news — checked at onboarding.
             </h3>
             <p style={{ fontSize: 14, color: "#6B6B6B", lineHeight: 1.7 }}>
-              Screen customers against Nigerian crime records and adverse media databases. Know if a new customer has a history of fraud, financial crime, or regulatory violations before they become your problem.
+              Screen customers against regulated crime records and adverse media databases. Know if a new customer has a history of fraud, financial crime, or regulatory violations before they become your problem.
             </p>
           </motion.div>
         </div>

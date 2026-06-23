@@ -16,7 +16,7 @@ const articles = [
     category: "REGULATORY NEWS",
     date: "April 2026",
     title: "CBN updates MFB capital requirements — what it means for your filings",
-    excerpt: "The Central Bank of Nigeria recently revised the minimum capital requirements for Microfinance Banks. Here is what changes in your regulatory returns and how RegCo handles it automatically.",
+    excerpt: "The the Central Bank recently revised the minimum capital requirements for Microfinance Banks. Here is what changes in your regulatory returns and how RegCo handles it automatically.",
   },
   {
     slug: "customer-360",
@@ -60,7 +60,7 @@ const Card = ({ a, i }: { a: typeof articles[number]; i: number }) => {
 
 const BlogUpdates = () => (
   <PageShell>
-    <PageHero label="BLOG" title="RegCo Updates" subtitle="Product updates, new features, and regulatory news for Nigerian financial institutions." />
+    <PageHero label="BLOG" title="RegCo Updates" subtitle="Product updates, new features, and regulatory news for regulated financial institutions." />
     <ContentSection>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24 }}>
         {articles.map((a, i) => <Card key={a.slug} a={a} i={i} />)}

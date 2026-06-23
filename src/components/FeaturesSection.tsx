@@ -4,8 +4,8 @@ import { motion } from "framer-motion";
 
 const features = [
   {
-    category: "BUILT FOR NIGERIA",
-    title: "The only platform that knows Nigerian regulatory formats by heart.",
+    category: "BUILT FOR REGULATED FINANCE",
+    title: "The only platform that knows regulatory formats by heart.",
     desc: "Every return on RegCo outputs in the exact format required by each portal — CBN Supervision, NFIU, SCUML, and NDIC. Not adapted. Not approximate. Exact.",
   },
   {
@@ -31,7 +31,7 @@ const features = [
   {
     category: "SECURITY",
     title: "NDPC registered. Bank-grade data handling.",
-    desc: "RegCo is registered with the Nigeria Data Protection Commission as both Data Controller and Data Processor. Your CBS data is processed in-memory and never stored permanently on our servers.",
+    desc: "RegCo is registered with the Data Protection Commission as both Data Controller and Data Processor. Your CBS data is processed in-memory and never stored permanently on our servers.",
   },
 ];
 
@@ -41,7 +41,7 @@ const FeaturesSection = () => (
       <div className="flex items-center justify-between mb-12">
         <AnimateIn>
           <h2 style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", color: "#1D1D1F", maxWidth: 600 }}>
-            Why Nigeria's financial institutions choose RegCo.
+            Why regulated financial institutions choose RegCo.
           </h2>
         </AnimateIn>
         <a href="#features" style={{ color: "#0066CC", fontSize: 17, whiteSpace: "nowrap" }}>See all features ›</a>

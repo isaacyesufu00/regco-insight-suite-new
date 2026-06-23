@@ -5,17 +5,17 @@ export default function ProductTransactionMonitoring() {
   return (
     <FeaturePageTemplate
       seoTitle="Transaction Monitoring | RegCo"
-      seoDescription="Near-real-time fraud and AML detection tuned to Nigerian thresholds — CTR, structuring, velocity, dormancy. STR/CTR drafts ready for NFIU submission."
+      seoDescription="Near-real-time fraud and AML detection tuned to regulatory thresholds — CTR, structuring, velocity, dormancy. STR/CTR drafts ready for NFIU submission."
       tag="Transaction Monitoring"
       title="Near-real-time fraud and AML detection, with cases that arrive evidence-attached."
-      intro="Rules tuned to Nigerian thresholds — CTR ₦5M, 24-hour velocity ₦10M, structuring, dormancy triggers, narration mismatches — running across every transaction your CBS produces. Hits route straight into the case queue with the supporting evidence already gathered."
+      intro="Rules tuned to regulatory thresholds — CTR ₦5M, 24-hour velocity ₦10M, structuring, dormancy triggers, narration mismatches — running across every transaction your CBS produces. Hits route straight into the case queue with the supporting evidence already gathered."
       problem={{
         heading: "Generic AML engines fire too late and miss the local typologies.",
-        body: "International AML platforms run rules tuned to USD/EUR thresholds and Western typologies. They don't catch the structuring patterns common in Nigerian retail banking, they miss narration-based laundering, and by the time the batch job runs the funds have already moved. RegCo monitors at the transaction event with rules tuned to the actual CBN and NFIU thresholds.",
+        body: "International AML platforms run rules tuned to USD/EUR thresholds and Western typologies. They don't catch the structuring patterns common in domestic retail banking, they miss narration-based laundering, and by the time the batch job runs the funds have already moved. RegCo monitors at the transaction event with rules tuned to the actual CBN and NFIU thresholds.",
       }}
       capabilities={[
         { icon: Zap,          title: "Sub-100ms screening",       body: "Production tier processes transaction events at median sub-100ms latency. Hits surface before settlement, not the next morning." },
-        { icon: Filter,       title: "Nigerian-tuned rules",      body: "CTR ₦5M, structuring within ₦4.5M bands, 24-hour velocity ₦10M, dormancy reactivation, narration-mismatch, counterparty risk — all out of the box." },
+        { icon: Filter,       title: "Locally-tuned rules",      body: "CTR ₦5M, structuring within ₦4.5M bands, 24-hour velocity ₦10M, dormancy reactivation, narration-mismatch, counterparty risk — all out of the box." },
         { icon: FileWarning,  title: "Auto STR/CTR drafts",       body: "When a rule fires that meets reporting thresholds, RegCo drafts the STR or CTR in NFIU's XML format and routes it to the compliance officer for sign-off." },
         { icon: Sliders,      title: "Configurable thresholds",   body: "Adjust thresholds per license category, customer segment, or product. Changes are version-controlled with effective dates." },
         { icon: Activity,     title: "Case-attached evidence",    body: "Every case lands in the queue with the triggering transaction, related history, customer context, and rule rationale already attached." },
@@ -35,7 +35,7 @@ export default function ProductTransactionMonitoring() {
       badges={["NFIU", "CBN AML/CFT", "FATF Rec. 20", "EFCC reportable", "GIABA"]}
       faqs={[
         { q: "Can we keep our existing rule set?",
-          a: "Yes. The default Nigerian rule pack ships pre-configured, but every rule is editable and you can add organisation-specific rules with the visual editor or expression DSL." },
+          a: "Yes. The default default rule pack ships pre-configured, but every rule is editable and you can add organisation-specific rules with the visual editor or expression DSL." },
         { q: "What's the integration with NFIU?",
           a: "Approved STR and CTR drafts are produced in NFIU's accepted XML format and either uploaded automatically (where the institution has API access) or staged for manual upload via the goAML portal." },
         { q: "How do we tune false positives down?",

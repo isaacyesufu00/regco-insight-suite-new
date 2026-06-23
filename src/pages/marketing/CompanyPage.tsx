@@ -18,17 +18,17 @@ export default function CompanyPage() {
             We build compliance tools for regulated financial institutions.
           </h1>
           <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, maxWidth: '520px' }}>
-            RegCo Technologies Limited is based in Abuja, Nigeria. We exist to help Nigerian banks, fintechs, and microfinance banks manage regulatory compliance with speed, clarity, and control.
+            RegCo Technologies Limited is based in our headquarters city. We exist to help regulated banks, fintechs, and microfinance banks manage regulatory compliance with speed, clarity, and control.
           </p>
         </div>
       </section>
 
       {/* Sections */}
       {[
-        { heading: 'Who we are', body: 'RegCo Technologies Limited is a compliance technology company building AI-powered tools for Nigerian licensed financial institutions. We serve MFBs, finance companies, PMBs, and commercial banks — any institution with mandatory regulatory obligations to the CBN, NFIU, SCUML, NDIC, FIRS, or PENCOM.' },
-        { heading: 'Our mission', body: 'Our mission is to make compliance simple, reliable, and automatic for every regulated financial institution in Nigeria. We believe that when compliance is easy, it happens. When it happens consistently, institutions are safer. When institutions are safer, the Nigerian financial system is stronger.' },
-        { heading: 'Why we built RegCo', body: 'Every licensed financial institution in Nigeria must file up to 17 mandatory regulatory returns per year. Most do this manually — in Excel, at 11pm before the deadline, with a compliance officer juggling every regulator at once. We built RegCo because the tools available to Nigerian compliance officers were inadequate for the complexity of what the CBN actually requires.' },
-        { heading: 'Our principles', body: 'We build accurate before fast. We design for compliance officers, not for demos. We are Nigeria-specific, not a foreign product adapted for Nigeria. We are transparent about what RegCo can and cannot do. And we build software that works five years from now.' },
+        { heading: 'Who we are', body: 'RegCo Technologies Limited is a compliance technology company building AI-powered tools for licensed financial institutions. We serve MFBs, finance companies, PMBs, and commercial banks — any institution with mandatory regulatory obligations to the CBN, NFIU, SCUML, NDIC, FIRS, or PENCOM.' },
+        { heading: 'Our mission', body: 'Our mission is to make compliance simple, reliable, and automatic for every regulated financial institution. We believe that when compliance is easy, it happens. When it happens consistently, institutions are safer. When institutions are safer, the regulated financial system is stronger.' },
+        { heading: 'Why we built RegCo', body: 'Every licensed financial institution in our market must file up to 17 mandatory regulatory returns per year. Most do this manually — in Excel, at 11pm before the deadline, with a compliance officer juggling every regulator at once. We built RegCo because the tools available to compliance officers were inadequate for the complexity of what the CBN actually requires.' },
+        { heading: 'Our principles', body: 'We build accurate before fast. We design for compliance officers, not for demos. We are Jurisdiction-specific, not a foreign product retrofitted. We are transparent about what RegCo can and cannot do. And we build software that works five years from now.' },
         { heading: 'How we work with financial institutions', body: 'We work directly with the Head of Compliance and the CEO at each institution. We configure the platform to match your CBS format, your regulatory profile, and your internal workflows. We provide onboarding support and are available throughout your first month to ensure everything is working correctly.' },
       ].map((section, i) => (
         <section key={section.heading} style={{ padding: '64px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', background: i % 2 === 0 ? '#FFFFFF' : '#F9FAFB' }}>

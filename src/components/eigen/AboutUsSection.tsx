@@ -51,17 +51,17 @@ const missionCards = [
   {
     label: "OUR MISSION",
     title: "Automate compliance. Protect institutions.",
-    body: "Nigerian financial institutions face an increasing volume of mandatory regulatory filings across five regulators. RegCo automates every mandatory return — from CBN monthly filings to FIRS annual tax returns — so compliance teams can focus on what matters: serving their customers and growing their institution.",
+    body: "regulated financial institutions face an increasing volume of mandatory regulatory filings across five regulators. RegCo automates every mandatory return — from CBN monthly filings to FIRS annual tax returns — so compliance teams can focus on what matters: serving their customers and growing their institution.",
   },
   {
     label: "OUR VISION",
-    title: "Zero regulatory penalties in Nigeria.",
-    body: "We believe no Nigerian financial institution should ever pay a ₦2,000,000 CBN fine for a late or incorrect filing when the technology to prevent it exists. RegCo is building the infrastructure layer that makes regulatory compliance as simple as pressing a button.",
+    title: "Zero regulatory penalties.",
+    body: "We believe no regulated financial institution should ever pay a ₦2,000,000 CBN fine for a late or incorrect filing when the technology to prevent it exists. RegCo is building the infrastructure layer that makes regulatory compliance as simple as pressing a button.",
   },
 ];
 
 const stats: { number: number; prefix?: string; suffix?: string; label: string }[] = [
-  { number: 1000, suffix: "+", label: "Licensed institutions in Nigeria" },
+  { number: 1000, suffix: "+", label: "Licensed institutions" },
   { number: 16, label: "Mandatory returns per institution" },
   { number: 2, prefix: "₦", suffix: "M", label: "Minimum CBN fine per late filing" },
   { number: 5, suffix: " min", label: "Average RegCo generation time" },
@@ -78,7 +78,7 @@ const AboutUsSection = () => (
         style={{ marginBottom: 80 }}
       >
         <p style={{ fontSize: 11, fontWeight: 700, color: "#9B9B9B", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 24 }}>ABOUT REGCO</p>
-        <WordReveal text="RegCo exists so that every licensed financial institution in Nigeria can meet its regulatory obligations — without friction, without fear, and without three sleepless days before every CBN deadline." />
+        <WordReveal text="RegCo exists so that every licensed financial institution in our market can meet its regulatory obligations — without friction, without fear, and without three sleepless days before every CBN deadline." />
       </motion.div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, marginBottom: 80 }}>

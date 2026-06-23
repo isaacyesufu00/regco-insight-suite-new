@@ -88,7 +88,7 @@ export default function Index() {
                 }}
               >
                 The compliance operating<br />
-                system for Nigerian finance.
+                system for regulated finance.
               </h1>
               <p
                 className="mt-6 text-ink-3"
@@ -125,7 +125,7 @@ export default function Index() {
       <section className="border-y border-[var(--line)]">
         <div className="container-site py-6 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-8">
           <p className="text-[12px] uppercase tracking-[0.18em] text-ink-3 font-mono">
-            Trusted by Nigerian financial institutions
+            Trusted by regulated financial institutions
           </p>
           <p className="text-[13px] text-ink-3">
             Microfinance Banks · Primary Mortgage Banks · Finance Companies · Commercial Banks · Fintechs
@@ -139,7 +139,7 @@ export default function Index() {
           <div className="max-w-[60ch] mb-12">
             <p className="tag mb-3">Four products. One system.</p>
             <h2 className="text-h2 text-ink">
-              Everything a Nigerian compliance desk does — under one license.
+              Everything a the compliance desk does — under one license.
             </h2>
           </div>
 

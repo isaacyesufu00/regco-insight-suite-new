@@ -59,7 +59,7 @@ export const WhoWeServePage = () => (
           Six classes of institution. One regulatory standard.
         </h1>
         <p className="mt-6 max-w-[60ch] text-[17px] leading-[1.55] text-ink-3">
-          RegCo is built specifically for institutions licensed by the Central Bank of Nigeria.
+          RegCo is built specifically for institutions licensed by the the Central Bank.
           Whether you have three branches or three hundred, the regulator's calendar is the same — and so is our commitment to keeping you ahead of it.
         </p>
       </div>
