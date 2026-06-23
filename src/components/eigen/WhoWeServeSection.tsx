@@ -257,7 +257,7 @@ const WhoWeServeSection = () => {
           <p style={{ fontSize: 22, fontWeight: 700, margin: "4px 0 0", letterSpacing: "-0.02em" }}>{zoomNumber}x</p>
         </motion.div>
 
-        {/* NIGERIA LABEL */}
+        {/* REGION LABEL */}
         <motion.div
           style={{
             position: "absolute", top: "38%", left: 0, right: 0, textAlign: "center",
@@ -265,10 +265,10 @@ const WhoWeServeSection = () => {
           }}
         >
           <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: "rgba(255,255,255,0.6)", margin: 0 }}>
-            FEDERAL REPUBLIC OF
+            REGULATED
           </p>
           <p style={{ fontSize: "clamp(56px, 9vw, 120px)", fontWeight: 800, letterSpacing: "-3px", margin: "8px 0 12px", lineHeight: 1 }}>
-            Nigeria
+            Jurisdiction
           </p>
           <div style={{ width: 60, height: 1, background: "rgba(255,255,255,0.4)", margin: "0 auto 12px" }} />
           <p style={{ fontSize: 13, color: "rgba(255,255,255,0.6)", margin: 0, letterSpacing: "0.04em" }}>
@@ -287,7 +287,7 @@ const WhoWeServeSection = () => {
           }}
         >
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.5)", textAlign: "center", marginBottom: 28 }}>
-            LICENSED INSTITUTION CATEGORIES — NIGERIA
+            LICENSED INSTITUTION CATEGORIES
           </p>
 
           {/* Timeline bar */}

@@ -1,7 +1,7 @@
 import { LegalPage, P, UL } from "@/components/eigen/LegalShell";
 
 const sections = [
-  { id: "what", label: "What is the NDPC?", title: "What is the NDPC?", body: <P>The Data Protection Commission (NDPC) is the regulatory body established under the Data Protection Act 2023 to oversee the protection of personal data in Nigeria.</P> },
+  { id: "what", label: "What is the NDPC?", title: "What is the NDPC?", body: <P>The Data Protection Commission (NDPC) is the regulatory body established under the Data Protection Act 2023 to oversee the protection of personal data within its jurisdiction.</P> },
   { id: "status", label: "RegCo's NDPC Status", title: "RegCo's NDPC Status", body: <>
     <P>RegCo Technologies Limited is registered with the NDPC as both:</P>
     <UL items={[
