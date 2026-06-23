@@ -2191,14 +2191,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      compile_returns_to_xml: {
-        Args: {
-          p_period_end: string
-          p_period_start: string
-          p_template_id: string
-        }
-        Returns: string
-      }
+      compile_returns_to_xml:
+        | {
+            Args: {
+              p_institution_id: string
+              p_period_end: string
+              p_period_start: string
+              p_template_id: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_period_end: string
+              p_period_start: string
+              p_template_id: string
+            }
+            Returns: string
+          }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       get_institution_id: { Args: never; Returns: string }
       has_role: {
         Args: {
