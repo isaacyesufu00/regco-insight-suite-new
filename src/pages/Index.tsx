@@ -1,9 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, type FormEvent } from "react";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, ArrowRight, Star } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SiteNavbar from "@/components/site/SiteNavbar";
 import SiteFooter from "@/components/site/SiteFooter";
+import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
+
+const HERO_FONT = '"Inter Tight", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 const HELVETICA = '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
@@ -64,102 +66,187 @@ const stats = [
 ];
 
 export default function Index() {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-
-  const submitEmail = (e: FormEvent) => {
-    e.preventDefault();
-    const v = email.trim();
-    navigate(v ? `/book-demo?email=${encodeURIComponent(v)}` : "/book-demo");
-  };
-
   return (
-    <div className="min-h-screen bg-white text-ink" style={{ fontFamily: HELVETICA }}>
+    <div className="min-h-screen bg-white text-ink" style={{ fontFamily: HERO_FONT }}>
       <SiteNavbar />
 
-      {/* Hero — compact text column, room for image on the right */}
+      {/* Hero — Kota-style stacked cards on a tinted page */}
       <section
         className="relative w-full"
-        style={{ minHeight: "100vh", background: "#FFFFFF" }}
+        style={{ background: "var(--hero-page)", padding: "48px 0 72px" }}
       >
-        <div className="container-site relative" style={{ minHeight: "100vh" }}>
+        <div className="container-site">
           <div
-            className="absolute left-0 right-0"
-            style={{ bottom: "12vh" }}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 1fr)",
+              gap: 24,
+            }}
+            className="hero-grid"
           >
-            <div style={{ maxWidth: 520 }}>
-              <h1
-                className="text-ink"
+            {/* LEFT — copy card with offset shadow card behind */}
+            <div style={{ position: "relative" }}>
+              <div
+                aria-hidden
                 style={{
-                  fontFamily: HELVETICA,
-                  fontWeight: 600,
-                  fontSize: "clamp(34px, 3.6vw, 46px)",
-                  lineHeight: 1.1,
-                  letterSpacing: "-0.01em",
+                  position: "absolute",
+                  inset: 0,
+                  transform: "translate(24px, 24px)",
+                  background: "var(--hero-card-shadow)",
+                  borderRadius: 28,
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  background: "var(--hero-card)",
+                  borderRadius: 28,
+                  padding: "48px 48px 48px",
+                  zIndex: 1,
+                  minHeight: 560,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
                 }}
               >
-                Automating regulatory<br />
-                compliance for regulated banks.
-              </h1>
-              <p
-                className="mt-5 text-ink-3"
-                style={{ fontFamily: HELVETICA, fontSize: 14, lineHeight: 1.55, maxWidth: 480 }}
-              >
-                Connect your CBS, screen customers live, monitor transactions in real time, and file CBN, NFIU, SCUML and NDIC returns from one audited workspace.
-              </p>
+                <div>
+                  {/* Reviews chip */}
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                      background: "#FFFFFF",
+                      border: "1px solid rgba(0,0,0,0.06)",
+                      borderRadius: 999,
+                      padding: "5px 12px",
+                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                      marginBottom: 32,
+                    }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", letterSpacing: "-0.01em" }}>
+                       
+                    </span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0 4px" }}>
+                      <span style={{ width: 16, height: 16, borderRadius: 4, background: "linear-gradient(135deg,#00C7FF,#0066FF)", display: "inline-block" }} />
+                      <span style={{ width: 16, height: 16, borderRadius: "50%", background: "conic-gradient(#EA4335 0 25%,#FBBC05 25% 50%,#34A853 50% 75%,#4285F4 75% 100%)", display: "inline-block" }} />
+                    </span>
+                    <span style={{ display: "inline-flex", gap: 2 }}>
+                      {[0,1,2,3,4].map((i) => (
+                        <Star key={i} size={12} fill="#F5B100" stroke="#F5B100" />
+                      ))}
+                    </span>
+                  </div>
 
-              <form
-                onSubmit={submitEmail}
-                className="mt-6 flex items-center"
+                  <h1
+                    style={{
+                      fontFamily: HERO_FONT,
+                      fontWeight: 700,
+                      fontSize: "clamp(40px, 4.6vw, 64px)",
+                      lineHeight: 1.05,
+                      letterSpacing: "-0.025em",
+                      color: "var(--hero-ink)",
+                      margin: 0,
+                    }}
+                  >
+                    Automating regulatory<br />
+                    compliance<br />
+                    for the modern<br />
+                    compliance desk.
+                  </h1>
+
+                  <p
+                    style={{
+                      marginTop: 28,
+                      fontFamily: HERO_FONT,
+                      fontSize: 17,
+                      lineHeight: 1.55,
+                      color: "var(--hero-sub)",
+                      maxWidth: 440,
+                    }}
+                  >
+                    RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
+                  </p>
+                </div>
+
+                <div style={{ marginTop: 40 }}>
+                  <Link
+                    to="/book-demo"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      background: "var(--hero-ink)",
+                      color: "#FFFFFF",
+                      fontFamily: HERO_FONT,
+                      fontSize: 15,
+                      fontWeight: 500,
+                      padding: "16px 28px",
+                      borderRadius: 999,
+                      textDecoration: "none",
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    Book a demo
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT — illustration card with offset shadow card behind */}
+            <div style={{ position: "relative" }}>
+              <div
+                aria-hidden
                 style={{
-                  maxWidth: 480,
-                  background: "#FFFFFF",
-                  border: "1px solid rgba(0,0,0,0.12)",
-                  borderRadius: 999,
-                  padding: "4px 4px 4px 18px",
-                  boxShadow: "0 1px 0 rgba(0,0,0,0.02)",
+                  position: "absolute",
+                  inset: 0,
+                  transform: "translate(24px, 24px)",
+                  background: "var(--hero-illus-shadow)",
+                  borderRadius: 28,
+                  zIndex: 0,
+                }}
+              />
+              <div
+                style={{
+                  position: "relative",
+                  background: "var(--hero-illus-card)",
+                  borderRadius: 28,
+                  overflow: "hidden",
+                  zIndex: 1,
+                  minHeight: 560,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Work email"
+                <img
+                  src={boardroomAsset.url}
+                  alt="Compliance team reviewing reports at a boardroom table"
                   style={{
-                    flex: 1,
-                    minWidth: 0,
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontFamily: HELVETICA,
-                    fontSize: 14,
-                    color: "#1A1A1A",
-                    padding: "10px 0",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    display: "block",
                   }}
                 />
-                <button
-                  type="submit"
-                  style={{
-                    flexShrink: 0,
-                    background: "#0A0A0A",
-                    color: "#FFFFFF",
-                    fontFamily: HELVETICA,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    padding: "10px 20px",
-                    borderRadius: 999,
-                    border: "none",
-                    cursor: "pointer",
-                  }}
-                >
-                  Request access
-                </button>
-              </form>
+              </div>
             </div>
           </div>
         </div>
+
+        <style>{`
+          @media (min-width: 1024px) {
+            .hero-grid {
+              grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) !important;
+              gap: 28px !important;
+            }
+          }
+        `}</style>
       </section>
+
+
 
 
       {/* Trust strip — text only */}
