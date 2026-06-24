@@ -1,9 +1,11 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, type FormEvent } from "react";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, ArrowRight, Star } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SiteNavbar from "@/components/site/SiteNavbar";
 import SiteFooter from "@/components/site/SiteFooter";
+import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
+
+const HERO_FONT = '"Inter Tight", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 const HELVETICA = '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
