@@ -11,6 +11,15 @@
 
 @layer base {
   :root {
+    /* Hero (Kota-style) tokens — blue palette derived from boardroom illustration */
+    --hero-page: #D6E4EF;
+    --hero-card: #EAF1F7;
+    --hero-card-shadow: #C8DAE8;
+    --hero-illus-card: #A9C8DE;
+    --hero-illus-shadow: #94B8D2;
+    --hero-ink: #0A0A0A;
+    --hero-sub: #2A2A2A;
+
     /* shadcn semantic tokens (HSL components) */
     --background: 0 0% 100%;
     --foreground: 0 0% 4%;
