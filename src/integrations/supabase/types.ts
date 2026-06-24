@@ -502,6 +502,7 @@ export type Database = {
           created_at: string
           customer_id: string | null
           id: string
+          institution_id: string
           opened_at: string
           severity: string
           status: string
@@ -518,6 +519,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          institution_id: string
           opened_at?: string
           severity?: string
           status?: string
@@ -534,6 +536,7 @@ export type Database = {
           created_at?: string
           customer_id?: string | null
           id?: string
+          institution_id?: string
           opened_at?: string
           severity?: string
           status?: string
@@ -839,27 +842,33 @@ export type Database = {
       }
       customers: {
         Row: {
+          bvn_hash: string | null
           created_at: string
           email_hash: string | null
           full_name: string
           id: string
           institution_id: string
+          phone_hash: string | null
           raw_pii_jsonb: Json | null
         }
         Insert: {
+          bvn_hash?: string | null
           created_at?: string
           email_hash?: string | null
           full_name: string
           id?: string
           institution_id?: string
+          phone_hash?: string | null
           raw_pii_jsonb?: Json | null
         }
         Update: {
+          bvn_hash?: string | null
           created_at?: string
           email_hash?: string | null
           full_name?: string
           id?: string
           institution_id?: string
+          phone_hash?: string | null
           raw_pii_jsonb?: Json | null
         }
         Relationships: [
@@ -994,6 +1003,78 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      fraud_signals: {
+        Row: {
+          ai_model_id: string | null
+          ai_reviewed_at: string | null
+          ai_status: string | null
+          created_at: string
+          details: Json
+          id: string
+          institution_id: string
+          reasoning: string | null
+          recommended_action: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          severity: string
+          signal_type: string
+          status: string
+          transaction_id: string
+        }
+        Insert: {
+          ai_model_id?: string | null
+          ai_reviewed_at?: string | null
+          ai_status?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          institution_id: string
+          reasoning?: string | null
+          recommended_action?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          severity?: string
+          signal_type: string
+          status?: string
+          transaction_id: string
+        }
+        Update: {
+          ai_model_id?: string | null
+          ai_reviewed_at?: string | null
+          ai_status?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          institution_id?: string
+          reasoning?: string | null
+          recommended_action?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          severity?: string
+          signal_type?: string
+          status?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_signals_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_signals_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       institution_report_types: {
         Row: {
@@ -1750,6 +1831,7 @@ export type Database = {
           customer_id: string | null
           highest_risk: string
           id: string
+          institution_id: string
           match_details: Json | null
           matches_found: number
           notes: string | null
@@ -1765,6 +1847,7 @@ export type Database = {
           customer_id?: string | null
           highest_risk?: string
           id?: string
+          institution_id: string
           match_details?: Json | null
           matches_found?: number
           notes?: string | null
@@ -1780,6 +1863,7 @@ export type Database = {
           customer_id?: string | null
           highest_risk?: string
           id?: string
+          institution_id?: string
           match_details?: Json | null
           matches_found?: number
           notes?: string | null
@@ -1888,12 +1972,17 @@ export type Database = {
         Row: {
           account_id: string
           amount: number
+          channel: string | null
+          counterparty_name: string | null
           created_at: string
           currency: string | null
+          customer_id: string | null
           direction: string | null
           id: string
           institution_id: string
+          narration: string | null
           receiver_name: string | null
+          reference: string | null
           sender_name: string | null
           status: string
           transaction_type: string
@@ -1901,12 +1990,17 @@ export type Database = {
         Insert: {
           account_id: string
           amount: number
+          channel?: string | null
+          counterparty_name?: string | null
           created_at?: string
           currency?: string | null
+          customer_id?: string | null
           direction?: string | null
           id?: string
           institution_id?: string
+          narration?: string | null
           receiver_name?: string | null
+          reference?: string | null
           sender_name?: string | null
           status?: string
           transaction_type?: string
@@ -1914,12 +2008,17 @@ export type Database = {
         Update: {
           account_id?: string
           amount?: number
+          channel?: string | null
+          counterparty_name?: string | null
           created_at?: string
           currency?: string | null
+          customer_id?: string | null
           direction?: string | null
           id?: string
           institution_id?: string
+          narration?: string | null
           receiver_name?: string | null
+          reference?: string | null
           sender_name?: string | null
           status?: string
           transaction_type?: string
