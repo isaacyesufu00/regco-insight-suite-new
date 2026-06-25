@@ -94,13 +94,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "accounts_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "accounts_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
@@ -360,6 +353,39 @@ export type Database = {
           title?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          institution_id: string
+          new_value: string | null
+          old_value: string | null
+          operator_id: string | null
+          target_record_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          new_value?: string | null
+          old_value?: string | null
+          operator_id?: string | null
+          target_record_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          new_value?: string | null
+          old_value?: string | null
+          operator_id?: string | null
+          target_record_id?: string | null
         }
         Relationships: []
       }
@@ -684,6 +710,30 @@ export type Database = {
         }
         Relationships: []
       }
+      compliance_rules: {
+        Row: {
+          corporate_ctr_threshold: number | null
+          individual_ctr_threshold: number | null
+          institution_id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          corporate_ctr_threshold?: number | null
+          individual_ctr_threshold?: number | null
+          institution_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          corporate_ctr_threshold?: number | null
+          individual_ctr_threshold?: number | null
+          institution_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       compliance_score_history: {
         Row: {
           breakdown: Json | null
@@ -743,6 +793,57 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ctr_flagged_transactions: {
+        Row: {
+          amount: number | null
+          created_at: string | null
+          customer_id: string | null
+          customer_segment: string | null
+          flag_reason: string | null
+          id: string
+          institution_id: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          customer_segment?: string | null
+          flag_reason?: string | null
+          id?: string
+          institution_id: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          customer_segment?: string | null
+          flag_reason?: string | null
+          id?: string
+          institution_id?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ctr_flagged_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ctr_flagged_transactions_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_accounts: {
         Row: {
@@ -842,44 +943,39 @@ export type Database = {
       }
       customers: {
         Row: {
+          account_number: string
           bvn_hash: string | null
-          created_at: string
+          created_at: string | null
+          customer_segment: string
           email_hash: string | null
           full_name: string
           id: string
           institution_id: string
           phone_hash: string | null
-          raw_pii_jsonb: Json | null
         }
         Insert: {
+          account_number: string
           bvn_hash?: string | null
-          created_at?: string
+          created_at?: string | null
+          customer_segment: string
           email_hash?: string | null
           full_name: string
           id?: string
-          institution_id?: string
+          institution_id: string
           phone_hash?: string | null
-          raw_pii_jsonb?: Json | null
         }
         Update: {
+          account_number?: string
           bvn_hash?: string | null
-          created_at?: string
+          created_at?: string | null
+          customer_segment?: string
           email_hash?: string | null
           full_name?: string
           id?: string
           institution_id?: string
           phone_hash?: string | null
-          raw_pii_jsonb?: Json | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "customers_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       data_sources: {
         Row: {
@@ -1067,13 +1163,6 @@ export type Database = {
             referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fraud_signals_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
         ]
       }
       institution_report_types: {
@@ -1176,6 +1265,53 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      kyc_records: {
+        Row: {
+          address_verified: boolean | null
+          bvn_verified: boolean | null
+          created_at: string | null
+          customer_id: string | null
+          id: string
+          id_verified: boolean | null
+          institution_id: string
+          kyc_status: string
+          missing_items: string[] | null
+          photo_verified: boolean | null
+        }
+        Insert: {
+          address_verified?: boolean | null
+          bvn_verified?: boolean | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          id_verified?: boolean | null
+          institution_id: string
+          kyc_status: string
+          missing_items?: string[] | null
+          photo_verified?: boolean | null
+        }
+        Update: {
+          address_verified?: boolean | null
+          bvn_verified?: boolean | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: string
+          id_verified?: boolean | null
+          institution_id?: string
+          kyc_status?: string
+          missing_items?: string[] | null
+          photo_verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       login_attempts: {
         Row: {
@@ -1728,101 +1864,61 @@ export type Database = {
           },
         ]
       }
-      sanctions_entries: {
+      sanctions_config: {
         Row: {
-          active: boolean | null
-          aliases: string | null
-          country: string | null
-          created_at: string
-          date_listed: string | null
-          date_of_birth: string | null
-          entity_type: string | null
-          full_name: string
-          id: string
-          last_updated: string | null
-          list_name: string
-          list_type: string | null
-          nationality: string | null
-          notes: string | null
-          raw_data: Json | null
-          reason: string | null
-          source_url: string | null
+          institution_id: string
+          is_active: boolean | null
+          watchlist_name: string
         }
         Insert: {
-          active?: boolean | null
-          aliases?: string | null
-          country?: string | null
-          created_at?: string
-          date_listed?: string | null
-          date_of_birth?: string | null
-          entity_type?: string | null
-          full_name: string
-          id?: string
-          last_updated?: string | null
-          list_name: string
-          list_type?: string | null
-          nationality?: string | null
-          notes?: string | null
-          raw_data?: Json | null
-          reason?: string | null
-          source_url?: string | null
+          institution_id: string
+          is_active?: boolean | null
+          watchlist_name: string
         }
         Update: {
-          active?: boolean | null
-          aliases?: string | null
-          country?: string | null
-          created_at?: string
-          date_listed?: string | null
-          date_of_birth?: string | null
-          entity_type?: string | null
-          full_name?: string
-          id?: string
-          last_updated?: string | null
-          list_name?: string
-          list_type?: string | null
-          nationality?: string | null
-          notes?: string | null
-          raw_data?: Json | null
-          reason?: string | null
-          source_url?: string | null
+          institution_id?: string
+          is_active?: boolean | null
+          watchlist_name?: string
         }
         Relationships: []
       }
-      sanctions_sync_log: {
+      sanctions_entries: {
         Row: {
-          duration_ms: number | null
-          error_message: string | null
+          created_at: string | null
+          customer_id: string | null
           id: string
-          list_name: string
-          records_added: number | null
-          records_updated: number | null
-          status: string | null
-          sync_date: string | null
-          total_records: number | null
+          institution_id: string
+          match_score: number | null
+          matched_name: string
+          watchlist_name: string
         }
         Insert: {
-          duration_ms?: number | null
-          error_message?: string | null
+          created_at?: string | null
+          customer_id?: string | null
           id?: string
-          list_name: string
-          records_added?: number | null
-          records_updated?: number | null
-          status?: string | null
-          sync_date?: string | null
-          total_records?: number | null
+          institution_id: string
+          match_score?: number | null
+          matched_name: string
+          watchlist_name: string
         }
         Update: {
-          duration_ms?: number | null
-          error_message?: string | null
+          created_at?: string | null
+          customer_id?: string | null
           id?: string
-          list_name?: string
-          records_added?: number | null
-          records_updated?: number | null
-          status?: string | null
-          sync_date?: string | null
-          total_records?: number | null
+          institution_id?: string
+          match_score?: number | null
+          matched_name?: string
+          watchlist_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sanctions_entries_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       screening_results: {
         Row: {
@@ -1970,72 +2066,38 @@ export type Database = {
       }
       transactions: {
         Row: {
-          account_id: string
           amount: number
-          channel: string | null
-          counterparty_name: string | null
-          created_at: string
-          currency: string | null
+          channel: string
+          created_at: string | null
           customer_id: string | null
-          direction: string | null
           id: string
           institution_id: string
-          narration: string | null
-          receiver_name: string | null
-          reference: string | null
-          sender_name: string | null
-          status: string
           transaction_type: string
         }
         Insert: {
-          account_id: string
           amount: number
-          channel?: string | null
-          counterparty_name?: string | null
-          created_at?: string
-          currency?: string | null
+          channel: string
+          created_at?: string | null
           customer_id?: string | null
-          direction?: string | null
           id?: string
-          institution_id?: string
-          narration?: string | null
-          receiver_name?: string | null
-          reference?: string | null
-          sender_name?: string | null
-          status?: string
-          transaction_type?: string
+          institution_id: string
+          transaction_type: string
         }
         Update: {
-          account_id?: string
           amount?: number
-          channel?: string | null
-          counterparty_name?: string | null
-          created_at?: string
-          currency?: string | null
+          channel?: string
+          created_at?: string | null
           customer_id?: string | null
-          direction?: string | null
           id?: string
           institution_id?: string
-          narration?: string | null
-          receiver_name?: string | null
-          reference?: string | null
-          sender_name?: string | null
-          status?: string
           transaction_type?: string
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_account_id_fkey"
-            columns: ["account_id"]
+            foreignKeyName: "transactions_customer_id_fkey"
+            columns: ["customer_id"]
             isOneToOne: false
-            referencedRelation: "accounts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
