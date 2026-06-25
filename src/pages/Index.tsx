@@ -133,15 +133,16 @@ export default function Index() {
       {/* Hero — Kota-style stacked cards on a tinted page */}
       <section
         className="relative w-full"
-        style={{ background: "var(--hero-page)", padding: "24px 0 72px" }}
+        style={{ background: "var(--hero-page)", padding: "32px 0 80px" }}
       >
         <HeroPillNav />
-        <div className="container-site" style={{ marginTop: 28 }}>
+        <div className="container-site" style={{ marginTop: 36 }}>
           <div
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0, 1fr)",
               gap: 24,
+              alignItems: "stretch",
             }}
             className="hero-grid"
           >
@@ -152,9 +153,9 @@ export default function Index() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  transform: "translate(12px, -12px)",
+                  transform: "translate(16px, -16px)",
                   background: "var(--hero-card-shadow)",
-                  borderRadius: 28,
+                  borderRadius: 32,
                   zIndex: 0,
                 }}
               />
@@ -162,36 +163,35 @@ export default function Index() {
                 style={{
                   position: "relative",
                   background: "var(--hero-card)",
-                  borderRadius: 28,
-                  padding: "48px",
+                  borderRadius: 32,
+                  padding: "56px 52px",
                   zIndex: 1,
-                  minHeight: 620,
+                  minHeight: 640,
                   display: "flex",
                   flexDirection: "column",
+                  alignItems: "flex-start",
                 }}
               >
                 {/* Reviews chip */}
                 <div
                   style={{
                     display: "inline-flex",
-                    alignSelf: "flex-start",
                     alignItems: "center",
-                    gap: 8,
+                    gap: 6,
                     background: "#FFFFFF",
                     border: "1px solid rgba(0,0,0,0.06)",
                     borderRadius: 999,
-                    padding: "5px 12px",
+                    padding: "6px 12px",
                     boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                    marginBottom: 32,
+                    marginBottom: 36,
                   }}
                 >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <AppStoreMark />
-                    <GoogleMark />
-                  </span>
-                  <span style={{ display: "inline-flex", gap: 2 }}>
+                  <AppStoreMark />
+                  <Star size={11} fill="#F5B100" stroke="#F5B100" />
+                  <GoogleMark />
+                  <span style={{ display: "inline-flex", gap: 2, marginLeft: 2 }}>
                     {[0,1,2,3,4].map((i) => (
-                      <Star key={i} size={12} fill="#F5B100" stroke="#F5B100" />
+                      <Star key={i} size={11} fill="#F5B100" stroke="#F5B100" />
                     ))}
                   </span>
                 </div>
@@ -200,12 +200,11 @@ export default function Index() {
                   style={{
                     fontFamily: HERO_FONT,
                     fontWeight: 700,
-                    fontSize: "clamp(36px, 3.4vw, 52px)",
-                    lineHeight: 1.05,
-                    letterSpacing: "-0.025em",
+                    fontSize: "clamp(44px, 4.2vw, 64px)",
+                    lineHeight: 1.02,
+                    letterSpacing: "-0.03em",
                     color: "var(--hero-ink)",
                     margin: 0,
-                    maxWidth: 460,
                   }}
                 >
                   Automating regulatory compliance for the modern compliance desk.
@@ -213,18 +212,18 @@ export default function Index() {
 
                 <p
                   style={{
-                    marginTop: 24,
+                    marginTop: 32,
                     fontFamily: HERO_FONT,
                     fontSize: 16,
                     lineHeight: 1.55,
                     color: "var(--hero-sub)",
-                    maxWidth: 440,
+                    maxWidth: 460,
                   }}
                 >
                   RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
                 </p>
 
-                <div style={{ marginTop: 32 }}>
+                <div style={{ marginTop: 48 }}>
                   <Link
                     to="/book-demo"
                     style={{
@@ -234,9 +233,9 @@ export default function Index() {
                       background: "var(--hero-ink)",
                       color: "#FFFFFF",
                       fontFamily: HERO_FONT,
-                      fontSize: 15,
+                      fontSize: 15.5,
                       fontWeight: 500,
-                      padding: "16px 28px",
+                      padding: "18px 32px",
                       borderRadius: 999,
                       textDecoration: "none",
                       letterSpacing: "-0.01em",
@@ -255,9 +254,9 @@ export default function Index() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  transform: "translate(12px, -12px)",
+                  transform: "translate(16px, -16px)",
                   background: "var(--hero-illus-shadow)",
-                  borderRadius: 28,
+                  borderRadius: 32,
                   zIndex: 0,
                 }}
               />
@@ -265,17 +264,19 @@ export default function Index() {
                 style={{
                   position: "relative",
                   background: "var(--hero-illus-card)",
-                  borderRadius: 28,
+                  borderRadius: 32,
                   overflow: "hidden",
                   zIndex: 1,
-                  minHeight: 620,
-                  display: "flex",
+                  minHeight: 640,
+                  height: "100%",
                 }}
               >
                 <img
                   src={boardroom}
                   alt="Compliance team reviewing reports at a boardroom table"
                   style={{
+                    position: "absolute",
+                    inset: 0,
                     width: "100%",
                     height: "100%",
                     objectFit: "cover",

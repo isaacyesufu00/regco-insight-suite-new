@@ -12,13 +12,13 @@
 @layer base {
   :root {
     /* Hero (Kota-style) tokens — blue palette derived from boardroom illustration */
-    --hero-page: #D6E4EF;
-    --hero-card: #EAF1F7;
-    --hero-card-shadow: #C8DAE8;
-    --hero-illus-card: #A9C8DE;
-    --hero-illus-shadow: #94B8D2;
-    --hero-ink: #0A0A0A;
-    --hero-sub: #2A2A2A;
+   --hero-page: #CFE0EE;
+   --hero-card: #EAF2F8;
+   --hero-card-shadow: #B6CFE0;
+   --hero-illus-card: #A9C8DE;
+   --hero-illus-shadow: #8AB0CC;
+   --hero-ink: #0A0A0A;
+   --hero-sub: #2A2A2A;
 
     /* shadcn semantic tokens (HSL components) */
     --background: 0 0% 100%;
