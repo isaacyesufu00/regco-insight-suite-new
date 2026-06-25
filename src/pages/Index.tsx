@@ -1,13 +1,75 @@
-import { Link } from "react-router-dom";
-import { ArrowUpRight, ArrowRight, Star } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import { useState } from "react";
+import { ArrowUpRight, ArrowRight, Star, ChevronDown } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import SiteNavbar from "@/components/site/SiteNavbar";
 import SiteFooter from "@/components/site/SiteFooter";
-import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
+import boardroom from "@/assets/hero-boardroom.png";
 
 const HERO_FONT = '"Inter Tight", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
 const HELVETICA = '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+
+// App Store + Google brand marks (small inline SVGs)
+const AppStoreMark = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
+    <defs>
+      <linearGradient id="asg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stopColor="#1AC8FF" />
+        <stop offset="1" stopColor="#0A6CFF" />
+      </linearGradient>
+    </defs>
+    <rect width="24" height="24" rx="5" fill="url(#asg)" />
+    <path d="M8.2 16.4l.9-1.55h1.78l-.88 1.55c-.34.59-1.1.79-1.69.45-.58-.34-.79-1.1-.45-1.69zM15.6 14.85h-5.4l-.9-1.55h7.2c.68 0 1.23.55 1.23 1.23 0 .67-.55 1.23-1.23 1.23h-.45l-.45-.91zm-2.3-7.6l.8-1.39c.34-.58 1.1-.79 1.68-.45.59.34.79 1.1.45 1.69l-3.74 6.48h2.7l.9 1.55H8.85L13.3 7.25z" fill="#fff"/>
+  </svg>
+);
+const GoogleMark = () => (
+  <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden>
+    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C33.9 6.1 29.2 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C33.9 6.1 29.2 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/>
+    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5C9.5 39.5 16.2 44 24 44z"/>
+    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.4-.4-3.5z"/>
+  </svg>
+);
+
+function HeroPillNav() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 24px" }}>
+      <div
+        style={{
+          maxWidth: 1200,
+          margin: "0 auto",
+          background: "#EAF1F7",
+          borderRadius: 999,
+          padding: "10px 14px 10px 22px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          boxShadow: "0 2px 14px rgba(20,40,80,0.08)",
+          fontFamily: HERO_FONT,
+        }}
+      >
+        <Link to="/" style={{ fontSize: 17, fontWeight: 700, color: "#0A0A0A", textDecoration: "none", letterSpacing: "-0.02em" }}>
+          RegCo
+        </Link>
+        <nav style={{ display: "flex", gap: 28, alignItems: "center" }} className="hidden md:flex">
+          <button onClick={() => setOpen(o => !o)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, color: "#0A0A0A", background: "none", border: "none", cursor: "pointer", fontFamily: HERO_FONT }}>
+            Products <ChevronDown size={13} />
+          </button>
+          {[["Who we serve","/who-we-serve"],["Pricing","/pricing"],["About","/about"]].map(([l,h]) => (
+            <NavLink key={h} to={h} style={{ fontSize: 14, color: "#0A0A0A", textDecoration: "none" }}>{l}</NavLink>
+          ))}
+        </nav>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <Link to="/sign-in" style={{ fontSize: 14, color: "#0A0A0A", textDecoration: "none", padding: "0 8px" }}>Sign in</Link>
+          <Link to="/book-demo" style={{ background: "#0A0A0A", color: "#FFFFFF", fontSize: 14, fontWeight: 500, padding: "10px 18px", borderRadius: 999, textDecoration: "none" }}>
+            Book a demo
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const products = [
   {
@@ -67,15 +129,14 @@ const stats = [
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-white text-ink" style={{ fontFamily: HERO_FONT }}>
-      <SiteNavbar />
-
+    <div className="min-h-screen text-ink" style={{ fontFamily: HERO_FONT, background: "var(--hero-page)" }}>
       {/* Hero — Kota-style stacked cards on a tinted page */}
       <section
         className="relative w-full"
-        style={{ background: "var(--hero-page)", padding: "48px 0 72px" }}
+        style={{ background: "var(--hero-page)", padding: "24px 0 72px" }}
       >
-        <div className="container-site">
+        <HeroPillNav />
+        <div className="container-site" style={{ marginTop: 28 }}>
           <div
             style={{
               display: "grid",
@@ -91,7 +152,7 @@ export default function Index() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  transform: "translate(24px, 24px)",
+                  transform: "translate(12px, -12px)",
                   background: "var(--hero-card-shadow)",
                   borderRadius: 28,
                   zIndex: 0,
@@ -102,75 +163,68 @@ export default function Index() {
                   position: "relative",
                   background: "var(--hero-card)",
                   borderRadius: 28,
-                  padding: "48px 48px 48px",
+                  padding: "48px",
                   zIndex: 1,
-                  minHeight: 560,
+                  minHeight: 620,
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "space-between",
                 }}
               >
-                <div>
-                  {/* Reviews chip */}
-                  <div
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 8,
-                      background: "#FFFFFF",
-                      border: "1px solid rgba(0,0,0,0.06)",
-                      borderRadius: 999,
-                      padding: "5px 12px",
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                      marginBottom: 32,
-                    }}
-                  >
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", letterSpacing: "-0.01em" }}>
-                       
-                    </span>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "0 4px" }}>
-                      <span style={{ width: 16, height: 16, borderRadius: 4, background: "linear-gradient(135deg,#00C7FF,#0066FF)", display: "inline-block" }} />
-                      <span style={{ width: 16, height: 16, borderRadius: "50%", background: "conic-gradient(#EA4335 0 25%,#FBBC05 25% 50%,#34A853 50% 75%,#4285F4 75% 100%)", display: "inline-block" }} />
-                    </span>
-                    <span style={{ display: "inline-flex", gap: 2 }}>
-                      {[0,1,2,3,4].map((i) => (
-                        <Star key={i} size={12} fill="#F5B100" stroke="#F5B100" />
-                      ))}
-                    </span>
-                  </div>
-
-                  <h1
-                    style={{
-                      fontFamily: HERO_FONT,
-                      fontWeight: 700,
-                      fontSize: "clamp(40px, 4.6vw, 64px)",
-                      lineHeight: 1.05,
-                      letterSpacing: "-0.025em",
-                      color: "var(--hero-ink)",
-                      margin: 0,
-                    }}
-                  >
-                    Automating regulatory<br />
-                    compliance<br />
-                    for the modern<br />
-                    compliance desk.
-                  </h1>
-
-                  <p
-                    style={{
-                      marginTop: 28,
-                      fontFamily: HERO_FONT,
-                      fontSize: 17,
-                      lineHeight: 1.55,
-                      color: "var(--hero-sub)",
-                      maxWidth: 440,
-                    }}
-                  >
-                    RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
-                  </p>
+                {/* Reviews chip */}
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignSelf: "flex-start",
+                    alignItems: "center",
+                    gap: 8,
+                    background: "#FFFFFF",
+                    border: "1px solid rgba(0,0,0,0.06)",
+                    borderRadius: 999,
+                    padding: "5px 12px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                    marginBottom: 32,
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <AppStoreMark />
+                    <GoogleMark />
+                  </span>
+                  <span style={{ display: "inline-flex", gap: 2 }}>
+                    {[0,1,2,3,4].map((i) => (
+                      <Star key={i} size={12} fill="#F5B100" stroke="#F5B100" />
+                    ))}
+                  </span>
                 </div>
 
-                <div style={{ marginTop: 40 }}>
+                <h1
+                  style={{
+                    fontFamily: HERO_FONT,
+                    fontWeight: 700,
+                    fontSize: "clamp(36px, 3.4vw, 52px)",
+                    lineHeight: 1.05,
+                    letterSpacing: "-0.025em",
+                    color: "var(--hero-ink)",
+                    margin: 0,
+                    maxWidth: 460,
+                  }}
+                >
+                  Automating regulatory compliance for the modern compliance desk.
+                </h1>
+
+                <p
+                  style={{
+                    marginTop: 24,
+                    fontFamily: HERO_FONT,
+                    fontSize: 16,
+                    lineHeight: 1.55,
+                    color: "var(--hero-sub)",
+                    maxWidth: 440,
+                  }}
+                >
+                  RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
+                </p>
+
+                <div style={{ marginTop: 32 }}>
                   <Link
                     to="/book-demo"
                     style={{
@@ -201,7 +255,7 @@ export default function Index() {
                 style={{
                   position: "absolute",
                   inset: 0,
-                  transform: "translate(24px, 24px)",
+                  transform: "translate(12px, -12px)",
                   background: "var(--hero-illus-shadow)",
                   borderRadius: 28,
                   zIndex: 0,
@@ -214,14 +268,12 @@ export default function Index() {
                   borderRadius: 28,
                   overflow: "hidden",
                   zIndex: 1,
-                  minHeight: 560,
+                  minHeight: 620,
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
                 }}
               >
                 <img
-                  src={boardroomAsset.url}
+                  src={boardroom}
                   alt="Compliance team reviewing reports at a boardroom table"
                   style={{
                     width: "100%",
@@ -239,7 +291,7 @@ export default function Index() {
         <style>{`
           @media (min-width: 1024px) {
             .hero-grid {
-              grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr) !important;
+              grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
               gap: 28px !important;
             }
           }
