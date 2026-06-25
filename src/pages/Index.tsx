@@ -164,12 +164,12 @@ export default function Index() {
                   position: "relative",
                   background: "var(--hero-card)",
                   borderRadius: 32,
-                  padding: "56px 52px",
+                  padding: "44px 40px",
                   zIndex: 1,
-                  minHeight: 640,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "flex-start",
+                  height: "100%",
                 }}
               >
                 {/* Reviews chip */}
@@ -200,7 +200,7 @@ export default function Index() {
                   style={{
                     fontFamily: HERO_FONT,
                     fontWeight: 700,
-                    fontSize: "clamp(44px, 4.2vw, 64px)",
+                    fontSize: "clamp(40px, 3.4vw, 54px)",
                     lineHeight: 1.02,
                     letterSpacing: "-0.03em",
                     color: "var(--hero-ink)",
@@ -267,8 +267,8 @@ export default function Index() {
                   borderRadius: 32,
                   overflow: "hidden",
                   zIndex: 1,
-                  minHeight: 640,
                   height: "100%",
+                  minHeight: 480,
                 }}
               >
                 <img
@@ -292,7 +292,7 @@ export default function Index() {
         <style>{`
           @media (min-width: 1024px) {
             .hero-grid {
-              grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+              grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.9fr) !important;
               gap: 28px !important;
             }
           }
