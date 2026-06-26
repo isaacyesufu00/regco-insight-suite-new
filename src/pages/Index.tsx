@@ -3,7 +3,8 @@ import { useState } from "react";
 import { ArrowUpRight, ArrowRight, Star, ChevronDown } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import SiteFooter from "@/components/site/SiteFooter";
-import boardroom from "@/assets/hero-boardroom.png";
+import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
+const boardroom = boardroomAsset.url;
 
 const HERO_FONT = '"Inter Tight", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
 
@@ -136,156 +137,108 @@ export default function Index() {
         style={{ background: "var(--hero-page)", padding: "32px 0 80px" }}
       >
         <HeroPillNav />
-        <div className="container-site" style={{ marginTop: 36 }}>
+        <div className="container-site" style={{ marginTop: 48 }}>
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 1fr)",
-              gap: 24,
-              alignItems: "stretch",
+              maxWidth: 760,
+              margin: "0 auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
             }}
-            className="hero-grid"
           >
-            {/* LEFT — copy card with offset shadow card behind */}
-            <div style={{ position: "relative" }}>
-              <div
-                aria-hidden
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  transform: "translate(16px, -16px)",
-                  background: "var(--hero-card-shadow)",
-                  borderRadius: 32,
-                  zIndex: 0,
-                }}
-              />
-              <div
-                style={{
-                  position: "relative",
-                  background: "var(--hero-card)",
-                  borderRadius: 32,
-                  padding: "44px 40px",
-                  zIndex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-start",
-                  height: "100%",
-                }}
-              >
-                {/* Reviews chip */}
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    background: "#FFFFFF",
-                    border: "1px solid rgba(0,0,0,0.06)",
-                    borderRadius: 999,
-                    padding: "6px 12px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-                    marginBottom: 36,
-                  }}
-                >
-                  <AppStoreMark />
-                  <Star size={11} fill="#F5B100" stroke="#F5B100" />
-                  <GoogleMark />
-                  <span style={{ display: "inline-flex", gap: 2, marginLeft: 2 }}>
-                    {[0,1,2,3,4].map((i) => (
-                      <Star key={i} size={11} fill="#F5B100" stroke="#F5B100" />
-                    ))}
-                  </span>
-                </div>
-
-                <h1
-                  style={{
-                    fontFamily: HERO_FONT,
-                    fontWeight: 700,
-                    fontSize: "clamp(40px, 3.4vw, 54px)",
-                    lineHeight: 1.02,
-                    letterSpacing: "-0.03em",
-                    color: "var(--hero-ink)",
-                    margin: 0,
-                  }}
-                >
-                  Automating regulatory compliance for the modern compliance desk.
-                </h1>
-
-                <p
-                  style={{
-                    marginTop: 32,
-                    fontFamily: HERO_FONT,
-                    fontSize: 16,
-                    lineHeight: 1.55,
-                    color: "var(--hero-sub)",
-                    maxWidth: 460,
-                  }}
-                >
-                  RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
-                </p>
-
-                <div style={{ marginTop: 48 }}>
-                  <Link
-                    to="/book-demo"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      background: "var(--hero-ink)",
-                      color: "#FFFFFF",
-                      fontFamily: HERO_FONT,
-                      fontSize: 15.5,
-                      fontWeight: 500,
-                      padding: "18px 32px",
-                      borderRadius: 999,
-                      textDecoration: "none",
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    Book a demo
-                  </Link>
-                </div>
-              </div>
+            {/* Reviews chip */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                background: "#FFFFFF",
+                border: "1px solid rgba(0,0,0,0.06)",
+                borderRadius: 999,
+                padding: "6px 12px",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+              }}
+            >
+              <AppStoreMark />
+              <Star size={11} fill="#F5B100" stroke="#F5B100" />
+              <GoogleMark />
+              <span style={{ display: "inline-flex", gap: 2, marginLeft: 2 }}>
+                {[0,1,2,3,4].map((i) => (
+                  <Star key={i} size={11} fill="#F5B100" stroke="#F5B100" />
+                ))}
+              </span>
             </div>
 
-            {/* RIGHT — illustration card with offset shadow card behind */}
-            <div style={{ position: "relative" }}>
-              <div
-                aria-hidden
+            <h1
+              style={{
+                fontFamily: HERO_FONT,
+                fontWeight: 700,
+                fontSize: "clamp(40px, 4vw, 56px)",
+                lineHeight: 1.04,
+                letterSpacing: "-0.03em",
+                color: "var(--hero-ink)",
+                margin: "24px 0 0",
+              }}
+            >
+              Automating regulatory compliance for the modern compliance desk.
+            </h1>
+
+            <p
+              style={{
+                marginTop: 28,
+                fontFamily: HERO_FONT,
+                fontSize: 17,
+                lineHeight: 1.55,
+                color: "var(--hero-sub)",
+                maxWidth: 560,
+              }}
+            >
+              RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
+            </p>
+
+            <div style={{ marginTop: 32 }}>
+              <Link
+                to="/book-demo"
                 style={{
-                  position: "absolute",
-                  inset: 0,
-                  transform: "translate(16px, -16px)",
-                  background: "var(--hero-illus-shadow)",
-                  borderRadius: 32,
-                  zIndex: 0,
-                }}
-              />
-              <div
-                style={{
-                  position: "relative",
-                  background: "var(--hero-illus-card)",
-                  borderRadius: 32,
-                  overflow: "hidden",
-                  zIndex: 1,
-                  height: "100%",
-                  minHeight: 480,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "var(--hero-ink)",
+                  color: "#FFFFFF",
+                  fontFamily: HERO_FONT,
+                  fontSize: 15.5,
+                  fontWeight: 500,
+                  padding: "18px 32px",
+                  borderRadius: 999,
+                  textDecoration: "none",
+                  letterSpacing: "-0.01em",
                 }}
               >
-                <img
-                  src={boardroom}
-                  alt="Compliance team reviewing reports at a boardroom table"
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    objectPosition: "center",
-                    display: "block",
-                  }}
-                />
-              </div>
+                Book a demo
+              </Link>
             </div>
+          </div>
+
+          {/* Illustration — full-width, frameless, blends into page background */}
+          <div
+            style={{
+              maxWidth: 1200,
+              margin: "72px auto 0",
+              padding: "0 8px",
+            }}
+          >
+            <img
+              src={boardroom}
+              alt="Compliance team reviewing reports at a boardroom table"
+              style={{
+                display: "block",
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+              }}
+            />
           </div>
         </div>
 
