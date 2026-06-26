@@ -1,31 +1,46 @@
-## What's actually different
 
-Two specific layout mistakes vs the Kota reference:
+## Hero restructure + Vercel image fix
 
-**1. Grid proportions are wrong.** Kota uses roughly a **`0.85fr` / `1.9fr`** split — the copy card is narrow and the illustration card is more than twice as wide, almost panoramic. We're rendering **`1fr` / `1fr`** (equal halves), which makes the left card look oversized and the right card look cramped (so the image can't "stretch across" the hero).
+### 1. Reorder the hero to a single vertical stack
+Drop the two-column grid. New top-to-bottom order, all centered in a 720px column:
 
-**2. Left card height is being padded out.** We force `min-height: 640px` on the left card. Kota lets the left card size to its content (headline + paragraph + button ≈ 540-560px), and uses `align-items: stretch` so the right card matches whatever the left card actually is. Right now our right card is forced taller than it needs to be, which is also why the image looks lonely inside it.
+1. **Reviews chip** (kept, small, on top)
+2. **Headline** — `Automating regulatory compliance for the modern compliance desk.` (Inter Tight, ~clamp(40px, 4vw, 56px), weight 700, `-0.03em`)
+3. **Subhead** — existing paragraph, max-width 560px, 16px, `var(--hero-sub)`
+4. **CTA** — black "Book a demo" pill (unchanged styling)
+5. **Illustration** — boardroom watercolor, full column width (max ~960px), no card frame, no rounded corners, no shadow card. The image's cream background blends straight into `var(--hero-page)`.
 
-## Fix (Index.tsx only — no CSS token changes, no other files)
+Spacing: 24px chip→h1, 28px h1→p, 32px p→CTA, 72px CTA→image, 96px below image.
 
-In the hero `<section>`:
+Removes: the right-hand illustration card, the offset shadow card behind it, the `grid-template-columns` split, and the `min-height: 480` on the image card.
 
-| Change | From | To |
-|---|---|---|
-| Desktop grid columns | `minmax(0, 1fr) minmax(0, 1fr)` | `minmax(320px, 0.85fr) minmax(0, 1.9fr)` |
-| Left card `min-height` | `640` | remove — let content size it |
-| Left card `padding` | `56px 52px` | `44px 40px` (Kota's left card is tighter) |
-| Headline `font-size` | `clamp(44px, 4.2vw, 64px)` | `clamp(40px, 3.4vw, 54px)` (since the card is narrower, the headline naturally wraps to 4 lines like Kota's "Employee health / insurance / that works for / modern teams") |
-| Right card `min-height` | `640` | remove |
-| Right card height | (none) | `height: 100%` so it stretches to match the left card via `align-items: stretch` on the grid |
-| Image positioning | `position: absolute; inset: 0; object-fit: cover` | unchanged — once the card is wide enough, the boardroom illustration will fill edge-to-edge horizontally |
+### 2. Fix the image not showing on Vercel
+Root cause: `src/assets/hero-boardroom.png` is a 1.1 MB binary committed to the repo. The Vite import works locally but Vercel's deploy can drop it (LFS, size, or the file isn't in the deploy artifact).
 
-## Result
+Fix: move the image to the Lovable Assets CDN so it's served from `/__l5e/assets-v1/...` regardless of host.
 
-- Left card becomes compact and roughly the width of Kota's copy card.
-- Right card spans ~⅔ of the hero, so the boardroom image stretches horizontally across the full panel like Kota's window-grid illustration.
-- Both cards remain equal height (driven by the left card's natural content height ≈ 540px), with the stacked shadow peek still visible.
+Steps (build mode):
+```bash
+lovable-assets create --file src/assets/hero-boardroom.png \
+  --filename hero-boardroom.png \
+  > src/assets/hero-boardroom.png.asset.json
+rm src/assets/hero-boardroom.png
+```
 
-## What stays untouched
+Then in `src/pages/Index.tsx`:
+```ts
+// before
+import boardroom from "@/assets/hero-boardroom.png";
+// after
+import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
+const boardroom = boardroomAsset.url;
+```
 
-Everything else: pill navbar, color tokens, radius, shadow offset, reviews chip order, button, and every section below the hero. No DB or edge-function changes. Pre-existing TS errors in Settings/Customer360/Screening remain out of scope per your standing rule.
+No other usage to update — the `<img src={boardroom}>` reference stays the same.
+
+### Files touched
+- `src/pages/Index.tsx` — hero JSX restructure + import swap (lines ~150–290)
+- `src/assets/hero-boardroom.png.asset.json` — new CDN pointer
+- `src/assets/hero-boardroom.png` — deleted
+
+Nothing else changes: navbar, color tokens, sections below the hero, DB, edge functions all untouched.
