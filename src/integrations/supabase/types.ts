@@ -16,13 +16,14 @@ export type Database = {
     Tables: {
       account_actions: {
         Row: {
-          account_number: string
+          account_number_hash: string
           action: string
           approved_at: string | null
           approved_by: string | null
           case_id: string | null
           created_at: string
           id: string
+          institution_id: string
           reason: string | null
           requested_by: string | null
           status: string
@@ -30,13 +31,14 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          account_number: string
+          account_number_hash: string
           action: string
           approved_at?: string | null
           approved_by?: string | null
           case_id?: string | null
           created_at?: string
           id?: string
+          institution_id: string
           reason?: string | null
           requested_by?: string | null
           status?: string
@@ -44,13 +46,14 @@ export type Database = {
           user_id: string
         }
         Update: {
-          account_number?: string
+          account_number_hash?: string
           action?: string
           approved_at?: string | null
           approved_by?: string | null
           case_id?: string | null
           created_at?: string
           id?: string
+          institution_id?: string
           reason?: string | null
           requested_by?: string | null
           status?: string
@@ -107,6 +110,7 @@ export type Database = {
           created_at: string
           expires_at: string
           id: string
+          institution_id: string
           query: string
           query_hash: string
           result: Json
@@ -116,6 +120,7 @@ export type Database = {
           created_at?: string
           expires_at: string
           id?: string
+          institution_id: string
           query: string
           query_hash: string
           result: Json
@@ -125,6 +130,7 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          institution_id?: string
           query?: string
           query_hash?: string
           result?: Json
@@ -136,21 +142,24 @@ export type Database = {
         Row: {
           created_at: string
           id: string
-          title: string
+          institution_id: string
+          title_hash: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
-          title?: string
+          institution_id: string
+          title_hash?: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
-          title?: string
+          institution_id?: string
+          title_hash?: string
           updated_at?: string
           user_id?: string
         }
@@ -168,10 +177,11 @@ export type Database = {
         Row: {
           action_payload: Json | null
           action_type: string | null
-          content: string
+          content_hash: string
           conversation_id: string
           created_at: string
           id: string
+          institution_id: string
           parts: Json | null
           role: string
           user_id: string
@@ -179,10 +189,11 @@ export type Database = {
         Insert: {
           action_payload?: Json | null
           action_type?: string | null
-          content?: string
+          content_hash?: string
           conversation_id: string
           created_at?: string
           id?: string
+          institution_id: string
           parts?: Json | null
           role: string
           user_id: string
@@ -190,10 +201,11 @@ export type Database = {
         Update: {
           action_payload?: Json | null
           action_type?: string | null
-          content?: string
+          content_hash?: string
           conversation_id?: string
           created_at?: string
           id?: string
+          institution_id?: string
           parts?: Json | null
           role?: string
           user_id?: string
@@ -217,40 +229,43 @@ export type Database = {
       }
       agent_tool_invocations: {
         Row: {
-          args: Json | null
+          args_hash: Json | null
           conversation_id: string | null
           created_at: string
           error: string | null
           id: string
+          institution_id: string
           latency_ms: number | null
           message_id: string | null
-          result_summary: string | null
+          result_summary_hash: string | null
           status: string
           tool_name: string
           user_id: string
         }
         Insert: {
-          args?: Json | null
+          args_hash?: Json | null
           conversation_id?: string | null
           created_at?: string
           error?: string | null
           id?: string
+          institution_id: string
           latency_ms?: number | null
           message_id?: string | null
-          result_summary?: string | null
+          result_summary_hash?: string | null
           status?: string
           tool_name: string
           user_id: string
         }
         Update: {
-          args?: Json | null
+          args_hash?: Json | null
           conversation_id?: string | null
           created_at?: string
           error?: string | null
           id?: string
+          institution_id?: string
           latency_ms?: number | null
           message_id?: string | null
-          result_summary?: string | null
+          result_summary_hash?: string | null
           status?: string
           tool_name?: string
           user_id?: string
@@ -295,20 +310,21 @@ export type Database = {
           category: string | null
           closed_date: string | null
           created_at: string | null
-          description: string | null
+          description_hash: string | null
           due_date: string | null
-          evidence_notes: string | null
+          evidence_notes_hash: string | null
           examination_date: string | null
           id: string
+          institution_id: string
           issue_ref: string | null
-          owner_email: string | null
-          owner_name: string | null
+          owner_email_hash: string | null
+          owner_name_hash: string | null
           regulator: string | null
-          remediation_plan: string | null
+          remediation_plan_hash: string | null
           severity: string | null
           source: string
           status: string | null
-          title: string
+          title_hash: string
           updated_at: string | null
           user_id: string
         }
@@ -316,20 +332,21 @@ export type Database = {
           category?: string | null
           closed_date?: string | null
           created_at?: string | null
-          description?: string | null
+          description_hash?: string | null
           due_date?: string | null
-          evidence_notes?: string | null
+          evidence_notes_hash?: string | null
           examination_date?: string | null
           id?: string
+          institution_id: string
           issue_ref?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
+          owner_email_hash?: string | null
+          owner_name_hash?: string | null
           regulator?: string | null
-          remediation_plan?: string | null
+          remediation_plan_hash?: string | null
           severity?: string | null
           source: string
           status?: string | null
-          title: string
+          title_hash: string
           updated_at?: string | null
           user_id: string
         }
@@ -337,22 +354,59 @@ export type Database = {
           category?: string | null
           closed_date?: string | null
           created_at?: string | null
-          description?: string | null
+          description_hash?: string | null
           due_date?: string | null
-          evidence_notes?: string | null
+          evidence_notes_hash?: string | null
           examination_date?: string | null
           id?: string
+          institution_id?: string
           issue_ref?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
+          owner_email_hash?: string | null
+          owner_name_hash?: string | null
           regulator?: string | null
-          remediation_plan?: string | null
+          remediation_plan_hash?: string | null
           severity?: string | null
           source?: string
           status?: string | null
-          title?: string
+          title_hash?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          args_hash: string | null
+          created_at: string
+          id: string
+          institution_id: string
+          record_id: string | null
+          result_summary_hash: string | null
+          table_name: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          args_hash?: string | null
+          created_at?: string
+          id?: string
+          institution_id: string
+          record_id?: string | null
+          result_summary_hash?: string | null
+          table_name?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          args_hash?: string | null
+          created_at?: string
+          id?: string
+          institution_id?: string
+          record_id?: string | null
+          result_summary_hash?: string | null
+          table_name?: string | null
         }
         Relationships: []
       }
@@ -399,36 +453,39 @@ export type Database = {
       }
       case_artifacts: {
         Row: {
-          body: string | null
+          body_hash: string | null
           case_id: string
           created_at: string
           id: string
+          institution_id: string
           kind: string
           metadata: Json | null
           storage_path: string | null
-          title: string
+          title_hash: string
           user_id: string
         }
         Insert: {
-          body?: string | null
+          body_hash?: string | null
           case_id: string
           created_at?: string
           id?: string
+          institution_id: string
           kind: string
           metadata?: Json | null
           storage_path?: string | null
-          title: string
+          title_hash: string
           user_id: string
         }
         Update: {
-          body?: string | null
+          body_hash?: string | null
           case_id?: string
           created_at?: string
           id?: string
+          institution_id?: string
           kind?: string
           metadata?: Json | null
           storage_path?: string | null
-          title?: string
+          title_hash?: string
           user_id?: string
         }
         Relationships: [
@@ -450,6 +507,7 @@ export type Database = {
           event_type: string
           hash: string
           id: string
+          institution_id: string
           payload: Json
           prev_hash: string | null
           user_id: string
@@ -462,6 +520,7 @@ export type Database = {
           event_type: string
           hash: string
           id?: string
+          institution_id: string
           payload?: Json
           prev_hash?: string | null
           user_id: string
@@ -474,6 +533,7 @@ export type Database = {
           event_type?: string
           hash?: string
           id?: string
+          institution_id?: string
           payload?: Json
           prev_hash?: string | null
           user_id?: string
@@ -2198,6 +2258,42 @@ export type Database = {
           updated_at?: string
           user_id?: string
           violations?: number
+        }
+        Relationships: []
+      }
+      verification_sessions: {
+        Row: {
+          bvn_hash: string | null
+          created_at: string
+          customer_id: string | null
+          id: string
+          institution_id: string
+          phone_hash: string | null
+          provider: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bvn_hash?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          institution_id: string
+          phone_hash?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bvn_hash?: string | null
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          institution_id?: string
+          phone_hash?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
