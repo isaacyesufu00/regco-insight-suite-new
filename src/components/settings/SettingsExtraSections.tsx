@@ -42,12 +42,12 @@ function TeamMembersSection() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("institution_users")
       .select("id, invited_email, invited_name, role, status, created_at")
       .eq("admin_user_id", user.id)
       .order("created_at", { ascending: false });
-    setInvites((data as InviteRow[]) || []);
+    setInvites(((data as unknown) as InviteRow[]) || []);
   };
 
   useEffect(() => { load(); }, [user?.id]);
