@@ -87,10 +87,10 @@ export default function Customer360() {
     const q = query.trim();
     try {
       const [nameRes, bvnRes, phoneRes, accountRes] = await Promise.all([
-        (supabase as any).from("customers").select("*").eq("user_id", user.id).ilike("full_name", `%${q}%`).limit(8),
-        (supabase as any).from("customers").select("*").eq("user_id", user.id).ilike("bvn", `%${q}%`).limit(5),
-        (supabase as any).from("customers").select("*").eq("user_id", user.id).ilike("phone_number", `%${q}%`).limit(5),
-        (supabase as any).from("customer_accounts").select("customer_id, account_number").eq("user_id", user.id).ilike("account_number", `%${q}%`).limit(5),
+        supabase.from("customers").select("*").eq("user_id", user.id).ilike("full_name", `%${q}%`).limit(8),
+        supabase.from("customers").select("*").eq("user_id", user.id).ilike("bvn", `%${q}%`).limit(5),
+        supabase.from("customers").select("*").eq("user_id", user.id).ilike("phone_number", `%${q}%`).limit(5),
+        supabase.from("customer_accounts").select("customer_id, account_number").eq("user_id", user.id).ilike("account_number", `%${q}%`).limit(5),
       ]);
 
       let fromAccounts: Customer[] = [];
@@ -98,15 +98,15 @@ export default function Customer360() {
       if (acctRows.length) {
         const ids = [...new Set(acctRows.map((a) => a.customer_id).filter((x): x is string => Boolean(x)))];
         if (ids.length) {
-          const { data } = await (supabase as any).from("customers").select("*").in("id", ids);
-          fromAccounts = ((data as unknown) as Customer[]) || [];
+          const { data } = await supabase.from("customers").select("*").in("id", ids);
+          fromAccounts = (data as Customer[]) || [];
         }
       }
 
       const all = [
-        ...(((nameRes.data as unknown) as Customer[]) || []),
-        ...(((bvnRes.data as unknown) as Customer[]) || []),
-        ...(((phoneRes.data as unknown) as Customer[]) || []),
+        ...((nameRes.data as Customer[]) || []),
+        ...((bvnRes.data as Customer[]) || []),
+        ...((phoneRes.data as Customer[]) || []),
         ...fromAccounts,
       ];
       const unique = all.filter((c, i, arr) => arr.findIndex((x) => x.id === c.id) === i);

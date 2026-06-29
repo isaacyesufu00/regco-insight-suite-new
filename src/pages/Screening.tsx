@@ -534,8 +534,8 @@ function ListStatusTab() {
 
   const load = async () => {
     const [{ data: logs }, { data: entries }] = await Promise.all([
-      (supabase as any).from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
-      (supabase as any).from("sanctions_entries").select("list_name").limit(20000),
+      supabase.from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
+      supabase.from("sanctions_entries").select("list_name").limit(20000),
     ]);
     setSyncLogs(logs || []);
     const c: Record<string, number> = {};

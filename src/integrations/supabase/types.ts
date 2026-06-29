@@ -272,61 +272,6 @@ export type Database = {
         }
         Relationships: []
       }
-      alerts: {
-        Row: {
-          assigned_to: string | null
-          created_at: string | null
-          id: string
-          institution_id: string
-          rule_id: string | null
-          severity: string | null
-          status: string | null
-          transaction_id: string | null
-        }
-        Insert: {
-          assigned_to?: string | null
-          created_at?: string | null
-          id?: string
-          institution_id: string
-          rule_id?: string | null
-          severity?: string | null
-          status?: string | null
-          transaction_id?: string | null
-        }
-        Update: {
-          assigned_to?: string | null
-          created_at?: string | null
-          id?: string
-          institution_id?: string
-          rule_id?: string | null
-          severity?: string | null
-          status?: string | null
-          transaction_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "alerts_assigned_to_fkey"
-            columns: ["assigned_to"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alerts_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "alerts_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "transactions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       aml_jobs: {
         Row: {
           created_at: string
@@ -759,7 +704,6 @@ export type Database = {
           created_at: string | null
           generated_at: string | null
           id: string
-          institution_id: string | null
           metrics: Json | null
           month: string
           report_type: string | null
@@ -772,7 +716,6 @@ export type Database = {
           created_at?: string | null
           generated_at?: string | null
           id?: string
-          institution_id?: string | null
           metrics?: Json | null
           month: string
           report_type?: string | null
@@ -785,7 +728,6 @@ export type Database = {
           created_at?: string | null
           generated_at?: string | null
           id?: string
-          institution_id?: string | null
           metrics?: Json | null
           month?: string
           report_type?: string | null
@@ -793,15 +735,7 @@ export type Database = {
           storage_path?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "compliance_reports_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       compliance_rules: {
         Row: {
@@ -889,47 +823,35 @@ export type Database = {
       }
       ctr_flagged_transactions: {
         Row: {
-          account_number_hash: string | null
           amount: number | null
-          bvn_hash: string | null
           created_at: string | null
           customer_id: string | null
           customer_segment: string | null
-          entity_type: string
           flag_reason: string | null
           id: string
           institution_id: string
-          phone_hash: string | null
           status: string
           transaction_id: string | null
         }
         Insert: {
-          account_number_hash?: string | null
           amount?: number | null
-          bvn_hash?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_segment?: string | null
-          entity_type?: string
           flag_reason?: string | null
           id?: string
           institution_id: string
-          phone_hash?: string | null
           status?: string
           transaction_id?: string | null
         }
         Update: {
-          account_number_hash?: string | null
           amount?: number | null
-          bvn_hash?: string | null
           created_at?: string | null
           customer_id?: string | null
           customer_segment?: string | null
-          entity_type?: string
           flag_reason?: string | null
           id?: string
           institution_id?: string
-          phone_hash?: string | null
           status?: string
           transaction_id?: string | null
         }
@@ -1082,44 +1004,6 @@ export type Database = {
         }
         Relationships: []
       }
-      data_retention_jobs: {
-        Row: {
-          created_at: string | null
-          id: string
-          institution_id: string
-          last_run_at: string | null
-          retention_policy_days: number | null
-          status: string | null
-          target_table: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          institution_id: string
-          last_run_at?: string | null
-          retention_policy_days?: number | null
-          status?: string | null
-          target_table: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          institution_id?: string
-          last_run_at?: string | null
-          retention_policy_days?: number | null
-          status?: string | null
-          target_table?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "data_retention_jobs_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       data_sources: {
         Row: {
           created_at: string
@@ -1182,90 +1066,6 @@ export type Database = {
           report_type?: string | null
         }
         Relationships: []
-      }
-      document_storage: {
-        Row: {
-          created_at: string | null
-          document_id: string | null
-          encryption_key_id: string | null
-          id: string
-          institution_id: string
-          storage_path: string
-        }
-        Insert: {
-          created_at?: string | null
-          document_id?: string | null
-          encryption_key_id?: string | null
-          id?: string
-          institution_id: string
-          storage_path: string
-        }
-        Update: {
-          created_at?: string | null
-          document_id?: string | null
-          encryption_key_id?: string | null
-          id?: string
-          institution_id?: string
-          storage_path?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_storage_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "document_storage_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents: {
-        Row: {
-          created_at: string | null
-          customer_id: string | null
-          document_type: string
-          id: string
-          institution_id: string
-          status: string
-        }
-        Insert: {
-          created_at?: string | null
-          customer_id?: string | null
-          document_type: string
-          id?: string
-          institution_id: string
-          status: string
-        }
-        Update: {
-          created_at?: string | null
-          customer_id?: string | null
-          document_type?: string
-          id?: string
-          institution_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "documents_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "documents_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       email_reminders: {
         Row: {
@@ -1493,62 +1293,6 @@ export type Database = {
         }
         Relationships: []
       }
-      integration_events: {
-        Row: {
-          created_at: string | null
-          event_payload: Json | null
-          id: string
-          institution_id: string
-          integration_name: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          event_payload?: Json | null
-          id?: string
-          institution_id: string
-          integration_name?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          event_payload?: Json | null
-          id?: string
-          institution_id?: string
-          integration_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "integration_events_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      knowledge_base: {
-        Row: {
-          content: string
-          created_at: string | null
-          embedding: string | null
-          id: string
-          metadata: Json | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-        }
-        Relationships: []
-      }
       kyc_records: {
         Row: {
           address_verified: boolean | null
@@ -1592,51 +1336,6 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      kyc_sessions: {
-        Row: {
-          completed_at: string | null
-          customer_id: string | null
-          id: string
-          institution_id: string
-          provider: string | null
-          started_at: string | null
-          status: string
-        }
-        Insert: {
-          completed_at?: string | null
-          customer_id?: string | null
-          id?: string
-          institution_id: string
-          provider?: string | null
-          started_at?: string | null
-          status: string
-        }
-        Update: {
-          completed_at?: string | null
-          customer_id?: string | null
-          id?: string
-          institution_id?: string
-          provider?: string | null
-          started_at?: string | null
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "kyc_sessions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "kyc_sessions_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
         ]
@@ -1781,48 +1480,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pep_screen_results: {
-        Row: {
-          created_at: string | null
-          customer_id: string | null
-          id: string
-          institution_id: string
-          match_found: boolean | null
-          pep_level: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string
-          institution_id: string
-          match_found?: boolean | null
-          pep_level?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          customer_id?: string | null
-          id?: string
-          institution_id?: string
-          match_found?: boolean | null
-          pep_level?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pep_screen_results_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "pep_screen_results_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           account_status: string
@@ -1867,59 +1524,6 @@ export type Database = {
           tutorial_completed?: boolean
         }
         Relationships: []
-      }
-      queue_jobs: {
-        Row: {
-          args_hash: string | null
-          attempts: number | null
-          created_at: string | null
-          error: string | null
-          id: string
-          institution_id: string
-          job_type: string
-          path: string | null
-          payload: Json | null
-          result: Json | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          args_hash?: string | null
-          attempts?: number | null
-          created_at?: string | null
-          error?: string | null
-          id?: string
-          institution_id: string
-          job_type?: string
-          path?: string | null
-          payload?: Json | null
-          result?: Json | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          args_hash?: string | null
-          attempts?: number | null
-          created_at?: string | null
-          error?: string | null
-          id?: string
-          institution_id?: string
-          job_type?: string
-          path?: string | null
-          payload?: Json | null
-          result?: Json | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "queue_jobs_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       regulatory_news: {
         Row: {
@@ -2287,47 +1891,6 @@ export type Database = {
           },
         ]
       }
-      risk_scores: {
-        Row: {
-          created_at: string | null
-          entity_id: string
-          entity_type: string
-          feature_importance: Json | null
-          id: string
-          institution_id: string
-          model_version: string
-          score: number
-        }
-        Insert: {
-          created_at?: string | null
-          entity_id: string
-          entity_type: string
-          feature_importance?: Json | null
-          id?: string
-          institution_id: string
-          model_version: string
-          score: number
-        }
-        Update: {
-          created_at?: string | null
-          entity_id?: string
-          entity_type?: string
-          feature_importance?: Json | null
-          id?: string
-          institution_id?: string
-          model_version?: string
-          score?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "risk_scores_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       sanctions_config: {
         Row: {
           institution_id: string
@@ -2384,51 +1947,6 @@ export type Database = {
           },
         ]
       }
-      sanctions_screen_results: {
-        Row: {
-          created_at: string | null
-          customer_id: string | null
-          entity_details: Json | null
-          id: string
-          institution_id: string
-          list_name: string | null
-          match_score: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          customer_id?: string | null
-          entity_details?: Json | null
-          id?: string
-          institution_id: string
-          list_name?: string | null
-          match_score?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          customer_id?: string | null
-          entity_details?: Json | null
-          id?: string
-          institution_id?: string
-          list_name?: string | null
-          match_score?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sanctions_screen_results_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sanctions_screen_results_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       screening_results: {
         Row: {
           action_taken: string | null
@@ -2480,51 +1998,6 @@ export type Database = {
         }
         Relationships: []
       }
-      str_candidates: {
-        Row: {
-          created_at: string | null
-          customer_id: string | null
-          filing_status: string | null
-          id: string
-          institution_id: string
-          reason: string | null
-          risk_score_at_filing: number | null
-        }
-        Insert: {
-          created_at?: string | null
-          customer_id?: string | null
-          filing_status?: string | null
-          id?: string
-          institution_id: string
-          reason?: string | null
-          risk_score_at_filing?: number | null
-        }
-        Update: {
-          created_at?: string | null
-          customer_id?: string | null
-          filing_status?: string | null
-          id?: string
-          institution_id?: string
-          reason?: string | null
-          risk_score_at_filing?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "str_candidates_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "str_candidates_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       support_tickets: {
         Row: {
           created_at: string
@@ -2552,48 +2025,6 @@ export type Database = {
           status?: string
           subject?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      transaction_events: {
-        Row: {
-          account_number_hash: string
-          amount: number
-          bvn_hash: string
-          channel: string | null
-          created_at: string
-          customer_id: string
-          entity_type: string
-          id: string
-          institution_id: string
-          path: string
-          phone_hash: string
-        }
-        Insert: {
-          account_number_hash: string
-          amount: number
-          bvn_hash: string
-          channel?: string | null
-          created_at?: string
-          customer_id: string
-          entity_type?: string
-          id?: string
-          institution_id: string
-          path?: string
-          phone_hash: string
-        }
-        Update: {
-          account_number_hash?: string
-          amount?: number
-          bvn_hash?: string
-          channel?: string | null
-          created_at?: string
-          customer_id?: string
-          entity_type?: string
-          id?: string
-          institution_id?: string
-          path?: string
-          phone_hash?: string
         }
         Relationships: []
       }
@@ -2830,41 +2261,6 @@ export type Database = {
         }
         Relationships: []
       }
-      users: {
-        Row: {
-          created_at: string | null
-          email_hash: string
-          full_name_hash: string | null
-          id: string
-          institution_id: string
-          role: string
-        }
-        Insert: {
-          created_at?: string | null
-          email_hash: string
-          full_name_hash?: string | null
-          id?: string
-          institution_id: string
-          role?: string
-        }
-        Update: {
-          created_at?: string | null
-          email_hash?: string
-          full_name_hash?: string | null
-          id?: string
-          institution_id?: string
-          role?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "users_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       verification_sessions: {
         Row: {
           bvn_hash: string | null
@@ -3014,44 +2410,6 @@ export type Database = {
         }
         Relationships: []
       }
-      webhook_events: {
-        Row: {
-          created_at: string | null
-          delivery_status: string | null
-          event_type: string
-          id: string
-          institution_id: string
-          payload: Json | null
-          target_url: string
-        }
-        Insert: {
-          created_at?: string | null
-          delivery_status?: string | null
-          event_type: string
-          id?: string
-          institution_id: string
-          payload?: Json | null
-          target_url: string
-        }
-        Update: {
-          created_at?: string | null
-          delivery_status?: string | null
-          event_type?: string
-          id?: string
-          institution_id?: string
-          payload?: Json | null
-          target_url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "webhook_events_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -3083,29 +2441,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      lock_next_job: {
-        Args: never
-        Returns: {
-          args_hash: string | null
-          attempts: number | null
-          created_at: string | null
-          error: string | null
-          id: string
-          institution_id: string
-          job_type: string
-          path: string | null
-          payload: Json | null
-          result: Json | null
-          status: string | null
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "queue_jobs"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
