@@ -1,436 +1,563 @@
-import { Link, NavLink } from "react-router-dom";
-import { useState } from "react";
-import { ArrowUpRight, ArrowRight, Star, ChevronDown } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import SiteFooter from "@/components/site/SiteFooter";
-import boardroomAsset from "@/assets/hero-boardroom.png.asset.json";
-const boardroom = boardroomAsset.url;
+import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check } from "lucide-react";
 
-const HERO_FONT = '"Inter Tight", -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+/* =========================================================
+   CROSBY-INTELLIGENCE STYLE HOMEPAGE
+   Pure dark editorial. Helvetica headers. Cream CTA pill.
+   All charts/figures are inline HTML/CSS mocks — no libs.
+   ========================================================= */
 
-const HELVETICA = '-apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif';
+const HELV = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
-// App Store + Google brand marks (small inline SVGs)
-const AppStoreMark = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
-    <defs>
-      <linearGradient id="asg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stopColor="#1AC8FF" />
-        <stop offset="1" stopColor="#0A6CFF" />
-      </linearGradient>
-    </defs>
-    <rect width="24" height="24" rx="5" fill="url(#asg)" />
-    <path d="M8.2 16.4l.9-1.55h1.78l-.88 1.55c-.34.59-1.1.79-1.69.45-.58-.34-.79-1.1-.45-1.69zM15.6 14.85h-5.4l-.9-1.55h7.2c.68 0 1.23.55 1.23 1.23 0 .67-.55 1.23-1.23 1.23h-.45l-.45-.91zm-2.3-7.6l.8-1.39c.34-.58 1.1-.79 1.68-.45.59.34.79 1.1.45 1.69l-3.74 6.48h2.7l.9 1.55H8.85L13.3 7.25z" fill="#fff"/>
-  </svg>
-);
-const GoogleMark = () => (
-  <svg width="14" height="14" viewBox="0 0 48 48" aria-hidden>
-    <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3 0 5.8 1.1 7.9 3l5.7-5.7C33.9 6.1 29.2 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
-    <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3 0 5.8 1.1 7.9 3l5.7-5.7C33.9 6.1 29.2 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/>
-    <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.5 5C9.5 39.5 16.2 44 24 44z"/>
-    <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.4-.4-3.5z"/>
-  </svg>
-);
+const C = {
+  page:   "#0A0A0A",
+  surface:"#141414",
+  ink:    "#F2EDE4",
+  ink2:   "#D8D2C6",
+  ink3:   "#8A847A",
+  rule:   "#2A2724",
+  cream:  "#F2E9D8",
+  creamHi:"#E6DCC4",
+};
 
-function HeroPillNav() {
-  const [open, setOpen] = useState(false);
+const SERIES = {
+  gpt:    "#A8312B",
+  fable:  "#B8924A",
+  gemini: "#3F6E94",
+  opus:   "#3F7A5E",
+};
+
+/* ---------- color ramp for heatmap ---------- */
+const RAMP = ["#1B1430","#4B1A5C","#8A2A6E","#C73E5E","#E86A3E","#F2C57A"];
+function ramp(v: number) {
+  if (v <= 0) return RAMP[0];
+  if (v >= 1) return RAMP[RAMP.length - 1];
+  const t = v * (RAMP.length - 1);
+  const i = Math.floor(t);
+  const f = t - i;
+  const a = hex(RAMP[i]); const b = hex(RAMP[i + 1]);
+  const r = Math.round(a.r + (b.r - a.r) * f);
+  const g = Math.round(a.g + (b.g - a.g) * f);
+  const bl= Math.round(a.b + (b.b - a.b) * f);
+  return `rgb(${r},${g},${bl})`;
+}
+function hex(h: string) {
+  const n = h.replace("#","");
+  return { r: parseInt(n.slice(0,2),16), g: parseInt(n.slice(2,4),16), b: parseInt(n.slice(4,6),16) };
+}
+
+/* ---------- top nav ---------- */
+function Nav() {
   return (
-    <div style={{ position: "sticky", top: 16, zIndex: 50, padding: "0 24px" }}>
-      <div
-        style={{
-          maxWidth: 1200,
-          margin: "0 auto",
-          background: "#EAF1F7",
-          borderRadius: 999,
-          padding: "10px 14px 10px 22px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          boxShadow: "0 2px 14px rgba(20,40,80,0.08)",
-          fontFamily: HERO_FONT,
-        }}
-      >
-        <Link to="/" style={{ fontSize: 17, fontWeight: 700, color: "#0A0A0A", textDecoration: "none", letterSpacing: "-0.02em" }}>
-          RegCo
-        </Link>
-        <nav style={{ display: "flex", gap: 28, alignItems: "center" }} className="hidden md:flex">
-          <button onClick={() => setOpen(o => !o)} style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 14, color: "#0A0A0A", background: "none", border: "none", cursor: "pointer", fontFamily: HERO_FONT }}>
-            Products <ChevronDown size={13} />
-          </button>
-          {[["Who we serve","/who-we-serve"],["Pricing","/pricing"],["About","/about"]].map(([l,h]) => (
-            <NavLink key={h} to={h} style={{ fontSize: 14, color: "#0A0A0A", textDecoration: "none" }}>{l}</NavLink>
-          ))}
-        </nav>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <Link to="/sign-in" style={{ fontSize: 14, color: "#0A0A0A", textDecoration: "none", padding: "0 8px" }}>Sign in</Link>
-          <Link to="/book-demo" style={{ background: "#0A0A0A", color: "#FFFFFF", fontSize: 14, fontWeight: 500, padding: "10px 18px", borderRadius: 999, textDecoration: "none" }}>
-            Book a demo
-          </Link>
-        </div>
+    <header style={{
+      position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 50,
+      background: C.page,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 32px 0 24px",
+      fontFamily: HELV,
+    }}>
+      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
+        <div>CROSBY</div>
+        <div>INTELLIGENCE</div>
+      </Link>
+      <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
+        {[
+          ["Benchmark","#findings"],
+          ["Fellowship","#fellowship"],
+          ["Conversations","#conversations"],
+        ].map(([l,h]) => (
+          <a key={l} href={h as string} style={navLink}>{l}</a>
+        ))}
+        <a href="/" style={navLink}>Main site <span style={{opacity:.6}}>↗</span></a>
+      </nav>
+    </header>
+  );
+}
+const navLink: React.CSSProperties = {
+  fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
+};
+
+/* ---------- left scroll ruler ---------- */
+function ScrollRuler({ active, total }: { active: number; total: number }) {
+  return (
+    <div style={{
+      position: "fixed", left: 56, top: "50%", transform: "translateY(-50%)",
+      display: "flex", flexDirection: "column", gap: 8, zIndex: 40,
+    }}>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{
+          height: 1,
+          width: i === active ? 24 : 16,
+          background: C.ink3,
+          opacity: i === active ? 1 : 0.35,
+          transition: "width 150ms ease, opacity 150ms ease",
+        }} />
+      ))}
+    </div>
+  );
+}
+
+/* ---------- cream CTA pill ---------- */
+function CreamCTA({ children, href = "#", to }: { children: React.ReactNode; href?: string; to?: string }) {
+  const [hover, setHover] = useState(false);
+  const style: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: hover ? C.creamHi : C.cream, color: "#0A0A0A",
+    borderRadius: 9999, padding: "14px 24px",
+    fontFamily: HELV, fontSize: 15, fontWeight: 500,
+    textDecoration: "none", transition: "background 150ms ease",
+  };
+  const inner = (<>{children} <ArrowRight size={16} strokeWidth={1.75} /></>);
+  if (to) return <Link to={to} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</Link>;
+  return <a href={href} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</a>;
+}
+
+/* ---------- shared text styles ---------- */
+const H1: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 700, fontSize: 56, lineHeight: 1.05,
+  letterSpacing: "-0.025em", color: C.ink, margin: 0,
+};
+const H1Washed: React.CSSProperties = { ...H1, color: "#6F6A62", fontSize: 44 };
+const H2: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 700, fontSize: 28, lineHeight: 1.15,
+  letterSpacing: "-0.02em", color: C.ink, margin: 0,
+};
+const Lede: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 400, fontSize: 19, lineHeight: 1.55,
+  color: C.ink, margin: 0,
+};
+const Body: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 400, fontSize: 17, lineHeight: 1.6,
+  color: C.ink2, margin: 0,
+};
+const Mono: React.CSSProperties = {
+  fontFamily: MONO, fontWeight: 400, fontSize: 13, color: C.ink3,
+};
+
+/* ---------- column wrapper ---------- */
+const Col: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "0 24px" };
+
+/* =========================================================
+   FIGURE 1 — Cluster intensity heatmap
+   ========================================================= */
+type Cell = { row: string; values: (number | null)[] };
+const SCEN_1: Cell[] = [
+  { row:"ExC",  values:[0.18,0.02,0.27,0.06] },
+  { row:"ExA.2",values:[0.26,0.08,0.07,null] },
+  { row:"3.3.5",values:[0.10,0.21,0.02,0.05] },
+  { row:"1.3",  values:[0.20,0.15,0.04,0.04] },
+  { row:"1.4",  values:[0.20,0.02,null,0.01] },
+  { row:"10",   values:[0.20,0.03,null,0.03] },
+  { row:"1",    values:[0.20,0.03,0.03,0.06] },
+  { row:"3.2",  values:[0.20,0.02,0.04,0.02] },
+  { row:"14.1", values:[0.20,0.09,0.02,0.06] },
+  { row:"ExA.5",values:[0.20,0.02,0.07,0.05] },
+  { row:"1.15", values:[0.20,0.06,0.03,0.05] },
+  { row:"2",    values:[0.20,null,0.05,null] },
+  { row:"5.1",  values:[0.18,null,0.03,null] },
+  { row:"4",    values:[0.18,null,null,0.03] },
+  { row:"7.1",  values:[0.10,0.15,0.05,0.05] },
+];
+const SCEN_2: Cell[] = [
+  { row:"6.1", values:[0.63,0.24,0.02,null] },
+  { row:"2.9", values:[0.47,0.07,0.04,0.04] },
+  { row:"2.3", values:[0.45,0.02,0.06,0.02] },
+  { row:"7.1", values:[0.42,0.05,0.16,0.03] },
+  { row:"9.2", values:[0.42,0.15,0.15,0.07] },
+  { row:"6.3", values:[0.40,0.23,0.03,0.04] },
+  { row:"8.1", values:[0.40,0.09,0.10,0.11] },
+  { row:"10.2",values:[0.33,0.23,0.03,0.08] },
+  { row:"11.8",values:[0.33,0.08,0.03,0.06] },
+  { row:"2.13",values:[0.27,0.13,0.06,0.06] },
+  { row:"10.1",values:[0.25,0.07,0.16,0.07] },
+  { row:"2.6", values:[0.25,0.03,0.06,0.04] },
+  { row:"ExA", values:[0.25,0.08,0.05,0.04] },
+  { row:"2.10",values:[0.25,0.05,null,null] },
+  { row:"2.11",values:[0.25,0.07,null,null] },
+];
+const SCEN_3: Cell[] = [
+  { row:"15.12",values:[0.60,0.06,0.21,0.13] },
+  { row:"7.5",  values:[0.20,0.26,0.11,0.11] },
+  { row:"13.1", values:[0.16,0.06,0.04,0.21] },
+  { row:"5.1",  values:[0.20,0.03,0.07,0.07] },
+  { row:"5.10", values:[0.20,null,null,null] },
+  { row:"7.8",  values:[0.20,null,0.07,null] },
+  { row:"10.2", values:[0.20,null,0.06,0.02] },
+  { row:"12.2", values:[0.20,0.07,null,0.07] },
+  { row:"7.3",  values:[0.18,0.13,0.10,0.05] },
+  { row:"3.1",  values:[0.18,0.05,0.04,null] },
+  { row:"4.1",  values:[0.18,0.07,0.02,null] },
+  { row:"15",   values:[0.18,null,null,null] },
+  { row:"4.5",  values:[0.18,0.02,0.06,0.05] },
+  { row:"9.10", values:[0.16,0.17,0.10,null] },
+  { row:"12.1", values:[0.16,0.15,0.08,0.05] },
+];
+
+function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ ...Mono, marginBottom: 12 }}>{title}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "44px repeat(4, 1fr)", rowGap: 4, columnGap: 4 }}>
+        <div />
+        {["T1","T2","T3","T4"].map(t => (
+          <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
+        ))}
+        {data.flatMap(r => [
+          <div key={r.row+"-l"} style={{ ...Mono, textAlign: "right", paddingRight: 8, alignSelf: "center" }}>{r.row}</div>,
+          ...r.values.map((v, i) => (
+            <div key={r.row+"-"+i} style={{
+              height: 22, borderRadius: 3,
+              background: v == null ? "transparent" : ramp(v),
+              color: v == null ? "transparent" : (v > 0.5 ? "#0A0A0A" : C.ink),
+              fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: "22px",
+            }}>{v == null ? "" : v.toFixed(2)}</div>
+          )),
+        ])}
       </div>
     </div>
   );
 }
 
-const products = [
-  {
-    n: "01",
-    name: "Automated Returns",
-    desc:
-      "Generate, validate, and file every CBN and NFIU return your institution owes. Schemas, arithmetic, and deadlines handled end-to-end — your team approves, RegCo files.",
-    href: "/product/automated-returns",
-  },
-  {
-    n: "02",
-    name: "Live Client Screening",
-    desc:
-      "BVN, NIN, sanctions (UN, OFAC, EU, HMT, CBN), PEP and adverse media — checked in real time at onboarding and continuously thereafter. One verdict per customer, with the audit trail attached.",
-    href: "/product/live-screening",
-  },
-  {
-    n: "03",
-    name: "Transaction Monitoring",
-    desc:
-      "Near-real-time detection across structuring, velocity, dormancy, narration mismatches, and counter-party risk. Fraud and AML cases flow straight into your case queue.",
-    href: "/product/transaction-monitoring",
-  },
-  {
-    n: "04",
-    name: "Audit Trail & Case Mgmt",
-    desc:
-      "A single chain of custody for every decision: alert raised, analyst assigned, evidence attached, outcome recorded. Export an examiner-ready packet in one click.",
-    href: "/product/audit-trail",
-  },
-];
-
-const steps = [
-  {
-    n: "Connect",
-    body:
-      "Plug into your core banking system — T24, Finacle, Flexcube, Bankone — or upload directly. RegCo maps your data to the schema each regulator expects.",
-  },
-  {
-    n: "Operate",
-    body:
-      "Returns generate on schedule. Customers are screened on every interaction. Transactions flow through detection rules tuned to your license category.",
-  },
-  {
-    n: "File",
-    body:
-      "Approve, file, and archive — with a complete audit trail. Every action attributable, every artefact retrievable.",
-  },
-];
-
-const stats = [
-  { v: "₦2.4B+", l: "Regulatory penalties avoided across our client base in 2025." },
-  { v: "17",     l: "Mandatory returns covered across CBN, NDIC, NFIU, SCUML, FIRS, PENCOM." },
-  { v: "<100ms", l: "Median transaction-screening latency at the production tier." },
-  { v: "99.4%",  l: "On-time submission rate across all active institutions." },
-];
-
-export default function Index() {
+function Figure1() {
   return (
-    <div className="min-h-screen text-ink" style={{ fontFamily: HERO_FONT, background: "var(--hero-page)" }}>
-      {/* Hero — Kota-style stacked cards on a tinted page */}
-      <section
-        className="relative w-full"
-        style={{ background: "var(--hero-page)", padding: "32px 0 80px" }}
-      >
-        <HeroPillNav />
-        <div className="container-site" style={{ marginTop: 48 }}>
-          <div
-            style={{
-              maxWidth: 760,
-              margin: "0 auto",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              textAlign: "center",
-            }}
-          >
-            {/* Reviews chip */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                background: "#FFFFFF",
-                border: "1px solid rgba(0,0,0,0.06)",
-                borderRadius: 999,
-                padding: "6px 12px",
-                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-              }}
-            >
-              <AppStoreMark />
-              <Star size={11} fill="#F5B100" stroke="#F5B100" />
-              <GoogleMark />
-              <span style={{ display: "inline-flex", gap: 2, marginLeft: 2 }}>
-                {[0,1,2,3,4].map((i) => (
-                  <Star key={i} size={11} fill="#F5B100" stroke="#F5B100" />
-                ))}
-              </span>
+    <div>
+      <div style={{
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32,
+      }}>
+        <div style={{ display: "flex", gap: 32 }}>
+          <HeatmapScenario title="SCENARIO 1" data={SCEN_1} />
+          <HeatmapScenario title="SCENARIO 2" data={SCEN_2} />
+          <HeatmapScenario title="SCENARIO 3" data={SCEN_3} />
+        </div>
+        {/* gradient legend */}
+        <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={Mono}>0</span>
+          <div style={{
+            flex: 1, height: 6, borderRadius: 3,
+            background: `linear-gradient(90deg, ${RAMP.join(",")})`,
+          }} />
+          <span style={Mono}>1.0 intensity</span>
+          <span style={{
+            width: 14, height: 14, background: "#F2C57A", borderRadius: 2,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Check size={10} color="#0A0A0A" strokeWidth={3} />
+          </span>
+          <span style={Mono}>Scores</span>
+        </div>
+      </div>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
+        Each cell = the cluster intensity (attorney recurrence × rubric weight × directional consistency) for that (scenario, section, turn). Higher = more attorneys converged on the same redline.
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================
+   FIGURE 3 — Ranked bar list (Overall score)
+   ========================================================= */
+const OVERALL = [
+  { name: "GPT-5.5",         value: 50.5, color: SERIES.gpt },
+  { name: "Claude Fable 5",  value: 47.3, color: SERIES.fable },
+  { name: "Gemini 3.5 Flash",value: 45.1, color: SERIES.gemini },
+  { name: "Claude Opus 4.8", value: 44.4, color: SERIES.opus },
+];
+
+function RankedBars() {
+  const max = 100;
+  return (
+    <div>
+      <div style={{
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32, display: "flex", flexDirection: "column", gap: 18,
+      }}>
+        {OVERALL.map((r, i) => (
+          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr 60px", gap: 16, alignItems: "center" }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9999, border: `1px solid ${C.rule}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: MONO, fontSize: 13, color: C.ink3,
+            }}>{i+1}</div>
+            <div style={{ height: 44, position: "relative" }}>
+              <div style={{
+                height: "100%", width: `${(r.value / max) * 100}%`,
+                background: r.color, borderRadius: 4,
+                display: "flex", alignItems: "center", paddingLeft: 16,
+                fontFamily: HELV, fontSize: 14, fontWeight: 500, color: C.ink,
+              }}>{r.name}</div>
             </div>
-
-            <h1
-              style={{
-                fontFamily: HERO_FONT,
-                fontWeight: 700,
-                fontSize: "clamp(40px, 4vw, 56px)",
-                lineHeight: 1.04,
-                letterSpacing: "-0.03em",
-                color: "var(--hero-ink)",
-                margin: "24px 0 0",
-              }}
-            >
-              Automating regulatory compliance for the modern compliance desk.
-            </h1>
-
-            <p
-              style={{
-                marginTop: 28,
-                fontFamily: HERO_FONT,
-                fontSize: 17,
-                lineHeight: 1.55,
-                color: "var(--hero-sub)",
-                maxWidth: 560,
-              }}
-            >
-              RegCo connects to your core banking system, screens every customer, monitors every transaction, and files every CBN, NFIU, SCUML and NDIC return — from one audited workspace.
-            </p>
-
-            <div style={{ marginTop: 32 }}>
-              <Link
-                to="/book-demo"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "var(--hero-ink)",
-                  color: "#FFFFFF",
-                  fontFamily: HERO_FONT,
-                  fontSize: 15.5,
-                  fontWeight: 500,
-                  padding: "18px 32px",
-                  borderRadius: 999,
-                  textDecoration: "none",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                Book a demo
-              </Link>
-            </div>
+            <div style={{ ...Body, textAlign: "right", fontFamily: MONO, fontSize: 14, color: C.ink }}>{r.value.toFixed(1)}%</div>
           </div>
+        ))}
+      </div>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
+        The 12 (scenario × turn) cells are averaged equally so later turns don't dominate the headline.
+      </p>
+    </div>
+  );
+}
 
-          {/* Illustration — full-width, frameless, blends into page background */}
-          <div
-            style={{
-              maxWidth: 1200,
-              margin: "72px auto 0",
-              padding: "0 8px",
-            }}
-          >
-            <img
-              src={boardroom}
-              alt="Compliance team reviewing reports at a boardroom table"
-              style={{
-                display: "block",
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-              }}
-            />
+/* =========================================================
+   FIGURE 6 — Grouped bars (Dimension pass rates)
+   ========================================================= */
+const DIMS: { label: string; values: [number, number, number, number] }[] = [
+  { label: "Legal",        values: [49.0, 44.9, 45.2, 44.2] },
+  { label: "Commercial",   values: [49.9, 47.0, 51.5, 44.7] },
+  { label: "Negotiation",  values: [50.9, 45.2, 45.0, 41.2] },
+  { label: "Counterparty", values: [51.0, 48.3, 57.1, 45.4] },
+  { label: "Deal-closing", values: [84.4, 83.2, 82.5, 86.2] },
+];
+
+function GroupedBars() {
+  const CHART_H = 320;
+  const seriesColors = [SERIES.gpt, SERIES.fable, SERIES.gemini, SERIES.opus];
+  return (
+    <div>
+      <div style={{
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32,
+      }}>
+        {/* legend */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
+          {["GPT-5.5","Claude Fable 5","Gemini 3.5 Flash","Claude Opus 4.8"].map((n,i) => (
+            <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
+              <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
+            </div>
+          ))}
+        </div>
+        {/* plot */}
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12 }}>
+          <div style={{ height: CHART_H, position: "relative" }}>
+            {[100,80,60,40,20,0].map((y, idx) => (
+              <div key={y} style={{
+                position: "absolute", right: 0, top: `${(idx / 5) * 100}%`,
+                transform: "translateY(-50%)", ...Mono, fontSize: 11,
+              }}>{y}%</div>
+            ))}
+          </div>
+          <div style={{ height: CHART_H, position: "relative", borderLeft: `1px solid ${C.rule}` }}>
+            {/* gridlines */}
+            {[0,1,2,3,4,5].map(i => (
+              <div key={i} style={{
+                position: "absolute", left: 0, right: 0,
+                top: `${(i / 5) * 100}%`, height: 1, background: C.rule,
+              }} />
+            ))}
+            {/* groups */}
+            <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
+              {DIMS.map((g, gi) => (
+                <div key={g.label} style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, padding: "0 12px" }}>
+                  {g.values.map((v, vi) => (
+                    <div key={vi} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
+                      <span style={{ ...Mono, fontSize: 11, color: C.ink, marginBottom: 4 }}>{v.toFixed(1)}</span>
+                      <div style={{ width: "100%", height: `${v}%`, background: seriesColors[vi] }} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        <style>{`
-          @media (min-width: 1024px) {
-            .hero-grid {
-              grid-template-columns: minmax(320px, 0.85fr) minmax(0, 1.9fr) !important;
-              gap: 28px !important;
-            }
-          }
-        `}</style>
-      </section>
-
-
-
-
-      {/* Trust strip — text only */}
-      <section className="border-y border-[var(--line)]">
-        <div className="container-site py-6 flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-8">
-          <p className="text-[12px] uppercase tracking-[0.18em] text-ink-3 font-mono">
-            Trusted by regulated financial institutions
-          </p>
-          <p className="text-[13px] text-ink-3">
-            Microfinance Banks · Primary Mortgage Banks · Finance Companies · Commercial Banks · Fintechs
-          </p>
-        </div>
-      </section>
-
-      {/* Four products */}
-      <section className="section-pad">
-        <div className="container-site">
-          <div className="max-w-[60ch] mb-12">
-            <p className="tag mb-3">Four products. One system.</p>
-            <h2 className="text-h2 text-ink">
-              Everything the compliance desk does — under one license.
-            </h2>
-          </div>
-
-
-          <div>
-            {products.map((p) => (
-              <Link
-                key={p.n}
-                to={p.href}
-                className="group grid grid-cols-12 gap-6 md:gap-10 py-10 border-t border-[var(--line)] last:border-b"
-              >
-                <div className="col-span-12 md:col-span-2">
-                  <span className="font-mono text-[13px] text-ink-3">{p.n}</span>
-                </div>
-                <div className="col-span-12 md:col-span-5">
-                  <h3 className="text-h3 text-ink">{p.name}</h3>
-                </div>
-                <div className="col-span-12 md:col-span-5">
-                  <p className="text-[15px] leading-[1.6] text-ink-3">{p.desc}</p>
-                  <span className="mt-4 inline-flex items-center gap-1 text-[13px] text-ink group-hover:underline underline-offset-4">
-                    Learn more <ArrowRight size={13} />
-                  </span>
-                </div>
-              </Link>
+        {/* x labels */}
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12, marginTop: 12 }}>
+          <div />
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
+            {DIMS.map(g => (
+              <div key={g.label} style={{ ...Body, fontSize: 14, color: C.ink, textAlign: "center" }}>{g.label}</div>
             ))}
           </div>
         </div>
+      </div>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;6</span>{" "}
+        Weighted pass rate per evaluation dimension, pooled across every trial and weighted by rubric weight.
+      </p>
+    </div>
+  );
+}
+
+/* =========================================================
+   Findings list
+   ========================================================= */
+const FINDINGS = [
+  { n: "01", title: "Issue prioritization",
+    body: "Issue prioritization is a shared weakness. Models struggle to identify the issues attorneys collectively treat as most important, especially when initiating redlines on a clean template." },
+  { n: "02", title: "Over-acceptance",
+    body: "Models exhibit a systematic over-acceptance bias when forced to accept or reject counterparty redlines. This pattern suggests that models lack a genuine understanding of the commercial stakes behind redlined terms and instead default to agreement regardless of substance." },
+  { n: "03", title: "Surgicalness",
+    body: "Claude Fable 5 leads on surgicalness. Among the models, Fable 5 comes closest to attorney drafting behavior, with the lowest reliance on block edits and the shortest average edit length." },
+  { n: "04", title: "The gap",
+    body: "Current models remain meaningfully short of attorney-grade redlining. The gap is not limited to legal correctness. Models remain weaker on strategic issue selection, vendor-side commercial judgment, drafting precision, and adaptive position management across turns." },
+];
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+export default function Index() {
+  const sectionsRef = useRef<HTMLElement[]>([]);
+  const [active, setActive] = useState(0);
+  const SECTION_COUNT = 8;
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ruler-id]"));
+    sectionsRef.current = sections;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = Number((e.target as HTMLElement).dataset.rulerId);
+          setActive(id);
+        }
+      });
+    }, { rootMargin: "-40% 0px -55% 0px", threshold: 0 });
+    sections.forEach(s => obs.observe(s));
+    return () => obs.disconnect();
+  }, []);
+
+  return (
+    <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
+      <Nav />
+      <ScrollRuler active={active} total={SECTION_COUNT} />
+
+      {/* HERO */}
+      <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
+        <div style={Col}>
+          <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
+            Benchmark · v1.0
+          </div>
+          <h1 style={H1}>
+            A benchmark for attorney-grade redlining.
+          </h1>
+          <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
+            We measure how frontier models negotiate real contracts, turn by turn. The benchmark grades issue prioritization, drafting precision, and adaptive position management against senior attorney baselines.
+          </p>
+          <div style={{ marginTop: 40 }}>
+            <CreamCTA href="#findings">Read the benchmark</CreamCTA>
+          </div>
+        </div>
       </section>
 
-      {/* How it works */}
-      <section className="section-pad bg-[#FAFAFA]">
-        <div className="container-site">
-          <div className="max-w-[60ch] mb-10">
-            <p className="tag mb-3">How RegCo works</p>
-            <h2 className="text-h2 text-ink">Three steps. One system of record.</h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 md:gap-12">
-            {steps.map((s, i) => (
-              <div key={s.n} className="border-t border-[var(--line)] pt-5">
-                <p className="font-mono text-[12px] text-ink-3">0{i + 1}</p>
-                <h3 className="mt-2 text-[20px] font-semibold text-ink tracking-tight">{s.n}</h3>
-                <p className="mt-3 text-[14.5px] leading-[1.6] text-ink-3">{s.body}</p>
+      {/* SUMMARY OF FINDINGS */}
+      <section id="findings" data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>2. Summary of Findings</h2>
+          <p style={{ ...Body, marginTop: 32 }}>
+            GPT-5.5 has the highest overall turn-weighted rubric score, but the spread across models is narrow, suggesting that the benchmark remains challenging across the frontier model set.
+          </p>
+
+          <div style={{ marginTop: 56 }}>
+            {FINDINGS.map((f, i) => (
+              <div key={f.n} style={{
+                display: "grid", gridTemplateColumns: "48px 200px 1fr", gap: 24,
+                padding: "32px 0",
+                borderTop: `1px solid ${C.rule}`,
+                borderBottom: i === FINDINGS.length - 1 ? `1px solid ${C.rule}` : undefined,
+              }}>
+                <div style={{ ...Mono, fontSize: 14 }}>{f.n}</div>
+                <div style={{ ...Body, color: C.ink, fontWeight: 700, fontSize: 16 }}>{f.title}</div>
+                <div style={Body}>{f.body}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats band */}
-      <section className="section-pad">
-        <div className="container-site grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
-          {stats.map((s) => (
-            <div key={s.v} className="border-t border-[var(--line)] pt-5">
-              <div className="text-kpi text-ink">{s.v}</div>
-              <p className="mt-3 text-[13px] leading-[1.5] text-ink-3">{s.l}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Closing CTA */}
-      <section className="bg-ink text-white">
-        <div className="container-site py-20 md:py-28 grid md:grid-cols-12 gap-10 items-end">
-          <div className="md:col-span-7">
-            <h2 className="text-h2 text-white max-w-[18ch]">
-              Begin your next reporting cycle with RegCo.
-            </h2>
-          </div>
-          <div className="md:col-span-5">
-            <p className="text-[14.5px] leading-[1.6] text-white/70">
-              Twenty minutes is enough to see exactly how your CBS data becomes a filed return, a screened customer, and a closed case.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                to="/book-demo"
-                className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-white text-ink text-[14px] font-medium hover:bg-white/90 transition-colors"
-              >
-                Book a demo <ArrowUpRight size={15} />
-              </Link>
-              <Link
-                to="/sign-in"
-                className="h-10 px-5 inline-flex items-center gap-2 rounded-full border border-white/25 text-white text-[14px] font-medium hover:bg-white/10 transition-colors"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="section-pad border-t border-[var(--line)]">
-        <div className="container-site grid md:grid-cols-12 gap-10 md:gap-16">
-          <div className="md:col-span-4">
-            <p className="tag mb-3">Questions</p>
-            <h2 className="text-h2 text-ink">Frequently asked.</h2>
-            <p className="mt-5 text-[14.5px] leading-[1.6] text-ink-3 max-w-[36ch]">
-              Straight answers on coverage, integration, security, and what it takes to go live.
+      {/* FIGURE 1 — wider column for the chart */}
+      <section data-ruler-id="2" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
+            <p style={Body}>
+              The figure below shows convergence intensity per (scenario, section, turn). Each rubric matters in an evolving negotiation. By grounding evaluation in that complexity, the benchmark tests whether model outputs are useful in realistic redlining workflows, not merely whether they can spot isolated issues.
             </p>
           </div>
-          <div className="md:col-span-8">
-            <Accordion type="single" collapsible className="w-full">
-              {[
-                {
-                  q: "Which core banking systems does RegCo connect to?",
-                  a: "We integrate with T24, Finacle, Flexcube, Bankone, and Kachasi via direct read-only connectors. Institutions on bespoke or legacy cores can map through scheduled file drops — CSV, XML, or fixed-width — without changes to the core itself.",
-                },
-                {
-                  q: "Which regulators and returns are covered?",
-                  a: "CBN (daily, monthly, quarterly prudential and AML returns), NDIC (deposit and single-obligor), NFIU (CTR, STR, currency declarations), SCUML, FIRS (CIT, VAT, WHT, PAYE), and PENCOM. Seventeen mandatory schedules in total at the current release.",
-                },
-                {
-                  q: "Where is our data stored and how is it secured?",
-                  a: "Data is held in encrypted tenant-isolated stores hosted in-region. Row-level security enforces strict per-institution access, and every read or write is recorded in an immutable audit log. Independent penetration tests are conducted annually.",
-                },
-                {
-                  q: "How long does deployment take?",
-                  a: "A standard institution is live in two to four weeks: one week for connector configuration, one for schema mapping and a parallel-run reporting cycle, and the remainder for officer onboarding and sign-off.",
-                },
-                {
-                  q: "How is RegCo priced?",
-                  a: "An annual platform fee scoped to license category and transaction volume, plus optional modules for transaction monitoring and case management. Pricing is discussed under NDA during the demo.",
-                },
-                {
-                  q: "What support do clients receive?",
-                  a: "Every institution is assigned a named compliance engineer and a one-business-hour response SLA on filing-blocking issues. Regulatory schema changes are absorbed by RegCo without billable change requests.",
-                },
-              ].map((item, i) => {
-                const n = String(i + 1).padStart(2, "0");
-                return (
-                  <AccordionItem
-                    key={n}
-                    value={`q-${n}`}
-                    className="border-t border-[var(--line)] last:border-b"
-                  >
-                    <AccordionTrigger className="py-6 hover:no-underline group">
-                      <div className="flex items-start gap-6 text-left flex-1">
-                        <span className="font-mono text-[12px] text-ink-3 pt-1">{n}</span>
-                        <span className="text-[17px] leading-[1.4] text-ink font-medium tracking-tight">
-                          {item.q}
-                        </span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-6 pl-[calc(0.75rem+1.5rem+0.5rem)]">
-                      <p className="text-[14.5px] leading-[1.65] text-ink-3 max-w-[62ch]">
-                        {item.a}
-                      </p>
-                    </AccordionContent>
-                  </AccordionItem>
-                );
-              })}
-            </Accordion>
-          </div>
+          <Figure1 />
         </div>
       </section>
 
-      <SiteFooter />
+      {/* TURN-LEVEL FINDINGS */}
+      <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>6. Turn-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            GPT-5.5 ranks first on the turn-weighted, cross-scenario score at 50.5%, followed by Claude Fable 5 at 47.3%, Gemini 3.5 Flash at 45.1%, and Claude Opus 4.8 at 44.4%. The narrow spread suggests that GPT-5.5 performs marginally better overall, but that the benchmark is similarly challenging for all models, with no model separating decisively from the field.
+          </p>
+        </div>
+      </section>
+
+      {/* RANKED BARS */}
+      <section data-ruler-id="4" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
+          <RankedBars />
+        </div>
+      </section>
+
+      {/* 6.3 SCORE BY TURN */}
+      <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>6.3 Score by turn</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The models struggle the most with opening redline strategy. Turn 1 is the lowest-scoring stage for every model: GPT-5.5 scores 30.3%, Claude Fable 5 22.6%, Gemini 3.5 Flash 21.9%, and Claude Opus 4.8 17.9%. Scores rise sharply in later turns, clustering mostly in the 50%–60% range once the negotiation record has developed.
+          </p>
+        </div>
+      </section>
+
+      <section data-ruler-id="6" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
+          <GroupedBars />
+        </div>
+      </section>
+
+      {/* FELLOWSHIP CTA */}
+      <section id="fellowship" data-ruler-id="7" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <h2 style={H1}>Introducing the RegCo Intelligence Fellowship</h2>
+          <p style={{ ...Body, marginTop: 40 }}>
+            We're launching the RegCo Intelligence Fellowship, a program to accelerate research on frontier problems in regulatory automation and supervised reporting. Two selected Fellows will split <strong style={{ color: C.ink }}>$50,000 in grants</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused research projects.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
+            <DatePanel label="Applications close" value="July 17, 2026" />
+            <DatePanel label="Fellows announced" value="July 31, 2026" />
+          </div>
+
+          <div style={{ marginTop: 40 }}>
+            <CreamCTA to="/book-demo">Apply here</CreamCTA>
+          </div>
+
+          <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
+            Questions? <a href="mailto:fellowship@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>fellowship@regco.ai</a>
+          </p>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{
+        borderTop: `1px solid ${C.rule}`, padding: "48px 32px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+      }}>
+        <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+          <div>CROSBY</div><div>INTELLIGENCE</div>
+        </div>
+        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Research</div>
+      </footer>
+    </div>
+  );
+}
+
+function DatePanel({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{
+      border: `1px solid ${C.rule}`, borderRadius: 6, padding: "20px 24px",
+      background: "transparent",
+    }}>
+      <div style={{ ...Body, fontSize: 14, color: C.ink3 }}>{label}</div>
+      <div style={{ ...H2, fontSize: 24, marginTop: 8 }}>{value}</div>
     </div>
   );
 }
