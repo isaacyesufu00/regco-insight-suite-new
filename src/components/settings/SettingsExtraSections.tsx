@@ -62,7 +62,7 @@ function TeamMembersSection() {
     if (!email.includes("@")) { toast({ title: "Invalid email", variant: "destructive" }); return; }
     if (remaining <= 0) { toast({ title: "User limit reached", description: `Your plan allows ${maxUsersAllowed} users.`, variant: "destructive" }); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("institution_users").insert({
+    const { error } = await (supabase as any).from("institution_users").insert({
       admin_user_id: user.id,
       invited_email: email.trim().toLowerCase(),
       invited_name: name.trim() || null,
