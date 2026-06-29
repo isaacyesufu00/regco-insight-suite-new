@@ -73,12 +73,12 @@ export default function AuditTracker() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('audit_issues')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-    setIssues((data as Issue[]) || []);
+    setIssues(((data as unknown) as Issue[]) || []);
     setLoading(false);
   };
 
