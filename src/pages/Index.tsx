@@ -204,19 +204,17 @@ function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
         {["T1","T2","T3","T4"].map(t => (
           <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
         ))}
-        {data.map(r => (
-          <>
-            <div key={r.row+"-l"} style={{ ...Mono, textAlign: "right", paddingRight: 8, alignSelf: "center" }}>{r.row}</div>
-            {r.values.map((v, i) => (
-              <div key={r.row+i} style={{
-                height: 22, borderRadius: 3,
-                background: v == null ? "transparent" : ramp(v),
-                color: v == null ? "transparent" : (v > 0.5 ? "#0A0A0A" : C.ink),
-                fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: "22px",
-              }}>{v == null ? "" : v.toFixed(2)}</div>
-            ))}
-          </>
-        ))}
+        {data.flatMap(r => [
+          <div key={r.row+"-l"} style={{ ...Mono, textAlign: "right", paddingRight: 8, alignSelf: "center" }}>{r.row}</div>,
+          ...r.values.map((v, i) => (
+            <div key={r.row+"-"+i} style={{
+              height: 22, borderRadius: 3,
+              background: v == null ? "transparent" : ramp(v),
+              color: v == null ? "transparent" : (v > 0.5 ? "#0A0A0A" : C.ink),
+              fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: "22px",
+            }}>{v == null ? "" : v.toFixed(2)}</div>
+          )),
+        ])}
       </div>
     </div>
   );
