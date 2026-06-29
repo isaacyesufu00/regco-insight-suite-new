@@ -42,12 +42,12 @@ function TeamMembersSection() {
 
   const load = async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("institution_users")
       .select("id, invited_email, invited_name, role, status, created_at")
       .eq("admin_user_id", user.id)
       .order("created_at", { ascending: false });
-    setInvites((data as InviteRow[]) || []);
+    setInvites(((data as unknown) as InviteRow[]) || []);
   };
 
   useEffect(() => { load(); }, [user?.id]);
@@ -62,7 +62,7 @@ function TeamMembersSection() {
     if (!email.includes("@")) { toast({ title: "Invalid email", variant: "destructive" }); return; }
     if (remaining <= 0) { toast({ title: "User limit reached", description: `Your plan allows ${maxUsersAllowed} users.`, variant: "destructive" }); return; }
     setSubmitting(true);
-    const { error } = await supabase.from("institution_users").insert({
+    const { error } = await (supabase as any).from("institution_users").insert({
       admin_user_id: user.id,
       invited_email: email.trim().toLowerCase(),
       invited_name: name.trim() || null,

@@ -73,12 +73,12 @@ export default function AuditTracker() {
   const load = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from('audit_issues')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-    setIssues((data as Issue[]) || []);
+    setIssues(((data as unknown) as Issue[]) || []);
     setLoading(false);
   };
 
@@ -230,7 +230,7 @@ function AddForm({ onCancel, onSaved, userId }: { onCancel: () => void; onSaved:
   const submit = async () => {
     if (!form.title.trim() || !form.source) { toast.error('Title and source are required'); return; }
     setSaving(true);
-    const { error } = await supabase.from('audit_issues').insert({
+    const { error } = await (supabase as any).from('audit_issues').insert({
       user_id: userId,
       issue_ref: form.issue_ref || null,
       source: form.source, category: form.category, title: form.title.trim(),
