@@ -428,7 +428,7 @@ export default function Index() {
       <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
         <div style={Col}>
           <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
-            Benchmark · v1.0
+            ledger · v1.0
           </div>
           <h1 style={H1}>
             A benchmark for attorney-grade redlining.
