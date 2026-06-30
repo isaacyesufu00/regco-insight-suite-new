@@ -66,6 +66,9 @@ import ProductTransactionMonitoring from "./pages/marketing/ProductTransactionMo
 import ProductAuditTrail from "./pages/marketing/ProductAuditTrail";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminTemplateEditor from "./pages/AdminTemplateEditor";
+import EditorialProduct from "./pages/Product";
+import EditorialAboutUs from "./pages/AboutUs";
+import EditorialWhoWeServe from "./pages/WhoWeServe";
 
 const queryClient = new QueryClient();
 
