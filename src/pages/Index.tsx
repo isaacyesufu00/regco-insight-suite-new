@@ -518,25 +518,41 @@ export default function Index() {
         </div>
       </section>
 
-      {/* FELLOWSHIP CTA */}
-      <section id="fellowship" data-ruler-id="7" style={{ paddingTop: 128, paddingBottom: 128 }}>
+      {/* 6.4 FILING READINESS — extra mockup */}
+      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1}>Introducing the RegCo Intelligence Fellowship</h2>
+          <h3 style={H2}>6.4 Filing readiness by jurisdiction</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Readiness varies sharply by jurisdiction. The ranking below pools every return across every supervised period, weighted by examiner materiality, and confirms that mature ledgers carry the platform's strongest filing posture across the regulated set.
+          </p>
+        </div>
+      </section>
+
+      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
+          <RankedBars />
+        </div>
+      </section>
+
+      {/* COMPLIANCE PROGRAM CTA */}
+      <section id="fellowship" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <h2 style={H1}>Introducing the RegCo Compliance Acceleration Program</h2>
           <p style={{ ...Body, marginTop: 40 }}>
-            We're launching the RegCo Intelligence Fellowship, a program to accelerate research on frontier problems in regulatory automation and supervised reporting. Two selected Fellows will split <strong style={{ color: C.ink }}>$50,000 in grants</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused research projects.
+            We're launching the RegCo Compliance Acceleration Program, a track to accelerate adoption on frontier problems in regulatory automation and supervised reporting. Two selected institutions will split <strong style={{ color: C.ink }}>$50,000 in onboarding credits</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused compliance rollouts.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
             <DatePanel label="Applications close" value="July 17, 2026" />
-            <DatePanel label="Fellows announced" value="July 31, 2026" />
+            <DatePanel label="Cohort announced" value="July 31, 2026" />
           </div>
 
           <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Apply here</CreamCTA>
+            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
           </div>
 
           <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
-            Questions? <a href="mailto:fellowship@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>fellowship@regco.ai</a>
+            Questions? <a href="mailto:hello@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>hello@regco.ai</a>
           </p>
         </div>
       </section>
@@ -547,10 +563,11 @@ export default function Index() {
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-          <div>CROSBY</div><div>INTELLIGENCE</div>
+          <div>REGCO</div><div>COMPLIANCE</div>
         </div>
-        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Research</div>
+        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
       </footer>
+
     </div>
   );
 }
