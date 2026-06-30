@@ -59,18 +59,19 @@ function Nav() {
       fontFamily: HELV,
     }}>
       <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>CROSBY</div>
-        <div>INTELLIGENCE</div>
+        <div>REGCO</div>
+        <div>COMPLIANCE</div>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {[
-          ["Benchmark","#findings"],
-          ["Fellowship","#fellowship"],
-          ["Conversations","#conversations"],
-        ].map(([l,h]) => (
-          <a key={l} href={h as string} style={navLink}>{l}</a>
+          ["Home","/"],
+          ["Product","/product"],
+          ["About us","/about-us"],
+          ["Who we serve","/who-we-serve"],
+          ["Log in","/login"],
+        ].map(([l,to]) => (
+          <Link key={l} to={to as string} style={navLink}>{l}</Link>
         ))}
-        <a href="/" style={navLink}>Main site <span style={{opacity:.6}}>↗</span></a>
       </nav>
     </header>
   );
@@ -78,6 +79,7 @@ function Nav() {
 const navLink: React.CSSProperties = {
   fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
 };
+
 
 /* ---------- left scroll ruler ---------- */
 function ScrollRuler({ active, total }: { active: number; total: number }) {
@@ -261,11 +263,12 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "GPT-5.5",         value: 50.5, color: SERIES.gpt },
-  { name: "Claude Fable 5",  value: 47.3, color: SERIES.fable },
-  { name: "Gemini 3.5 Flash",value: 45.1, color: SERIES.gemini },
-  { name: "Claude Opus 4.8", value: 44.4, color: SERIES.opus },
+  { name: "Returns Engine", value: 50.5, color: SERIES.gpt },
+  { name: "Screening Core", value: 47.3, color: SERIES.fable },
+  { name: "Monitoring Hub", value: 45.1, color: SERIES.gemini },
+  { name: "Audit Vault",    value: 44.4, color: SERIES.opus },
 ];
+
 
 function RankedBars() {
   const max = 100;
@@ -306,11 +309,11 @@ function RankedBars() {
    FIGURE 6 — Grouped bars (Dimension pass rates)
    ========================================================= */
 const DIMS: { label: string; values: [number, number, number, number] }[] = [
-  { label: "Legal",        values: [49.0, 44.9, 45.2, 44.2] },
-  { label: "Commercial",   values: [49.9, 47.0, 51.5, 44.7] },
-  { label: "Negotiation",  values: [50.9, 45.2, 45.0, 41.2] },
-  { label: "Counterparty", values: [51.0, 48.3, 57.1, 45.4] },
-  { label: "Deal-closing", values: [84.4, 83.2, 82.5, 86.2] },
+  { label: "Returns",    values: [49.0, 44.9, 45.2, 44.2] },
+  { label: "Screening",  values: [49.9, 47.0, 51.5, 44.7] },
+  { label: "Monitoring", values: [50.9, 45.2, 45.0, 41.2] },
+  { label: "Audit",      values: [51.0, 48.3, 57.1, 45.4] },
+  { label: "Reporting",  values: [84.4, 83.2, 82.5, 86.2] },
 ];
 
 function GroupedBars() {
@@ -324,7 +327,7 @@ function GroupedBars() {
       }}>
         {/* legend */}
         <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
-          {["GPT-5.5","Claude Fable 5","Gemini 3.5 Flash","Claude Opus 4.8"].map((n,i) => (
+          {["Returns Engine","Screening Core","Monitoring Hub","Audit Vault"].map((n,i) => (
             <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
               <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
@@ -386,15 +389,16 @@ function GroupedBars() {
    Findings list
    ========================================================= */
 const FINDINGS = [
-  { n: "01", title: "Issue prioritization",
-    body: "Issue prioritization is a shared weakness. Models struggle to identify the issues attorneys collectively treat as most important, especially when initiating redlines on a clean template." },
-  { n: "02", title: "Over-acceptance",
-    body: "Models exhibit a systematic over-acceptance bias when forced to accept or reject counterparty redlines. This pattern suggests that models lack a genuine understanding of the commercial stakes behind redlined terms and instead default to agreement regardless of substance." },
-  { n: "03", title: "Surgicalness",
-    body: "Claude Fable 5 leads on surgicalness. Among the models, Fable 5 comes closest to attorney drafting behavior, with the lowest reliance on block edits and the shortest average edit length." },
+  { n: "01", title: "Filing prioritization",
+    body: "Filing prioritization is a shared weakness. Teams struggle to identify the returns examiners collectively treat as most material, especially when initiating filings on a clean ledger period." },
+  { n: "02", title: "Over-reporting",
+    body: "Institutions exhibit a systematic over-reporting bias when forced to flag or release borderline transactions for review. This pattern suggests that teams lack a genuine understanding of the supervisory stakes behind flagged entries and instead default to escalation regardless of substance." },
+  { n: "03", title: "Precision",
+    body: "Screening Core leads on precision. Among the modules, Screening comes closest to examiner review behavior, with the lowest reliance on bulk holds and the shortest average remediation length." },
   { n: "04", title: "The gap",
-    body: "Current models remain meaningfully short of attorney-grade redlining. The gap is not limited to legal correctness. Models remain weaker on strategic issue selection, vendor-side commercial judgment, drafting precision, and adaptive position management across turns." },
+    body: "Current workflows remain meaningfully short of examiner-grade reporting. The gap is not limited to technical correctness. Teams remain weaker on strategic filing selection, institution-side commercial judgment, drafting precision, and adaptive position management across periods." },
 ];
+
 
 /* =========================================================
    PAGE
@@ -402,7 +406,7 @@ const FINDINGS = [
 export default function Index() {
   const sectionsRef = useRef<HTMLElement[]>([]);
   const [active, setActive] = useState(0);
-  const SECTION_COUNT = 8;
+  const SECTION_COUNT = 10;
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ruler-id]"));
@@ -431,23 +435,24 @@ export default function Index() {
             ledger · v1.0
           </div>
           <h1 style={H1}>
-            A benchmark for attorney-grade redlining.
+            A platform for audit-grade regulatory compliance.
           </h1>
           <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
-            We measure how frontier models negotiate real contracts, turn by turn. The benchmark grades issue prioritization, drafting precision, and adaptive position management against senior attorney baselines.
+            We measure how regulated institutions file real returns, period by period. The platform grades filing prioritization, drafting precision, and adaptive position management against senior examiner baselines.
           </p>
           <div style={{ marginTop: 40 }}>
-            <CreamCTA href="#findings">Read the benchmark</CreamCTA>
+            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
           </div>
+
         </div>
       </section>
 
       {/* SUMMARY OF FINDINGS */}
       <section id="findings" data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>2. Summary of Findings</h2>
+          <h2 style={H1Washed}>2. Summary of Capabilities</h2>
           <p style={{ ...Body, marginTop: 32 }}>
-            GPT-5.5 has the highest overall turn-weighted rubric score, but the spread across models is narrow, suggesting that the benchmark remains challenging across the frontier model set.
+            Returns Engine has the highest overall period-weighted readiness score, but the spread across modules is narrow, suggesting that the platform remains exacting across the supervised reporting set.
           </p>
 
           <div style={{ marginTop: 56 }}>
@@ -482,10 +487,10 @@ export default function Index() {
       {/* TURN-LEVEL FINDINGS */}
       <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>6. Turn-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
+          <h2 style={H1Washed}>6. Period-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall readiness</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            GPT-5.5 ranks first on the turn-weighted, cross-scenario score at 50.5%, followed by Claude Fable 5 at 47.3%, Gemini 3.5 Flash at 45.1%, and Claude Opus 4.8 at 44.4%. The narrow spread suggests that GPT-5.5 performs marginally better overall, but that the benchmark is similarly challenging for all models, with no model separating decisively from the field.
+            Returns Engine ranks first on the period-weighted, cross-return readiness score at 50.5%, followed by Screening Core at 47.3%, Monitoring Hub at 45.1%, and Audit Vault at 44.4%. The narrow spread suggests that Returns Engine performs marginally better overall, but that the platform is similarly exacting for all modules, with no module separating decisively from the field.
           </p>
         </div>
       </section>
@@ -500,9 +505,9 @@ export default function Index() {
       {/* 6.3 SCORE BY TURN */}
       <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h3 style={H2}>6.3 Score by turn</h3>
+          <h3 style={H2}>6.3 Score by period</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            The models struggle the most with opening redline strategy. Turn 1 is the lowest-scoring stage for every model: GPT-5.5 scores 30.3%, Claude Fable 5 22.6%, Gemini 3.5 Flash 21.9%, and Claude Opus 4.8 17.9%. Scores rise sharply in later turns, clustering mostly in the 50%–60% range once the negotiation record has developed.
+            The modules struggle the most with opening filing strategy. Period 1 is the lowest-scoring stage for every module: Returns Engine scores 30.3%, Screening Core 22.6%, Monitoring Hub 21.9%, and Audit Vault 17.9%. Scores rise sharply in later periods, clustering mostly in the 50%–60% range once the supervisory record has developed.
           </p>
         </div>
       </section>
@@ -513,25 +518,41 @@ export default function Index() {
         </div>
       </section>
 
-      {/* FELLOWSHIP CTA */}
-      <section id="fellowship" data-ruler-id="7" style={{ paddingTop: 128, paddingBottom: 128 }}>
+      {/* 6.4 FILING READINESS — extra mockup */}
+      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1}>Introducing the RegCo Intelligence Fellowship</h2>
+          <h3 style={H2}>6.4 Filing readiness by jurisdiction</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Readiness varies sharply by jurisdiction. The ranking below pools every return across every supervised period, weighted by examiner materiality, and confirms that mature ledgers carry the platform's strongest filing posture across the regulated set.
+          </p>
+        </div>
+      </section>
+
+      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
+          <RankedBars />
+        </div>
+      </section>
+
+      {/* COMPLIANCE PROGRAM CTA */}
+      <section id="fellowship" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <h2 style={H1}>Introducing the RegCo Compliance Acceleration Program</h2>
           <p style={{ ...Body, marginTop: 40 }}>
-            We're launching the RegCo Intelligence Fellowship, a program to accelerate research on frontier problems in regulatory automation and supervised reporting. Two selected Fellows will split <strong style={{ color: C.ink }}>$50,000 in grants</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused research projects.
+            We're launching the RegCo Compliance Acceleration Program, a track to accelerate adoption on frontier problems in regulatory automation and supervised reporting. Two selected institutions will split <strong style={{ color: C.ink }}>$50,000 in onboarding credits</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused compliance rollouts.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
             <DatePanel label="Applications close" value="July 17, 2026" />
-            <DatePanel label="Fellows announced" value="July 31, 2026" />
+            <DatePanel label="Cohort announced" value="July 31, 2026" />
           </div>
 
           <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Apply here</CreamCTA>
+            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
           </div>
 
           <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
-            Questions? <a href="mailto:fellowship@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>fellowship@regco.ai</a>
+            Questions? <a href="mailto:hello@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>hello@regco.ai</a>
           </p>
         </div>
       </section>
@@ -542,10 +563,11 @@ export default function Index() {
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-          <div>CROSBY</div><div>INTELLIGENCE</div>
+          <div>REGCO</div><div>COMPLIANCE</div>
         </div>
-        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Research</div>
+        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
       </footer>
+
     </div>
   );
 }
