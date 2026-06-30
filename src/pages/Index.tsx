@@ -505,9 +505,9 @@ export default function Index() {
       {/* 6.3 SCORE BY TURN */}
       <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h3 style={H2}>6.3 Score by turn</h3>
+          <h3 style={H2}>6.3 Score by period</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            The models struggle the most with opening redline strategy. Turn 1 is the lowest-scoring stage for every model: GPT-5.5 scores 30.3%, Claude Fable 5 22.6%, Gemini 3.5 Flash 21.9%, and Claude Opus 4.8 17.9%. Scores rise sharply in later turns, clustering mostly in the 50%–60% range once the negotiation record has developed.
+            The modules struggle the most with opening filing strategy. Period 1 is the lowest-scoring stage for every module: Returns Engine scores 30.3%, Screening Core 22.6%, Monitoring Hub 21.9%, and Audit Vault 17.9%. Scores rise sharply in later periods, clustering mostly in the 50%–60% range once the supervisory record has developed.
           </p>
         </div>
       </section>
