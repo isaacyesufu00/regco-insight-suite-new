@@ -435,14 +435,15 @@ export default function Index() {
             ledger · v1.0
           </div>
           <h1 style={H1}>
-            A benchmark for attorney-grade redlining.
+            A platform for audit-grade regulatory compliance.
           </h1>
           <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
-            We measure how frontier models negotiate real contracts, turn by turn. The benchmark grades issue prioritization, drafting precision, and adaptive position management against senior attorney baselines.
+            We measure how regulated institutions file real returns, period by period. The platform grades filing prioritization, drafting precision, and adaptive position management against senior examiner baselines.
           </p>
           <div style={{ marginTop: 40 }}>
-            <CreamCTA href="#findings">Read the benchmark</CreamCTA>
+            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
           </div>
+
         </div>
       </section>
 
