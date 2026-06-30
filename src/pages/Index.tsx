@@ -406,7 +406,7 @@ const FINDINGS = [
 export default function Index() {
   const sectionsRef = useRef<HTMLElement[]>([]);
   const [active, setActive] = useState(0);
-  const SECTION_COUNT = 8;
+  const SECTION_COUNT = 10;
 
   useEffect(() => {
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ruler-id]"));
