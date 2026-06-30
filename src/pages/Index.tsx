@@ -450,9 +450,9 @@ export default function Index() {
       {/* SUMMARY OF FINDINGS */}
       <section id="findings" data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>2. Summary of Findings</h2>
+          <h2 style={H1Washed}>2. Summary of Capabilities</h2>
           <p style={{ ...Body, marginTop: 32 }}>
-            GPT-5.5 has the highest overall turn-weighted rubric score, but the spread across models is narrow, suggesting that the benchmark remains challenging across the frontier model set.
+            Returns Engine has the highest overall period-weighted readiness score, but the spread across modules is narrow, suggesting that the platform remains exacting across the supervised reporting set.
           </p>
 
           <div style={{ marginTop: 56 }}>
