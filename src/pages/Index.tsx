@@ -263,11 +263,12 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "GPT-5.5",         value: 50.5, color: SERIES.gpt },
-  { name: "Claude Fable 5",  value: 47.3, color: SERIES.fable },
-  { name: "Gemini 3.5 Flash",value: 45.1, color: SERIES.gemini },
-  { name: "Claude Opus 4.8", value: 44.4, color: SERIES.opus },
+  { name: "Returns Engine", value: 50.5, color: SERIES.gpt },
+  { name: "Screening Core", value: 47.3, color: SERIES.fable },
+  { name: "Monitoring Hub", value: 45.1, color: SERIES.gemini },
+  { name: "Audit Vault",    value: 44.4, color: SERIES.opus },
 ];
+
 
 function RankedBars() {
   const max = 100;
