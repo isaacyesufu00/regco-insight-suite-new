@@ -327,7 +327,7 @@ function GroupedBars() {
       }}>
         {/* legend */}
         <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
-          {["GPT-5.5","Claude Fable 5","Gemini 3.5 Flash","Claude Opus 4.8"].map((n,i) => (
+          {["Returns Engine","Screening Core","Monitoring Hub","Audit Vault"].map((n,i) => (
             <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
               <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
