@@ -97,12 +97,15 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPage />} />
-            <Route path="/product" element={<NewProductPage />} />
+            <Route path="/product" element={<EditorialProduct />} />
+            <Route path="/product-legacy" element={<NewProductPage />} />
             <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
             <Route path="/product/live-screening" element={<ProductLiveScreening />} />
             <Route path="/product/transaction-monitoring" element={<ProductTransactionMonitoring />} />
             <Route path="/product/audit-trail" element={<ProductAuditTrail />} />
-            <Route path="/who-we-serve" element={<WhoWeServePage />} />
+            <Route path="/about-us" element={<EditorialAboutUs />} />
+            <Route path="/who-we-serve" element={<EditorialWhoWeServe />} />
+            <Route path="/who-we-serve-legacy" element={<WhoWeServePage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/company" element={<NewCompanyPage />} />
             {/* Blog */}
