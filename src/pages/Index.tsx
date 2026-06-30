@@ -59,18 +59,19 @@ function Nav() {
       fontFamily: HELV,
     }}>
       <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>CROSBY</div>
-        <div>INTELLIGENCE</div>
+        <div>REGCO</div>
+        <div>COMPLIANCE</div>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {[
-          ["Benchmark","#findings"],
-          ["Fellowship","#fellowship"],
-          ["Conversations","#conversations"],
-        ].map(([l,h]) => (
-          <a key={l} href={h as string} style={navLink}>{l}</a>
+          ["Home","/"],
+          ["Product","/product"],
+          ["About us","/about-us"],
+          ["Who we serve","/who-we-serve"],
+          ["Log in","/login"],
+        ].map(([l,to]) => (
+          <Link key={l} to={to as string} style={navLink}>{l}</Link>
         ))}
-        <a href="/" style={navLink}>Main site <span style={{opacity:.6}}>↗</span></a>
       </nav>
     </header>
   );
@@ -78,6 +79,7 @@ function Nav() {
 const navLink: React.CSSProperties = {
   fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
 };
+
 
 /* ---------- left scroll ruler ---------- */
 function ScrollRuler({ active, total }: { active: number; total: number }) {
