@@ -487,10 +487,10 @@ export default function Index() {
       {/* TURN-LEVEL FINDINGS */}
       <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>6. Turn-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
+          <h2 style={H1Washed}>6. Period-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall readiness</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            GPT-5.5 ranks first on the turn-weighted, cross-scenario score at 50.5%, followed by Claude Fable 5 at 47.3%, Gemini 3.5 Flash at 45.1%, and Claude Opus 4.8 at 44.4%. The narrow spread suggests that GPT-5.5 performs marginally better overall, but that the benchmark is similarly challenging for all models, with no model separating decisively from the field.
+            Returns Engine ranks first on the period-weighted, cross-return readiness score at 50.5%, followed by Screening Core at 47.3%, Monitoring Hub at 45.1%, and Audit Vault at 44.4%. The narrow spread suggests that Returns Engine performs marginally better overall, but that the platform is similarly exacting for all modules, with no module separating decisively from the field.
           </p>
         </div>
       </section>
