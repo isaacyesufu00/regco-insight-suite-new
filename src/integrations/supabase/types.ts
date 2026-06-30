@@ -1527,25 +1527,61 @@ export type Database = {
       }
       knowledge_base: {
         Row: {
+          chunk_index: number | null
           content: string
+          content_hash: string | null
           created_at: string | null
+          document_title: string | null
+          document_type: string | null
           embedding: string | null
+          embedding_model: string | null
           id: string
+          ingested_at: string | null
+          jurisdiction: string | null
           metadata: Json | null
+          publication_date: string | null
+          regulator: string | null
+          section_heading: string | null
+          source_name: string | null
+          source_url: string | null
         }
         Insert: {
+          chunk_index?: number | null
           content: string
+          content_hash?: string | null
           created_at?: string | null
+          document_title?: string | null
+          document_type?: string | null
           embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          ingested_at?: string | null
+          jurisdiction?: string | null
           metadata?: Json | null
+          publication_date?: string | null
+          regulator?: string | null
+          section_heading?: string | null
+          source_name?: string | null
+          source_url?: string | null
         }
         Update: {
+          chunk_index?: number | null
           content?: string
+          content_hash?: string | null
           created_at?: string | null
+          document_title?: string | null
+          document_type?: string | null
           embedding?: string | null
+          embedding_model?: string | null
           id?: string
+          ingested_at?: string | null
+          jurisdiction?: string | null
           metadata?: Json | null
+          publication_date?: string | null
+          regulator?: string | null
+          section_heading?: string | null
+          source_name?: string | null
+          source_url?: string | null
         }
         Relationships: []
       }
