@@ -389,15 +389,16 @@ function GroupedBars() {
    Findings list
    ========================================================= */
 const FINDINGS = [
-  { n: "01", title: "Issue prioritization",
-    body: "Issue prioritization is a shared weakness. Models struggle to identify the issues attorneys collectively treat as most important, especially when initiating redlines on a clean template." },
-  { n: "02", title: "Over-acceptance",
-    body: "Models exhibit a systematic over-acceptance bias when forced to accept or reject counterparty redlines. This pattern suggests that models lack a genuine understanding of the commercial stakes behind redlined terms and instead default to agreement regardless of substance." },
-  { n: "03", title: "Surgicalness",
-    body: "Claude Fable 5 leads on surgicalness. Among the models, Fable 5 comes closest to attorney drafting behavior, with the lowest reliance on block edits and the shortest average edit length." },
+  { n: "01", title: "Filing prioritization",
+    body: "Filing prioritization is a shared weakness. Teams struggle to identify the returns examiners collectively treat as most material, especially when initiating filings on a clean ledger period." },
+  { n: "02", title: "Over-reporting",
+    body: "Institutions exhibit a systematic over-reporting bias when forced to flag or release borderline transactions for review. This pattern suggests that teams lack a genuine understanding of the supervisory stakes behind flagged entries and instead default to escalation regardless of substance." },
+  { n: "03", title: "Precision",
+    body: "Screening Core leads on precision. Among the modules, Screening comes closest to examiner review behavior, with the lowest reliance on bulk holds and the shortest average remediation length." },
   { n: "04", title: "The gap",
-    body: "Current models remain meaningfully short of attorney-grade redlining. The gap is not limited to legal correctness. Models remain weaker on strategic issue selection, vendor-side commercial judgment, drafting precision, and adaptive position management across turns." },
+    body: "Current workflows remain meaningfully short of examiner-grade reporting. The gap is not limited to technical correctness. Teams remain weaker on strategic filing selection, institution-side commercial judgment, drafting precision, and adaptive position management across periods." },
 ];
+
 
 /* =========================================================
    PAGE
