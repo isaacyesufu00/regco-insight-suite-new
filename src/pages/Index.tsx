@@ -390,13 +390,13 @@ function GroupedBars() {
    ========================================================= */
 const FINDINGS = [
   { n: "01", title: "Filing prioritization",
-    body: "Filing prioritization is a shared weakness. Teams struggle to identify the returns examiners collectively treat as most material, especially when initiating filings on a clean ledger period." },
+    body: "RegCo knows which filings matter most. It ranks every open return by deadline and risk, so your team always works on the right thing first instead of guessing." },
   { n: "02", title: "Over-reporting",
-    body: "Institutions exhibit a systematic over-reporting bias when forced to flag or release borderline transactions for review. This pattern suggests that teams lack a genuine understanding of the supervisory stakes behind flagged entries and instead default to escalation regardless of substance." },
+    body: "Most platforms flag too much and overwhelm your team with noise. RegCo filters out low-risk activity automatically, so the alerts your officers see are the ones that actually need a human decision, not routine transactions that simply crossed a number." },
   { n: "03", title: "Precision",
-    body: "Screening Core leads on precision. Among the modules, Screening comes closest to examiner review behavior, with the lowest reliance on bulk holds and the shortest average remediation length." },
+    body: "RegCo's Screening Core leads on precision. It matches how a senior examiner actually reviews a case, with the fewest false holds and the fastest turnaround of any module in the platform." },
   { n: "04", title: "The gap",
-    body: "Current workflows remain meaningfully short of examiner-grade reporting. The gap is not limited to technical correctness. Teams remain weaker on strategic filing selection, institution-side commercial judgment, drafting precision, and adaptive position management across periods." },
+    body: "No automated system fully replaces a senior compliance officer yet, and RegCo doesn't pretend otherwise. Where it still falls short: judging unusual cases, weighing context across departments, writing clean documentation, and adjusting thresholds as they spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems." },
 ];
 
 
