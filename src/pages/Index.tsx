@@ -379,7 +379,7 @@ function GroupedBars() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;6</span>{" "}
-        Weighted pass rate per evaluation dimension, pooled across every trial and weighted by rubric weight.
+        Weighted accuracy for each part of the compliance workflow, pooled across every test case.
       </p>
     </div>
   );
