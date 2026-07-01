@@ -502,35 +502,35 @@ export default function Index() {
         </div>
       </section>
 
-      {/* 6.3 SCORE BY TURN */}
+      {/* 6.2 SCORE BY SIDE */}
       <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h3 style={H2}>6.3 Score by period</h3>
+          <h3 style={H2}>6.2 Score by side</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            The modules struggle the most with opening filing strategy. Period 1 is the lowest-scoring stage for every module: Returns Engine scores 30.3%, Screening Core 22.6%, Monitoring Hub 21.9%, and Audit Vault 17.9%. Scores rise sharply in later periods, clustering mostly in the 50%–60% range once the supervisory record has developed.
+            Every method, including RegCo, still struggles with escalation decisions that need
           </p>
         </div>
       </section>
 
-      <section data-ruler-id="6" style={{ paddingTop: 32, paddingBottom: 96 }}>
+      {/* 6.3 SCORE BY STAGE */}
+      <section data-ruler-id="6" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>6.3 Score by stage</h3>
+          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
+            Every method struggles most at the very first step: intake.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The stage-by-stage chart shows Intake is the hardest step for every method: RegCo scores 30.3%, rule-based detection scores 22.6%, machine-learning-only scores 21.9%, and manual review scores 17.9%. This lines up with what examiners told us — Intake is the stage where experienced reviewers agree most strongly on what matters, which is exactly where automated systems struggle most. Scores climb fast in later stages, mostly settling between 50% and 60% once a case has more history attached to it. In short: every method gets better once a case is already underway. The hard part is spotting and prioritizing the right case before any history exists.
+          </p>
+          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
+            default toward clearing transactions.
+          </p>
+        </div>
+      </section>
+
+      <section data-ruler-id="7" style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <GroupedBars />
-        </div>
-      </section>
-
-      {/* 6.4 FILING READINESS — extra mockup */}
-      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h3 style={H2}>6.4 Filing readiness by jurisdiction</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Readiness varies sharply by jurisdiction. The ranking below pools every return across every supervised period, weighted by examiner materiality, and confirms that mature ledgers carry the platform's strongest filing posture across the regulated set.
-          </p>
-        </div>
-      </section>
-
-      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
-          <RankedBars />
         </div>
       </section>
 
