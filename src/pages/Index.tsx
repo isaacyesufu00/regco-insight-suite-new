@@ -452,7 +452,7 @@ export default function Index() {
         <div style={Col}>
           <h2 style={H1Washed}>2. Summary of Capabilities</h2>
           <p style={{ ...Body, marginTop: 32 }}>
-            Returns Engine has the highest overall period-weighted readiness score, but the spread across modules is narrow, suggesting that the platform remains exacting across the supervised reporting set.
+            RegCo gives compliance teams the strongest overall readiness score, and it stays accurate across every part of the platform, from filing to screening to case review.
           </p>
 
           <div style={{ marginTop: 56 }}>
