@@ -2516,6 +2516,39 @@ export type Database = {
         }
         Relationships: []
       }
+      staging_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          created_at: string | null
+          id: string
+          source: string
+          status: string
+          title: string
+          url: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          created_at?: string | null
+          id?: string
+          source: string
+          status?: string
+          title: string
+          url: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          created_at?: string | null
+          id?: string
+          source?: string
+          status?: string
+          title?: string
+          url?: string
+        }
+        Relationships: []
+      }
       str_candidates: {
         Row: {
           created_at: string | null
