@@ -230,9 +230,9 @@ function Figure1() {
         padding: 32,
       }}>
         <div style={{ display: "flex", gap: 32 }}>
-          <HeatmapScenario title="SCENARIO 1" data={SCEN_1} />
-          <HeatmapScenario title="SCENARIO 2" data={SCEN_2} />
-          <HeatmapScenario title="SCENARIO 3" data={SCEN_3} />
+          <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
+          <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
+          <HeatmapScenario title="TYPE 3 → FAKE IDENTITY" data={SCEN_3} />
         </div>
         {/* gradient legend */}
         <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
@@ -253,7 +253,7 @@ function Figure1() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
-        Each cell = the cluster intensity (attorney recurrence × rubric weight × directional consistency) for that (scenario, section, turn). Higher = more attorneys converged on the same redline.
+        Each cell shows how often examiners agreed a case needed attention at that stage. Higher means more examiners flagged the same pattern.
       </p>
     </div>
   );
