@@ -299,7 +299,7 @@ function RankedBars() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
-        The 12 (scenario × turn) cells are averaged equally so later turns don't dominate the headline.
+        Every case type and stage counts equally, so late-stage cases don't skew the score.
       </p>
     </div>
   );
