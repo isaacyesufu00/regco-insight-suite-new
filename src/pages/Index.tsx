@@ -203,7 +203,7 @@ function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
       <div style={{ ...Mono, marginBottom: 12 }}>{title}</div>
       <div style={{ display: "grid", gridTemplateColumns: "44px repeat(4, 1fr)", rowGap: 4, columnGap: 4 }}>
         <div />
-        {["T1","T2","T3","T4"].map(t => (
+        {["S1","S2","S3","S4"].map(t => (
           <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
         ))}
         {data.flatMap(r => [
