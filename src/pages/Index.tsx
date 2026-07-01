@@ -477,7 +477,7 @@ export default function Index() {
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
             <p style={Body}>
-              The figure below shows convergence intensity per (scenario, section, turn). Each rubric matters in an evolving negotiation. By grounding evaluation in that complexity, the benchmark tests whether model outputs are useful in realistic redlining workflows, not merely whether they can spot isolated issues.
+              spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems.
             </p>
           </div>
           <Figure1 />
