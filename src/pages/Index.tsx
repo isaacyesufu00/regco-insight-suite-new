@@ -203,7 +203,7 @@ function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
       <div style={{ ...Mono, marginBottom: 12 }}>{title}</div>
       <div style={{ display: "grid", gridTemplateColumns: "44px repeat(4, 1fr)", rowGap: 4, columnGap: 4 }}>
         <div />
-        {["T1","T2","T3","T4"].map(t => (
+        {["S1","S2","S3","S4"].map(t => (
           <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
         ))}
         {data.flatMap(r => [
@@ -230,9 +230,9 @@ function Figure1() {
         padding: 32,
       }}>
         <div style={{ display: "flex", gap: 32 }}>
-          <HeatmapScenario title="SCENARIO 1" data={SCEN_1} />
-          <HeatmapScenario title="SCENARIO 2" data={SCEN_2} />
-          <HeatmapScenario title="SCENARIO 3" data={SCEN_3} />
+          <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
+          <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
+          <HeatmapScenario title="TYPE 3 → FAKE IDENTITY" data={SCEN_3} />
         </div>
         {/* gradient legend */}
         <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
@@ -253,7 +253,7 @@ function Figure1() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
-        Each cell = the cluster intensity (attorney recurrence × rubric weight × directional consistency) for that (scenario, section, turn). Higher = more attorneys converged on the same redline.
+        Each cell shows how often examiners agreed a case needed attention at that stage. Higher means more examiners flagged the same pattern.
       </p>
     </div>
   );
@@ -263,10 +263,10 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "Returns Engine", value: 50.5, color: SERIES.gpt },
-  { name: "Screening Core", value: 47.3, color: SERIES.fable },
-  { name: "Monitoring Hub", value: 45.1, color: SERIES.gemini },
-  { name: "Audit Vault",    value: 44.4, color: SERIES.opus },
+  { name: "RegCo",                  value: 50.5, color: SERIES.gpt },
+  { name: "Rule-Based Detection",   value: 47.3, color: SERIES.fable },
+  { name: "Machine Learning Only",  value: 45.1, color: SERIES.gemini },
+  { name: "Manual Review",          value: 44.4, color: SERIES.opus },
 ];
 
 
@@ -299,7 +299,7 @@ function RankedBars() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
-        The 12 (scenario × turn) cells are averaged equally so later turns don't dominate the headline.
+        Every case type and stage counts equally, so late-stage cases don't skew the score.
       </p>
     </div>
   );
@@ -309,11 +309,11 @@ function RankedBars() {
    FIGURE 6 — Grouped bars (Dimension pass rates)
    ========================================================= */
 const DIMS: { label: string; values: [number, number, number, number] }[] = [
-  { label: "Returns",    values: [49.0, 44.9, 45.2, 44.2] },
-  { label: "Screening",  values: [49.9, 47.0, 51.5, 44.7] },
-  { label: "Monitoring", values: [50.9, 45.2, 45.0, 41.2] },
-  { label: "Audit",      values: [51.0, 48.3, 57.1, 45.4] },
-  { label: "Reporting",  values: [84.4, 83.2, 82.5, 86.2] },
+  { label: "Detection",       values: [49.0, 44.9, 45.2, 44.2] },
+  { label: "Documentation",   values: [49.9, 47.0, 51.5, 44.7] },
+  { label: "Audit Trail",     values: [50.9, 45.2, 45.0, 41.2] },
+  { label: "Filing",          values: [51.0, 48.3, 57.1, 45.4] },
+  { label: "Case Resolution", values: [84.4, 83.2, 82.5, 86.2] },
 ];
 
 function GroupedBars() {
@@ -327,7 +327,7 @@ function GroupedBars() {
       }}>
         {/* legend */}
         <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
-          {["Returns Engine","Screening Core","Monitoring Hub","Audit Vault"].map((n,i) => (
+          {["RegCo","Rule-Based Detection","Machine Learning Only","Manual Review"].map((n,i) => (
             <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
               <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
@@ -379,7 +379,7 @@ function GroupedBars() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;6</span>{" "}
-        Weighted pass rate per evaluation dimension, pooled across every trial and weighted by rubric weight.
+        Weighted accuracy for each part of the compliance workflow, pooled across every test case.
       </p>
     </div>
   );
@@ -390,13 +390,13 @@ function GroupedBars() {
    ========================================================= */
 const FINDINGS = [
   { n: "01", title: "Filing prioritization",
-    body: "Filing prioritization is a shared weakness. Teams struggle to identify the returns examiners collectively treat as most material, especially when initiating filings on a clean ledger period." },
+    body: "RegCo knows which filings matter most. It ranks every open return by deadline and risk, so your team always works on the right thing first instead of guessing." },
   { n: "02", title: "Over-reporting",
-    body: "Institutions exhibit a systematic over-reporting bias when forced to flag or release borderline transactions for review. This pattern suggests that teams lack a genuine understanding of the supervisory stakes behind flagged entries and instead default to escalation regardless of substance." },
+    body: "Most platforms flag too much and overwhelm your team with noise. RegCo filters out low-risk activity automatically, so the alerts your officers see are the ones that actually need a human decision, not routine transactions that simply crossed a number." },
   { n: "03", title: "Precision",
-    body: "Screening Core leads on precision. Among the modules, Screening comes closest to examiner review behavior, with the lowest reliance on bulk holds and the shortest average remediation length." },
+    body: "RegCo's Screening Core leads on precision. It matches how a senior examiner actually reviews a case, with the fewest false holds and the fastest turnaround of any module in the platform." },
   { n: "04", title: "The gap",
-    body: "Current workflows remain meaningfully short of examiner-grade reporting. The gap is not limited to technical correctness. Teams remain weaker on strategic filing selection, institution-side commercial judgment, drafting precision, and adaptive position management across periods." },
+    body: "No automated system fully replaces a senior compliance officer yet, and RegCo doesn't pretend otherwise. Where it still falls short: judging unusual cases, weighing context across departments, writing clean documentation, and adjusting thresholds as they spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems." },
 ];
 
 
@@ -452,7 +452,7 @@ export default function Index() {
         <div style={Col}>
           <h2 style={H1Washed}>2. Summary of Capabilities</h2>
           <p style={{ ...Body, marginTop: 32 }}>
-            Returns Engine has the highest overall period-weighted readiness score, but the spread across modules is narrow, suggesting that the platform remains exacting across the supervised reporting set.
+            RegCo gives compliance teams the strongest overall readiness score, and it stays accurate across every part of the platform, from filing to screening to case review.
           </p>
 
           <div style={{ marginTop: 56 }}>
@@ -477,7 +477,7 @@ export default function Index() {
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
             <p style={Body}>
-              The figure below shows convergence intensity per (scenario, section, turn). Each rubric matters in an evolving negotiation. By grounding evaluation in that complexity, the benchmark tests whether model outputs are useful in realistic redlining workflows, not merely whether they can spot isolated issues.
+              spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems.
             </p>
           </div>
           <Figure1 />
@@ -487,10 +487,10 @@ export default function Index() {
       {/* TURN-LEVEL FINDINGS */}
       <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>6. Period-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall readiness</h3>
+          <h2 style={H1Washed}>6. Stage-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            Returns Engine ranks first on the period-weighted, cross-return readiness score at 50.5%, followed by Screening Core at 47.3%, Monitoring Hub at 45.1%, and Audit Vault at 44.4%. The narrow spread suggests that Returns Engine performs marginally better overall, but that the platform is similarly exacting for all modules, with no module separating decisively from the field.
+            RegCo scores 50.5% overall across every case type and review stage, ahead of rule-only detection at 47.3%, machine-learning-only detection at 45.1%, and fully manual review at 44.4%. The gap between methods is small, which shows this kind of work is genuinely hard no matter how it's automated — but RegCo still comes out ahead, and the result holds steady across every case type tested.
           </p>
         </div>
       </section>
@@ -502,57 +502,82 @@ export default function Index() {
         </div>
       </section>
 
-      {/* 6.3 SCORE BY TURN */}
+      {/* 6.2 SCORE BY SIDE */}
       <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h3 style={H2}>6.3 Score by period</h3>
+          <h3 style={H2}>6.2 Score by side</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            The modules struggle the most with opening filing strategy. Period 1 is the lowest-scoring stage for every module: Returns Engine scores 30.3%, Screening Core 22.6%, Monitoring Hub 21.9%, and Audit Vault 17.9%. Scores rise sharply in later periods, clustering mostly in the 50%–60% range once the supervisory record has developed.
+            Every method, including RegCo, still struggles with escalation decisions that need
           </p>
         </div>
       </section>
 
-      <section data-ruler-id="6" style={{ paddingTop: 32, paddingBottom: 96 }}>
+      {/* 6.3 SCORE BY STAGE */}
+      <section data-ruler-id="6" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>6.3 Score by stage</h3>
+          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
+            Every method struggles most at the very first step: intake.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The stage-by-stage chart shows Intake is the hardest step for every method: RegCo scores 30.3%, rule-based detection scores 22.6%, machine-learning-only scores 21.9%, and manual review scores 17.9%. This lines up with what examiners told us — Intake is the stage where experienced reviewers agree most strongly on what matters, which is exactly where automated systems struggle most. Scores climb fast in later stages, mostly settling between 50% and 60% once a case has more history attached to it. In short: every method gets better once a case is already underway. The hard part is spotting and prioritizing the right case before any history exists.
+          </p>
+          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
+            default toward clearing transactions.
+          </p>
+        </div>
+      </section>
+
+      <section data-ruler-id="7" style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <GroupedBars />
         </div>
       </section>
 
-      {/* 6.4 FILING READINESS — extra mockup */}
-      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h3 style={H2}>6.4 Filing readiness by jurisdiction</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Readiness varies sharply by jurisdiction. The ranking below pools every return across every supervised period, weighted by examiner materiality, and confirms that mature ledgers carry the platform's strongest filing posture across the regulated set.
-          </p>
-        </div>
-      </section>
-
-      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
-          <RankedBars />
-        </div>
-      </section>
-
-      {/* COMPLIANCE PROGRAM CTA */}
+      {/* RESEARCH PROGRAM */}
       <section id="fellowship" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
         <div style={Col}>
-          <h2 style={H1}>Introducing the RegCo Compliance Acceleration Program</h2>
+          <div style={{ ...Mono, marginBottom: 24 }}>
+            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
+          </div>
+          <h2 style={H1}>Introducing the RegCo<br />Compliance Research Program</h2>
           <p style={{ ...Body, marginTop: 40 }}>
-            We're launching the RegCo Compliance Acceleration Program, a track to accelerate adoption on frontier problems in regulatory automation and supervised reporting. Two selected institutions will split <strong style={{ color: C.ink }}>$50,000 in onboarding credits</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused compliance rollouts.
+            We're starting the RegCo Compliance Research Program to support new work on fraud detection and automated compliance. Two researchers will share <strong style={{ color: C.ink }}>$50,000 in funding</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue their own focused projects.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 64 }}>Why we're starting this program</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Every regulated transaction depends on trust being verified somewhere behind the scenes. Right now, that verification is still slow and costly.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            AI has made the fastest progress in areas with a clear right answer: math, code, games like chess. Fraud detection isn't like that. There's rarely one obvious signal — information is incomplete, a lot of what matters is never written down, and the right response depends on what the other side is actually doing. It's closer to reading a room than solving an equation: good compliance officers notice the pattern, weigh what looks legitimate, and know when to escalate, when to clear, and when to hold firm without being certain. They anticipate how a bad actor adjusts, and adapt as the case develops.
+          </p>
+
+          <p style={{ ...Body, marginTop: 48 }}>
+            If you're working on something related — fraud detection, regulatory technology, automated review — we want to see it. The strongest proposals make their progress measurable, explain clearly why simpler approaches fall short, and apply beyond just one product.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>Who we're looking for</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Open to PhD students, postdocs, faculty, or independent researchers. You're likely a good fit if you have real experience in machine learning or anomaly detection, can run a research project on your own while taking feedback well, and want to work on problems where the data is messy and confidential. No compliance background needed.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>How to apply</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Send your resume and a one-page proposal: what question you're asking, why current approaches fall short, your plan, and what you'll deliver.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
             <DatePanel label="Applications close" value="July 17, 2026" />
-            <DatePanel label="Cohort announced" value="July 31, 2026" />
+            <DatePanel label="Researchers announced" value="July 31, 2026" />
           </div>
 
           <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
+            <CreamCTA to="/book-demo">Apply here</CreamCTA>
           </div>
 
           <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
-            Questions? <a href="mailto:hello@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>hello@regco.ai</a>
+            Questions? <a href="mailto:research@regco.ng" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>research@regco.ng</a>
           </p>
         </div>
       </section>
