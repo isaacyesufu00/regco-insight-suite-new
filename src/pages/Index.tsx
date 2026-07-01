@@ -309,11 +309,11 @@ function RankedBars() {
    FIGURE 6 — Grouped bars (Dimension pass rates)
    ========================================================= */
 const DIMS: { label: string; values: [number, number, number, number] }[] = [
-  { label: "Returns",    values: [49.0, 44.9, 45.2, 44.2] },
-  { label: "Screening",  values: [49.9, 47.0, 51.5, 44.7] },
-  { label: "Monitoring", values: [50.9, 45.2, 45.0, 41.2] },
-  { label: "Audit",      values: [51.0, 48.3, 57.1, 45.4] },
-  { label: "Reporting",  values: [84.4, 83.2, 82.5, 86.2] },
+  { label: "Detection",       values: [49.0, 44.9, 45.2, 44.2] },
+  { label: "Documentation",   values: [49.9, 47.0, 51.5, 44.7] },
+  { label: "Audit Trail",     values: [50.9, 45.2, 45.0, 41.2] },
+  { label: "Filing",          values: [51.0, 48.3, 57.1, 45.4] },
+  { label: "Case Resolution", values: [84.4, 83.2, 82.5, 86.2] },
 ];
 
 function GroupedBars() {
