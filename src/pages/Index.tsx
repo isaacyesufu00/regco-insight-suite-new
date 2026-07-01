@@ -534,25 +534,50 @@ export default function Index() {
         </div>
       </section>
 
-      {/* COMPLIANCE PROGRAM CTA */}
+      {/* RESEARCH PROGRAM */}
       <section id="fellowship" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
         <div style={Col}>
-          <h2 style={H1}>Introducing the RegCo Compliance Acceleration Program</h2>
+          <div style={{ ...Mono, marginBottom: 24 }}>
+            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
+          </div>
+          <h2 style={H1}>Introducing the RegCo<br />Compliance Research Program</h2>
           <p style={{ ...Body, marginTop: 40 }}>
-            We're launching the RegCo Compliance Acceleration Program, a track to accelerate adoption on frontier problems in regulatory automation and supervised reporting. Two selected institutions will split <strong style={{ color: C.ink }}>$50,000 in onboarding credits</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue individual, focused compliance rollouts.
+            We're starting the RegCo Compliance Research Program to support new work on fraud detection and automated compliance. Two researchers will share <strong style={{ color: C.ink }}>$50,000 in funding</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue their own focused projects.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 64 }}>Why we're starting this program</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Every regulated transaction depends on trust being verified somewhere behind the scenes. Right now, that verification is still slow and costly.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            AI has made the fastest progress in areas with a clear right answer: math, code, games like chess. Fraud detection isn't like that. There's rarely one obvious signal — information is incomplete, a lot of what matters is never written down, and the right response depends on what the other side is actually doing. It's closer to reading a room than solving an equation: good compliance officers notice the pattern, weigh what looks legitimate, and know when to escalate, when to clear, and when to hold firm without being certain. They anticipate how a bad actor adjusts, and adapt as the case develops.
+          </p>
+
+          <p style={{ ...Body, marginTop: 48 }}>
+            If you're working on something related — fraud detection, regulatory technology, automated review — we want to see it. The strongest proposals make their progress measurable, explain clearly why simpler approaches fall short, and apply beyond just one product.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>Who we're looking for</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Open to PhD students, postdocs, faculty, or independent researchers. You're likely a good fit if you have real experience in machine learning or anomaly detection, can run a research project on your own while taking feedback well, and want to work on problems where the data is messy and confidential. No compliance background needed.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>How to apply</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Send your resume and a one-page proposal: what question you're asking, why current approaches fall short, your plan, and what you'll deliver.
           </p>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
             <DatePanel label="Applications close" value="July 17, 2026" />
-            <DatePanel label="Cohort announced" value="July 31, 2026" />
+            <DatePanel label="Researchers announced" value="July 31, 2026" />
           </div>
 
           <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
+            <CreamCTA to="/book-demo">Apply here</CreamCTA>
           </div>
 
           <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
-            Questions? <a href="mailto:hello@regco.ai" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>hello@regco.ai</a>
+            Questions? <a href="mailto:research@regco.ng" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>research@regco.ng</a>
           </p>
         </div>
       </section>
