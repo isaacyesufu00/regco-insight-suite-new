@@ -487,10 +487,10 @@ export default function Index() {
       {/* TURN-LEVEL FINDINGS */}
       <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>6. Period-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall readiness</h3>
+          <h2 style={H1Washed}>6. Stage-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            Returns Engine ranks first on the period-weighted, cross-return readiness score at 50.5%, followed by Screening Core at 47.3%, Monitoring Hub at 45.1%, and Audit Vault at 44.4%. The narrow spread suggests that Returns Engine performs marginally better overall, but that the platform is similarly exacting for all modules, with no module separating decisively from the field.
+            RegCo scores 50.5% overall across every case type and review stage, ahead of rule-only detection at 47.3%, machine-learning-only detection at 45.1%, and fully manual review at 44.4%. The gap between methods is small, which shows this kind of work is genuinely hard no matter how it's automated — but RegCo still comes out ahead, and the result holds steady across every case type tested.
           </p>
         </div>
       </section>
