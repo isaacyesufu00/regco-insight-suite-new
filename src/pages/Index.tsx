@@ -263,10 +263,10 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "Returns Engine", value: 50.5, color: SERIES.gpt },
-  { name: "Screening Core", value: 47.3, color: SERIES.fable },
-  { name: "Monitoring Hub", value: 45.1, color: SERIES.gemini },
-  { name: "Audit Vault",    value: 44.4, color: SERIES.opus },
+  { name: "RegCo",                  value: 50.5, color: SERIES.gpt },
+  { name: "Rule-Based Detection",   value: 47.3, color: SERIES.fable },
+  { name: "Machine Learning Only",  value: 45.1, color: SERIES.gemini },
+  { name: "Manual Review",          value: 44.4, color: SERIES.opus },
 ];
 
 
