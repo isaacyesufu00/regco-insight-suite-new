@@ -253,7 +253,10 @@ function Figure1() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
-        Each cell shows how often examiners agreed a case needed attention at that stage. Higher means more examiners flagged the same pattern.
+        Each cell shows detection activity intensity across case type and review stage. Higher = more concentrated review at that point in the workflow.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Pattern structure based on documented AML typologies.
       </p>
     </div>
   );
