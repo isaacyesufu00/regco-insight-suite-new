@@ -263,15 +263,14 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "RegCo",                  value: 50.5, color: SERIES.gpt },
-  { name: "Rule-Based Detection",   value: 47.3, color: SERIES.fable },
-  { name: "Machine Learning Only",  value: 45.1, color: SERIES.gemini },
-  { name: "Manual Review",          value: 44.4, color: SERIES.opus },
+  { name: "RegCo",                  desc: "Automated + AI-assisted review", color: SERIES.gpt },
+  { name: "Rule-Based Detection",   desc: "Threshold rules only",           color: SERIES.fable },
+  { name: "Machine Learning Only",  desc: "Anomaly models only",            color: SERIES.gemini },
+  { name: "Manual Review",          desc: "Officer review, no automation",  color: SERIES.opus },
 ];
 
 
 function RankedBars() {
-  const max = 100;
   return (
     <div>
       <div style={{
@@ -279,7 +278,7 @@ function RankedBars() {
         padding: 32, display: "flex", flexDirection: "column", gap: 18,
       }}>
         {OVERALL.map((r, i) => (
-          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr 60px", gap: 16, alignItems: "center" }}>
+          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 16, alignItems: "center" }}>
             <div style={{
               width: 32, height: 32, borderRadius: 9999, border: `1px solid ${C.rule}`,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -287,19 +286,25 @@ function RankedBars() {
             }}>{i+1}</div>
             <div style={{ height: 44, position: "relative" }}>
               <div style={{
-                height: "100%", width: `${(r.value / max) * 100}%`,
+                height: "100%", width: "100%",
                 background: r.color, borderRadius: 4,
-                display: "flex", alignItems: "center", paddingLeft: 16,
-                fontFamily: HELV, fontSize: 14, fontWeight: 500, color: C.ink,
-              }}>{r.name}</div>
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "0 20px",
+                fontFamily: HELV, fontSize: 14, color: C.ink,
+              }}>
+                <span style={{ fontWeight: 500 }}>{r.name}</span>
+                <span style={{ fontWeight: 400, opacity: 0.85, fontSize: 13 }}>{r.desc}</span>
+              </div>
             </div>
-            <div style={{ ...Body, textAlign: "right", fontFamily: MONO, fontSize: 14, color: C.ink }}>{r.value.toFixed(1)}%</div>
           </div>
         ))}
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
-        Every case type and stage counts equally, so late-stage cases don't skew the score.
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;2</span>{" "}
+        Four detection approaches compared by method coverage. RegCo combines rule enforcement, pattern detection, and AI-assisted review.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Comparison is based on internal methodology assessment, not independent study.
       </p>
     </div>
   );
