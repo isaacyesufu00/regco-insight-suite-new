@@ -1778,6 +1778,45 @@ export type Database = {
           },
         ]
       }
+      pending_submissions: {
+        Row: {
+          amountNGN: number
+          caseId: string
+          createdAt: string
+          flagRule: string
+          flagSeverity: string
+          institutionId: string
+          narrative: string | null
+          owlScore: number
+          status: string
+          transactionDate: string
+        }
+        Insert: {
+          amountNGN: number
+          caseId: string
+          createdAt: string
+          flagRule: string
+          flagSeverity: string
+          institutionId: string
+          narrative?: string | null
+          owlScore: number
+          status?: string
+          transactionDate: string
+        }
+        Update: {
+          amountNGN?: number
+          caseId?: string
+          createdAt?: string
+          flagRule?: string
+          flagSeverity?: string
+          institutionId?: string
+          narrative?: string | null
+          owlScore?: number
+          status?: string
+          transactionDate?: string
+        }
+        Relationships: []
+      }
       pep_entries: {
         Row: {
           category: string | null
@@ -2522,6 +2561,7 @@ export type Database = {
           content: string
           created_at: string | null
           id: string
+          metadata: Json | null
           source: string
           status: string
           title: string
@@ -2532,6 +2572,7 @@ export type Database = {
           content: string
           created_at?: string | null
           id?: string
+          metadata?: Json | null
           source: string
           status?: string
           title: string
@@ -2542,6 +2583,7 @@ export type Database = {
           content?: string
           created_at?: string | null
           id?: string
+          metadata?: Json | null
           source?: string
           status?: string
           title?: string
@@ -2792,6 +2834,7 @@ export type Database = {
           str_filed_at: string | null
           str_reference: string | null
           transaction_date: string
+          transaction_ref: string | null
           transaction_type: string | null
           user_id: string
         }
@@ -2819,6 +2862,7 @@ export type Database = {
           str_filed_at?: string | null
           str_reference?: string | null
           transaction_date?: string
+          transaction_ref?: string | null
           transaction_type?: string | null
           user_id: string
         }
@@ -2846,6 +2890,7 @@ export type Database = {
           str_filed_at?: string | null
           str_reference?: string | null
           transaction_date?: string
+          transaction_ref?: string | null
           transaction_type?: string | null
           user_id?: string
         }
