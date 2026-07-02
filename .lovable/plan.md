@@ -1,63 +1,71 @@
-## Text-only copy swap on `src/pages/Index.tsx`
+Text-only copy swap across the editorial site. No layout, component, style, chart, or asset changes — only string replacements inside existing JSX.
 
-No visual/layout changes. Just replace strings in-place, matching the pasted brief line-for-line.
+## Scope
 
-### 1. Findings list (`FINDINGS`, lines 391–400)
-Replace title + body for the four rows:
-- **01 Filing prioritization** → "RegCo knows which filings matter most. It ranks every open return by deadline and risk, so your team always works on the right thing first instead of guessing."
-- **02 Over-reporting** → "Most platforms flag too much and overwhelm your team with noise. RegCo filters out low-risk activity automatically, so the alerts your officers see are the ones that actually need a human decision, not routine transactions that simply crossed a number."
-- **03 Precision** → "RegCo's Screening Core leads on precision. It matches how a senior examiner actually reviews a case, with the fewest false holds and the fastest turnaround of any module in the platform."
-- **04 The gap** → "No automated system fully replaces a senior compliance officer yet, and RegCo doesn't pretend otherwise. Where it still falls short: judging unusual cases, weighing context across departments, writing clean documentation, and adjusting thresholds as they spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems."
+Three files, all copy-only:
 
-### 2. Section 2 intro (line 455)
-→ "RegCo gives compliance teams the strongest overall readiness score, and it stays accurate across every part of the platform, from filing to screening to case review."
+1. **`src/pages/Index.tsx`** (homepage / benchmark page)
+2. **`src/pages/Fellowship.tsx`** or whichever file currently renders `/fellowship` → repurposed as the Mission page (route path unchanged, only visible copy swapped)
+3. **`src/components/editorial/EditorialTheme.tsx`** (shared Nav) — brand + nav links
 
-### 3. Figure 1 intro paragraph (line 480)
-→ "spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems."
+## Global Nav (EditorialTheme.tsx)
 
-Update FIG. 1 caption (line 256) → "Each cell shows how often examiners agreed a case needed attention at that stage. Higher means more examiners flagged the same pattern."
+- Brand wordmark: `REGCO / COMPLIANCE` (two-line stacked, existing typography preserved)
+- Links, in order: `Home`, `Product`, `About us`, `Who we serve`, `Log in`
+- Route targets stay as they are today; only the visible labels change
 
-Update heatmap column headers (line 207): `T1..T4` → `S1..S4`. Add scenario titles (line 233–235): `SCENARIO 1/2/3` → `TYPE 1 → STRUCTURING`, `TYPE 2 → SHELL ACCOUNTS`, `TYPE 3 → FAKE IDENTITY`.
+## Homepage (`src/pages/Index.tsx`) — copy map
 
-### 4. Section 6 (lines 490–494)
-- Heading → "6. Stage-level Findings"
-- Sub → "6.1 Overall score"
-- Body → "RegCo scores 50.5% overall across every case type and review stage, ahead of rule-only detection at 47.3%, machine-learning-only detection at 45.1%, and fully manual review at 44.4%. The gap between methods is small, which shows this kind of work is genuinely hard no matter how it's automated — but RegCo still comes out ahead, and the result holds steady across every case type tested."
+Replace text in-place, keeping every existing wrapper, chart, heatmap, leaderboard, and figure caption element:
 
-### 5. Ranked bars (`OVERALL`, lines 266–269)
-Replace names → `RegCo`, `Rule-Based Detection`, `Machine Learning Only`, `Manual Review`. Update FIG. 3 caption (line 302) → "Every case type and stage counts equally, so late-stage cases don't skew the score."
+- Eyebrow → `REGCO · COMPLIANCE PLATFORM`
+- Hero H1 (2 lines) → `Compliance automation for banks / that can't afford to miss a filing.`
+- Hero subhead (3 lines) → RegCo connects to your core banking system … audit trail.
+- Hero CTA label → `Book a demo →` (route unchanged)
+- Section 1 label → `1. What We Measure` + 3 body paragraphs (3 / 4 / 4 lines) per brief
+- Section 2 heading → `2. Summary of Capabilities` + 3-line intro
+- Items 01–04 titles + bodies replaced verbatim (Filing Engine, Over-reporting, Precision, The gap)
+- Section 3 heatmap: paragraph above grid, column group headers (`STRUCTURING / SHELL ACCOUNTS / SYNTHETIC IDENTITY`), sub-column headers (`INTAKE / REVIEW / ESCALATE / CLOSE`), row labels list, legend text, FIG. 1 caption, illustrative-data disclaimer. Cell numeric values kept identical.
+- Section 4: heading `4. Stage-level Findings`, subheading `4.1 Overall coverage`, 6-line body, leaderboard rows (RegCo / Rule-Based Detection / Machine Learning Only / Manual Review) with no percentages, FIG. 2 caption, small internal-methodology note, subheading `4.2 Coverage by case side`, 1-line cut-off fragment.
+- Section 5: `4.3 Coverage by review stage`, eyebrow line, 9-line body, chart legend labels, axis labels unchanged in structure.
+- Section 6: legend, `default to clearing borderline activity.` fragment, x-axis labels (`Detection / Documentation / Audit Trail / Filing / Case Resolution`), FIG. 3 caption + disclaimer.
 
-### 6. Section 6.3 (lines 508–511)
-- Heading → "6.3 Score by stage"
-- Add eyebrow line → "Every method struggles most at the very first step: intake."
-- Body → the 9-line paragraph about Intake (RegCo 30.3%, rule-based 22.6%, ML 21.9%, manual 17.9%…).
+## Mission page (was Fellowship)
 
-Insert a "6.2 Score by side" heading + one-line fragment "Every method, including RegCo, still struggles with escalation decisions that need" between the ranked bars and 6.3, per brief.
+Same file, same components, copy only:
 
-### 7. Grouped bars (`DIMS`, lines 311–317 + legend line 330)
-- Legend names → `RegCo`, `Rule-Based Detection`, `Machine Learning Only`, `Manual Review`.
-- X-axis labels → `Detection`, `Documentation`, `Audit Trail`, `Filing`, `Case Resolution`.
-- FIG. 6 caption (line 382) → "Weighted accuracy for each part of the compliance workflow, pooled across every test case."
-- Add cut-off fragment above chart → "default toward clearing transactions."
+- Breadcrumb → `‹ RegCo Compliance`
+- H1 (3 lines) → `We exist to make compliance / a system, not a / manual process.`
+- Intro 3-line paragraph
+- `Why this needed to be built` + 2-line and 9-line body paragraphs
+- `What the platform handles` + 5-line paragraph
+- `Who we are built for` + 4-line paragraph
+- CTA button → `Learn about us →` (points to `/about`)
 
-### 8. Remove section 6.4 "Filing readiness by jurisdiction" (lines 521–535)
-Not in the new brief — delete both sections (heading + duplicate ranked bars) so the flow matches the pasted structure.
+**Founding Letter component** (existing block, copy only):
+- Header left: `REGCO / COMPLIANCE`
+- Header right italic: `Compliance infrastructure for regulated institutions`
+- Red rule + date `June 27th, 2026`
+- Six replacement paragraphs verbatim
+- Final sentence with existing red-`zero` treatment kept (only the surrounding words change to `RegCo exists to make compliance invisible to the institution and defensible to the regulator. It is day [zero].`)
+- Signature placeholder unchanged
+- Name block → `Isaac Yesufu / Founder and CEO, RegCo`
+- Trailing centered red italic link → `Learn more about what we are building →` to `/about`
 
-### 9. Program CTA section (lines 538–557) → RegCo Research Program
-- Breadcrumb "‹ RegCo Compliance" above headline.
-- Headline (2 lines) → "Introducing the RegCo / Compliance Research Program"
-- Body → "We're starting the RegCo Compliance Research Program to support new work on fraud detection and automated compliance. Two researchers will share $50,000 in funding and $25,000 in compute credits to pursue their own focused projects."
-- Add subheading "Why we're starting this program" + the two paragraphs ("Every regulated transaction depends…" and the 10-line "AI has made the fastest progress…").
-- Add "Who we're looking for" section with intro fragment + 5-line paragraph.
-- Add "How to apply" subheading + 2-line body.
-- Date cards → "Applications close / July 17, 2026" and "Researchers announced / July 31, 2026".
-- CTA button label → "Apply here" (keep cream pill, still routes to `/book-demo`).
-- Footer line → "Questions? research@regco.ng"
+## Case Studies
 
-### Out of scope
-- No layout, spacing, color, chart-shape, or component changes.
-- Nav already matches ("Home / Product / About us / Who we serve / Log in") — no change.
-- Ledger eyebrow ("ledger · v1.0") stays.
-- No database or edge-function touches.
+If a `/conversations` page currently exists in the editorial theme, swap its label to `Case Studies` and replace its body with the two placeholder cards + closing note from the brief. If it does not exist yet, this plan does **not** add a new page — I will flag it and ask before creating one.
 
-Single file edited: `src/pages/Index.tsx`.
+## Explicit exclusions (enforced during the swap)
+
+Remove any lingering instance of: specific benchmark percentages, "senior examiner baselines", bare "audit-grade", third-party benchmark claims, "adaptive position management", Crosby Intelligence references, the "RegCo Compliance Research Program" section, any "Apply here" CTA, fabricated Fellowship date cards, and bare "machine learning" phrasing (allow only `rule-based and AI-assisted`).
+
+## Out of scope
+
+- No CSS, spacing, color, font, chart geometry, or component structure changes
+- No route additions, no new components, no asset swaps
+- No database, edge function, or auth changes
+
+## Verification
+
+After the edits I'll re-read each modified file and grep the repo for the forbidden phrases to confirm none survive.

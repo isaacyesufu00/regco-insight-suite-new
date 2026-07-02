@@ -232,7 +232,7 @@ function Figure1() {
         <div style={{ display: "flex", gap: 32 }}>
           <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
           <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
-          <HeatmapScenario title="TYPE 3 → FAKE IDENTITY" data={SCEN_3} />
+          <HeatmapScenario title="TYPE 3 → SYNTHETIC IDENTITY" data={SCEN_3} />
         </div>
         {/* gradient legend */}
         <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
@@ -253,7 +253,10 @@ function Figure1() {
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
         <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
-        Each cell shows how often examiners agreed a case needed attention at that stage. Higher means more examiners flagged the same pattern.
+        Each cell shows detection activity intensity across case type and review stage. Higher = more concentrated review at that point in the workflow.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Pattern structure based on documented AML typologies.
       </p>
     </div>
   );
@@ -263,15 +266,14 @@ function Figure1() {
    FIGURE 3 — Ranked bar list (Overall score)
    ========================================================= */
 const OVERALL = [
-  { name: "RegCo",                  value: 50.5, color: SERIES.gpt },
-  { name: "Rule-Based Detection",   value: 47.3, color: SERIES.fable },
-  { name: "Machine Learning Only",  value: 45.1, color: SERIES.gemini },
-  { name: "Manual Review",          value: 44.4, color: SERIES.opus },
+  { name: "RegCo",                  desc: "Automated + AI-assisted review", color: SERIES.gpt },
+  { name: "Rule-Based Detection",   desc: "Threshold rules only",           color: SERIES.fable },
+  { name: "Machine Learning Only",  desc: "Anomaly models only",            color: SERIES.gemini },
+  { name: "Manual Review",          desc: "Officer review, no automation",  color: SERIES.opus },
 ];
 
 
 function RankedBars() {
-  const max = 100;
   return (
     <div>
       <div style={{
@@ -279,7 +281,7 @@ function RankedBars() {
         padding: 32, display: "flex", flexDirection: "column", gap: 18,
       }}>
         {OVERALL.map((r, i) => (
-          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr 60px", gap: 16, alignItems: "center" }}>
+          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 16, alignItems: "center" }}>
             <div style={{
               width: 32, height: 32, borderRadius: 9999, border: `1px solid ${C.rule}`,
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -287,19 +289,25 @@ function RankedBars() {
             }}>{i+1}</div>
             <div style={{ height: 44, position: "relative" }}>
               <div style={{
-                height: "100%", width: `${(r.value / max) * 100}%`,
+                height: "100%", width: "100%",
                 background: r.color, borderRadius: 4,
-                display: "flex", alignItems: "center", paddingLeft: 16,
-                fontFamily: HELV, fontSize: 14, fontWeight: 500, color: C.ink,
-              }}>{r.name}</div>
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "0 20px",
+                fontFamily: HELV, fontSize: 14, color: C.ink,
+              }}>
+                <span style={{ fontWeight: 500 }}>{r.name}</span>
+                <span style={{ fontWeight: 400, opacity: 0.85, fontSize: 13 }}>{r.desc}</span>
+              </div>
             </div>
-            <div style={{ ...Body, textAlign: "right", fontFamily: MONO, fontSize: 14, color: C.ink }}>{r.value.toFixed(1)}%</div>
           </div>
         ))}
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
-        Every case type and stage counts equally, so late-stage cases don't skew the score.
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;2</span>{" "}
+        Four detection approaches compared by method coverage. RegCo combines rule enforcement, pattern detection, and AI-assisted review.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Comparison is based on internal methodology assessment, not independent study.
       </p>
     </div>
   );
@@ -378,8 +386,11 @@ function GroupedBars() {
         </div>
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;6</span>{" "}
-        Weighted accuracy for each part of the compliance workflow, pooled across every test case.
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
+        Coverage by compliance dimension, pooled across all typologies and weighted by regulatory materiality.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Relative weighting based on CBN examination priorities.
       </p>
     </div>
   );
@@ -389,14 +400,14 @@ function GroupedBars() {
    Findings list
    ========================================================= */
 const FINDINGS = [
-  { n: "01", title: "Filing prioritization",
-    body: "RegCo knows which filings matter most. It ranks every open return by deadline and risk, so your team always works on the right thing first instead of guessing." },
+  { n: "01", title: "Filing Engine",
+    body: "Filing prioritization is a shared gap across most institutions. Teams struggle to know which returns examiners treat as most material, especially when filing across multiple regulators in the same period. RegCo generates returns automatically and flags the ones that need human sign-off before the deadline hits." },
   { n: "02", title: "Over-reporting",
-    body: "Most platforms flag too much and overwhelm your team with noise. RegCo filters out low-risk activity automatically, so the alerts your officers see are the ones that actually need a human decision, not routine transactions that simply crossed a number." },
+    body: "Institutions that review manually tend to flag too much. Every marginal transaction gets escalated because the cost of missing something feels higher than the cost of wasting an officer's time. RegCo filters activity by risk weight, so the alerts that reach your team are the ones that actually warrant a decision." },
   { n: "03", title: "Precision",
-    body: "RegCo's Screening Core leads on precision. It matches how a senior examiner actually reviews a case, with the fewest false holds and the fastest turnaround of any module in the platform." },
+    body: "RegCo's Screening Core is built to match the way a senior examiner reads a case, not the way a rule engine reads a number. Among the modules, Screening comes closest to examination-level review behavior, with fewer blanket holds and faster clearance times on low-risk accounts." },
   { n: "04", title: "The gap",
-    body: "No automated system fully replaces a senior compliance officer yet, and RegCo doesn't pretend otherwise. Where it still falls short: judging unusual cases, weighing context across departments, writing clean documentation, and adjusting thresholds as they spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems." },
+    body: "No automated system fully replaces a trained compliance officer, and RegCo does not claim otherwise. The gap that remains is real: complex cases, unusual counterparty structures, and edge-case transaction patterns still need human judgment. What RegCo eliminates is the paperwork that was consuming that judgment before it got to the cases that actually needed it." },
 ];
 
 
@@ -432,27 +443,44 @@ export default function Index() {
       <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
         <div style={Col}>
           <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
-            ledger · v1.0
+            REGCO · COMPLIANCE PLATFORM
           </div>
           <h1 style={H1}>
-            A platform for audit-grade regulatory compliance.
+            Compliance automation for banks<br />that can't afford to miss a filing.
           </h1>
           <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
-            We measure how regulated institutions file real returns, period by period. The platform grades filing prioritization, drafting precision, and adaptive position management against senior examiner baselines.
+            RegCo connects to your core banking system and handles<br />
+            the compliance work your team does manually: screening<br />
+            customers, generating returns, and keeping an audit trail.
           </p>
           <div style={{ marginTop: 40 }}>
             <CreamCTA to="/book-demo">Book a demo</CreamCTA>
           </div>
-
         </div>
       </section>
 
-      {/* SUMMARY OF FINDINGS */}
-      <section id="findings" data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
+      {/* SECTION 1 — WHAT WE MEASURE */}
+      <section data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>1. What We Measure</h2>
+          <p style={{ ...Body, marginTop: 32 }}>
+            RegCo tracks whether regulated institutions are meeting their compliance obligations in real time, not just at the point of examination.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Most compliance failures are not the result of deliberate evasion. They are the result of manual processes that could not keep up with transaction volume, filing deadlines, and screening requirements happening at once.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            RegCo measures four things every month: whether filings were generated on time, whether screening caught what it should have caught, whether fraud patterns were flagged before they became regulatory problems, and whether the audit trail was complete enough to survive an examination.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 2 — SUMMARY OF CAPABILITIES */}
+      <section id="capabilities" data-ruler-id="2" style={{ paddingTop: 96, paddingBottom: 96 }}>
         <div style={Col}>
           <h2 style={H1Washed}>2. Summary of Capabilities</h2>
           <p style={{ ...Body, marginTop: 32 }}>
-            RegCo gives compliance teams the strongest overall readiness score, and it stays accurate across every part of the platform, from filing to screening to case review.
+            The platform covers the four core compliance jobs a regulated institution handles every reporting period. Each module works alone or as part of a single connected system.
           </p>
 
           <div style={{ marginTop: 56 }}>
@@ -472,113 +500,154 @@ export default function Index() {
         </div>
       </section>
 
-      {/* FIGURE 1 — wider column for the chart */}
-      <section data-ruler-id="2" style={{ paddingTop: 96, paddingBottom: 96 }}>
+      {/* SECTION 3 — DETECTION ACTIVITY (heatmap) */}
+      <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 96 }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
             <p style={Body}>
-              spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems.
+              The table below shows where compliance activity concentrates across fraud typology and review stage. Each cell represents how often a pattern required active review at that point in a real case workflow. Darker cells indicate higher review concentration. Data shown is illustrative.
             </p>
           </div>
           <Figure1 />
         </div>
       </section>
 
-      {/* TURN-LEVEL FINDINGS */}
-      <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 32 }}>
+      {/* SECTION 4 — STAGE-LEVEL FINDINGS */}
+      <section data-ruler-id="4" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h2 style={H1Washed}>6. Stage-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>6.1 Overall score</h3>
+          <h2 style={H1Washed}>4. Stage-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>4.1 Overall coverage</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            RegCo scores 50.5% overall across every case type and review stage, ahead of rule-only detection at 47.3%, machine-learning-only detection at 45.1%, and fully manual review at 44.4%. The gap between methods is small, which shows this kind of work is genuinely hard no matter how it's automated — but RegCo still comes out ahead, and the result holds steady across every case type tested.
+            RegCo achieves the broadest coverage across every case type and review stage when compared to rule-based-only detection, machine-learning-only detection, and fully manual review. The difference between methods is small, which reflects how genuinely difficult this work is regardless of how it is automated. RegCo's advantage holds consistently across every typology tested.
           </p>
         </div>
       </section>
 
-      {/* RANKED BARS */}
-      <section data-ruler-id="4" style={{ paddingTop: 32, paddingBottom: 96 }}>
+      {/* RANKED BARS (leaderboard) */}
+      <section data-ruler-id="5" style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
           <RankedBars />
         </div>
       </section>
 
-      {/* 6.2 SCORE BY SIDE */}
-      <section data-ruler-id="5" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h3 style={H2}>6.2 Score by side</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Every method, including RegCo, still struggles with escalation decisions that need
-          </p>
-        </div>
-      </section>
-
-      {/* 6.3 SCORE BY STAGE */}
+      {/* 4.2 COVERAGE BY CASE SIDE */}
       <section data-ruler-id="6" style={{ paddingTop: 96, paddingBottom: 32 }}>
         <div style={Col}>
-          <h3 style={H2}>6.3 Score by stage</h3>
-          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
-            Every method struggles most at the very first step: intake.
-          </p>
+          <h3 style={H2}>4.2 Coverage by case side</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            The stage-by-stage chart shows Intake is the hardest step for every method: RegCo scores 30.3%, rule-based detection scores 22.6%, machine-learning-only scores 21.9%, and manual review scores 17.9%. This lines up with what examiners told us — Intake is the stage where experienced reviewers agree most strongly on what matters, which is exactly where automated systems struggle most. Scores climb fast in later stages, mostly settling between 50% and 60% once a case has more history attached to it. In short: every method gets better once a case is already underway. The hard part is spotting and prioritizing the right case before any history exists.
-          </p>
-          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
-            default toward clearing transactions.
+            Every method, including RegCo, shows weaker coverage on
           </p>
         </div>
       </section>
 
-      <section data-ruler-id="7" style={{ paddingTop: 32, paddingBottom: 96 }}>
+      {/* 4.3 COVERAGE BY REVIEW STAGE */}
+      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>4.3 Coverage by review stage</h3>
+          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
+            Every method performs worst at the point of account intake.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The stage-by-stage chart shows that Intake is the most difficult stage for every detection method. This lines up with what experienced compliance officers describe: early review relies on judgment and limited signals, while mid-case and late-case review relies on pattern recognition across an established transaction record. Coverage improves significantly once 30 or more days of account activity are available. RegCo's screening and fraud modules perform best after that threshold, when behavioural signals are more reliable. The implication for compliance teams is clear: intake screening requires the most human support, and that is where RegCo routes the fewest automated clearances and the most officer attention.
+          </p>
+          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
+            default to clearing borderline activity.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 6 — COVERAGE BY DIMENSION (grouped bars) */}
+      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
           <GroupedBars />
         </div>
       </section>
 
-      {/* RESEARCH PROGRAM */}
-      <section id="fellowship" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
+      {/* MISSION (replaces Research Program) */}
+      <section id="mission" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
         <div style={Col}>
           <div style={{ ...Mono, marginBottom: 24 }}>
             <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
           </div>
-          <h2 style={H1}>Introducing the RegCo<br />Compliance Research Program</h2>
+          <h2 style={H1}>We exist to make compliance<br />a system, not a<br />manual process.</h2>
           <p style={{ ...Body, marginTop: 40 }}>
-            We're starting the RegCo Compliance Research Program to support new work on fraud detection and automated compliance. Two researchers will share <strong style={{ color: C.ink }}>$50,000 in funding</strong> and <strong style={{ color: C.ink }}>$25,000 in compute credits</strong> to pursue their own focused projects.
+            RegCo builds the infrastructure that regulated financial institutions need to meet their CBN and NFIU obligations without building a compliance department the size of a bank.
           </p>
 
-          <h3 style={{ ...H2, marginTop: 64 }}>Why we're starting this program</h3>
+          <h3 style={{ ...H2, marginTop: 64 }}>Why this needed to be built</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            Every regulated transaction depends on trust being verified somewhere behind the scenes. Right now, that verification is still slow and costly.
+            The CBN's 2026 AML baseline standards require automated monitoring, real-time screening, and a full audit trail.
           </p>
           <p style={{ ...Body, marginTop: 24 }}>
-            AI has made the fastest progress in areas with a clear right answer: math, code, games like chess. Fraud detection isn't like that. There's rarely one obvious signal — information is incomplete, a lot of what matters is never written down, and the right response depends on what the other side is actually doing. It's closer to reading a room than solving an equation: good compliance officers notice the pattern, weigh what looks legitimate, and know when to escalate, when to clear, and when to hold firm without being certain. They anticipate how a bad actor adjusts, and adapt as the case develops.
+            Most regional banks cannot build that from scratch. It takes twelve to eighteen months, a technical team most institutions do not have, and ongoing maintenance that has no clear owner. Buying a global enterprise solution costs more than a regional microfinance bank spends on its entire compliance function in a year. RegCo sits between those two options. It connects to the core banking system an institution already runs, ingests transactions, screens customers, generates returns, and keeps a regulator-ready audit trail. Your compliance officer reviews the output. They do not build the pipeline.
           </p>
 
-          <p style={{ ...Body, marginTop: 48 }}>
-            If you're working on something related — fraud detection, regulatory technology, automated review — we want to see it. The strongest proposals make their progress measurable, explain clearly why simpler approaches fall short, and apply beyond just one product.
-          </p>
-
-          <h3 style={{ ...H2, marginTop: 48 }}>Who we're looking for</h3>
+          <h3 style={{ ...H2, marginTop: 48 }}>What the platform handles</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            Open to PhD students, postdocs, faculty, or independent researchers. You're likely a good fit if you have real experience in machine learning or anomaly detection, can run a research project on your own while taking feedback well, and want to work on problems where the data is messy and confidential. No compliance background needed.
+            RegCo covers four compliance jobs that currently consume the most officer time at regional institutions: generating CBN and NFIU returns, screening customers against five active sanctions lists, flagging suspicious transaction patterns in near real time, and maintaining the case documentation an examiner will ask for. Every action taken on the platform is logged with a timestamp and a user identity. Nothing is editable after the fact.
           </p>
 
-          <h3 style={{ ...H2, marginTop: 48 }}>How to apply</h3>
+          <h3 style={{ ...H2, marginTop: 48 }}>Who we are built for</h3>
           <p style={{ ...Body, marginTop: 24 }}>
-            Send your resume and a one-page proposal: what question you're asking, why current approaches fall short, your plan, and what you'll deliver.
+            We focus on CBN-regulated financial institutions: unit microfinance banks, state microfinance banks, national microfinance banks, payment service banks, and finance companies. We are not a global vendor. We are built for the specific regulatory environment these institutions operate in, and we measure ourselves by what a CBN examiner actually looks for.
           </p>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 56 }}>
-            <DatePanel label="Applications close" value="July 17, 2026" />
-            <DatePanel label="Researchers announced" value="July 31, 2026" />
-          </div>
 
           <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Apply here</CreamCTA>
+            <CreamCTA to="/about-us">Learn about us</CreamCTA>
           </div>
 
-          <p style={{ ...Body, fontSize: 14, color: C.ink3, marginTop: 24 }}>
-            Questions? <a href="mailto:research@regco.ng" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>research@regco.ng</a>
-          </p>
+          {/* FOUNDING LETTER */}
+          <div style={{ marginTop: 128, border: `1px solid ${C.rule}`, background: C.surface, padding: 48 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
+              <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 15, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+                <div>REGCO</div><div>COMPLIANCE</div>
+              </div>
+              <div style={{ fontFamily: HELV, fontStyle: "italic", fontSize: 13, color: C.ink3, textAlign: "right" }}>
+                Compliance infrastructure for regulated institutions
+              </div>
+            </div>
+            <div style={{ height: 2, background: "#CA0101", marginTop: 20, marginBottom: 32 }} />
+            <div style={{ ...Mono, fontSize: 13, color: C.ink3, marginBottom: 32 }}>June 27th, 2026</div>
+
+            <p style={{ ...Body, marginTop: 0 }}>
+              After banking, compliance is the part of finance most overdue for automation.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              Today, systems can process transactions and flag numbers. But they lack judgment. What counts as a suspicious pattern versus normal business activity? When does a series of small transfers become a structuring case? When you hire a senior compliance officer, making those calls is exactly what you are paying for.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              Rapid progress in AI has happened wherever there is a clear right answer: math, code, pattern recognition. Compliance has very few of those. Most of the hard calls live in a grey area where the answer depends on context, regulatory history, and what an examiner is likely to focus on during the next cycle.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              How do you automate a decision where reasonable officers disagree? Or where the right response depends on the institution's own risk appetite, not just the transaction amount? How do you build a system that handles the edge cases, not just the thresholds?
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              That is why we built RegCo. A platform that sits between the core banking system and the compliance officer. It handles the work that should never have been manual: screening customers, generating filings, flagging patterns, and keeping a complete record of every decision made.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              We are not replacing compliance officers. We are giving them back the time they currently spend on paperwork, so they can focus on the judgment calls that actually require a human. That is the job no platform can do alone.
+            </p>
+
+            <div style={{ height: 2, background: "#CA0101", marginTop: 32, width: 120 }} />
+            <p style={{ ...Body, marginTop: 20 }}>
+              RegCo exists to make compliance invisible to the institution and defensible to the regulator. It is day{" "}
+              <span style={{ color: "#CA0101", textDecoration: "underline", textDecorationColor: "#CA0101", textDecorationThickness: "1.5px", textUnderlineOffset: 3 }}>
+                zero
+              </span>.
+            </p>
+
+            <div style={{ marginTop: 48, width: 248, height: 80, border: `1px dashed ${C.rule}`, display: "flex", alignItems: "center", justifyContent: "center", ...Mono, fontSize: 11 }}>
+              [signature]
+            </div>
+            <div style={{ marginTop: 16, ...Body, color: C.ink }}>Isaac Yesufu</div>
+            <div style={{ ...Body, color: C.ink3, fontSize: 14 }}>Founder and CEO, RegCo</div>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 48 }}>
+            <Link to="/about-us" style={{ fontFamily: HELV, fontStyle: "italic", fontSize: 15, color: "#CA0101", textDecoration: "none" }}>
+              Learn more about what we are building →
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -593,18 +662,6 @@ export default function Index() {
         <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
       </footer>
 
-    </div>
-  );
-}
-
-function DatePanel({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{
-      border: `1px solid ${C.rule}`, borderRadius: 6, padding: "20px 24px",
-      background: "transparent",
-    }}>
-      <div style={{ ...Body, fontSize: 14, color: C.ink3 }}>{label}</div>
-      <div style={{ ...H2, fontSize: 24, marginTop: 8 }}>{value}</div>
     </div>
   );
 }
