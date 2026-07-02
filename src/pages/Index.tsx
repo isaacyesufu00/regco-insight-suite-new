@@ -665,15 +665,3 @@ export default function Index() {
     </div>
   );
 }
-
-function DatePanel({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{
-      border: `1px solid ${C.rule}`, borderRadius: 6, padding: "20px 24px",
-      background: "transparent",
-    }}>
-      <div style={{ ...Body, fontSize: 14, color: C.ink3 }}>{label}</div>
-      <div style={{ ...H2, fontSize: 24, marginTop: 8 }}>{value}</div>
-    </div>
-  );
-}
