@@ -386,8 +386,11 @@ function GroupedBars() {
         </div>
       </div>
       <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;6</span>{" "}
-        Weighted accuracy for each part of the compliance workflow, pooled across every test case.
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
+        Coverage by compliance dimension, pooled across all typologies and weighted by regulatory materiality.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Relative weighting based on CBN examination priorities.
       </p>
     </div>
   );
