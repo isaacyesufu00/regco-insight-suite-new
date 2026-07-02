@@ -232,7 +232,7 @@ function Figure1() {
         <div style={{ display: "flex", gap: 32 }}>
           <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
           <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
-          <HeatmapScenario title="TYPE 3 → FAKE IDENTITY" data={SCEN_3} />
+          <HeatmapScenario title="TYPE 3 → SYNTHETIC IDENTITY" data={SCEN_3} />
         </div>
         {/* gradient legend */}
         <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
