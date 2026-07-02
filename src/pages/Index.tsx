@@ -397,14 +397,14 @@ function GroupedBars() {
    Findings list
    ========================================================= */
 const FINDINGS = [
-  { n: "01", title: "Filing prioritization",
-    body: "RegCo knows which filings matter most. It ranks every open return by deadline and risk, so your team always works on the right thing first instead of guessing." },
+  { n: "01", title: "Filing Engine",
+    body: "Filing prioritization is a shared gap across most institutions. Teams struggle to know which returns examiners treat as most material, especially when filing across multiple regulators in the same period. RegCo generates returns automatically and flags the ones that need human sign-off before the deadline hits." },
   { n: "02", title: "Over-reporting",
-    body: "Most platforms flag too much and overwhelm your team with noise. RegCo filters out low-risk activity automatically, so the alerts your officers see are the ones that actually need a human decision, not routine transactions that simply crossed a number." },
+    body: "Institutions that review manually tend to flag too much. Every marginal transaction gets escalated because the cost of missing something feels higher than the cost of wasting an officer's time. RegCo filters activity by risk weight, so the alerts that reach your team are the ones that actually warrant a decision." },
   { n: "03", title: "Precision",
-    body: "RegCo's Screening Core leads on precision. It matches how a senior examiner actually reviews a case, with the fewest false holds and the fastest turnaround of any module in the platform." },
+    body: "RegCo's Screening Core is built to match the way a senior examiner reads a case, not the way a rule engine reads a number. Among the modules, Screening comes closest to examination-level review behavior, with fewer blanket holds and faster clearance times on low-risk accounts." },
   { n: "04", title: "The gap",
-    body: "No automated system fully replaces a senior compliance officer yet, and RegCo doesn't pretend otherwise. Where it still falls short: judging unusual cases, weighing context across departments, writing clean documentation, and adjusting thresholds as they spot the details that matter in a live case. RegCo is built around that complexity, so the platform shows whether its outputs actually help your team get work done, not just whether it can catch obvious problems." },
+    body: "No automated system fully replaces a trained compliance officer, and RegCo does not claim otherwise. The gap that remains is real: complex cases, unusual counterparty structures, and edge-case transaction patterns still need human judgment. What RegCo eliminates is the paperwork that was consuming that judgment before it got to the cases that actually needed it." },
 ];
 
 
