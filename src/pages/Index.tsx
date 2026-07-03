@@ -446,7 +446,7 @@ export default function Index() {
             REGCO · COMPLIANCE PLATFORM
           </div>
           <h1 style={H1}>
-            Compliance automation for banks<br />that can't afford to miss a filing.
+            Compliance automation for banks that can't afford to miss a filing.
           </h1>
           <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
             RegCo connects to your core banking system and handles<br />
