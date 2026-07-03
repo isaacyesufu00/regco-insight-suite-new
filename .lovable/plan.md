@@ -1,67 +1,71 @@
-## Homepage Rebuild — OffDeal-style Pixel Replica for RegCo
+Text-only copy swap across the editorial site. No layout, component, style, chart, or asset changes — only string replacements inside existing JSX.
 
-Full rebuild of `/` (`src/pages/Index.tsx`) following the spec exactly. Current editorial dark-theme homepage will be replaced. All twelve sections built inline with hex tokens and px sizing per spec.
+## Scope
 
-### Files touched
-- **`src/pages/Index.tsx`** — full rewrite. Twelve sections, all inline styles, no substitutions.
-- **`src/components/editorial/EditorialTheme.tsx`** — leave alone. Other pages (`/product`, `/about-us`, `/who-we-serve`) still use it. Homepage will not import from it.
-- **`index.html`** — no change (title/meta already set).
-- No new dependencies. Lucide already available for chevrons, plus, arrow, play, pie, search, clock, workflow, bank, network, card, document, columns icons.
+Three files, all copy-only:
 
-### Section build order
-```text
-1  Announcement bar (#000, pulsing green dot, 2 underlined links)
-2  Sticky nav (blur, REGCO wordmark, 5 dropdown labels, white CTA)
-3  Hero (814px, dark bg image + radial+linear overlay, pill badge,
-      serif 84px 2-line headline, subhead, email pill + Get Started,
-      CBS integration link, 4-stat row w/ inset left border)
-4  "Built for" strip (serif label + 6 grayscale wordmarks: CBN, NFIU,
-      SCUML, NDIC, FIRS, PENCOM as text wordmarks)
-5  "Manual review costs time" (2 columns, #F4F1EE cards, image placeholders)
-6  "Modern Approach" (#F7F5F2, video block + play ring, 4 stat blocks)
-7  "RegCo Advantage" (#222, accordion: 1 open + 3 collapsed at 0.5 opacity)
-8  Testimonials (3 bracketed placeholder cards, serif quote, avatar row)
-9  Who We Serve (3x2 grid, dark CTA card in slot 2, 5 institution cards)
-10 FAQ (2-col, 5 accordion rows w/ + → × rotate)
-11 Final CTA card (#EBE5DF, serif headline, 2 buttons, floating notif)
-12 Footer (#171514, 6-col grid, giant #928D80 outline REGCO wordmark)
-```
+1. **`src/pages/Index.tsx`** (homepage / benchmark page)
+2. **`src/pages/Fellowship.tsx`** or whichever file currently renders `/fellowship` → repurposed as the Mission page (route path unchanged, only visible copy swapped)
+3. **`src/components/editorial/EditorialTheme.tsx`** (shared Nav) — brand + nav links
 
-### Interaction state
-- Accordion state (sections 7 & 10): `useState<number | null>` per group, one-open-at-a-time, chevron/plus rotates 180°/45°.
-- Nav chevrons rotate on hover via CSS (no dropdown menus wired — spec says "treat as plain nav link if no dropdown exists yet").
-- All arrow-icon buttons: shared `<ArrowChip>` inline component with hover nudge.
-- No new routes. Links point to existing `/about`, `/demo` (spec) — will use `/about-us` and `/book-demo` to match current router, noted in code.
+## Global Nav (EditorialTheme.tsx)
 
-### Placeholder images
-Sections 3, 5, 6, 7, 11 need imagery. Approach:
-- Hero bg (S3): dark server-room / data-viz — generate one image via `imagegen` (fast tier, 1920x1080, jpg) → `src/assets/hero-dark.jpg`.
-- Manual Way (S5 col 1): generate cluttered spreadsheet illustration.
-- RegCo Way (S5 col 2), Modern Approach media (S6), Advantage diagram (S7), Final CTA visual (S11): use a single dashboard mock generated once, reused. Placeholder gray blocks with correct aspect ratios acceptable if generation is skipped — spec permits placeholders.
+- Brand wordmark: `REGCO / COMPLIANCE` (two-line stacked, existing typography preserved)
+- Links, in order: `Home`, `Product`, `About us`, `Who we serve`, `Log in`
+- Route targets stay as they are today; only the visible labels change
 
-Plan: generate hero image + one dashboard mock (2 images total) so the page renders substantively; other slots use aspect-ratio placeholder divs with `#F4F1EE` fill and small caption. Real screenshots swap in later.
+## Homepage (`src/pages/Index.tsx`) — copy map
 
-### Font stacks (inline everywhere on this page)
-```
-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif
-sans:  system-ui, sans-serif
-```
-No Helvetica, no JetBrains Mono on this page. Editorial theme (other pages) unaffected.
+Replace text in-place, keeping every existing wrapper, chart, heatmap, leaderboard, and figure caption element:
 
-### Do-not list — enforced
-- No Paper.design floating chrome
-- No named testimonials — bracketed placeholders only
-- No unverified numbers in announcement bar
-- Serif for every headline
-- Card radii exactly: 8 / 10 / 12 as specified
-- Who We Serve is exactly 3×2 with dark CTA in slot 2
-- Inset left-border stat pattern preserved on hero + Section 6
+- Eyebrow → `REGCO · COMPLIANCE PLATFORM`
+- Hero H1 (2 lines) → `Compliance automation for banks / that can't afford to miss a filing.`
+- Hero subhead (3 lines) → RegCo connects to your core banking system … audit trail.
+- Hero CTA label → `Book a demo →` (route unchanged)
+- Section 1 label → `1. What We Measure` + 3 body paragraphs (3 / 4 / 4 lines) per brief
+- Section 2 heading → `2. Summary of Capabilities` + 3-line intro
+- Items 01–04 titles + bodies replaced verbatim (Filing Engine, Over-reporting, Precision, The gap)
+- Section 3 heatmap: paragraph above grid, column group headers (`STRUCTURING / SHELL ACCOUNTS / SYNTHETIC IDENTITY`), sub-column headers (`INTAKE / REVIEW / ESCALATE / CLOSE`), row labels list, legend text, FIG. 1 caption, illustrative-data disclaimer. Cell numeric values kept identical.
+- Section 4: heading `4. Stage-level Findings`, subheading `4.1 Overall coverage`, 6-line body, leaderboard rows (RegCo / Rule-Based Detection / Machine Learning Only / Manual Review) with no percentages, FIG. 2 caption, small internal-methodology note, subheading `4.2 Coverage by case side`, 1-line cut-off fragment.
+- Section 5: `4.3 Coverage by review stage`, eyebrow line, 9-line body, chart legend labels, axis labels unchanged in structure.
+- Section 6: legend, `default to clearing borderline activity.` fragment, x-axis labels (`Detection / Documentation / Audit Trail / Filing / Case Resolution`), FIG. 3 caption + disclaimer.
 
-### Out of scope
-- Wiring real dropdown menus for nav items
-- Video playback modal
-- Real logo assets for CBN/NFIU/etc. (text wordmarks per spec fallback)
-- Any DB/edge function changes (per standing rule)
+## Mission page (was Fellowship)
 
-### Verification
-After build: read the rendered `/` via Playwright at 1440×900, screenshot full hero + one mid-section + footer wordmark to confirm layout, colors, and stat inset borders match spec.
+Same file, same components, copy only:
+
+- Breadcrumb → `‹ RegCo Compliance`
+- H1 (3 lines) → `We exist to make compliance / a system, not a / manual process.`
+- Intro 3-line paragraph
+- `Why this needed to be built` + 2-line and 9-line body paragraphs
+- `What the platform handles` + 5-line paragraph
+- `Who we are built for` + 4-line paragraph
+- CTA button → `Learn about us →` (points to `/about`)
+
+**Founding Letter component** (existing block, copy only):
+- Header left: `REGCO / COMPLIANCE`
+- Header right italic: `Compliance infrastructure for regulated institutions`
+- Red rule + date `June 27th, 2026`
+- Six replacement paragraphs verbatim
+- Final sentence with existing red-`zero` treatment kept (only the surrounding words change to `RegCo exists to make compliance invisible to the institution and defensible to the regulator. It is day [zero].`)
+- Signature placeholder unchanged
+- Name block → `Isaac Yesufu / Founder and CEO, RegCo`
+- Trailing centered red italic link → `Learn more about what we are building →` to `/about`
+
+## Case Studies
+
+If a `/conversations` page currently exists in the editorial theme, swap its label to `Case Studies` and replace its body with the two placeholder cards + closing note from the brief. If it does not exist yet, this plan does **not** add a new page — I will flag it and ask before creating one.
+
+## Explicit exclusions (enforced during the swap)
+
+Remove any lingering instance of: specific benchmark percentages, "senior examiner baselines", bare "audit-grade", third-party benchmark claims, "adaptive position management", Crosby Intelligence references, the "RegCo Compliance Research Program" section, any "Apply here" CTA, fabricated Fellowship date cards, and bare "machine learning" phrasing (allow only `rule-based and AI-assisted`).
+
+## Out of scope
+
+- No CSS, spacing, color, font, chart geometry, or component structure changes
+- No route additions, no new components, no asset swaps
+- No database, edge function, or auth changes
+
+## Verification
+
+After the edits I'll re-read each modified file and grep the repo for the forbidden phrases to confirm none survive.
