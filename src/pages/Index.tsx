@@ -59,8 +59,8 @@ function Nav() {
       fontFamily: HELV,
     }}>
       <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>REGCO</div>
-        <div>COMPLIANCE</div>
+        <div>{"\n\n"}REGCO</div>
+        <div>{"\n"}</div>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {[
