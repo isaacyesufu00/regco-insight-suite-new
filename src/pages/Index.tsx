@@ -59,8 +59,8 @@ function Nav() {
       fontFamily: HELV,
     }}>
       <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>REGCO</div>
-        <div>COMPLIANCE</div>
+        <div>{"\n\n"}REGCO</div>
+        <div>{"\n"}</div>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {[
@@ -446,7 +446,7 @@ export default function Index() {
             REGCO · COMPLIANCE PLATFORM
           </div>
           <h1 style={H1}>
-            Compliance automation for banks<br />that can't afford to miss a filing.
+            Compliance automation for banks that can't afford to miss a filing.
           </h1>
           <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
             RegCo connects to your core banking system and handles<br />

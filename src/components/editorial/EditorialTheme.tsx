@@ -38,8 +38,8 @@ export function Nav() {
       fontFamily: HELV,
     }}>
       <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>REGCO</div>
-        <div>COMPLIANCE</div>
+        <div>{"\n\n"}REGCO</div>
+        <div>{"\n"}</div>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {NAV_ITEMS.map(([l, to]) => (
@@ -133,7 +133,7 @@ export function EditorialFooter() {
       display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
       <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-        <div>REGCO</div><div>COMPLIANCE</div>
+        <div>{"\n\n"}REGCO</div><div>{"\n"}</div>
       </div>
       <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
     </footer>
