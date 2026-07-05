@@ -4,7 +4,7 @@ import {
   ChevronDown, ArrowRight, Play, PieChart, Search, Clock, GitBranch,
   Building2, Network, CreditCard, FileText, Landmark, Plus, ShieldCheck,
 } from "lucide-react";
-import heroDark from "@/assets/regco-hero-dark.jpg";
+import heroPaperwork from "@/assets/regco-hero-paperwork.png.asset.json";
 import dashMock from "@/assets/regco-dashboard-mock.jpg";
 import manualWay from "@/assets/regco-manual-way.jpg";
 
