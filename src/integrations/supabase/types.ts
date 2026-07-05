@@ -1528,7 +1528,6 @@ export type Database = {
       knowledge_base: {
         Row: {
           chunk_index: number | null
-          cleaned_content: string | null
           content: string
           content_hash: string | null
           created_at: string | null
@@ -1540,7 +1539,6 @@ export type Database = {
           ingested_at: string | null
           jurisdiction: string | null
           metadata: Json | null
-          needs_reembed: boolean | null
           publication_date: string | null
           regulator: string | null
           section_heading: string | null
@@ -1549,7 +1547,6 @@ export type Database = {
         }
         Insert: {
           chunk_index?: number | null
-          cleaned_content?: string | null
           content: string
           content_hash?: string | null
           created_at?: string | null
@@ -1561,7 +1558,6 @@ export type Database = {
           ingested_at?: string | null
           jurisdiction?: string | null
           metadata?: Json | null
-          needs_reembed?: boolean | null
           publication_date?: string | null
           regulator?: string | null
           section_heading?: string | null
@@ -1570,7 +1566,6 @@ export type Database = {
         }
         Update: {
           chunk_index?: number | null
-          cleaned_content?: string | null
           content?: string
           content_hash?: string | null
           created_at?: string | null
@@ -1582,7 +1577,6 @@ export type Database = {
           ingested_at?: string | null
           jurisdiction?: string | null
           metadata?: Json | null
-          needs_reembed?: boolean | null
           publication_date?: string | null
           regulator?: string | null
           section_heading?: string | null
@@ -3227,37 +3221,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      match_knowledge_base:
-        | {
-            Args: {
-              match_count: number
-              match_threshold: number
-              query_embedding: string
-            }
-            Returns: {
-              content: string
-              document_title: string
-              id: string
-              jurisdiction: string
-              regulator: string
-              similarity: number
-              source_name: string
-            }[]
-          }
-        | {
-            Args: {
-              match_count: number
-              match_threshold: number
-              p_institution_id: string
-              query_embedding: string
-            }
-            Returns: {
-              content: string
-              id: string
-              institution_id: string
-              similarity: number
-            }[]
-          }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }

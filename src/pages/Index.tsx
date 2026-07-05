@@ -1,608 +1,667 @@
 import { Link } from "react-router-dom";
-import { useState, CSSProperties, ReactNode } from "react";
-import {
-  ChevronDown, ArrowRight, Play, PieChart, Search, Clock, GitBranch,
-  Building2, Network, CreditCard, FileText, Landmark, Plus, ShieldCheck,
-} from "lucide-react";
-import heroPaperwork from "@/assets/regco-hero-paperwork.png.asset.json";
-import dashMock from "@/assets/regco-dashboard-mock.jpg";
-import manualWay from "@/assets/regco-manual-way.jpg";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check } from "lucide-react";
 
-/* Tokens */
-const SERIF = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
-const MAXW = 1368;
+/* =========================================================
+   CROSBY-INTELLIGENCE STYLE HOMEPAGE
+   Pure dark editorial. Helvetica headers. Cream CTA pill.
+   All charts/figures are inline HTML/CSS mocks — no libs.
+   ========================================================= */
 
-/* Shared bits */
-function ArrowChip({ dark = false, size = 24 }: { dark?: boolean; size?: number }) {
-  return (
-    <span style={{
-      width: size, height: size, borderRadius: 4,
-      background: dark ? "#171514" : "#FFFFFF",
-      display: "inline-flex", alignItems: "center", justifyContent: "center",
-      flexShrink: 0,
-    }}>
-      <ArrowRight size={14} strokeWidth={3} color={dark ? "#FFFFFF" : "#333333"} />
-    </span>
-  );
+const HELV = 'Helvetica Neue, Helvetica, Arial, sans-serif';
+const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+
+const C = {
+  page:   "#0A0A0A",
+  surface:"#141414",
+  ink:    "#F2EDE4",
+  ink2:   "#D8D2C6",
+  ink3:   "#8A847A",
+  rule:   "#2A2724",
+  cream:  "#F2E9D8",
+  creamHi:"#E6DCC4",
+};
+
+const SERIES = {
+  gpt:    "#A8312B",
+  fable:  "#B8924A",
+  gemini: "#3F6E94",
+  opus:   "#3F7A5E",
+};
+
+/* ---------- color ramp for heatmap ---------- */
+const RAMP = ["#1B1430","#4B1A5C","#8A2A6E","#C73E5E","#E86A3E","#F2C57A"];
+function ramp(v: number) {
+  if (v <= 0) return RAMP[0];
+  if (v >= 1) return RAMP[RAMP.length - 1];
+  const t = v * (RAMP.length - 1);
+  const i = Math.floor(t);
+  const f = t - i;
+  const a = hex(RAMP[i]); const b = hex(RAMP[i + 1]);
+  const r = Math.round(a.r + (b.r - a.r) * f);
+  const g = Math.round(a.g + (b.g - a.g) * f);
+  const bl= Math.round(a.b + (b.b - a.b) * f);
+  return `rgb(${r},${g},${bl})`;
+}
+function hex(h: string) {
+  const n = h.replace("#","");
+  return { r: parseInt(n.slice(0,2),16), g: parseInt(n.slice(2,4),16), b: parseInt(n.slice(4,6),16) };
 }
 
-/* 1 — Announcement bar */
-function AnnouncementBar() {
+/* ---------- top nav ---------- */
+function Nav() {
+  return (
+    <header style={{
+      position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 50,
+      background: C.page,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 32px 0 24px",
+      fontFamily: HELV,
+    }}>
+      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
+        <div>{"\n\n"}REGCO</div>
+        <div>{"\n"}</div>
+      </Link>
+      <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
+        {[
+          ["Home","/"],
+          ["Product","/product"],
+          ["About us","/about-us"],
+          ["Who we serve","/who-we-serve"],
+          ["Log in","/login"],
+        ].map(([l,to]) => (
+          <Link key={l} to={to as string} style={navLink}>{l}</Link>
+        ))}
+      </nav>
+    </header>
+  );
+}
+const navLink: React.CSSProperties = {
+  fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
+};
+
+
+/* ---------- left scroll ruler ---------- */
+function ScrollRuler({ active, total }: { active: number; total: number }) {
   return (
     <div style={{
-      maxHeight: 64, overflow: "hidden", background: "#000000",
-      padding: "12px 16px", display: "flex", alignItems: "center",
-      justifyContent: "center", gap: 8, flexWrap: "wrap",
+      position: "fixed", left: 56, top: "50%", transform: "translateY(-50%)",
+      display: "flex", flexDirection: "column", gap: 8, zIndex: 40,
     }}>
-      <span style={{ position: "relative", width: 8, height: 8, display: "inline-block", marginRight: 4 }}>
-        <span style={{ position: "absolute", inset: -3, width: 14, height: 14, borderRadius: "50%", background: "#016630", opacity: 0.011 }} />
-        <span style={{ position: "absolute", inset: -2, width: 12, height: 12, borderRadius: "50%", background: "#016630", opacity: 0.30 }} />
-        <span style={{ position: "absolute", inset: 0, width: 8, height: 8, borderRadius: "50%", background: "oklch(62.7% 0.194 149.2)" }} />
-      </span>
-      <span style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 14, fontWeight: 700, letterSpacing: "0.14px", lineHeight: "20px" }}>
-        RegCo is building compliance infrastructure for regulated institutions.
-      </span>
-      <Link to="/about-us" style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 14, letterSpacing: "0.14px", lineHeight: "20px", textDecoration: "underline" }}>Read our story</Link>
-      <Link to="/book-demo" style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 14, letterSpacing: "0.14px", lineHeight: "20px", textDecoration: "underline" }}>Book a demo</Link>
+      {Array.from({ length: total }).map((_, i) => (
+        <div key={i} style={{
+          height: 1,
+          width: i === active ? 24 : 16,
+          background: C.ink3,
+          opacity: i === active ? 1 : 0.35,
+          transition: "width 150ms ease, opacity 150ms ease",
+        }} />
+      ))}
     </div>
   );
 }
 
-/* 2 — Sticky Nav */
-function StickyNav() {
-  const items = ["Product", "Who We Serve", "Platform", "Company", "Resources"];
+/* ---------- cream CTA pill ---------- */
+function CreamCTA({ children, href = "#", to }: { children: React.ReactNode; href?: string; to?: string }) {
+  const [hover, setHover] = useState(false);
+  const style: React.CSSProperties = {
+    display: "inline-flex", alignItems: "center", gap: 8,
+    background: hover ? C.creamHi : C.cream, color: "#0A0A0A",
+    borderRadius: 9999, padding: "14px 24px",
+    fontFamily: HELV, fontSize: 15, fontWeight: 500,
+    textDecoration: "none", transition: "background 150ms ease",
+  };
+  const inner = (<>{children} <ArrowRight size={16} strokeWidth={1.75} /></>);
+  if (to) return <Link to={to} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</Link>;
+  return <a href={href} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</a>;
+}
+
+/* ---------- shared text styles ---------- */
+const H1: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 700, fontSize: 56, lineHeight: 1.05,
+  letterSpacing: "-0.025em", color: C.ink, margin: 0,
+};
+const H1Washed: React.CSSProperties = { ...H1, color: "#6F6A62", fontSize: 44 };
+const H2: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 700, fontSize: 28, lineHeight: 1.15,
+  letterSpacing: "-0.02em", color: C.ink, margin: 0,
+};
+const Lede: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 400, fontSize: 19, lineHeight: 1.55,
+  color: C.ink, margin: 0,
+};
+const Body: React.CSSProperties = {
+  fontFamily: HELV, fontWeight: 400, fontSize: 17, lineHeight: 1.6,
+  color: C.ink2, margin: 0,
+};
+const Mono: React.CSSProperties = {
+  fontFamily: MONO, fontWeight: 400, fontSize: 13, color: C.ink3,
+};
+
+/* ---------- column wrapper ---------- */
+const Col: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "0 24px" };
+
+/* =========================================================
+   FIGURE 1 — Cluster intensity heatmap
+   ========================================================= */
+type Cell = { row: string; values: (number | null)[] };
+const SCEN_1: Cell[] = [
+  { row:"ExC",  values:[0.18,0.02,0.27,0.06] },
+  { row:"ExA.2",values:[0.26,0.08,0.07,null] },
+  { row:"3.3.5",values:[0.10,0.21,0.02,0.05] },
+  { row:"1.3",  values:[0.20,0.15,0.04,0.04] },
+  { row:"1.4",  values:[0.20,0.02,null,0.01] },
+  { row:"10",   values:[0.20,0.03,null,0.03] },
+  { row:"1",    values:[0.20,0.03,0.03,0.06] },
+  { row:"3.2",  values:[0.20,0.02,0.04,0.02] },
+  { row:"14.1", values:[0.20,0.09,0.02,0.06] },
+  { row:"ExA.5",values:[0.20,0.02,0.07,0.05] },
+  { row:"1.15", values:[0.20,0.06,0.03,0.05] },
+  { row:"2",    values:[0.20,null,0.05,null] },
+  { row:"5.1",  values:[0.18,null,0.03,null] },
+  { row:"4",    values:[0.18,null,null,0.03] },
+  { row:"7.1",  values:[0.10,0.15,0.05,0.05] },
+];
+const SCEN_2: Cell[] = [
+  { row:"6.1", values:[0.63,0.24,0.02,null] },
+  { row:"2.9", values:[0.47,0.07,0.04,0.04] },
+  { row:"2.3", values:[0.45,0.02,0.06,0.02] },
+  { row:"7.1", values:[0.42,0.05,0.16,0.03] },
+  { row:"9.2", values:[0.42,0.15,0.15,0.07] },
+  { row:"6.3", values:[0.40,0.23,0.03,0.04] },
+  { row:"8.1", values:[0.40,0.09,0.10,0.11] },
+  { row:"10.2",values:[0.33,0.23,0.03,0.08] },
+  { row:"11.8",values:[0.33,0.08,0.03,0.06] },
+  { row:"2.13",values:[0.27,0.13,0.06,0.06] },
+  { row:"10.1",values:[0.25,0.07,0.16,0.07] },
+  { row:"2.6", values:[0.25,0.03,0.06,0.04] },
+  { row:"ExA", values:[0.25,0.08,0.05,0.04] },
+  { row:"2.10",values:[0.25,0.05,null,null] },
+  { row:"2.11",values:[0.25,0.07,null,null] },
+];
+const SCEN_3: Cell[] = [
+  { row:"15.12",values:[0.60,0.06,0.21,0.13] },
+  { row:"7.5",  values:[0.20,0.26,0.11,0.11] },
+  { row:"13.1", values:[0.16,0.06,0.04,0.21] },
+  { row:"5.1",  values:[0.20,0.03,0.07,0.07] },
+  { row:"5.10", values:[0.20,null,null,null] },
+  { row:"7.8",  values:[0.20,null,0.07,null] },
+  { row:"10.2", values:[0.20,null,0.06,0.02] },
+  { row:"12.2", values:[0.20,0.07,null,0.07] },
+  { row:"7.3",  values:[0.18,0.13,0.10,0.05] },
+  { row:"3.1",  values:[0.18,0.05,0.04,null] },
+  { row:"4.1",  values:[0.18,0.07,0.02,null] },
+  { row:"15",   values:[0.18,null,null,null] },
+  { row:"4.5",  values:[0.18,0.02,0.06,0.05] },
+  { row:"9.10", values:[0.16,0.17,0.10,null] },
+  { row:"12.1", values:[0.16,0.15,0.08,0.05] },
+];
+
+function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
   return (
-    <header style={{
-      position: "sticky", top: 0, zIndex: 40,
-      backdropFilter: "blur(5px)", WebkitBackdropFilter: "blur(5px)",
-      background: "rgba(21,21,21,0.01)",
-      boxShadow: "inset 0 -1px 0 rgba(255,255,255,0.1)",
-      padding: "20px 40px", display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <div style={{ maxWidth: MAXW, flex: 1, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Link to="/" style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 24, fontWeight: 800, letterSpacing: "0.02em", textDecoration: "none", height: 34, display: "inline-flex", alignItems: "center" }}>REGCO</Link>
-        <nav style={{ display: "flex", gap: 20, justifyContent: "center" }}>
-          {items.map((l) => (
-            <div key={l} className="regco-nav-item" style={{
-              borderRadius: 8, padding: "8px 12px",
-              display: "flex", alignItems: "center", gap: 8, cursor: "pointer",
-            }}>
-              <span style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 16, textAlign: "center" }}>{l}</span>
-              <span className="regco-nav-chev" style={{ position: "relative", top: 1, display: "inline-flex", transition: "transform 200ms ease" }}>
-                <ChevronDown size={16} strokeWidth={2} color="#FFFFFF" />
-              </span>
-            </div>
-          ))}
-        </nav>
-        <Link to="/book-demo" className="regco-cta-white" style={{
-          background: "#FFFFFF", borderRadius: 6, padding: "8px 20px",
-          color: "#000000", fontFamily: SANS, fontSize: 16, fontWeight: 500,
-          letterSpacing: "0.16px", lineHeight: "24px", textDecoration: "none",
-          transition: "background 150ms ease",
-        }}>Book a Demo</Link>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ ...Mono, marginBottom: 12 }}>{title}</div>
+      <div style={{ display: "grid", gridTemplateColumns: "44px repeat(4, 1fr)", rowGap: 4, columnGap: 4 }}>
+        <div />
+        {["S1","S2","S3","S4"].map(t => (
+          <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
+        ))}
+        {data.flatMap(r => [
+          <div key={r.row+"-l"} style={{ ...Mono, textAlign: "right", paddingRight: 8, alignSelf: "center" }}>{r.row}</div>,
+          ...r.values.map((v, i) => (
+            <div key={r.row+"-"+i} style={{
+              height: 22, borderRadius: 3,
+              background: v == null ? "transparent" : ramp(v),
+              color: v == null ? "transparent" : (v > 0.5 ? "#0A0A0A" : C.ink),
+              fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: "22px",
+            }}>{v == null ? "" : v.toFixed(2)}</div>
+          )),
+        ])}
       </div>
-    </header>
+    </div>
   );
 }
 
-/* 3 — Hero */
-function Hero() {
-  const stats = [
-    { big: "5 Watchlists", small: "UN, OFAC, EU, UK HM Treasury, and CBN checked on every transaction" },
-    { big: "6 CBN Rules", small: "Structuring, velocity, and split-deposit detection built into every account" },
-    { big: "17 Return Types", small: "CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM filings automated" },
-    { big: "100% Logged", small: "Every decision timestamped and audit-ready, nothing editable after the fact" },
-  ];
+function Figure1() {
   return (
-    <section style={{ minHeight: 814, position: "relative", overflow: "hidden", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <img src={heroPaperwork.url} alt="" style={{
-        position: "absolute", inset: 0, width: "100%", height: "100%",
-        objectFit: "cover", objectPosition: "50%", opacity: 1, zIndex: 0,
-      }} />
+    <div>
       <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
-        backgroundImage: `radial-gradient(ellipse 94.92% 193.97% at 10.55% 42.49%, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.9) 100%), linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)`,
-        zIndex: 1,
-      }} />
-      <div style={{
-        position: "relative", zIndex: 2, maxWidth: MAXW, margin: "0 auto",
-        padding: "80px 32px 48px", display: "flex", flexDirection: "column",
-        justifyContent: "space-between", flex: 1, width: "100%",
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32,
       }}>
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 32, justifyContent: "center" }}>
-          <div style={{
-            marginTop: 64, width: "fit-content", background: "#454443",
-            borderRadius: 9999, padding: "6px 20px",
-            color: "#FFFFFF", fontFamily: SANS, fontSize: 16,
-            letterSpacing: "0.16px", lineHeight: "24px",
-          }}>For CBN-regulated financial institutions</div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <h1 style={{
-              margin: 0, whiteSpace: "pre-wrap", color: "#BBB3A0",
-              fontFamily: SERIF, fontSize: 84, letterSpacing: "-1.68px", lineHeight: "96px",
-            }}>{"The Compliance Platform\n\nfor Regulated Institutions"}</h1>
-            <p style={{ margin: 0, color: "#FFFFFF", fontFamily: SANS, fontSize: 20, lineHeight: "28px" }}>
-              A modern approach to regulatory compliance
-            </p>
-          </div>
-
-          <div style={{ maxWidth: 480, display: "flex", flexDirection: "column", gap: 24 }}>
-            <form onSubmit={(e) => e.preventDefault()} style={{
-              background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.05)",
-              borderRadius: 6, display: "flex",
-            }}>
-              <input
-                type="text"
-                placeholder="Enter your institution's website"
-                style={{
-                  flex: 1, padding: "12px 8px 12px 20px", borderRadius: 6,
-                  color: "#74716B", fontFamily: SANS, fontSize: 16,
-                  border: "none", outline: "none", background: "transparent",
-                }}
-              />
-              <button type="submit" style={{
-                margin: 4, padding: "8px 20px", background: "#171514",
-                borderRadius: 6, border: "none", color: "#FFFFFF",
-                fontFamily: SANS, fontSize: 16, fontWeight: 500,
-                letterSpacing: "0.16px", lineHeight: "24px", cursor: "pointer",
-              }}>Get Started</button>
-            </form>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0" }}>
-              <span style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 14, letterSpacing: "0.14px", lineHeight: "20px" }}>
-                Looking to integrate RegCo with your CBS? Talk to our team
-              </span>
-              <Link to="/book-demo"><ArrowChip /></Link>
-            </div>
-          </div>
+        <div style={{ display: "flex", gap: 32 }}>
+          <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
+          <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
+          <HeatmapScenario title="TYPE 3 → SYNTHETIC IDENTITY" data={SCEN_3} />
         </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 40 }}>
-          {stats.map((s) => (
-            <div key={s.big} style={{
-              boxShadow: "inset 2px 0 0 rgba(255,255,255,0.2)",
-              paddingLeft: 40, display: "flex", flexDirection: "column", gap: 8,
-            }}>
-              <div style={{ color: "#FFFFFF", fontFamily: SERIF, fontSize: 24, lineHeight: "32px" }}>{s.big}</div>
-              <div style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 16, letterSpacing: "0.16px", lineHeight: "24px" }}>{s.small}</div>
-            </div>
-          ))}
+        {/* gradient legend */}
+        <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
+          <span style={Mono}>0</span>
+          <div style={{
+            flex: 1, height: 6, borderRadius: 3,
+            background: `linear-gradient(90deg, ${RAMP.join(",")})`,
+          }} />
+          <span style={Mono}>1.0 intensity</span>
+          <span style={{
+            width: 14, height: 14, background: "#F2C57A", borderRadius: 2,
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <Check size={10} color="#0A0A0A" strokeWidth={3} />
+          </span>
+          <span style={Mono}>Scores</span>
         </div>
       </div>
-    </section>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
+        Each cell shows detection activity intensity across case type and review stage. Higher = more concentrated review at that point in the workflow.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Pattern structure based on documented AML typologies.
+      </p>
+    </div>
   );
 }
 
-/* 4 — Built for */
-function BuiltFor() {
-  const marks = ["CBN", "NFIU", "SCUML", "NDIC", "FIRS", "PENCOM"];
+/* =========================================================
+   FIGURE 3 — Ranked bar list (Overall score)
+   ========================================================= */
+const OVERALL = [
+  { name: "RegCo",                  desc: "Automated + AI-assisted review", color: SERIES.gpt },
+  { name: "Rule-Based Detection",   desc: "Threshold rules only",           color: SERIES.fable },
+  { name: "Machine Learning Only",  desc: "Anomaly models only",            color: SERIES.gemini },
+  { name: "Manual Review",          desc: "Officer review, no automation",  color: SERIES.opus },
+];
+
+
+function RankedBars() {
   return (
-    <section style={{ maxWidth: MAXW, margin: "0 auto", overflow: "hidden", padding: 40, display: "flex", gap: 144, justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ color: "#333333", fontFamily: SERIF, fontSize: 24, lineHeight: "32px", minWidth: "fit-content", alignSelf: "center" }}>Built for</div>
-      <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 48, justifyContent: "flex-end", flexWrap: "wrap" }}>
-        {marks.map((m) => (
-          <span key={m} style={{
-            fontFamily: SERIF, fontSize: 28, color: "#333333",
-            filter: "grayscale(100%)", flexShrink: 0, letterSpacing: "0.02em",
-          }}>{m}</span>
+    <div>
+      <div style={{
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32, display: "flex", flexDirection: "column", gap: 18,
+      }}>
+        {OVERALL.map((r, i) => (
+          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 16, alignItems: "center" }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: 9999, border: `1px solid ${C.rule}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: MONO, fontSize: 13, color: C.ink3,
+            }}>{i+1}</div>
+            <div style={{ height: 44, position: "relative" }}>
+              <div style={{
+                height: "100%", width: "100%",
+                background: r.color, borderRadius: 4,
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "0 20px",
+                fontFamily: HELV, fontSize: 14, color: C.ink,
+              }}>
+                <span style={{ fontWeight: 500 }}>{r.name}</span>
+                <span style={{ fontWeight: 400, opacity: 0.85, fontSize: 13 }}>{r.desc}</span>
+              </div>
+            </div>
+          </div>
         ))}
       </div>
-    </section>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;2</span>{" "}
+        Four detection approaches compared by method coverage. RegCo combines rule enforcement, pattern detection, and AI-assisted review.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Comparison is based on internal methodology assessment, not independent study.
+      </p>
+    </div>
   );
 }
 
-/* 5 — Manual review */
-function ManualReview() {
+/* =========================================================
+   FIGURE 6 — Grouped bars (Dimension pass rates)
+   ========================================================= */
+const DIMS: { label: string; values: [number, number, number, number] }[] = [
+  { label: "Detection",       values: [49.0, 44.9, 45.2, 44.2] },
+  { label: "Documentation",   values: [49.9, 47.0, 51.5, 44.7] },
+  { label: "Audit Trail",     values: [50.9, 45.2, 45.0, 41.2] },
+  { label: "Filing",          values: [51.0, 48.3, 57.1, 45.4] },
+  { label: "Case Resolution", values: [84.4, 83.2, 82.5, 86.2] },
+];
+
+function GroupedBars() {
+  const CHART_H = 320;
+  const seriesColors = [SERIES.gpt, SERIES.fable, SERIES.gemini, SERIES.opus];
   return (
-    <section style={{ background: "#FCFBFA", padding: "80px 40px 128px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 80px", display: "flex", flexDirection: "column", gap: 64 }}>
-        <h2 style={{
-          margin: 0, color: "#333333", fontFamily: SERIF, fontSize: 56,
-          letterSpacing: "-0.56px", lineHeight: "64px", textAlign: "center",
-          whiteSpace: "pre-wrap",
-        }}>{"Manual review costs time.\n\nRegCo gives it back."}</h2>
-        <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
-          {[
-            { title: "The Manual Way", src: manualWay },
-            { title: "The RegCo Way", src: dashMock },
-          ].map((c) => (
-            <div key={c.title} style={{
-              background: "#F4F1EE", borderRadius: 8, flex: 1,
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 16, paddingTop: 40, overflow: "hidden",
-            }}>
-              <div style={{ color: "#333333", fontFamily: SERIF, fontSize: 32, lineHeight: "40px" }}>{c.title}</div>
-              <img src={c.src} alt={c.title} loading="lazy" style={{ width: "100%", aspectRatio: "1332 / 1080", objectFit: "cover", display: "block" }} />
+    <div>
+      <div style={{
+        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
+        padding: 32,
+      }}>
+        {/* legend */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
+          {["RegCo","Rule-Based Detection","Machine Learning Only","Manual Review"].map((n,i) => (
+            <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
+              <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-/* 6 — Modern Approach */
-function ModernApproach() {
-  const stats = [
-    { t: "Automated Filing", d: "CBN and NFIU returns generated directly from your transaction data" },
-    { t: "AI-Assisted Review", d: "Copilot surfaces patterns and drafts filing narratives for officer review" },
-    { t: "Real-Time Screening", d: "Every customer and transaction checked against five sanctions lists" },
-    { t: "Audit-Ready Records", d: "A complete documentation trail for every decision, ready for examination" },
-  ];
-  return (
-    <section style={{ background: "#F7F5F2", padding: "80px 40px 128px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 12px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <h2 style={{
-          margin: 0, color: "#333333", fontFamily: SERIF, fontSize: 56,
-          letterSpacing: "-0.56px", lineHeight: "64px", textAlign: "center",
-          whiteSpace: "pre-wrap",
-        }}>{"The Modern Approach to\n\nRegulatory Compliance"}</h2>
-
-        <Link to="/book-demo" style={{
-          marginTop: 32, display: "inline-flex", alignItems: "center", gap: 8,
-          color: "#171514", fontFamily: SANS, fontSize: 16, fontWeight: 500,
-          letterSpacing: "0.16px", lineHeight: "24px", textDecoration: "none",
-        }}>
-          See RegCo in Action <ArrowChip dark />
-        </Link>
-
-        <div style={{ marginTop: 24, marginBottom: 24, width: "100%", aspectRatio: "2756 / 1080", position: "relative", borderRadius: 8, overflow: "hidden" }}>
-          <img src={dashMock} alt="RegCo dashboard" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-          <div style={{
-            position: "absolute", bottom: "calc(0px + 32px)", left: 16,
-            width: 40, height: 40, borderRadius: "50%",
-            background: "rgba(84,79,66,0.15)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            border: "1.5px solid #544F42", transform: "rotate(-90deg)",
-          }}>
-            <Play size={20} color="#544F42" strokeWidth={3} style={{ transform: "rotate(90deg)" }} fill="#544F42" />
+        {/* plot */}
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12 }}>
+          <div style={{ height: CHART_H, position: "relative" }}>
+            {[100,80,60,40,20,0].map((y, idx) => (
+              <div key={y} style={{
+                position: "absolute", right: 0, top: `${(idx / 5) * 100}%`,
+                transform: "translateY(-50%)", ...Mono, fontSize: 11,
+              }}>{y}%</div>
+            ))}
+          </div>
+          <div style={{ height: CHART_H, position: "relative", borderLeft: `1px solid ${C.rule}` }}>
+            {/* gridlines */}
+            {[0,1,2,3,4,5].map(i => (
+              <div key={i} style={{
+                position: "absolute", left: 0, right: 0,
+                top: `${(i / 5) * 100}%`, height: 1, background: C.rule,
+              }} />
+            ))}
+            {/* groups */}
+            <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
+              {DIMS.map((g, gi) => (
+                <div key={g.label} style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, padding: "0 12px" }}>
+                  {g.values.map((v, vi) => (
+                    <div key={vi} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
+                      <span style={{ ...Mono, fontSize: 11, color: C.ink, marginBottom: 4 }}>{v.toFixed(1)}</span>
+                      <div style={{ width: "100%", height: `${v}%`, background: seriesColors[vi] }} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 40, width: "100%" }}>
-          {stats.map((s) => (
-            <div key={s.t} style={{ boxShadow: "inset 1px 0 0 #EBE5DF", paddingLeft: 40, display: "flex", flexDirection: "column", gap: 4 }}>
-              <div style={{ color: "#000000", fontFamily: SERIF, fontSize: 24, lineHeight: "32px" }}>{s.t}</div>
-              <div style={{ color: "#333333", fontFamily: SANS, fontSize: 16, letterSpacing: "0.16px", lineHeight: "24px" }}>{s.d}</div>
-            </div>
-          ))}
+        {/* x labels */}
+        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12, marginTop: 12 }}>
+          <div />
+          <div style={{ display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
+            {DIMS.map(g => (
+              <div key={g.label} style={{ ...Body, fontSize: 14, color: C.ink, textAlign: "center" }}>{g.label}</div>
+            ))}
+          </div>
         </div>
       </div>
-    </section>
+      <p style={{ ...Mono, marginTop: 16 }}>
+        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
+        Coverage by compliance dimension, pooled across all typologies and weighted by regulatory materiality.
+      </p>
+      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
+        Data is illustrative. Relative weighting based on CBN examination priorities.
+      </p>
+    </div>
   );
 }
 
-/* 7 — Advantage accordion */
-function Advantage() {
-  const items = [
-    { icon: PieChart, title: "Understand your compliance gap",
-      body: "Our compliance advisors walk you through exactly where your institution stands against the CBN's baseline standards, backed by a real gap assessment." },
-    { icon: Search, title: "Identify high-risk activity" },
-    { icon: Clock, title: "Onboard in minutes" },
-    { icon: GitBranch, title: "Track case progress" },
-  ];
-  const [open, setOpen] = useState<number>(0);
+/* =========================================================
+   Findings list
+   ========================================================= */
+const FINDINGS = [
+  { n: "01", title: "Filing Engine",
+    body: "Filing prioritization is a shared gap across most institutions. Teams struggle to know which returns examiners treat as most material, especially when filing across multiple regulators in the same period. RegCo generates returns automatically and flags the ones that need human sign-off before the deadline hits." },
+  { n: "02", title: "Over-reporting",
+    body: "Institutions that review manually tend to flag too much. Every marginal transaction gets escalated because the cost of missing something feels higher than the cost of wasting an officer's time. RegCo filters activity by risk weight, so the alerts that reach your team are the ones that actually warrant a decision." },
+  { n: "03", title: "Precision",
+    body: "RegCo's Screening Core is built to match the way a senior examiner reads a case, not the way a rule engine reads a number. Among the modules, Screening comes closest to examination-level review behavior, with fewer blanket holds and faster clearance times on low-risk accounts." },
+  { n: "04", title: "The gap",
+    body: "No automated system fully replaces a trained compliance officer, and RegCo does not claim otherwise. The gap that remains is real: complex cases, unusual counterparty structures, and edge-case transaction patterns still need human judgment. What RegCo eliminates is the paperwork that was consuming that judgment before it got to the cases that actually needed it." },
+];
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+export default function Index() {
+  const sectionsRef = useRef<HTMLElement[]>([]);
+  const [active, setActive] = useState(0);
+  const SECTION_COUNT = 10;
+
+  useEffect(() => {
+    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ruler-id]"));
+    sectionsRef.current = sections;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const id = Number((e.target as HTMLElement).dataset.rulerId);
+          setActive(id);
+        }
+      });
+    }, { rootMargin: "-40% 0px -55% 0px", threshold: 0 });
+    sections.forEach(s => obs.observe(s));
+    return () => obs.disconnect();
+  }, []);
+
   return (
-    <section style={{ background: "#222222", padding: "128px 40px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 48px", display: "flex", flexDirection: "column", gap: 64 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16, padding: "0 40px" }}>
-          <h2 style={{ margin: 0, color: "#FFFFFF", fontFamily: SERIF, fontSize: 56, letterSpacing: "-0.56px", lineHeight: "64px" }}>The RegCo Advantage</h2>
-          <p style={{ margin: 0, color: "#F1F1F1", fontFamily: SANS, fontSize: 18, lineHeight: "26px" }}>
-            A connected system that supports your compliance team at every stage.
+    <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
+      <Nav />
+      <ScrollRuler active={active} total={SECTION_COUNT} />
+
+      {/* HERO */}
+      <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
+        <div style={Col}>
+          <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
+            REGCO · COMPLIANCE PLATFORM
+          </div>
+          <h1 style={H1}>
+            Compliance automation for banks that can't afford to miss a filing.
+          </h1>
+          <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
+            RegCo connects to your core banking system and handles<br />
+            the compliance work your team does manually: screening<br />
+            customers, generating returns, and keeping an audit trail.
+          </p>
+          <div style={{ marginTop: 40 }}>
+            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 1 — WHAT WE MEASURE */}
+      <section data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>1. What We Measure</h2>
+          <p style={{ ...Body, marginTop: 32 }}>
+            RegCo tracks whether regulated institutions are meeting their compliance obligations in real time, not just at the point of examination.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Most compliance failures are not the result of deliberate evasion. They are the result of manual processes that could not keep up with transaction volume, filing deadlines, and screening requirements happening at once.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            RegCo measures four things every month: whether filings were generated on time, whether screening caught what it should have caught, whether fraud patterns were flagged before they became regulatory problems, and whether the audit trail was complete enough to survive an examination.
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 48 }}>
-          <div style={{ width: "100%", flex: 1 }}>
-            <img src={dashMock} alt="" loading="lazy" style={{ width: "100%", aspectRatio: "846 / 535", objectFit: "cover", borderRadius: 8, display: "block" }} />
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 24, width: "75%" }}>
-            {items.map((it, i) => {
-              const Icon = it.icon;
-              const isOpen = open === i;
-              return (
-                <div key={it.title}
-                  onClick={() => setOpen(i)}
-                  style={{
-                    borderBottom: "1px solid #000000",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
-                    paddingBottom: 24, opacity: isOpen ? 1 : 0.5, cursor: "pointer",
-                    transition: "opacity 200ms ease",
-                  }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <Icon size={24} strokeWidth={2} color="#F1F1F1" />
-                      <span style={{ color: "#FFFFFF", fontFamily: SERIF, fontSize: 24, fontWeight: 500, lineHeight: "32px" }}>{it.title}</span>
-                    </div>
-                    <ChevronDown size={16} color="#FFFFFF" style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 300ms ease" }} />
-                  </div>
-                  {isOpen && it.body && (
-                    <div style={{ marginTop: 12, paddingBottom: 16 }}>
-                      <p style={{ margin: 0, color: "#FFFFFF", fontFamily: SANS, fontSize: 18, lineHeight: "26px" }}>{it.body}</p>
-                      <Link to="/book-demo" style={{ marginTop: 16, display: "inline-flex", alignItems: "center", gap: 8, color: "#FFFFFF", fontFamily: SANS, fontSize: 16, fontWeight: 500, textDecoration: "none" }}>
-                        Get Started <ArrowChip />
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-/* 8 — Testimonials */
-function Testimonials() {
-  const cards = [1, 2, 3];
-  return (
-    <section style={{ background: "#FCFBFA", padding: "128px 40px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 48px", display: "flex", flexDirection: "column", gap: 64 }}>
-        <h2 style={{
-          margin: 0, color: "#928D80", fontFamily: SERIF, fontSize: 56,
-          letterSpacing: "-0.56px", lineHeight: "64px", textAlign: "center",
-          whiteSpace: "pre-wrap",
-        }}>{"What Compliance Teams\n\nHave to Say About RegCo"}</h2>
-        <div style={{ display: "flex", gap: 16, justifyContent: "space-between" }}>
-          {cards.map((n) => (
-            <div key={n} style={{
-              background: "#FCFBFA", border: "2px solid #EBE5DF", borderRadius: 10,
-              flex: 1, display: "flex", flexDirection: "column", gap: 40,
-              justifyContent: "space-between", padding: 40,
-            }}>
-              <p style={{ margin: 0, color: "#333333", fontFamily: SERIF, fontSize: 24, lineHeight: "32px" }}>
-                [Client quote pending approval — Institution Name]
-              </p>
-              <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "#D9D4CC" }} />
-                <div style={{ color: "rgba(0,0,0,0.6)", fontFamily: SANS, fontSize: 20, lineHeight: "28px" }}>
-                  [Compliance Officer, Institution]
-                </div>
+      {/* SECTION 2 — SUMMARY OF CAPABILITIES */}
+      <section id="capabilities" data-ruler-id="2" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>2. Summary of Capabilities</h2>
+          <p style={{ ...Body, marginTop: 32 }}>
+            The platform covers the four core compliance jobs a regulated institution handles every reporting period. Each module works alone or as part of a single connected system.
+          </p>
+
+          <div style={{ marginTop: 56 }}>
+            {FINDINGS.map((f, i) => (
+              <div key={f.n} style={{
+                display: "grid", gridTemplateColumns: "48px 200px 1fr", gap: 24,
+                padding: "32px 0",
+                borderTop: `1px solid ${C.rule}`,
+                borderBottom: i === FINDINGS.length - 1 ? `1px solid ${C.rule}` : undefined,
+              }}>
+                <div style={{ ...Mono, fontSize: 14 }}>{f.n}</div>
+                <div style={{ ...Body, color: C.ink, fontWeight: 700, fontSize: 16 }}>{f.title}</div>
+                <div style={Body}>{f.body}</div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-/* 9 — Who We Serve */
-function WhoWeServe() {
-  const cardBase: CSSProperties = {
-    background: "#F4F1EE", borderRadius: 12, display: "flex",
-    flexDirection: "column", gap: 40, maxHeight: 248, padding: 40,
-  };
-  const iconBox: CSSProperties = {
-    width: 40, height: 40, background: "#254763", borderRadius: 8,
-    padding: 8, display: "inline-flex", alignItems: "center", justifyContent: "center",
-  };
-  const iconProps = { size: 24, color: "#FFFFFF", strokeWidth: 1.5 } as const;
-  const cards: { icon: ReactNode; title: string; desc: string; order: number }[] = [
-    { icon: <Landmark {...iconProps} />, title: "Unit MFBs", desc: "Single-location microfinance banks operating under CBN unit license", order: 1 },
-    { icon: <Network {...iconProps} />, title: "State & National MFBs", desc: "Multi-branch microfinance operations across one or more states", order: 3 },
-    { icon: <CreditCard {...iconProps} />, title: "Payment Service Banks", desc: "PSB-licensed institutions handling deposit and transfer services", order: 4 },
-    { icon: <FileText {...iconProps} />, title: "Finance Companies", desc: "CBN-licensed finance companies and mortgage institutions", order: 5 },
-    { icon: <Building2 {...iconProps} />, title: "Commercial Banks", desc: "Deposit money banks with multi-branch compliance obligations", order: 6 },
-  ];
-  return (
-    <section style={{ background: "#FCFBFA", padding: "128px 40px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 48px", display: "flex", flexDirection: "column", gap: 64 }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <h2 style={{ margin: 0, color: "#000000", fontFamily: SERIF, fontSize: 56, letterSpacing: "-0.56px", lineHeight: "64px", textAlign: "center" }}>Who We Serve</h2>
-          <p style={{ margin: 0, color: "rgba(0,0,0,0.6)", fontFamily: SANS, fontSize: 18, lineHeight: "26px", textAlign: "center" }}>
-            Built for the specific regulatory obligations of CBN-licensed institutions.
+      {/* SECTION 3 — DETECTION ACTIVITY (heatmap) */}
+      <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
+          <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
+            <p style={Body}>
+              The table below shows where compliance activity concentrates across fraud typology and review stage. Each cell represents how often a pattern required active review at that point in a real case workflow. Darker cells indicate higher review concentration. Data shown is illustrative.
+            </p>
+          </div>
+          <Figure1 />
+        </div>
+      </section>
+
+      {/* SECTION 4 — STAGE-LEVEL FINDINGS */}
+      <section data-ruler-id="4" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h2 style={H1Washed}>4. Stage-level Findings</h2>
+          <h3 style={{ ...H2, marginTop: 56 }}>4.1 Overall coverage</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            RegCo achieves the broadest coverage across every case type and review stage when compared to rule-based-only detection, machine-learning-only detection, and fully manual review. The difference between methods is small, which reflects how genuinely difficult this work is regardless of how it is automated. RegCo's advantage holds consistently across every typology tested.
           </p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-          {cards.map((c) => (
-            <div key={c.title} style={{ ...cardBase, order: c.order }}>
-              <span style={iconBox}>{c.icon}</span>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <div style={{ color: "#333333", fontFamily: SERIF, fontSize: 24, lineHeight: "32px" }}>{c.title}</div>
-                <div style={{ color: "rgba(0,0,0,0.6)", fontFamily: SANS, fontSize: 16, letterSpacing: "0.16px", lineHeight: "24px" }}>{c.desc}</div>
+      </section>
+
+      {/* RANKED BARS (leaderboard) */}
+      <section data-ruler-id="5" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
+          <RankedBars />
+        </div>
+      </section>
+
+      {/* 4.2 COVERAGE BY CASE SIDE */}
+      <section data-ruler-id="6" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>4.2 Coverage by case side</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Every method, including RegCo, shows weaker coverage on
+          </p>
+        </div>
+      </section>
+
+      {/* 4.3 COVERAGE BY REVIEW STAGE */}
+      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
+        <div style={Col}>
+          <h3 style={H2}>4.3 Coverage by review stage</h3>
+          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
+            Every method performs worst at the point of account intake.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The stage-by-stage chart shows that Intake is the most difficult stage for every detection method. This lines up with what experienced compliance officers describe: early review relies on judgment and limited signals, while mid-case and late-case review relies on pattern recognition across an established transaction record. Coverage improves significantly once 30 or more days of account activity are available. RegCo's screening and fraud modules perform best after that threshold, when behavioural signals are more reliable. The implication for compliance teams is clear: intake screening requires the most human support, and that is where RegCo routes the fewest automated clearances and the most officer attention.
+          </p>
+          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
+            default to clearing borderline activity.
+          </p>
+        </div>
+      </section>
+
+      {/* SECTION 6 — COVERAGE BY DIMENSION (grouped bars) */}
+      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
+          <GroupedBars />
+        </div>
+      </section>
+
+      {/* MISSION (replaces Research Program) */}
+      <section id="mission" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <div style={{ ...Mono, marginBottom: 24 }}>
+            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
+          </div>
+          <h2 style={H1}>We exist to make compliance<br />a system, not a<br />manual process.</h2>
+          <p style={{ ...Body, marginTop: 40 }}>
+            RegCo builds the infrastructure that regulated financial institutions need to meet their CBN and NFIU obligations without building a compliance department the size of a bank.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 64 }}>Why this needed to be built</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            The CBN's 2026 AML baseline standards require automated monitoring, real-time screening, and a full audit trail.
+          </p>
+          <p style={{ ...Body, marginTop: 24 }}>
+            Most regional banks cannot build that from scratch. It takes twelve to eighteen months, a technical team most institutions do not have, and ongoing maintenance that has no clear owner. Buying a global enterprise solution costs more than a regional microfinance bank spends on its entire compliance function in a year. RegCo sits between those two options. It connects to the core banking system an institution already runs, ingests transactions, screens customers, generates returns, and keeps a regulator-ready audit trail. Your compliance officer reviews the output. They do not build the pipeline.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>What the platform handles</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            RegCo covers four compliance jobs that currently consume the most officer time at regional institutions: generating CBN and NFIU returns, screening customers against five active sanctions lists, flagging suspicious transaction patterns in near real time, and maintaining the case documentation an examiner will ask for. Every action taken on the platform is logged with a timestamp and a user identity. Nothing is editable after the fact.
+          </p>
+
+          <h3 style={{ ...H2, marginTop: 48 }}>Who we are built for</h3>
+          <p style={{ ...Body, marginTop: 24 }}>
+            We focus on CBN-regulated financial institutions: unit microfinance banks, state microfinance banks, national microfinance banks, payment service banks, and finance companies. We are not a global vendor. We are built for the specific regulatory environment these institutions operate in, and we measure ourselves by what a CBN examiner actually looks for.
+          </p>
+
+          <div style={{ marginTop: 40 }}>
+            <CreamCTA to="/about-us">Learn about us</CreamCTA>
+          </div>
+
+          {/* FOUNDING LETTER */}
+          <div style={{ marginTop: 128, border: `1px solid ${C.rule}`, background: C.surface, padding: 48 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 24 }}>
+              <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 15, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+                <div>REGCO</div><div>COMPLIANCE</div>
+              </div>
+              <div style={{ fontFamily: HELV, fontStyle: "italic", fontSize: 13, color: C.ink3, textAlign: "right" }}>
+                Compliance infrastructure for regulated institutions
               </div>
             </div>
-          ))}
-          {/* Special CTA card - order 2 */}
-          <div style={{
-            order: 2, background: "#30302F", borderRadius: 10,
-            display: "flex", flexDirection: "column", gap: 32,
-            alignItems: "center", justifyContent: "center", padding: 24,
-            position: "relative", maxHeight: 248,
-            backgroundImage: "repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 8px)",
-          }}>
-            <div style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 40, fontWeight: 800, letterSpacing: "0.02em", width: 128, textAlign: "center" }}>REGCO</div>
-            <Link to="/who-we-serve" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#FFFFFF", fontFamily: SANS, fontSize: 16, fontWeight: 500, letterSpacing: "0.16px", lineHeight: "24px", textDecoration: "none" }}>
-              Learn more <ArrowChip />
+            <div style={{ height: 2, background: "#CA0101", marginTop: 20, marginBottom: 32 }} />
+            <div style={{ ...Mono, fontSize: 13, color: C.ink3, marginBottom: 32 }}>June 27th, 2026</div>
+
+            <p style={{ ...Body, marginTop: 0 }}>
+              After banking, compliance is the part of finance most overdue for automation.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              Today, systems can process transactions and flag numbers. But they lack judgment. What counts as a suspicious pattern versus normal business activity? When does a series of small transfers become a structuring case? When you hire a senior compliance officer, making those calls is exactly what you are paying for.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              Rapid progress in AI has happened wherever there is a clear right answer: math, code, pattern recognition. Compliance has very few of those. Most of the hard calls live in a grey area where the answer depends on context, regulatory history, and what an examiner is likely to focus on during the next cycle.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              How do you automate a decision where reasonable officers disagree? Or where the right response depends on the institution's own risk appetite, not just the transaction amount? How do you build a system that handles the edge cases, not just the thresholds?
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              That is why we built RegCo. A platform that sits between the core banking system and the compliance officer. It handles the work that should never have been manual: screening customers, generating filings, flagging patterns, and keeping a complete record of every decision made.
+            </p>
+            <p style={{ ...Body, marginTop: 20 }}>
+              We are not replacing compliance officers. We are giving them back the time they currently spend on paperwork, so they can focus on the judgment calls that actually require a human. That is the job no platform can do alone.
+            </p>
+
+            <div style={{ height: 2, background: "#CA0101", marginTop: 32, width: 120 }} />
+            <p style={{ ...Body, marginTop: 20 }}>
+              RegCo exists to make compliance invisible to the institution and defensible to the regulator. It is day{" "}
+              <span style={{ color: "#CA0101", textDecoration: "underline", textDecorationColor: "#CA0101", textDecorationThickness: "1.5px", textUnderlineOffset: 3 }}>
+                zero
+              </span>.
+            </p>
+
+            <div style={{ marginTop: 48, width: 248, height: 80, border: `1px dashed ${C.rule}`, display: "flex", alignItems: "center", justifyContent: "center", ...Mono, fontSize: 11 }}>
+              [signature]
+            </div>
+            <div style={{ marginTop: 16, ...Body, color: C.ink }}>Isaac Yesufu</div>
+            <div style={{ ...Body, color: C.ink3, fontSize: 14 }}>Founder and CEO, RegCo</div>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 48 }}>
+            <Link to="/about-us" style={{ fontFamily: HELV, fontStyle: "italic", fontSize: 15, color: "#CA0101", textDecoration: "none" }}>
+              Learn more about what we are building →
             </Link>
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
+      </section>
 
-/* 10 — FAQ */
-function FAQ() {
-  const qs = [
-    { q: "What is RegCo?", a: "RegCo is a compliance platform that automates regulatory reporting, transaction monitoring, and sanctions screening for CBN-licensed institutions." },
-    { q: "How does RegCo connect to our core banking system?", a: "RegCo integrates with major CBS providers via secure API. Our team handles the connection during onboarding." },
-    { q: "What kinds of institutions does RegCo work with?", a: "Unit MFBs, State & National MFBs, Payment Service Banks, Finance Companies, and Commercial Banks operating under CBN license." },
-    { q: "How does RegCo's pricing work?", a: "Pricing is scoped to institution size and modules deployed. Contact our team for a tailored quote." },
-    { q: "How long does onboarding take?", a: "Most institutions are live within weeks. Timeline depends on CBS integration complexity and data readiness." },
-  ];
-  const [open, setOpen] = useState<number | null>(null);
-  return (
-    <section style={{ background: "#F7F5F2", padding: "128px 40px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", display: "flex", gap: 24, justifyContent: "space-between" }}>
-        <div style={{ maxWidth: 900, display: "flex", flexDirection: "column", gap: 24 }}>
-          <h2 style={{ margin: 0, color: "#000000", fontFamily: SERIF, fontSize: 56, letterSpacing: "-0.56px", lineHeight: "64px" }}>FAQ's</h2>
-          <p style={{ margin: 0, color: "rgba(0,0,0,0.6)", fontFamily: SANS, fontSize: 18, lineHeight: "26px" }}>
-            Answers to frequently asked questions.
-          </p>
-          <Link to="/book-demo" style={{ display: "inline-flex", alignItems: "center", gap: 8, color: "#171514", fontFamily: SANS, fontSize: 16, fontWeight: 500, letterSpacing: "0.16px", lineHeight: "24px", textDecoration: "none" }}>
-            Talk to us <ArrowChip dark />
-          </Link>
+      {/* FOOTER */}
+      <footer style={{
+        borderTop: `1px solid ${C.rule}`, padding: "48px 32px",
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+      }}>
+        <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+          <div>REGCO</div><div>COMPLIANCE</div>
         </div>
-        <div style={{ flex: 1, maxWidth: 672 }}>
-          {qs.map((row, i) => {
-            const isOpen = open === i;
-            return (
-              <div key={row.q} style={{ padding: "0 8px", position: "relative", borderBottom: "1px solid rgba(0,0,0,0.1)" }}>
-                <div
-                  onClick={() => setOpen(isOpen ? null : i)}
-                  style={{ padding: "24px 0", display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer" }}
-                >
-                  <span style={{ color: "#000000", fontFamily: SERIF, fontSize: 24, fontWeight: 500, lineHeight: "32px" }}>{row.q}</span>
-                  <span style={{
-                    width: 24, height: 24, borderRadius: "50%",
-                    border: "2px solid rgba(0,0,0,0.6)",
-                    display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
-                    transition: "transform 300ms ease",
-                  }}>
-                    <Plus size={14} strokeWidth={2} color="rgba(0,0,0,0.6)" />
-                  </span>
-                </div>
-                {isOpen && (
-                  <p style={{ margin: 0, paddingBottom: 16, color: "#333333", fontFamily: SANS, fontSize: 18, lineHeight: "26px" }}>{row.a}</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
+      </footer>
 
-/* 11 — Final CTA card */
-function FinalCTA() {
-  return (
-    <section style={{ background: "#F7F5F2", padding: "0 40px 128px" }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto" }}>
-        <div style={{ background: "#EBE5DF", borderRadius: 8, display: "flex" }}>
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: "96px 80px" }}>
-            <h2 style={{ margin: 0, color: "#928D80", fontFamily: SERIF, fontSize: 56, letterSpacing: "-0.56px", lineHeight: "64px", maxWidth: 424 }}>
-              Ready to Automate Your Compliance Workflow?
-            </h2>
-            <p style={{ marginTop: 12, marginBottom: 0, maxWidth: 400, color: "#333333", fontFamily: SANS, fontSize: 18, lineHeight: "26px" }}>
-              Talk to our team to see how RegCo connects to your core banking system and what your onboarding timeline looks like.
-            </p>
-            <div style={{ marginTop: 40, display: "flex", gap: 8 }}>
-              <Link to="/book-demo" style={{
-                background: "#171514", borderRadius: 6, padding: "12px 28px",
-                color: "#FFFFFF", fontFamily: SANS, fontSize: 18, fontWeight: 500,
-                lineHeight: "26px", textDecoration: "none",
-              }}>Book a Demo</Link>
-              <Link to="/product" style={{
-                border: "1px solid rgba(0,0,0,0.6)", borderRadius: 6, padding: "12px 28px",
-                color: "#222222", fontFamily: SANS, fontSize: 18, fontWeight: 500,
-                lineHeight: "26px", textDecoration: "none",
-              }}>See the Product</Link>
-            </div>
-          </div>
-          <div style={{ flex: 1, aspectRatio: "1 / 1", borderRadius: 8, position: "relative", maxWidth: "33%", margin: "auto" }}>
-            <img src={dashMock} alt="" loading="lazy" style={{ width: "100%", height: "100%", objectFit: "contain", padding: 32, aspectRatio: "460 / 421" }} />
-            <div style={{
-              position: "absolute", bottom: "10%", left: "-25%",
-              width: 295, height: 74, background: "#FFFFFF", borderRadius: 8,
-              padding: 16, display: "flex", gap: 12, alignItems: "center",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-            }}>
-              <div style={{ width: 42, height: 42, borderRadius: 8, background: "#F0EBE4", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-                <ShieldCheck size={24} color="#171514" />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <div style={{ color: "#000000", fontFamily: SANS, fontSize: 16, fontWeight: 500, letterSpacing: "0.16px", lineHeight: "24px" }}>Case closed</div>
-                <div style={{ color: "rgba(0,0,0,0.6)", fontFamily: SANS, fontSize: 14, letterSpacing: "0.14px", lineHeight: "20px" }}>Filed and logged in under 2 minutes</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* 12 — Footer */
-function Footer() {
-  const link: CSSProperties = { color: "#F1F1F1", fontFamily: SANS, fontSize: 16, lineHeight: "24px", textDecoration: "none" };
-  const header: CSSProperties = { color: "#F9F9FA", fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: "26px" };
-  const cols: { header: string; links: [string, string][] }[] = [
-    { header: "Product", links: [["Fraud Detection","/product"],["Filing Engine","/product"],["Screening Core","/product"],["Copilot","/product"]] },
-    { header: "Platform", links: [["Book a Demo","/book-demo"],["Integrations","/product"],["Security","/product"]] },
-    { header: "Company", links: [["About","/about-us"],["Case Studies","/about-us"],["Careers","/about-us"]] },
-    { header: "Social", links: [["LinkedIn","#"],["X","#"]] },
-  ];
-  return (
-    <footer style={{ background: "#171514", paddingTop: 64 }}>
-      <div style={{ maxWidth: MAXW, margin: "0 auto", padding: "0 40px" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 80, marginTop: 56, padding: "0 48px" }}>
-          <div style={{ gridColumn: "span 2", display: "flex", flexDirection: "column", gap: 64 }}>
-            <div style={{ color: "#FFFFFF", fontFamily: SANS, fontSize: 24, fontWeight: 800, letterSpacing: "0.02em", height: 28 }}>REGCO</div>
-            <div style={{ color: "#F1F1F1", fontFamily: SANS, fontSize: 16, lineHeight: "24px" }}>Abuja, Nigeria</div>
-          </div>
-          {cols.map((col) => (
-            <div key={col.header}>
-              <div style={header}>{col.header}</div>
-              <div style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 12 }}>
-                {col.links.map(([l, to]) => (
-                  <Link key={l} to={to} style={link}>{l}</Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ marginTop: 64, padding: "24px 48px", display: "flex", justifyContent: "space-between" }}>
-          <div style={{ color: "#F1F1F1", fontFamily: SANS, fontSize: 12, lineHeight: "133.333%" }}>
-            Copyright © 2026 RegCo Compliance, Inc. | All Rights Reserved
-          </div>
-          <div style={{ display: "flex", gap: 16 }}>
-            <Link to="#" style={{ color: "#F1F1F1", fontFamily: SANS, fontSize: 12, lineHeight: "133.333%", textDecoration: "none" }}>Terms of Service</Link>
-            <Link to="#" style={{ color: "#F1F1F1", fontFamily: SANS, fontSize: 12, lineHeight: "133.333%", textDecoration: "none" }}>Privacy Policy</Link>
-          </div>
-        </div>
-        <div style={{
-          textAlign: "center", padding: "0 24px",
-          color: "transparent", fontFamily: SERIF,
-          fontSize: "clamp(80px, 22vw, 340px)",
-          lineHeight: 0.9, letterSpacing: "-0.04em", fontWeight: 400,
-          WebkitTextStroke: "1px #928D80",
-          userSelect: "none",
-        }}>REGCO</div>
-      </div>
-    </footer>
-  );
-}
-
-/* Page */
-export default function Index() {
-  return (
-    <div style={{
-      background: "#FCFBFA", fontSize: 12, lineHeight: "16px",
-      WebkitFontSmoothing: "antialiased", MozOsxFontSmoothing: "grayscale",
-      fontFamily: SANS,
-    }}>
-      <style>{`
-        .regco-nav-item:hover .regco-nav-chev { transform: rotate(180deg); }
-        .regco-cta-white:hover { background: #F1F1F1 !important; }
-      `}</style>
-      <AnnouncementBar />
-      <StickyNav />
-      <Hero />
-      <BuiltFor />
-      <ManualReview />
-      <ModernApproach />
-      <Advantage />
-      <Testimonials />
-      <WhoWeServe />
-      <FAQ />
-      <FinalCTA />
-      <Footer />
     </div>
   );
 }

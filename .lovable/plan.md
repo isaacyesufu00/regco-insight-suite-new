@@ -1,52 +1,71 @@
-## Homepage: Helvetica font swap + new hero background image
+Text-only copy swap across the editorial site. No layout, component, style, chart, or asset changes — only string replacements inside existing JSX.
 
-Two focused edits to `src/pages/Index.tsx` (the OffDeal-style pixel replica homepage). No structural, layout, color, or copy changes — only font family and hero background image.
+## Scope
 
-### 1. Global font swap → Helvetica
+Three files, all copy-only:
 
-Current page uses two inline font stacks defined at the top of `Index.tsx`:
-- serif: `ui-serif, Georgia, Cambria, "Times New Roman", Times, serif` (headlines, decorative wordmarks)
-- sans: `system-ui, sans-serif` (body, nav, buttons, labels)
+1. **`src/pages/Index.tsx`** (homepage / benchmark page)
+2. **`src/pages/Fellowship.tsx`** or whichever file currently renders `/fellowship` → repurposed as the Mission page (route path unchanged, only visible copy swapped)
+3. **`src/components/editorial/EditorialTheme.tsx`** (shared Nav) — brand + nav links
 
-Replace **both** stacks with a single Helvetica-first stack applied everywhere on the homepage:
+## Global Nav (EditorialTheme.tsx)
 
-```
-"Helvetica Neue", Helvetica, Arial, sans-serif
-```
+- Brand wordmark: `REGCO / COMPLIANCE` (two-line stacked, existing typography preserved)
+- Links, in order: `Home`, `Product`, `About us`, `Who we serve`, `Log in`
+- Route targets stay as they are today; only the visible labels change
 
-This means every serif headline (hero H1, section titles, "The RegCo Advantage", "Who We Serve", FAQ, testimonials, footer decorative REGCO wordmark, final CTA) becomes Helvetica as well — matching the user's "change the font to helvetica" instruction literally, no serif exceptions.
+## Homepage (`src/pages/Index.tsx`) — copy map
 
-Scope: only `src/pages/Index.tsx`. Other pages (`/product`, `/about-us`, `/who-we-serve`, dashboard, etc.) are untouched and keep their existing typography.
+Replace text in-place, keeping every existing wrapper, chart, heatmap, leaderboard, and figure caption element:
 
-### 2. Hero background image → user's uploaded manual-process photo
+- Eyebrow → `REGCO · COMPLIANCE PLATFORM`
+- Hero H1 (2 lines) → `Compliance automation for banks / that can't afford to miss a filing.`
+- Hero subhead (3 lines) → RegCo connects to your core banking system … audit trail.
+- Hero CTA label → `Book a demo →` (route unchanged)
+- Section 1 label → `1. What We Measure` + 3 body paragraphs (3 / 4 / 4 lines) per brief
+- Section 2 heading → `2. Summary of Capabilities` + 3-line intro
+- Items 01–04 titles + bodies replaced verbatim (Filing Engine, Over-reporting, Precision, The gap)
+- Section 3 heatmap: paragraph above grid, column group headers (`STRUCTURING / SHELL ACCOUNTS / SYNTHETIC IDENTITY`), sub-column headers (`INTAKE / REVIEW / ESCALATE / CLOSE`), row labels list, legend text, FIG. 1 caption, illustrative-data disclaimer. Cell numeric values kept identical.
+- Section 4: heading `4. Stage-level Findings`, subheading `4.1 Overall coverage`, 6-line body, leaderboard rows (RegCo / Rule-Based Detection / Machine Learning Only / Manual Review) with no percentages, FIG. 2 caption, small internal-methodology note, subheading `4.2 Coverage by case side`, 1-line cut-off fragment.
+- Section 5: `4.3 Coverage by review stage`, eyebrow line, 9-line body, chart legend labels, axis labels unchanged in structure.
+- Section 6: legend, `default to clearing borderline activity.` fragment, x-axis labels (`Detection / Documentation / Audit Trail / Filing / Case Resolution`), FIG. 3 caption + disclaimer.
 
-Use the last uploaded image (`user-uploads://regco_hero_manual_process-Picsart-AiImageEnhancer.png` — the dramatic photo of stacked paperwork, sticky notes, calculator, coffee mug) as the hero section's background image, replacing the current `src/assets/regco-hero-dark.jpg`.
+## Mission page (was Fellowship)
 
-Approach:
-- Register the upload as a Lovable CDN asset so it doesn't bloat the repo:
-  ```
-  lovable-assets create --file /mnt/user-uploads/regco_hero_manual_process-Picsart-AiImageEnhancer.png \
-    --filename regco-hero-paperwork.png > src/assets/regco-hero-paperwork.png.asset.json
-  ```
-- Import the pointer JSON in `Index.tsx` and use `.url` as the hero `background-image`.
-- Remove the now-unused import of `regco-hero-dark.jpg` (leave the file on disk; other components may not use it but no need to delete).
+Same file, same components, copy only:
 
-### 3. Tint so hero text stays readable
+- Breadcrumb → `‹ RegCo Compliance`
+- H1 (3 lines) → `We exist to make compliance / a system, not a / manual process.`
+- Intro 3-line paragraph
+- `Why this needed to be built` + 2-line and 9-line body paragraphs
+- `What the platform handles` + 5-line paragraph
+- `Who we are built for` + 4-line paragraph
+- CTA button → `Learn about us →` (points to `/about`)
 
-The uploaded image is already fairly dark/moody but has warm yellow highlights that will fight white headline text. Add a darkening tint overlay on top of the image, under the text:
+**Founding Letter component** (existing block, copy only):
+- Header left: `REGCO / COMPLIANCE`
+- Header right italic: `Compliance infrastructure for regulated institutions`
+- Red rule + date `June 27th, 2026`
+- Six replacement paragraphs verbatim
+- Final sentence with existing red-`zero` treatment kept (only the surrounding words change to `RegCo exists to make compliance invisible to the institution and defensible to the regulator. It is day [zero].`)
+- Signature placeholder unchanged
+- Name block → `Isaac Yesufu / Founder and CEO, RegCo`
+- Trailing centered red italic link → `Learn more about what we are building →` to `/about`
 
-- Keep the existing radial + linear gradient overlays in the hero, and strengthen the base tint to:
-  ```
-  linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0.8) 100%)
-  ```
-  layered above the background image via `background: <gradient>, url(<image>)` with `background-size: cover; background-position: center`.
-- Result: paperwork photo is clearly visible but muted; white eyebrow, headline, subhead, stats all remain high-contrast.
+## Case Studies
 
-No other hero geometry, copy, CTA, or stat-row changes.
+If a `/conversations` page currently exists in the editorial theme, swap its label to `Case Studies` and replace its body with the two placeholder cards + closing note from the brief. If it does not exist yet, this plan does **not** add a new page — I will flag it and ask before creating one.
 
-### Files touched
-- `src/pages/Index.tsx` — font stack constants + hero background image + tint gradient
-- `src/assets/regco-hero-paperwork.png.asset.json` — new CDN asset pointer (created via `lovable-assets`)
+## Explicit exclusions (enforced during the swap)
 
-### Explicitly NOT changed
-- Layout, spacing, colors elsewhere, section order, copy, accordion behavior, footer wordmark structure, other pages, editorial theme, nav component
+Remove any lingering instance of: specific benchmark percentages, "senior examiner baselines", bare "audit-grade", third-party benchmark claims, "adaptive position management", Crosby Intelligence references, the "RegCo Compliance Research Program" section, any "Apply here" CTA, fabricated Fellowship date cards, and bare "machine learning" phrasing (allow only `rule-based and AI-assisted`).
+
+## Out of scope
+
+- No CSS, spacing, color, font, chart geometry, or component structure changes
+- No route additions, no new components, no asset swaps
+- No database, edge function, or auth changes
+
+## Verification
+
+After the edits I'll re-read each modified file and grep the repo for the forbidden phrases to confirm none survive.
