@@ -9,8 +9,8 @@ import dashMock from "@/assets/regco-dashboard-mock.jpg";
 import manualWay from "@/assets/regco-manual-way.jpg";
 
 /* Tokens */
-const SERIF = 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif';
-const SANS = "system-ui, sans-serif";
+const SERIF = '"Helvetica Neue", Helvetica, Arial, sans-serif';
+const SANS = '"Helvetica Neue", Helvetica, Arial, sans-serif';
 const MAXW = 1368;
 
 /* Shared bits */
