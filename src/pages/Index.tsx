@@ -96,13 +96,13 @@ function Hero() {
   ];
   return (
     <section style={{ minHeight: 814, position: "relative", overflow: "hidden", display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
-      <img src={heroDark} alt="" style={{
+      <img src={heroPaperwork.url} alt="" style={{
         position: "absolute", inset: 0, width: "100%", height: "100%",
-        objectFit: "cover", objectPosition: "50%", opacity: 0.95, zIndex: 0,
+        objectFit: "cover", objectPosition: "50%", opacity: 1, zIndex: 0,
       }} />
       <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: 750,
-        backgroundImage: `radial-gradient(ellipse 94.92% 193.97% at 10.55% 42.49%, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 69%, rgba(0,0,0,1) 100%), linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%)`,
+        position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+        backgroundImage: `radial-gradient(ellipse 94.92% 193.97% at 10.55% 42.49%, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.9) 100%), linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.7) 100%)`,
         zIndex: 1,
       }} />
       <div style={{
