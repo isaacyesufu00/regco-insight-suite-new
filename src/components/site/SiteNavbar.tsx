@@ -49,7 +49,7 @@ export default function SiteNavbar() {
     >
       <div className="container-site flex items-center justify-between h-14">
         <Link to="/" className="text-[18px] font-semibold tracking-tight text-ink">
-          RegCo
+          RegCo<span style={{ color: "#CA0101" }}>.</span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-[14px]">

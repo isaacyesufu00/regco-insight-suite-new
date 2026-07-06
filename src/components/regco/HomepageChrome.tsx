@@ -110,7 +110,7 @@ export const HomepageFooter = () => {
     >
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr", gap: 40, marginBottom: 56 }}>
         <div>
-          <p style={{ fontSize: 18, fontWeight: 700, color: "#0A0A0A", margin: "0 0 12px", letterSpacing: "-0.3px" }}>RegCo</p>
+          <p style={{ fontSize: 18, fontWeight: 700, color: "#0A0A0A", margin: "0 0 12px", letterSpacing: "-0.3px" }}>RegCo<span style={{color:"#CA0101"}}>.</span></p>
           <p style={{ fontSize: 13, color: "rgba(0,0,0,0.5)", lineHeight: 1.65, maxWidth: 240, margin: 0 }}>
             AI compliance agent for licensed financial institutions.
           </p>

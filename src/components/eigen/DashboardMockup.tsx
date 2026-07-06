@@ -62,7 +62,7 @@ const DashboardMockup = () => (
     <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", minHeight: 420 }}>
       {/* Sidebar */}
       <div style={{ background: "#FAFAFA", borderRight: "1px solid rgba(0,0,0,0.06)", padding: 16 }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 16px" }}>RegCo</p>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#1A1A1A", margin: "0 0 16px" }}>RegCo<span style={{color:"#CA0101"}}>.</span></p>
         {sidebarItems.map((item) => (
           <div
             key={item.label}

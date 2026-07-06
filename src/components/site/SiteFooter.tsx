@@ -21,7 +21,7 @@ export default function SiteFooter() {
       <div className="container-site">
         <div className="grid md:grid-cols-12 gap-10">
           <div className="md:col-span-4">
-            <Link to="/" className="text-[18px] font-semibold text-ink">RegCo</Link>
+            <Link to="/" className="text-[18px] font-semibold text-ink">RegCo<span style={{color:"#CA0101"}}>.</span></Link>
             <p className="mt-4 max-w-xs text-[13.5px] leading-relaxed text-ink-3">
               Regulatory infrastructure for regulated financial institutions. Returns, screening, monitoring, and audit — in one system.
             </p>

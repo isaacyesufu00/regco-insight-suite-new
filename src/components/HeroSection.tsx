@@ -21,7 +21,7 @@ const HeroSection = () => {
           animate={mounted ? { opacity: 1 } : undefined}
           transition={{ duration: 0.8, delay: 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <span style={{ fontWeight: 400, fontSize: 19, color: "#1D1D1F" }}>RegCo</span>{" "}
+          <span style={{ fontWeight: 400, fontSize: 19, color: "#1D1D1F" }}>RegCo<span style={{color:"#CA0101"}}>.</span></span>{" "}
           <span style={{ fontStyle: "italic", fontWeight: 300, fontSize: 19, color: "#1D1D1F" }}>Compliance</span>
         </motion.div>
 

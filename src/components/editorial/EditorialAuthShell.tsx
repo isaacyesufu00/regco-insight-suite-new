@@ -16,7 +16,7 @@ export default function EditorialAuthShell({ title, subtitle, children, footer }
     <div className="min-h-screen flex bg-white text-ink">
       {/* Left panel — quiet B/W brand panel */}
       <div className="hidden md:flex flex-col justify-between p-12 lg:p-16 w-[42%] border-r border-[var(--line)]">
-        <Link to="/" className="text-[20px] font-semibold text-ink">RegCo</Link>
+        <Link to="/" className="text-[20px] font-semibold text-ink">RegCo<span style={{color:"#CA0101"}}>.</span></Link>
 
         <div className="max-w-md">
           <p className="text-[28px] leading-[1.15] font-semibold tracking-tight text-ink">
@@ -36,7 +36,7 @@ export default function EditorialAuthShell({ title, subtitle, children, footer }
       <div className="flex-1 flex items-center justify-center px-6 py-12">
         <div className="w-full max-w-[400px]">
           <div className="md:hidden mb-8">
-            <Link to="/" className="text-[18px] font-semibold text-ink">RegCo</Link>
+            <Link to="/" className="text-[18px] font-semibold text-ink">RegCo<span style={{color:"#CA0101"}}>.</span></Link>
           </div>
 
           <h1 className="text-[32px] leading-[1.1] font-semibold tracking-tight text-ink">{title}</h1>

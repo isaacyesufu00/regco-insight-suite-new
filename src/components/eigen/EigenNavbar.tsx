@@ -56,7 +56,7 @@ const EigenNavbar = () => {
       }}
     >
       <Link to="/" style={{ fontSize: 15, fontWeight: 700, color: "#1A1A1A", textDecoration: "none" }}>
-        RegCo
+        RegCo<span style={{ color: "#CA0101" }}>.</span>
       </Link>
 
       <div style={{ display: "flex", gap: 28 }}>

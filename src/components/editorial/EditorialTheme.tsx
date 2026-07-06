@@ -37,9 +37,8 @@ export function Nav() {
       padding: "0 32px 0 24px",
       fontFamily: HELV,
     }}>
-      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>{"\n\n"}REGCO</div>
-        <div>{"\n"}</div>
+      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 18 }}>
+        RegCo<span style={{ color: "#CA0101" }}>.</span>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {NAV_ITEMS.map(([l, to]) => (
@@ -132,8 +131,8 @@ export function EditorialFooter() {
       borderTop: `1px solid ${C.rule}`, padding: "48px 32px",
       display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
-      <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-        <div>{"\n\n"}REGCO</div><div>{"\n"}</div>
+      <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 15, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+        RegCo<span style={{ color: "#CA0101" }}>.</span>
       </div>
       <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
     </footer>
