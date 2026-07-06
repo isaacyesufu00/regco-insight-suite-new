@@ -56,7 +56,7 @@ const Sidebar = ({ active }: { active: string }) => {
     <div style={{ width: 188, background: "#0F0F11", borderRight: `1px solid ${PALETTE.border}`, padding: 16, display: "flex", flexDirection: "column", gap: 4 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
         <div style={{ width: 24, height: 24, borderRadius: 6, background: PALETTE.text, color: PALETTE.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 800 }}>R</div>
-        <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.text }}>RegCo</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: PALETTE.text }}>RegCo<span style={{color:"#CA0101"}}>.</span></span>
       </div>
       {items.map((it) => {
         const isActive = it === active;
@@ -84,7 +84,7 @@ const AgentMock = () => (
   <div style={{ display: "flex", height: 460, color: PALETTE.text }}>
     <Sidebar active="Agent" />
     <div style={{ flex: 1, padding: "36px 28px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-      <h2 style={{ fontFamily: "var(--font-serif, Georgia)", fontSize: 38, fontWeight: 700, letterSpacing: "-1.2px", margin: "16px 0 18px" }}>RegCo</h2>
+      <h2 style={{ fontFamily: "var(--font-serif, Georgia)", fontSize: 38, fontWeight: 700, letterSpacing: "-1.2px", margin: "16px 0 18px" }}>RegCo<span style={{color:"#CA0101"}}>.</span></h2>
       <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
         {["Generate Return", "Screen Customer", "View Alerts", "Draft STR"].map((p) => (
           <span key={p} style={{ fontSize: 11.5, fontWeight: 500, color: PALETTE.muted, padding: "5px 12px", border: `1px solid ${PALETTE.border}`, borderRadius: 999 }}>{p}</span>

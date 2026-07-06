@@ -226,7 +226,7 @@ const Confirm = () => {
               <rect x="3" y="3" width="18" height="18" rx="4" stroke="currentColor" strokeWidth="2" />
               <path d="M8 12h8M12 8v8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
             </svg>
-            <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo</span>
+            <span className="text-2xl font-bold" style={{ color: "#1a1a2e" }}>RegCo<span style={{color:"#CA0101"}}>.</span></span>
           </Link>
           <h1 className="text-2xl font-bold mt-4 mb-2" style={{ color: "#1a1a2e" }}>Set Up Your Password</h1>
           <p className="text-sm" style={{ color: "#8a8a9a" }}>

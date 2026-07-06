@@ -261,7 +261,7 @@ export default function AgentRail() {
       style={{ width: 370, background: "var(--rail-bg)", borderRight: "1px solid var(--rail-border)" }}
     >
       <div className="flex items-center justify-between px-5 h-14 border-b border-[var(--rail-border)]">
-        <span className="text-[15px] font-semibold text-[var(--navy)] tracking-tight">RegCo</span>
+        <span className="text-[15px] font-semibold text-[var(--navy)] tracking-tight">RegCo<span style={{color:"#CA0101"}}>.</span></span>
         <div className="flex items-center gap-1 text-[var(--ink-3)]">
           <button onClick={() => navigate("/dashboard/settings")} title="Settings" className="p-1.5 rounded hover:bg-black/[0.04]"><SettingsIcon size={14} /></button>
         </div>
