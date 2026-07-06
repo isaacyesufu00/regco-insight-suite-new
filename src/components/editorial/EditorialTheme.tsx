@@ -37,9 +37,8 @@ export function Nav() {
       padding: "0 32px 0 24px",
       fontFamily: HELV,
     }}>
-      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>{"\n\n"}REGCO</div>
-        <div>{"\n"}</div>
+      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 18 }}>
+        RegCo<span style={{ color: "#CA0101" }}>.</span>
       </Link>
       <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
         {NAV_ITEMS.map(([l, to]) => (
