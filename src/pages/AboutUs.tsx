@@ -1,4 +1,6 @@
+import FoundingLetter from "@/components/FoundingLetter";
 import { Nav, ScrollRuler, CreamCTA, EditorialFooter, useRulerActive, C, HELV, Col, H1, H1Washed, H2, Lede, Body, Mono } from "@/components/editorial/EditorialTheme";
+
 
 const ROWS = [
   { n: "01", title: "Examiner first",
