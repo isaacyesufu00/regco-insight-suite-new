@@ -12,11 +12,12 @@ const ROWS = [
 ];
 
 export default function AboutUs() {
-  const active = useRulerActive(3);
+  const active = useRulerActive(4);
   return (
     <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
       <Nav />
-      <ScrollRuler active={active} total={3} />
+      <ScrollRuler active={active} total={4} />
+
 
       <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
         <div style={Col}>
