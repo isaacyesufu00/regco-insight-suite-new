@@ -79,7 +79,7 @@ const Navbar = () => {
             textDecoration: "none",
           }}
         >
-          RegCo
+          RegCo<span style={{ color: "#CA0101" }}>.</span>
         </Link>
 
         {/* Center pill */}
