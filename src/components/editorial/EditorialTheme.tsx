@@ -131,8 +131,8 @@ export function EditorialFooter() {
       borderTop: `1px solid ${C.rule}`, padding: "48px 32px",
       display: "flex", justifyContent: "space-between", alignItems: "center",
     }}>
-      <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-        <div>{"\n\n"}REGCO</div><div>{"\n"}</div>
+      <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 15, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
+        RegCo<span style={{ color: "#CA0101" }}>.</span>
       </div>
       <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
     </footer>
