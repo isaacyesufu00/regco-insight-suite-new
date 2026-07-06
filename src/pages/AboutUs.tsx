@@ -74,7 +74,14 @@ export default function AboutUs() {
         </div>
       </section>
 
+      <section data-ruler-id="3" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <FoundingLetter />
+        </div>
+      </section>
+
       <EditorialFooter />
+
     </div>
   );
 }
