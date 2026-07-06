@@ -1,4 +1,6 @@
+import FoundingLetter from "@/components/FoundingLetter";
 import { Nav, ScrollRuler, CreamCTA, EditorialFooter, useRulerActive, C, HELV, Col, H1, H1Washed, H2, Lede, Body, Mono } from "@/components/editorial/EditorialTheme";
+
 
 const ROWS = [
   { n: "01", title: "Examiner first",
@@ -10,11 +12,12 @@ const ROWS = [
 ];
 
 export default function AboutUs() {
-  const active = useRulerActive(3);
+  const active = useRulerActive(4);
   return (
     <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
       <Nav />
-      <ScrollRuler active={active} total={3} />
+      <ScrollRuler active={active} total={4} />
+
 
       <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
         <div style={Col}>
@@ -72,7 +75,14 @@ export default function AboutUs() {
         </div>
       </section>
 
+      <section data-ruler-id="3" style={{ paddingTop: 128, paddingBottom: 128 }}>
+        <div style={Col}>
+          <FoundingLetter />
+        </div>
+      </section>
+
       <EditorialFooter />
+
     </div>
   );
 }
