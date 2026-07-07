@@ -3207,6 +3207,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aml_core_decision: {
+        Args: { p_amount_ngn: number; p_customer_type: string }
+        Returns: {
+          is_flagged: boolean
+          risk_level: string
+          rule_hit: string
+        }[]
+      }
       compile_returns_to_xml:
         | {
             Args: {
