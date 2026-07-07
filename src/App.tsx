@@ -69,9 +69,6 @@ import AdminTemplateEditor from "./pages/AdminTemplateEditor";
 import EditorialProduct from "./pages/Product";
 import EditorialAboutUs from "./pages/AboutUs";
 import EditorialWhoWeServe from "./pages/WhoWeServe";
-import HomeBW from "./pages/marketing-bw/HomeBW";
-import ProductBW from "./pages/marketing-bw/ProductBW";
-import WhoWeServeBW from "./pages/marketing-bw/WhoWeServeBW";
 
 const queryClient = new QueryClient();
 
@@ -85,8 +82,7 @@ const App = () => (
         <AuthProvider>
           <ProfileProvider>
           <Routes>
-            <Route path="/" element={<HomeBW />} />
-            <Route path="/home-editorial" element={<Index />} />
+            <Route path="/" element={<Index />} />
             <Route path="/home-legacy" element={<Homepage />} />
             <Route path="/login" element={<Navigate to="/sign-in" replace />} />
             <Route path="/sign-in" element={<SignIn />} />
@@ -101,16 +97,14 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPage />} />
-            <Route path="/product" element={<ProductBW />} />
-            <Route path="/product-editorial" element={<EditorialProduct />} />
+            <Route path="/product" element={<EditorialProduct />} />
             <Route path="/product-legacy" element={<NewProductPage />} />
             <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
             <Route path="/product/live-screening" element={<ProductLiveScreening />} />
             <Route path="/product/transaction-monitoring" element={<ProductTransactionMonitoring />} />
             <Route path="/product/audit-trail" element={<ProductAuditTrail />} />
             <Route path="/about-us" element={<EditorialAboutUs />} />
-            <Route path="/who-we-serve" element={<WhoWeServeBW />} />
-            <Route path="/who-we-serve-editorial" element={<EditorialWhoWeServe />} />
+            <Route path="/who-we-serve" element={<EditorialWhoWeServe />} />
             <Route path="/who-we-serve-legacy" element={<WhoWeServePage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/company" element={<NewCompanyPage />} />
