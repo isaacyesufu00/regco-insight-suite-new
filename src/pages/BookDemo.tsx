@@ -1,12 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import EditorialAuthShell from "@/components/editorial/EditorialAuthShell";
+import { Nav, EditorialFooter, C, HELV, MONO, H1, Body, Mono } from "@/components/editorial/EditorialTheme";
 
 const institutionTypes = ["Unit MFB", "State MFB", "National MFB", "Commercial Bank", "Finance Company", "Primary Mortgage Bank", "Fintech"];
 
-const fieldClass =
-  "w-full bg-transparent border-0 border-b border-ink-15 px-0 py-3 text-[15px] text-ink placeholder:text-ink-muted/60 focus:outline-none focus:border-ink transition-colors";
+const label: React.CSSProperties = {
+  fontFamily: MONO, fontSize: 11, letterSpacing: "0.18em",
+  textTransform: "uppercase", color: C.ink3, display: "block", marginBottom: 8,
+};
+const input: React.CSSProperties = {
+  width: "100%", background: "transparent",
+  border: "none", borderBottom: `1px solid ${C.rule}`,
+  color: C.ink, fontFamily: HELV, fontSize: 15,
+  padding: "10px 0", outline: "none", transition: "border-color 150ms ease",
+};
 
 const BookDemo = () => {
   const [fullName, setFullName] = useState("");
@@ -23,12 +31,10 @@ const BookDemo = () => {
     e.preventDefault();
     setError("");
     if (!fullName.trim() || !institutionName.trim() || !institutionType || !phone.trim() || !email.trim()) {
-      setError("Please fill in all required fields.");
-      return;
+      setError("Please fill in all required fields."); return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError("Please enter a valid email address.");
-      return;
+      setError("Please enter a valid email address."); return;
     }
     setLoading(true);
     const payload = {
@@ -40,81 +46,103 @@ const BookDemo = () => {
       message: message.trim().slice(0, 2000) || null,
     };
     const { error: dbError } = await supabase.from("demo_requests").insert(payload);
-    if (dbError) {
-      setLoading(false);
-      setError("Something went wrong. Please try again.");
-      return;
-    }
+    if (dbError) { setLoading(false); setError("Something went wrong. Please try again."); return; }
     try { await supabase.functions.invoke("send-demo-notification", { body: payload }); } catch {}
-    setLoading(false);
-    setSubmitted(true);
+    setLoading(false); setSubmitted(true);
   };
 
-  if (submitted) {
-    return (
-      <EditorialAuthShell
-        title="Thank you."
-        subtitle="A member of our team will confirm your demo within twenty-four hours."
-        quote="Bring a real export from last quarter. We'll generate the return in under five minutes."
-        attribution="What to expect"
-        footer={<Link to="/" className="text-ink underline underline-offset-4 decoration-rust">Return home</Link>}
-      >
-        <p className="font-serif italic text-[20px] text-ink-muted">
-          We sent a confirmation to <span className="text-ink not-italic">{email}</span>.
-        </p>
-      </EditorialAuthShell>
-    );
-  }
-
   return (
-    <EditorialAuthShell
-      title="Book a demo."
-      subtitle="A twenty-minute walkthrough, tailored to your institution."
-      quote="We replaced four spreadsheets, two consultants and a permanent dread of the 20th of every month — with RegCo."
-      attribution="Head of Compliance · Tier-2 MFB"
-      footer={<>Already a customer?{" "}<Link to="/sign-in" className="text-ink underline underline-offset-4 decoration-rust">Sign in</Link></>}
-    >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">Full name</label>
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={100} required className={fieldClass} />
-        </div>
-        <div>
-          <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">Institution</label>
-          <input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} maxLength={100} required className={fieldClass} />
-        </div>
-        <div>
-          <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">License category</label>
-          <select value={institutionType} onChange={(e) => setInstitutionType(e.target.value)} required
-            className={`${fieldClass} appearance-none ${institutionType ? "" : "text-ink-muted/60"}`}>
-            <option value="">Select…</option>
-            {institutionTypes.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-5">
+    <div style={{ minHeight: "100vh", background: C.page, color: C.ink }}>
+      <Nav />
+      <main style={{ paddingTop: 160, paddingBottom: 120 }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 96 }}>
+          {/* Left column: editorial context */}
           <div>
-            <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} required className={fieldClass} />
+            <div style={{ ...Mono, marginBottom: 32 }}>REGCO · BOOK A DEMO</div>
+            <h1 style={{ ...H1, fontSize: 48, marginBottom: 28 }}>
+              A twenty-minute walkthrough, tailored to your institution.
+            </h1>
+            <p style={{ ...Body, marginBottom: 40, maxWidth: 480 }}>
+              Bring a real export from last quarter. We'll generate the return in under
+              five minutes — live, on your own data.
+            </p>
+            <div style={{ borderTop: `1px solid ${C.rule}`, paddingTop: 24, maxWidth: 440 }}>
+              <p style={{ fontFamily: HELV, fontSize: 17, lineHeight: 1.5, color: C.ink, fontStyle: "italic", margin: 0 }}>
+                "We replaced four spreadsheets, two consultants and a permanent dread
+                of the 20th of every month — with RegCo."
+              </p>
+              <p style={{ ...Mono, marginTop: 16 }}>HEAD OF COMPLIANCE · TIER-2 MFB</p>
+            </div>
           </div>
+
+          {/* Right column: form */}
           <div>
-            <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">Phone</label>
-            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} required className={fieldClass} />
+            {submitted ? (
+              <div>
+                <h2 style={{ ...H1, fontSize: 40, marginBottom: 20 }}>Thank you.</h2>
+                <p style={{ ...Body, marginBottom: 32 }}>
+                  A member of our team will confirm your demo within twenty-four hours.
+                  We sent a confirmation to <span style={{ color: C.ink }}>{email}</span>.
+                </p>
+                <Link to="/" style={{ ...Body, color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>
+                  Return home →
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                <div>
+                  <label style={label}>Full name</label>
+                  <input style={input} value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={100} required />
+                </div>
+                <div>
+                  <label style={label}>Institution</label>
+                  <input style={input} value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} maxLength={100} required />
+                </div>
+                <div>
+                  <label style={label}>License category</label>
+                  <select style={{ ...input, appearance: "none" }} value={institutionType} onChange={(e) => setInstitutionType(e.target.value)} required>
+                    <option value="" style={{ background: C.page }}>Select…</option>
+                    {institutionTypes.map((t) => <option key={t} value={t} style={{ background: C.page }}>{t}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                  <div>
+                    <label style={label}>Email</label>
+                    <input style={input} type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} required />
+                  </div>
+                  <div>
+                    <label style={label}>Phone</label>
+                    <input style={input} type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} required />
+                  </div>
+                </div>
+                <div>
+                  <label style={label}>What would you like to see? (optional)</label>
+                  <textarea style={{ ...input, resize: "none", paddingTop: 10 }} rows={3} value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} />
+                </div>
+
+                {error && <p style={{ fontFamily: HELV, fontSize: 13, color: "#E85D4E", margin: 0 }}>{error}</p>}
+
+                <button type="submit" disabled={loading} style={{
+                  marginTop: 8, background: C.cream, color: "#0A0A0A",
+                  border: "none", borderRadius: 9999, padding: "14px 24px",
+                  fontFamily: HELV, fontSize: 15, fontWeight: 500,
+                  cursor: loading ? "default" : "pointer", opacity: loading ? 0.6 : 1,
+                  transition: "background 150ms ease",
+                }}>
+                  {loading ? "Submitting…" : "Request a demo →"}
+                </button>
+
+                <p style={{ ...Body, fontSize: 13, color: C.ink3, marginTop: 8 }}>
+                  Already a customer?{" "}
+                  <Link to="/sign-in" style={{ color: C.ink, textDecoration: "underline", textUnderlineOffset: 4 }}>Sign in</Link>
+                </p>
+              </form>
+            )}
           </div>
         </div>
-        <div>
-          <label className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink-muted">What would you like to see? (optional)</label>
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={3}
-            className={`${fieldClass} resize-none py-3`} />
-        </div>
-
-        {error && <p className="text-[13px] text-[var(--rust)]">{error}</p>}
-
-        <button type="submit" disabled={loading}
-          className="w-full py-3.5 rounded-full bg-ink text-[var(--paper)] text-[14.5px] font-medium hover:bg-[var(--rust)] disabled:opacity-60 transition-colors">
-          {loading ? "Submitting…" : "Request a demo"}
-        </button>
-      </form>
-    </EditorialAuthShell>
+      </main>
+      <EditorialFooter />
+    </div>
   );
 };
 
