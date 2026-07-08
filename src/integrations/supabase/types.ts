@@ -275,9 +275,13 @@ export type Database = {
       alerts: {
         Row: {
           assigned_to: string | null
+          checker_comment: string | null
+          checker_id: string | null
           created_at: string | null
           id: string
           institution_id: string
+          maker_comment: string | null
+          maker_id: string | null
           rule_id: string | null
           severity: string | null
           status: string | null
@@ -285,9 +289,13 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          checker_comment?: string | null
+          checker_id?: string | null
           created_at?: string | null
           id?: string
           institution_id: string
+          maker_comment?: string | null
+          maker_id?: string | null
           rule_id?: string | null
           severity?: string | null
           status?: string | null
@@ -295,9 +303,13 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          checker_comment?: string | null
+          checker_id?: string | null
           created_at?: string | null
           id?: string
           institution_id?: string
+          maker_comment?: string | null
+          maker_id?: string | null
           rule_id?: string | null
           severity?: string | null
           status?: string | null
@@ -532,6 +544,41 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_trail: {
+        Row: {
+          action: string
+          actor_id: string
+          alert_id: string
+          created_at: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          alert_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          alert_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_trail_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
             referencedColumns: ["id"]
           },
         ]
@@ -2439,6 +2486,38 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          created_at: string
+          id: string
+          institution_id: string
+          profile_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution_id: string
+          profile_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution_id?: string
+          profile_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sanctions_config: {
         Row: {
           institution_id: string
@@ -3207,6 +3286,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aml_core_decision: {
+        Args: { p_amount_ngn: number; p_customer_type: string }
+        Returns: {
+          is_flagged: boolean
+          risk_level: string
+          rule_hit: string
+        }[]
+      }
       compile_returns_to_xml:
         | {
             Args: {
@@ -3233,6 +3320,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_checker: {
+        Args: { p_institution_id: string; p_profile_id: string }
         Returns: boolean
       }
       lock_next_job: {
