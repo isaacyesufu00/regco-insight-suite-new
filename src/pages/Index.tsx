@@ -1,617 +1,116 @@
-import { Link } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
-
-/* =========================================================
-   CROSBY-INTELLIGENCE STYLE HOMEPAGE
-   Pure dark editorial. Helvetica headers. Cream CTA pill.
-   All charts/figures are inline HTML/CSS mocks — no libs.
-   ========================================================= */
-
-const HELV = 'Helvetica Neue, Helvetica, Arial, sans-serif';
-const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
-
-const C = {
-  page:   "#0A0A0A",
-  surface:"#141414",
-  ink:    "#F2EDE4",
-  ink2:   "#D8D2C6",
-  ink3:   "#8A847A",
-  rule:   "#2A2724",
-  cream:  "#F2E9D8",
-  creamHi:"#E6DCC4",
-};
-
-const SERIES = {
-  gpt:    "#A8312B",
-  fable:  "#B8924A",
-  gemini: "#3F6E94",
-  opus:   "#3F7A5E",
-};
-
-/* ---------- color ramp for heatmap ---------- */
-const RAMP = ["#1B1430","#4B1A5C","#8A2A6E","#C73E5E","#E86A3E","#F2C57A"];
-function ramp(v: number) {
-  if (v <= 0) return RAMP[0];
-  if (v >= 1) return RAMP[RAMP.length - 1];
-  const t = v * (RAMP.length - 1);
-  const i = Math.floor(t);
-  const f = t - i;
-  const a = hex(RAMP[i]); const b = hex(RAMP[i + 1]);
-  const r = Math.round(a.r + (b.r - a.r) * f);
-  const g = Math.round(a.g + (b.g - a.g) * f);
-  const bl= Math.round(a.b + (b.b - a.b) * f);
-  return `rgb(${r},${g},${bl})`;
-}
-function hex(h: string) {
-  const n = h.replace("#","");
-  return { r: parseInt(n.slice(0,2),16), g: parseInt(n.slice(2,4),16), b: parseInt(n.slice(4,6),16) };
-}
-
-/* ---------- top nav ---------- */
-function Nav() {
-  return (
-    <header style={{
-      position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 50,
-      background: C.page,
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 32px 0 24px",
-      fontFamily: HELV,
-    }}>
-      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
-        <div>{"\n\n"}REGCO</div>
-        <div>{"\n"}</div>
-      </Link>
-      <nav style={{ display: "flex", gap: 36, alignItems: "center" }}>
-        {[
-          ["Home","/"],
-          ["Product","/product"],
-          ["About us","/about-us"],
-          ["Who we serve","/who-we-serve"],
-          ["Log in","/login"],
-        ].map(([l,to]) => (
-          <Link key={l} to={to as string} style={navLink}>{l}</Link>
-        ))}
-      </nav>
-    </header>
-  );
-}
-const navLink: React.CSSProperties = {
-  fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
-};
-
-
-/* ---------- left scroll ruler ---------- */
-function ScrollRuler({ active, total }: { active: number; total: number }) {
-  return (
-    <div style={{
-      position: "fixed", left: 56, top: "50%", transform: "translateY(-50%)",
-      display: "flex", flexDirection: "column", gap: 8, zIndex: 40,
-    }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{
-          height: 1,
-          width: i === active ? 24 : 16,
-          background: C.ink3,
-          opacity: i === active ? 1 : 0.35,
-          transition: "width 150ms ease, opacity 150ms ease",
-        }} />
-      ))}
+ {/* Top launch pricing bar - exact 36px height */}
+  <div style={{ backgroundColor: '#FFFFFF', borderBottomColor: '#0000001A', borderBottomStyle: 'solid', borderBottomWidth: '1px', boxSizing: 'border-box', position: 'relative', left: '0px', right: '0px', top: '0px' }}>
+    <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'flex', height: '36px', justifyContent: 'center', marginLeft: 'auto', marginRight: 'auto', maxWidth: '1280px', paddingInline: '16px' }}>
+      <div style={{ boxSizing: 'border-box', color: '#111', display: 'flex', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss02"', fontSize: '14px', fontWeight: 500, lineHeight: '150%', textAlign: 'center' }}>Limited-time launch pricing</div>
+      <div style={{ boxSizing: 'border-box', color: '#000000A6', display: 'flex', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss01", "ss02"', fontSize: '14px', lineHeight: '137.5%', marginLeft: '6px', textAlign: 'center' }}>Pro $29/mo $49 · Max $69/mo $99</div>
     </div>
-  );
-}
+  </div>
 
-/* ---------- cream CTA pill ---------- */
-function CreamCTA({ children, href = "#", to }: { children: React.ReactNode; href?: string; to?: string }) {
-  const [hover, setHover] = useState(false);
-  const style: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 8,
-    background: hover ? C.creamHi : C.cream, color: "#0A0A0A",
-    borderRadius: 9999, padding: "14px 24px",
-    fontFamily: HELV, fontSize: 15, fontWeight: 500,
-    textDecoration: "none", transition: "background 150ms ease",
-  };
-  const inner = (<>{children} <ArrowRight size={16} strokeWidth={1.75} /></>);
-  if (to) return <Link to={to} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</Link>;
-  return <a href={href} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</a>;
-}
+  {/* Hidden accessibility clip - preserved */}
+  <div style={{ boxSizing: 'border-box', position: 'absolute', width: '0px', height: '0px', overflow: 'hidden' }}>
+    <div style={{ boxSizing: 'border-box', clip: 'rect(0px, 0px)', height: '1px', width: '1px', margin: '-1px', overflow: 'hidden', position: 'absolute' }} />
+  </div>
 
-/* ---------- shared text styles ---------- */
-const H1: React.CSSProperties = {
-  fontFamily: HELV, fontWeight: 700, fontSize: 56, lineHeight: 1.05,
-  letterSpacing: "-0.025em", color: C.ink, margin: 0,
-};
-const H1Washed: React.CSSProperties = { ...H1, color: "#6F6A62", fontSize: 44 };
-const H2: React.CSSProperties = {
-  fontFamily: HELV, fontWeight: 700, fontSize: 28, lineHeight: 1.15,
-  letterSpacing: "-0.02em", color: C.ink, margin: 0,
-};
-const Lede: React.CSSProperties = {
-  fontFamily: HELV, fontWeight: 400, fontSize: 19, lineHeight: 1.55,
-  color: C.ink, margin: 0,
-};
-const Body: React.CSSProperties = {
-  fontFamily: HELV, fontWeight: 400, fontSize: 17, lineHeight: 1.6,
-  color: C.ink2, margin: 0,
-};
-const Mono: React.CSSProperties = {
-  fontFamily: MONO, fontWeight: 400, fontSize: 13, color: C.ink3,
-};
+  {/* Right rail Merlin widgets - original opacity 0, translate 8px 0px, preserved but hidden */}
+  <div style={{ alignItems: 'flex-end', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '6px', position: 'absolute', right: '0px', top: '610.5px', zIndex: 20, pointerEvents: 'none' }}>
+    <div style={{ alignItems: 'flex-end', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '2px', opacity: 0, position: 'relative', transform: 'translate(8px, 0px)' }}>
+      <div style={{ alignItems: 'center', backgroundColor: '#1C1C1E', borderBottomLeftRadius: '10px', borderTopLeftRadius: '10px', boxShadow: '#FFFFFF0F 0px 0px 0px 1px inset, #00000066 -2px 1px 8px, #00000033 0px 1px 2px', boxSizing: 'border-box', display: 'flex', height: '36px', width: '36px', justifyContent: 'center' }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ height: '18px', width: '18px' }}><circle cx="12" cy="12" r="10" fill="none" stroke="#A1A1AA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M2 12h20" fill="none" stroke="#A1A1AA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M12 2a15.3 15.3 0 0 1 4 10a15.3 0 0 1-4 10a15.3 15.3 0 0 1-4-10a15.3 0 0 1 4-10z" fill="none" stroke="#A1A1AA" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      </div>
+    <div style={{ alignItems: 'center', backgroundColor: '#1C1C1E', borderBottomLeftRadius: '10px', borderTopLeftRadius: '10px', boxShadow: '#FFFFFF0F 0px 0px 0px 1px inset, #00000080 -3px 2px 14px, #0000004D 0px 1px 4px', boxSizing: 'border-box', display: 'flex', opacity: 0.55, padding: '8px', position: 'relative' }}>
+      <div style={{ backgroundColor: '#DDD', borderRadius: '1px', boxSizing: 'border-box', height: '24px', width: '24px', outline: '1px solid #FFFFFF1A', outlineOffset: '-1px', overflow: 'hidden' }} />
+    </div>
+  </div>
 
-/* ---------- column wrapper ---------- */
-const Col: React.CSSProperties = { maxWidth: 760, margin: "0 auto", padding: "0 24px" };
-
-/* =========================================================
-   FIGURE 1 — Cluster intensity heatmap
-   ========================================================= */
-type Cell = { row: string; values: (number | null)[] };
-const SCEN_1: Cell[] = [
-  { row:"ExC",  values:[0.18,0.02,0.27,0.06] },
-  { row:"ExA.2",values:[0.26,0.08,0.07,null] },
-  { row:"3.3.5",values:[0.10,0.21,0.02,0.05] },
-  { row:"1.3",  values:[0.20,0.15,0.04,0.04] },
-  { row:"1.4",  values:[0.20,0.02,null,0.01] },
-  { row:"10",   values:[0.20,0.03,null,0.03] },
-  { row:"1",    values:[0.20,0.03,0.03,0.06] },
-  { row:"3.2",  values:[0.20,0.02,0.04,0.02] },
-  { row:"14.1", values:[0.20,0.09,0.02,0.06] },
-  { row:"ExA.5",values:[0.20,0.02,0.07,0.05] },
-  { row:"1.15", values:[0.20,0.06,0.03,0.05] },
-  { row:"2",    values:[0.20,null,0.05,null] },
-  { row:"5.1",  values:[0.18,null,0.03,null] },
-  { row:"4",    values:[0.18,null,null,0.03] },
-  { row:"7.1",  values:[0.10,0.15,0.05,0.05] },
-];
-const SCEN_2: Cell[] = [
-  { row:"6.1", values:[0.63,0.24,0.02,null] },
-  { row:"2.9", values:[0.47,0.07,0.04,0.04] },
-  { row:"2.3", values:[0.45,0.02,0.06,0.02] },
-  { row:"7.1", values:[0.42,0.05,0.16,0.03] },
-  { row:"9.2", values:[0.42,0.15,0.15,0.07] },
-  { row:"6.3", values:[0.40,0.23,0.03,0.04] },
-  { row:"8.1", values:[0.40,0.09,0.10,0.11] },
-  { row:"10.2",values:[0.33,0.23,0.03,0.08] },
-  { row:"11.8",values:[0.33,0.08,0.03,0.06] },
-  { row:"2.13",values:[0.27,0.13,0.06,0.06] },
-  { row:"10.1",values:[0.25,0.07,0.16,0.07] },
-  { row:"2.6", values:[0.25,0.03,0.06,0.04] },
-  { row:"ExA", values:[0.25,0.08,0.05,0.04] },
-  { row:"2.10",values:[0.25,0.05,null,null] },
-  { row:"2.11",values:[0.25,0.07,null,null] },
-];
-const SCEN_3: Cell[] = [
-  { row:"15.12",values:[0.60,0.06,0.21,0.13] },
-  { row:"7.5",  values:[0.20,0.26,0.11,0.11] },
-  { row:"13.1", values:[0.16,0.06,0.04,0.21] },
-  { row:"5.1",  values:[0.20,0.03,0.07,0.07] },
-  { row:"5.10", values:[0.20,null,null,null] },
-  { row:"7.8",  values:[0.20,null,0.07,null] },
-  { row:"10.2", values:[0.20,null,0.06,0.02] },
-  { row:"12.2", values:[0.20,0.07,null,0.07] },
-  { row:"7.3",  values:[0.18,0.13,0.10,0.05] },
-  { row:"3.1",  values:[0.18,0.05,0.04,null] },
-  { row:"4.1",  values:[0.18,0.07,0.02,null] },
-  { row:"15",   values:[0.18,null,null,null] },
-  { row:"4.5",  values:[0.18,0.02,0.06,0.05] },
-  { row:"9.10", values:[0.16,0.17,0.10,null] },
-  { row:"12.1", values:[0.16,0.15,0.08,0.05] },
-];
-
-function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
-  return (
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <div style={{ ...Mono, marginBottom: 12 }}>{title}</div>
-      <div style={{ display: "grid", gridTemplateColumns: "44px repeat(4, 1fr)", rowGap: 4, columnGap: 4 }}>
-        <div />
-        {["S1","S2","S3","S4"].map(t => (
-          <div key={t} style={{ ...Mono, textAlign: "center", paddingBottom: 4 }}>{t}</div>
-        ))}
-        {data.flatMap(r => [
-          <div key={r.row+"-l"} style={{ ...Mono, textAlign: "right", paddingRight: 8, alignSelf: "center" }}>{r.row}</div>,
-          ...r.values.map((v, i) => (
-            <div key={r.row+"-"+i} style={{
-              height: 22, borderRadius: 3,
-              background: v == null ? "transparent" : ramp(v),
-              color: v == null ? "transparent" : (v > 0.5 ? "#0A0A0A" : C.ink),
-              fontFamily: MONO, fontSize: 10, textAlign: "center", lineHeight: "22px",
-            }}>{v == null ? "" : v.toFixed(2)}</div>
-          )),
-        ])}
+  {/* Nav - exact blur 24px saturate 150%, bg #0D0C0A73, height 56px, maxWidth 1280px, paddingInline 24px, gap 48px */}
+  <div style={{ backdropFilter: 'blur(24px) saturate(150%)', backgroundColor: '#0D0C0A73', boxSizing: 'border-box', position: 'sticky', top: '0px', zIndex: 50, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+    <div style={{ alignItems: 'center', boxSizing: 'border-box', display: 'grid', gap: '48px', gridTemplateColumns: 'minmax(0px, 1fr) auto minmax(0px, 1fr)', height: '56px', marginLeft: 'auto', marginRight: 'auto', maxWidth: '1280px', paddingInline: '24px' }}>
+      <div style={{ justifySelf: 'flex-start' }}><div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/2SJTXX1X8J2Z632KPK106GM3T4.png)', backgroundPosition: '-12.1469px -43.6351px', backgroundRepeat: 'no-repeat', backgroundSize: '104.265px 104.265px', display: 'inline-block', height: '22px', width: '82px' }} /></div>
+      <div style={{ alignItems: 'center', display: 'flex', gap: '28px', justifySelf: 'center' }}>
+        <div style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss01", "ss02"', fontSize: '15px', lineHeight: '150%' }}>Work</div>
+        <div style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss01", "ss02"', fontSize: '15px', lineHeight: '150%' }}>Pricing</div>
+        <div style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss01", "ss02"', fontSize: '15px', lineHeight: '150%' }}>Docs</div>
+        <div style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss02"', fontSize: '15px', lineHeight: '150%' }}>Blog</div>
+      </div>
+      <div style={{ alignItems: 'center', display: 'flex', gap: '10px', justifyContent: 'flex-end', justifySelf: 'flex-end', paddingLeft: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '6px', padding: '2px' }}><svg viewBox="0 0 24 24" width="14" height="14"><path d="M20.317 4.37a19.791 19.791 0 00-4.885-1.515" fill="#FFFFFF" /></svg></div>
+        <div style={{ display: 'flex', backgroundColor: '#000000', borderRadius: '9999px', height: '28px', paddingInline: '10px', gap: '6px', alignItems: 'center' }}><div style={{ backgroundColor: '#FFFFFF', borderRadius: '9999px', height: '16px', width: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ fontSize: '10px', color: '#000' }}>G</span></div><span style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '13px', fontWeight: 500 }}>9.8K</span></div>
+        <div style={{ borderColor: '#FFFFFF40', borderStyle: 'solid', borderWidth: '1px', borderRadius: '9999px', height: '28px', paddingInline: '12px', display: 'flex', alignItems: 'center' }}><span style={{ color: '#FFFFFF', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '13px' }}>Book a demo</span></div>
+        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '9999px', height: '28px', paddingInline: '12px', display: 'flex', alignItems: 'center' }}><span style={{ color: '#0D0C0A', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '13px', fontWeight: 500 }}>Download</span></div>
       </div>
     </div>
-  );
-}
+  </div>
 
-function Figure1() {
-  return (
-    <div>
-      <div style={{
-        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
-        padding: 32,
-      }}>
-        <div style={{ display: "flex", gap: 32 }}>
-          <HeatmapScenario title="TYPE 1 → STRUCTURING" data={SCEN_1} />
-          <HeatmapScenario title="TYPE 2 → SHELL ACCOUNTS" data={SCEN_2} />
-          <HeatmapScenario title="TYPE 3 → SYNTHETIC IDENTITY" data={SCEN_3} />
-        </div>
-        {/* gradient legend */}
-        <div style={{ marginTop: 24, display: "flex", alignItems: "center", gap: 12 }}>
-          <span style={Mono}>0</span>
-          <div style={{
-            flex: 1, height: 6, borderRadius: 3,
-            background: `linear-gradient(90deg, ${RAMP.join(",")})`,
-          }} />
-          <span style={Mono}>1.0 intensity</span>
-          <span style={{
-            width: 14, height: 14, background: "#F2C57A", borderRadius: 2,
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <Check size={10} color="#0A0A0A" strokeWidth={3} />
-          </span>
-          <span style={Mono}>Scores</span>
-        </div>
+  {/* Hero wrapper maxWidth 1280 paddingInline 24 */}
+  <div style={{ boxSizing: 'border-box', marginLeft: 'auto', marginRight: 'auto', maxWidth: '1280px', paddingInline: '24px', width: '100%' }}>
+    <div style={{ paddingTop: '64px', paddingBottom: '40px' }}>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '14px', lineHeight: '150%' }}>Backed by</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ height: '20px', width: '20px', backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/1W1CV0B01ZKBCP8MVY5P46E0J1.webp)', backgroundSize: 'cover', display: 'inline-block' }} /><span style={{ color: '#E85D04', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '14px', letterSpacing: '0.35px', lineHeight: '150%' }}>Combinator</span></span>
       </div>
-      <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;1</span>{" "}
-        Each cell shows detection activity intensity across case type and review stage. Higher = more concentrated review at that point in the workflow.
-      </p>
-      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
-        Data is illustrative. Pattern structure based on documented AML typologies.
-      </p>
-    </div>
-  );
-}
-
-/* =========================================================
-   FIGURE 3 — Ranked bar list (Overall score)
-   ========================================================= */
-const OVERALL = [
-  { name: "RegCo",                  desc: "Automated + AI-assisted review", color: SERIES.gpt },
-  { name: "Rule-Based Detection",   desc: "Threshold rules only",           color: SERIES.fable },
-  { name: "Machine Learning Only",  desc: "Anomaly models only",            color: SERIES.gemini },
-  { name: "Manual Review",          desc: "Officer review, no automation",  color: SERIES.opus },
-];
-
-
-function RankedBars() {
-  return (
-    <div>
-      <div style={{
-        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
-        padding: 32, display: "flex", flexDirection: "column", gap: 18,
-      }}>
-        {OVERALL.map((r, i) => (
-          <div key={r.name} style={{ display: "grid", gridTemplateColumns: "32px 1fr", gap: 16, alignItems: "center" }}>
-            <div style={{
-              width: 32, height: 32, borderRadius: 9999, border: `1px solid ${C.rule}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: MONO, fontSize: 13, color: C.ink3,
-            }}>{i+1}</div>
-            <div style={{ height: 44, position: "relative" }}>
-              <div style={{
-                height: "100%", width: "100%",
-                background: r.color, borderRadius: 4,
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                padding: "0 20px",
-                fontFamily: HELV, fontSize: 14, color: C.ink,
-              }}>
-                <span style={{ fontWeight: 500 }}>{r.name}</span>
-                <span style={{ fontWeight: 400, opacity: 0.85, fontSize: 13 }}>{r.desc}</span>
-              </div>
-            </div>
-          </div>
-        ))}
+      <div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontFeatureSettings: '"cv01", "ss02"', fontSize: '60px', letterSpacing: '-1.8px', lineHeight: '110%', marginTop: '24px', maxWidth: '896px' }}>Compliance automation for banks that can't afford to miss a filing.</div>
+      <div style={{ marginTop: '24px', maxWidth: '768px' }}><span style={{ color: '#ECECECBF', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '19px', lineHeight: '150%', whiteSpace: 'pre-wrap' }}>{'RegCo connects to your core banking system and handles' + '\n' + 'the compliance work your team does manually: screening' + '\n' + 'customers, generating returns, and keeping an audit trail.'}</span></div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '40px', paddingBottom: '20px', alignItems: 'center' }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ backgroundColor: '#ECECEC', borderRadius: '9999px', display: 'inline-flex', gap: '8px', paddingBlock: '10px', paddingInline: '16px', alignItems: 'center' }}><span style={{ color: '#0D0C0A', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', fontWeight: 500, lineHeight: '150%' }}>Book a demo</span></div>
+          <div style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '12px', lineHeight: '150%', marginTop: '6px', position: 'absolute', left: '50%', top: '100%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>Minimum macOS 26 (Tahoe)</div>
+        </div>
+        <div style={{ backgroundColor: '#FFFFFF14', borderRadius: '9999px', paddingBlock: '10px', paddingInline: '16px', display: 'flex' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%' }}>Login</span></div>
       </div>
-      <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;2</span>{" "}
-        Four detection approaches compared by method coverage. RegCo combines rule enforcement, pattern detection, and AI-assisted review.
-      </p>
-      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
-        Comparison is based on internal methodology assessment, not independent study.
-      </p>
     </div>
-  );
-}
 
-/* =========================================================
-   FIGURE 6 — Grouped bars (Dimension pass rates)
-   ========================================================= */
-const DIMS: { label: string; values: [number, number, number, number] }[] = [
-  { label: "Detection",       values: [49.0, 44.9, 45.2, 44.2] },
-  { label: "Documentation",   values: [49.9, 47.0, 51.5, 44.7] },
-  { label: "Audit Trail",     values: [50.9, 45.2, 45.0, 41.2] },
-  { label: "Filing",          values: [51.0, 48.3, 57.1, 45.4] },
-  { label: "Case Resolution", values: [84.4, 83.2, 82.5, 86.2] },
-];
+    {/* Hero media - exact borderRadius 16px overflow clip */}
+    <div style={{ paddingBottom: '40px', paddingTop: '16px' }}><div style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative', backgroundColor: '#151410', border: '1px solid rgba(255,255,255,0.08)' }}><div style={{ aspectRatio: '16 / 9', width: '100%', backgroundColor: '#1A1917' }} /><div style={{ position: 'absolute', right: '16px', top: '16px' }}><div style={{ backdropFilter: 'blur(8px)', backgroundColor: '#00000080', borderRadius: '6px', display: 'inline-flex', height: '32px', width: '32px', alignItems: 'center', justifyContent: 'center' }}><svg viewBox="0 0 24 24" width="16" height="16"><path d="M11 5L6 9H3v6h3l5 4V5z M16 9l5 5 M21 9l-5 5" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" /></svg></div></div></div></div>
 
-function GroupedBars() {
-  const CHART_H = 320;
-  const seriesColors = [SERIES.gpt, SERIES.fable, SERIES.gemini, SERIES.opus];
-  return (
-    <div>
-      <div style={{
-        background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
-        padding: 32,
-      }}>
-        {/* legend */}
-        <div style={{ display: "flex", justifyContent: "center", gap: 28, marginBottom: 24 }}>
-          {["RegCo","Rule-Based Detection","Machine Learning Only","Manual Review"].map((n,i) => (
-            <div key={n} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 9999, background: seriesColors[i] }} />
-              <span style={{ ...Body, fontSize: 13, color: C.ink }}>{n}</span>
-            </div>
-          ))}
-        </div>
-        {/* plot */}
-        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12 }}>
-          <div style={{ height: CHART_H, position: "relative" }}>
-            {[100,80,60,40,20,0].map((y, idx) => (
-              <div key={y} style={{
-                position: "absolute", right: 0, top: `${(idx / 5) * 100}%`,
-                transform: "translateY(-50%)", ...Mono, fontSize: 11,
-              }}>{y}%</div>
-            ))}
-          </div>
-          <div style={{ height: CHART_H, position: "relative", borderLeft: `1px solid ${C.rule}` }}>
-            {/* gridlines */}
-            {[0,1,2,3,4,5].map(i => (
-              <div key={i} style={{
-                position: "absolute", left: 0, right: 0,
-                top: `${(i / 5) * 100}%`, height: 1, background: C.rule,
-              }} />
-            ))}
-            {/* groups */}
-            <div style={{ position: "absolute", inset: 0, display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
-              {DIMS.map((g, gi) => (
-                <div key={g.label} style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 4, padding: "0 12px" }}>
-                  {g.values.map((v, vi) => (
-                    <div key={vi} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%" }}>
-                      <span style={{ ...Mono, fontSize: 11, color: C.ink, marginBottom: 4 }}>{v.toFixed(1)}</span>
-                      <div style={{ width: "100%", height: `${v}%`, background: seriesColors[vi] }} />
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        {/* x labels */}
-        <div style={{ display: "grid", gridTemplateColumns: "40px 1fr", gap: 12, marginTop: 12 }}>
-          <div />
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${DIMS.length}, 1fr)` }}>
-            {DIMS.map(g => (
-              <div key={g.label} style={{ ...Body, fontSize: 14, color: C.ink, textAlign: "center" }}>{g.label}</div>
-            ))}
-          </div>
-        </div>
+    {/* Integrations - exact columnGap 32px rowGap 16px */}
+    <div style={{ paddingBlock: '56px' }}>
+      <div style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', display: 'flex', justifyContent: 'center', marginBottom: '40px' }}>Built to integrate with</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: '32px', rowGap: '16px', justifyContent: 'center', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px', alignItems: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '24px', letterSpacing: '-0.6px', lineHeight: '133.333%' }}>Dojah</span><span style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', marginBottom: '2px' }}>Identity verification</span></div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '24px', letterSpacing: '-0.6px', lineHeight: '133.333%' }}>Smile Identity</span><span style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', marginBottom: '2px' }}>KYC and liveness checks</span></div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '24px', letterSpacing: '-0.6px', lineHeight: '133.333%' }}>Prembly</span><span style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', marginBottom: '2px' }}>NIN and document verification</span></div>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '24px', letterSpacing: '-0.6px', lineHeight: '133.333%' }}>NIBSS</span><span style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', marginBottom: '2px' }}>— BVN infrastructure</span></div>
+        <span style={{ color: '#B3B3B399', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', marginBottom: '2px' }}>and more</span>
       </div>
-      <p style={{ ...Mono, marginTop: 16 }}>
-        <span style={{ letterSpacing: "0.08em" }}>FIG.&nbsp;&nbsp;3</span>{" "}
-        Coverage by compliance dimension, pooled across all typologies and weighted by regulatory materiality.
-      </p>
-      <p style={{ ...Mono, marginTop: 8, fontSize: 11 }}>
-        Data is illustrative. Relative weighting based on CBN examination priorities.
-      </p>
     </div>
-  );
-}
+  </div>
 
-/* =========================================================
-   Findings list
-   ========================================================= */
-const FINDINGS = [
-  { n: "01", title: "Filing Engine",
-    body: "Filing prioritization is a shared gap across most institutions. Teams struggle to know which returns examiners treat as most material, especially when filing across multiple regulators in the same period. RegCo generates returns automatically and flags the ones that need human sign-off before the deadline hits." },
-  { n: "02", title: "Over-reporting",
-    body: "Institutions that review manually tend to flag too much. Every marginal transaction gets escalated because the cost of missing something feels higher than the cost of wasting an officer's time. RegCo filters activity by risk weight, so the alerts that reach your team are the ones that actually warrant a decision." },
-  { n: "03", title: "Precision",
-    body: "RegCo's Screening Core is built to match the way a senior examiner reads a case, not the way a rule engine reads a number. Among the modules, Screening comes closest to examination-level review behavior, with fewer blanket holds and faster clearance times on low-risk accounts." },
-  { n: "04", title: "The gap",
-    body: "No automated system fully replaces a trained compliance officer, and RegCo does not claim otherwise. The gap that remains is real: complex cases, unusual counterparty structures, and edge-case transaction patterns still need human judgment. What RegCo eliminates is the paperwork that was consuming that judgment before it got to the cases that actually needed it." },
-];
+  {/* Feature 1 - grid minmax 300px 1fr gap 56px */}
+  <div style={{ paddingBlock: '96px', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px', display: 'grid', gridTemplateColumns: 'minmax(0px, 300px) 1fr', gap: '56px', alignItems: 'center' }}>
+    <div style={{ maxWidth: '300px' }}><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '36px', letterSpacing: '-0.72px', lineHeight: '120%' }}>Screen without leaving the dashboard</div><div style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '17px', lineHeight: '155%', marginTop: '16px' }}>Stop exporting transaction data to a separate tool and re-importing flags. Screen, score, and review every transaction directly inside RegCo.</div><div style={{ display: 'inline-flex', gap: '4px', marginTop: '28px', alignItems: 'center' }}><span style={{ color: '#E63535', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '16px', lineHeight: '150%' }}>Learn more</span><span style={{ color: '#E63535', fontSize: '16px' }}>→</span></div></div>
+    <div style={{ borderRadius: '16px', overflow: 'hidden', backgroundColor: '#1A1917', aspectRatio: '16 / 10' }} />
+  </div>
 
+  {/* Feature 2 - grid 1fr 360px with blur background */}
+  <div style={{ paddingBlock: '96px', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px', display: 'grid', gridTemplateColumns: '1fr minmax(0px, 360px)', gap: '56px', alignItems: 'center' }}>
+    <div style={{ borderRadius: '16px', overflow: 'hidden', position: 'relative' }}><div style={{ position: 'absolute', inset: '0px', backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/54X6V3Q435WABTR4AYCDC8VAKZ.webp)', backgroundSize: 'cover', filter: 'blur(5px)', opacity: 0.6 }} /><div style={{ position: 'relative', paddingBlock: '28px', paddingInline: '16px' }}><div style={{ aspectRatio: '1024 / 671', backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/6Q11AGXRT4265FY41XTRNGSYEJ.webp)', backgroundSize: 'cover', backgroundPosition: '50%', borderRadius: '10px', width: '100%' }} /></div></div>
+    <div style={{ maxWidth: '360px' }}><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '36px', letterSpacing: '-0.72px', lineHeight: '120%' }}>A complete compliance workspace</div><div style={{ marginTop: '16px' }}><div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}><span style={{ backgroundColor: '#ECECEC59', borderRadius: '9999px', height: '6px', width: '6px', marginTop: '8px', flexShrink: 0 }} /><span style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '16px', lineHeight: '150%' }}>Transaction monitoring</span></div><div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}><span style={{ backgroundColor: '#ECECEC59', borderRadius: '9999px', height: '6px', width: '6px', marginTop: '8px', flexShrink: 0 }} /><span style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '16px', lineHeight: '150%' }}>Screening, and case management in one view</span></div><div style={{ display: 'flex', gap: '12px', marginBottom: '12px' }}><span style={{ backgroundColor: '#ECECEC59', borderRadius: '9999px', height: '6px', width: '6px', marginTop: '8px', flexShrink: 0 }} /><span style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '16px', lineHeight: '150%' }}>Filter, flag, escalate, and close cases from a single record</span></div><div style={{ display: 'flex', gap: '12px' }}><span style={{ backgroundColor: '#ECECEC59', borderRadius: '9999px', height: '6px', width: '6px', marginTop: '8px', flexShrink: 0 }} /><span style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '16px', lineHeight: '150%' }}>Export CTR and STR filings in CBN and NFIU format when you need to</span></div></div><div style={{ display: 'inline-flex', gap: '4px', marginTop: '28px' }}><span style={{ color: '#E63535', fontSize: '16px' }}>Learn more</span><span style={{ color: '#E63535' }}>→</span></div></div>
+  </div>
 
-/* =========================================================
-   PAGE
-   ========================================================= */
-export default function Index() {
-  const sectionsRef = useRef<HTMLElement[]>([]);
-  const [active, setActive] = useState(0);
-  const SECTION_COUNT = 10;
+  {/* Feature 3 */}
+  <div style={{ paddingBlock: '96px', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px', display: 'grid', gridTemplateColumns: 'minmax(0px, 360px) 1fr', gap: '56px', alignItems: 'center' }}>
+    <div style={{ maxWidth: '360px' }}><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '36px', letterSpacing: '-0.72px', lineHeight: '120%' }}>Connect your systems</div><div style={{ color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '17px', lineHeight: '155%', marginTop: '16px', whiteSpace: 'pre-wrap' }}>{'Via a signed webhook, connect your core banking system and have every transaction screened and scored the moment it happens no manual export, no batch upload.'}</div><div style={{ display: 'inline-flex', gap: '4px', marginTop: '28px' }}><span style={{ color: '#E63535', fontSize: '16px' }}>Learn how it works</span><span style={{ color: '#E63535' }}>→</span></div></div>
+    <div style={{ borderRadius: '16px', overflow: 'hidden', backgroundColor: '#1A1917', aspectRatio: '16 / 10' }} />
+  </div>
 
-  useEffect(() => {
-    const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-ruler-id]"));
-    sectionsRef.current = sections;
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          const id = Number((e.target as HTMLElement).dataset.rulerId);
-          setActive(id);
-        }
-      });
-    }, { rootMargin: "-40% 0px -55% 0px", threshold: 0 });
-    sections.forEach(s => obs.observe(s));
-    return () => obs.disconnect();
-  }, []);
+  {/* Compliance layer - bg #161614 borderTop #FFFFFF12 */}
+  <div style={{ backgroundColor: '#161614', borderTop: '1px solid #FFFFFF12', paddingBlock: '96px' }}><div style={{ maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px' }}><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '40px', letterSpacing: '-0.8px', lineHeight: '115%', display: 'flex', justifyContent: 'center', textAlign: 'center' }}>RegCo is building the compliance layer for regulated institutions.</div><div style={{ borderRadius: '16px', marginLeft: 'auto', marginRight: 'auto', marginTop: '48px', maxWidth: '896px', overflow: 'hidden' }}><div style={{ aspectRatio: '1024 / 573', backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/68065B772N5SVH0TEJZC21TDGZ.webp)', backgroundSize: 'cover', backgroundPosition: '50%', width: '100%' }} /></div></div></div>
 
-  return (
-    <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
-      <Nav />
-      <ScrollRuler active={active} total={SECTION_COUNT} />
+  {/* FAQ - bg #1E1E1C */}
+  <div style={{ backgroundColor: '#1E1E1C', borderTop: '1px solid #FFFFFF12', paddingBlock: '96px' }}><div style={{ maxWidth: '768px', marginLeft: 'auto', marginRight: 'auto', paddingInline: '24px' }}><div style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '150%', display: 'flex', justifyContent: 'center' }}>FAQ</div><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '36px', letterSpacing: '-0.72px', lineHeight: '115%', display: 'flex', justifyContent: 'center', marginTop: '12px', textAlign: 'center' }}>Common questions</div><div style={{ borderTop: '1px solid #FFFFFF12', marginTop: '40px' }}>{['How is RegCo different from a manual compliance process?','How is this different from building compliance tooling in-house?','How does pricing work?','How does the CBS connection work?','Can I use RegCo alongside our existing KYC and screening tools?','Do you train AI models on our transaction data?','What reports can I export?','Do you offer enterprise plans?'].map(function(q, idx) { return (<div key={q} style={{ borderBottom: '1px solid #FFFFFF12' }}><div onClick={function(){ toggleFaq(idx); }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', paddingBlock: '20px', cursor: 'pointer' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '17px', lineHeight: '150%' }}>{q}</span><svg viewBox="0 0 16 16" width="16" height="16" style={{ transform: openFaq === idx? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}><path d="M4 6l4 4 4-4" fill="none" stroke="#B3B3B3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>{openFaq === idx? <div style={{ paddingBottom: '20px', color: '#ECECECB3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', lineHeight: '160%' }}>Deterministic proof: every flag maps to SQL and CBN regulation section. No black box AI decision. Audit trail with maker checker and GoAML XML export.</div> : null}</div>); })}</div></div></div>
 
-      {/* HERO */}
-      <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
-        <div style={Col}>
-          <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
-            REGCO · COMPLIANCE PLATFORM
-          </div>
-          <h1 style={H1}>
-            Compliance automation for banks that can't afford to miss a filing.
-          </h1>
-          <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
-            RegCo connects to your core banking system and handles<br />
-            the compliance work your team does manually: screening<br />
-            customers, generating returns, and keeping an audit trail.
-          </p>
-          <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
-          </div>
-        </div>
-      </section>
+  {/* Final CTA */}
+  <div style={{ borderTop: '1px solid #FFFFFF12', paddingBlock: '96px', textAlign: 'center' }}><div style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '40px', letterSpacing: '-0.8px', lineHeight: '150%' }}>See RegCo on your institution.</div><div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '32px', paddingBottom: '20px' }}><div style={{ backgroundColor: '#ECECEC', borderRadius: '9999px', paddingBlock: '10px', paddingInline: '16px' }}><span style={{ color: '#0D0C0A', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px', fontWeight: 500 }}>Book a demo</span></div><div style={{ backgroundColor: '#FFFFFF14', borderRadius: '9999px', paddingBlock: '10px', paddingInline: '16px' }}><span style={{ color: '#ECECEC', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '15px' }}>Log in</span></div></div></div>
 
-      {/* SECTION 1 — WHAT WE MEASURE */}
-      <section data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
-        <div style={Col}>
-          <h2 style={H1Washed}>1. What We Measure</h2>
-          <p style={{ ...Body, marginTop: 32 }}>
-            RegCo tracks whether regulated institutions are meeting their compliance obligations in real time, not just at the point of examination.
-          </p>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Most compliance failures are not the result of deliberate evasion. They are the result of manual processes that could not keep up with transaction volume, filing deadlines, and screening requirements happening at once.
-          </p>
-          <p style={{ ...Body, marginTop: 24 }}>
-            RegCo measures four things every month: whether filings were generated on time, whether screening caught what it should have caught, whether fraud patterns were flagged before they became regulatory problems, and whether the audit trail was complete enough to survive an examination.
-          </p>
-        </div>
-      </section>
-
-      {/* SECTION 2 — SUMMARY OF CAPABILITIES */}
-      <section id="capabilities" data-ruler-id="2" style={{ paddingTop: 96, paddingBottom: 96 }}>
-        <div style={Col}>
-          <h2 style={H1Washed}>2. Summary of Capabilities</h2>
-          <p style={{ ...Body, marginTop: 32 }}>
-            The platform covers the four core compliance jobs a regulated institution handles every reporting period. Each module works alone or as part of a single connected system.
-          </p>
-
-          <div style={{ marginTop: 56 }}>
-            {FINDINGS.map((f, i) => (
-              <div key={f.n} style={{
-                display: "grid", gridTemplateColumns: "48px 200px 1fr", gap: 24,
-                padding: "32px 0",
-                borderTop: `1px solid ${C.rule}`,
-                borderBottom: i === FINDINGS.length - 1 ? `1px solid ${C.rule}` : undefined,
-              }}>
-                <div style={{ ...Mono, fontSize: 14 }}>{f.n}</div>
-                <div style={{ ...Body, color: C.ink, fontWeight: 700, fontSize: 16 }}>{f.title}</div>
-                <div style={Body}>{f.body}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 3 — DETECTION ACTIVITY (heatmap) */}
-      <section data-ruler-id="3" style={{ paddingTop: 96, paddingBottom: 96 }}>
-        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
-          <div style={{ ...Col, padding: 0, marginBottom: 56 }}>
-            <p style={Body}>
-              The table below shows where compliance activity concentrates across fraud typology and review stage. Each cell represents how often a pattern required active review at that point in a real case workflow. Darker cells indicate higher review concentration. Data shown is illustrative.
-            </p>
-          </div>
-          <Figure1 />
-        </div>
-      </section>
-
-      {/* SECTION 4 — STAGE-LEVEL FINDINGS */}
-      <section data-ruler-id="4" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h2 style={H1Washed}>4. Stage-level Findings</h2>
-          <h3 style={{ ...H2, marginTop: 56 }}>4.1 Overall coverage</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            RegCo achieves the broadest coverage across every case type and review stage when compared to rule-based-only detection, machine-learning-only detection, and fully manual review. The difference between methods is small, which reflects how genuinely difficult this work is regardless of how it is automated. RegCo's advantage holds consistently across every typology tested.
-          </p>
-        </div>
-      </section>
-
-      {/* RANKED BARS (leaderboard) */}
-      <section data-ruler-id="5" style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div style={{ maxWidth: 920, margin: "0 auto", padding: "0 24px" }}>
-          <RankedBars />
-        </div>
-      </section>
-
-      {/* 4.2 COVERAGE BY CASE SIDE */}
-      <section data-ruler-id="6" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h3 style={H2}>4.2 Coverage by case side</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Every method, including RegCo, shows weaker coverage on
-          </p>
-        </div>
-      </section>
-
-      {/* 4.3 COVERAGE BY REVIEW STAGE */}
-      <section data-ruler-id="7" style={{ paddingTop: 96, paddingBottom: 32 }}>
-        <div style={Col}>
-          <h3 style={H2}>4.3 Coverage by review stage</h3>
-          <p style={{ ...Body, marginTop: 24, fontStyle: "italic", color: C.ink3 }}>
-            Every method performs worst at the point of account intake.
-          </p>
-          <p style={{ ...Body, marginTop: 24 }}>
-            The stage-by-stage chart shows that Intake is the most difficult stage for every detection method. This lines up with what experienced compliance officers describe: early review relies on judgment and limited signals, while mid-case and late-case review relies on pattern recognition across an established transaction record. Coverage improves significantly once 30 or more days of account activity are available. RegCo's screening and fraud modules perform best after that threshold, when behavioural signals are more reliable. The implication for compliance teams is clear: intake screening requires the most human support, and that is where RegCo routes the fewest automated clearances and the most officer attention.
-          </p>
-          <p style={{ ...Body, marginTop: 32, color: C.ink3, fontSize: 15 }}>
-            default to clearing borderline activity.
-          </p>
-        </div>
-      </section>
-
-      {/* SECTION 6 — COVERAGE BY DIMENSION (grouped bars) */}
-      <section data-ruler-id="8" style={{ paddingTop: 32, paddingBottom: 96 }}>
-        <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 24px" }}>
-          <GroupedBars />
-        </div>
-      </section>
-
-      {/* MISSION (replaces Research Program) */}
-      <section id="mission" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
-        <div style={Col}>
-          <div style={{ ...Mono, marginBottom: 24 }}>
-            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
-          </div>
-          <h2 style={H1}>We exist to make compliance<br />a system, not a<br />manual process.</h2>
-          <p style={{ ...Body, marginTop: 40 }}>
-            RegCo builds the infrastructure that regulated financial institutions need to meet their CBN and NFIU obligations without building a compliance department the size of a bank.
-          </p>
-
-          <h3 style={{ ...H2, marginTop: 64 }}>Why this needed to be built</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            The CBN's 2026 AML baseline standards require automated monitoring, real-time screening, and a full audit trail.
-          </p>
-          <p style={{ ...Body, marginTop: 24 }}>
-            Most regional banks cannot build that from scratch. It takes twelve to eighteen months, a technical team most institutions do not have, and ongoing maintenance that has no clear owner. Buying a global enterprise solution costs more than a regional microfinance bank spends on its entire compliance function in a year. RegCo sits between those two options. It connects to the core banking system an institution already runs, ingests transactions, screens customers, generates returns, and keeps a regulator-ready audit trail. Your compliance officer reviews the output. They do not build the pipeline.
-          </p>
-
-          <h3 style={{ ...H2, marginTop: 48 }}>What the platform handles</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            RegCo covers four compliance jobs that currently consume the most officer time at regional institutions: generating CBN and NFIU returns, screening customers against five active sanctions lists, flagging suspicious transaction patterns in near real time, and maintaining the case documentation an examiner will ask for. Every action taken on the platform is logged with a timestamp and a user identity. Nothing is editable after the fact.
-          </p>
-
-          <h3 style={{ ...H2, marginTop: 48 }}>Who we are built for</h3>
-          <p style={{ ...Body, marginTop: 24 }}>
-            We focus on CBN-regulated financial institutions: unit microfinance banks, state microfinance banks, national microfinance banks, payment service banks, and finance companies. We are not a global vendor. We are built for the specific regulatory environment these institutions operate in, and we measure ourselves by what a CBN examiner actually looks for.
-          </p>
-
-          <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/about-us">Learn about us</CreamCTA>
-          </div>
-
-
-
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer style={{
-        borderTop: `1px solid ${C.rule}`, padding: "48px 32px",
-        display: "flex", justifyContent: "space-between", alignItems: "center",
-      }}>
-        <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-          <div>REGCO</div><div>COMPLIANCE</div>
-        </div>
-        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
-      </footer>
-
+  <div style={{ borderTop: '1px solid #FFFFFF12', paddingBlock: '48px', paddingInline: '24px', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', width: '100%', display: 'flex', justifyContent: 'space-between', gap: '40px', flexWrap: 'wrap' }}>
+    <div style={{ maxWidth: '200px' }}><div style={{ backgroundImage: 'url(https://app.paper.design/file-assets/01KWCRWTX4FYZH5GEAGHH0B512/2SJTXX1X8J2Z632KPK106GM3T4.png)', backgroundPosition: '-12.1469px -43.6351px', backgroundSize: '104.265px 104.265px', height: '22px', width: '82px' }} /><div style={{ color: '#B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '14px', lineHeight: '137.5%', marginTop: '10px' }}>The compliance infrastructure for Nigerian banks.</div><div style={{ color: '#B3B3B3B3', fontFamily: '"Geist", system-ui, sans-serif', fontSize: '13px', lineHeight: '150%', marginTop: '10px' }}>© 2026 RegCo, Inc.</div></div>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0px, 1fr))', columnGap: '64px', rowGap: '32px' }}>
+      <div><div style={{ color: '#ECECEC', fontSize: '15px', fontWeight: 500, marginBottom: '12px' }}>Product</div><div style={{ color: '#B3B3B3', fontSize: '15px', marginBottom: '10px' }}>Pricing</div><div style={{ color: '#B3B3B3', fontSize: '15px' }}>Docs</div></div>
+      <div><div style={{ color: '#ECECEC', fontSize: '15px', fontWeight: 500, marginBottom: '12px' }}>Company</div><div style={{ color: '#B3B3B3', fontSize: '15px', marginBottom: '10px' }}>Work</div><div style={{ color: '#B3B3B3', fontSize: '15px' }}>About</div></div>
+      <div><div style={{ color: '#ECECEC', fontSize: '15px', fontWeight: 500, marginBottom: '12px' }}>Legal</div><div style={{ color: '#B3B3B3', fontSize: '15px', marginBottom: '10px' }}>Privacy</div><div style={{ color: '#B3B3B3', fontSize: '15px' }}>Terms</div></div>
+      <div><div style={{ color: '#ECECEC', fontSize: '15px', fontWeight: 500, marginBottom: '12px' }}>Connect</div><div style={{ color: '#B3B3B3', fontSize: '15px' }}>GitHub 9.8K</div></div>
     </div>
-  );
+  </div>
+</div>
+);
 }
