@@ -28,15 +28,19 @@ export function ComplianceGauge() {
         await supabase.functions.invoke("calculate-compliance-score", {
           body: { user_id: user.id },
         });
-      } catch { /* ignore */ }
+      } catch (e) {
+        console.error("Failed to recalculate compliance score:", e);
+      }
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("compliance_scores")
         .select("score, score_breakdown")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (data) {
+      if (error) {
+        console.error("Failed to load compliance score:", error);
+      } else if (data) {
         setScore(data.score);
         setBreakdown((data.score_breakdown as unknown as ScoreBreakdown[]) || []);
       }
