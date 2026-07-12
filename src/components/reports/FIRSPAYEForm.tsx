@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Section, Field, Row, TextInput, NumberInput, Computed, fmt } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, num, Select, tableInputStyle, TableHeader, PaymentFields, DeclarationSection } from "./FormShell";
 
 export interface FIRSPAYEPayload {
   section_a: Record<string, string>;
@@ -17,7 +17,6 @@ interface Props {
   onValidChange: (valid: boolean, payload: FIRSPAYEPayload) => void;
 }
 
-const num = (s: string) => parseFloat(s) || 0;
 const STATE_IRS = ["FCT-IRS", "LIRS (Lagos)", "OGIRS (Ogun)", "RIRS (Rivers)", "KIRS (Kano)", "OYIRS (Oyo)", "Other State IRS"];
 
 const newEmp = () => ({ name: "", grade: "", gross: "", pension: "", nhf: "", nhis: "", chargeable: "", paye: "" });
@@ -55,7 +54,7 @@ export default function FIRSPAYEForm({ employerName, periodLabel, onValidChange 
   const updateEmp = (i: number, patch: Record<string, string>) =>
     setEmployees(es => es.map((e, idx) => idx === i ? { ...e, ...patch } : e));
 
-  const sel: React.CSSProperties = { width: "100%", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, padding: "6px 8px", fontSize: 12, background: "#FFF" };
+  const sel = tableInputStyle;
 
   return (
     <div>
@@ -67,10 +66,9 @@ export default function FIRSPAYEForm({ employerName, periodLabel, onValidChange 
         <Row>
           <Field label="TIN *"><TextInput value={a.tin} onChange={ev => setA({ ...a, tin: ev.target.value })} /></Field>
           <Field label="State Internal Revenue Service *">
-            <select value={a.state_irs} onChange={ev => setA({ ...a, state_irs: ev.target.value })}
-              style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
+            <Select value={a.state_irs} onChange={ev => setA({ ...a, state_irs: ev.target.value })}>
               {STATE_IRS.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
+            </Select>
           </Field>
         </Row>
       </Section>
@@ -106,13 +104,7 @@ export default function FIRSPAYEForm({ employerName, periodLabel, onValidChange 
           <>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-                <thead>
-                  <tr style={{ background: "#F5F5F0" }}>
-                    {["Name", "Grade", "Gross ₦", "Pension ₦", "NHF ₦", "NHIS ₦", "Chargeable ₦", "PAYE ₦", ""].map(h => (
-                      <th key={h} style={{ textAlign: "left", padding: "8px 6px", fontWeight: 600, color: "#0A0A0A", borderBottom: "1px solid rgba(0,0,0,0.12)", whiteSpace: "nowrap" }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
+                <TableHeader columns={["Name", "Grade", "Gross ₦", "Pension ₦", "NHF ₦", "NHIS ₦", "Chargeable ₦", "PAYE ₦", ""]} />
                 <tbody>
                   {employees.map((e, i) => (
                     <tr key={i} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
@@ -148,27 +140,23 @@ export default function FIRSPAYEForm({ employerName, periodLabel, onValidChange 
 
       <Section letter="C" title="Remittance Details">
         <Computed label="Total PAYE to remit" value={totalPAYE} prefix="₦" />
-        <Field label="Payment made? *">
-          <select value={c.paid} onChange={ev => setC({ ...c, paid: ev.target.value })}
-            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
-            <option value="">Select…</option><option>Yes</option><option>No</option>
-          </select>
-        </Field>
-        {c.paid === "Yes" && (
-          <Row>
-            <Field label="Payment date"><TextInput type="date" value={c.payment_date} onChange={ev => setC({ ...c, payment_date: ev.target.value })} /></Field>
-            <Field label="FIRS receipt number"><TextInput value={c.receipt_number} onChange={ev => setC({ ...c, receipt_number: ev.target.value })} /></Field>
-          </Row>
-        )}
+        <PaymentFields
+          label="Payment made? *"
+          options={["Yes", "No"]}
+          paid={c.paid} onPaidChange={v => setC({ ...c, paid: v })}
+          paymentDate={c.payment_date} onPaymentDateChange={v => setC({ ...c, payment_date: v })}
+          receiptNumber={c.receipt_number} onReceiptChange={v => setC({ ...c, receipt_number: v })}
+          receiptLabel="FIRS receipt number"
+          showDetails={p => p === "Yes"}
+        />
       </Section>
 
-      <Section letter="D" title="Declaration">
-        <Row>
-          <Field label="Authorised Signatory *"><TextInput value={d.signatory_name} onChange={ev => setD({ ...d, signatory_name: ev.target.value })} /></Field>
-          <Field label="Designation *"><TextInput value={d.designation} onChange={ev => setD({ ...d, designation: ev.target.value })} /></Field>
-        </Row>
-        <Field label="Date *"><TextInput type="date" value={d.date} onChange={ev => setD({ ...d, date: ev.target.value })} /></Field>
-      </Section>
+      <DeclarationSection
+        letter="D"
+        signatoryName={d.signatory_name} onSignatoryChange={v => setD({ ...d, signatory_name: v })}
+        designation={d.designation} onDesignationChange={v => setD({ ...d, designation: v })}
+        date={d.date} onDateChange={v => setD({ ...d, date: v })}
+      />
     </div>
   );
 }

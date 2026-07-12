@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { Section, Field, Row, TextInput, NumberInput, Computed } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, fmt, num, tableInputStyle, TableHeader, AddRowButton, RemoveRowButton, PaymentFields, DeclarationSection } from "./FormShell";
 
 export interface WHTRow {
   id: string;
@@ -25,8 +24,6 @@ interface Props {
   periodLabel: string;
   onValidChange: (valid: boolean, payload: FIRSWHTPayload) => void;
 }
-
-const num = (s: string) => parseFloat(s) || 0;
 
 const NATURE_RATES: Record<string, number> = {
   "Rent": 10,
@@ -70,7 +67,7 @@ export default function FIRSWHTForm({ companyName, periodLabel, onValidChange }:
     setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
   const removeRow = (id: string) => setRows(rs => rs.length > 1 ? rs.filter(r => r.id !== id) : rs);
 
-  const sel: React.CSSProperties = { width: "100%", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, padding: "6px 8px", fontSize: 12, background: "#FFF" };
+  const sel = tableInputStyle;
 
   return (
     <div>
@@ -85,13 +82,7 @@ export default function FIRSWHTForm({ companyName, periodLabel, onValidChange }:
       <Section letter="B" title="WHT Transactions">
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: "#F5F5F0" }}>
-                {["Payee Name", "Payee TIN", "Nature of Payment", "Gross ₦", "Rate", "WHT ₦", ""].map(h => (
-                  <th key={h} style={{ textAlign: "left", padding: "8px 6px", fontWeight: 600, color: "#0A0A0A", borderBottom: "1px solid rgba(0,0,0,0.12)", whiteSpace: "nowrap" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
+            <TableHeader columns={["Payee Name", "Payee TIN", "Nature of Payment", "Gross ₦", "Rate", "WHT ₦", ""]} />
             <tbody>
               {computed.map(r => (
                 <tr key={r.id} style={{ borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
@@ -104,22 +95,16 @@ export default function FIRSWHTForm({ companyName, periodLabel, onValidChange }:
                   </td>
                   <td style={{ padding: 4 }}><input type="number" style={sel} value={r.gross} onChange={ev => updateRow(r.id, { gross: ev.target.value })} /></td>
                   <td style={{ padding: 4, fontVariantNumeric: "tabular-nums" }}>{r.rate}%</td>
-                  <td style={{ padding: 4, fontVariantNumeric: "tabular-nums" }}>₦{new Intl.NumberFormat("en-NG", { maximumFractionDigits: 2 }).format(num(r.wht))}</td>
+                  <td style={{ padding: 4, fontVariantNumeric: "tabular-nums" }}>₦{fmt(num(r.wht))}</td>
                   <td style={{ padding: 4 }}>
-                    <button type="button" onClick={() => removeRow(r.id)} disabled={rows.length === 1}
-                      style={{ background: "transparent", border: "none", color: rows.length === 1 ? "#CCC" : "#0A0A0A", cursor: rows.length === 1 ? "not-allowed" : "pointer", padding: 4 }}>
-                      <Trash2 size={14} />
-                    </button>
+                    <RemoveRowButton onClick={() => removeRow(r.id)} disabled={rows.length === 1} />
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <button type="button" onClick={() => setRows([...rows, newRow()])}
-          style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, background: "#FFF", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", color: "#0A0A0A" }}>
-          <Plus size={14} /> Add row
-        </button>
+        <AddRowButton label="Add row" onClick={() => setRows([...rows, newRow()])} />
       </Section>
 
       <Section letter="C" title="Summary">
@@ -127,27 +112,23 @@ export default function FIRSWHTForm({ companyName, periodLabel, onValidChange }:
           <Computed label="Total gross payments subject to WHT" value={summary.total_gross} prefix="₦" />
           <Computed label="Total WHT deducted" value={summary.total_wht} prefix="₦" />
         </Row>
-        <Field label="Payment made to FIRS? *">
-          <select value={c.paid} onChange={ev => setC({ ...c, paid: ev.target.value })}
-            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
-            <option value="">Select…</option><option>Yes</option><option>No</option>
-          </select>
-        </Field>
-        {c.paid === "Yes" && (
-          <Row>
-            <Field label="Payment date"><TextInput type="date" value={c.payment_date} onChange={ev => setC({ ...c, payment_date: ev.target.value })} /></Field>
-            <Field label="FIRS receipt number"><TextInput value={c.receipt_number} onChange={ev => setC({ ...c, receipt_number: ev.target.value })} /></Field>
-          </Row>
-        )}
+        <PaymentFields
+          label="Payment made to FIRS? *"
+          options={["Yes", "No"]}
+          paid={c.paid} onPaidChange={v => setC({ ...c, paid: v })}
+          paymentDate={c.payment_date} onPaymentDateChange={v => setC({ ...c, payment_date: v })}
+          receiptNumber={c.receipt_number} onReceiptChange={v => setC({ ...c, receipt_number: v })}
+          receiptLabel="FIRS receipt number"
+          showDetails={p => p === "Yes"}
+        />
       </Section>
 
-      <Section letter="D" title="Declaration">
-        <Row>
-          <Field label="Authorised Signatory *"><TextInput value={d.signatory_name} onChange={ev => setD({ ...d, signatory_name: ev.target.value })} /></Field>
-          <Field label="Designation *"><TextInput value={d.designation} onChange={ev => setD({ ...d, designation: ev.target.value })} /></Field>
-        </Row>
-        <Field label="Date *"><TextInput type="date" value={d.date} onChange={ev => setD({ ...d, date: ev.target.value })} /></Field>
-      </Section>
+      <DeclarationSection
+        letter="D"
+        signatoryName={d.signatory_name} onSignatoryChange={v => setD({ ...d, signatory_name: v })}
+        designation={d.designation} onDesignationChange={v => setD({ ...d, designation: v })}
+        date={d.date} onDateChange={v => setD({ ...d, date: v })}
+      />
     </div>
   );
 }

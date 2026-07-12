@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Section, Field, Row, TextInput, NumberInput, Computed, fmt } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, fmt, num, PaymentFields, DeclarationSection } from "./FormShell";
 
 export interface FIRSCITPayload {
   section_a: Record<string, string>;
@@ -25,8 +25,6 @@ interface Props {
   reportingYear: string;
   onValidChange: (valid: boolean, payload: FIRSCITPayload) => void;
 }
-
-const num = (s: string) => parseFloat(s) || 0;
 
 function determineCategory(turnover: number): { category: string; rate: number } {
   if (turnover < 25_000_000) return { category: "Small", rate: 0 };
@@ -107,27 +105,23 @@ export default function FIRSCITForm({ companyName, rcNumber, reportingYear, onVa
       <Section letter="D" title="Payment Details">
         <Field label="Advance tax paid / instalments (₦)"><NumberInput value={b.advance_tax} onChange={ev => setB({ ...b, advance_tax: ev.target.value })} /></Field>
         <Computed label={c.balance < 0 ? "Refund due" : "Balance payable"} value={Math.abs(c.balance)} prefix={c.balance < 0 ? "−₦" : "₦"} />
-        <Field label="Payment status *">
-          <select value={d.paid} onChange={ev => setD({ ...d, paid: ev.target.value })}
-            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
-            <option value="">Select…</option><option>Paid in full</option><option>Partial</option><option>Unpaid</option>
-          </select>
-        </Field>
-        {(d.paid === "Paid in full" || d.paid === "Partial") && (
-          <Row>
-            <Field label="Payment date"><TextInput type="date" value={d.payment_date} onChange={ev => setD({ ...d, payment_date: ev.target.value })} /></Field>
-            <Field label="FIRS receipt number"><TextInput value={d.receipt_number} onChange={ev => setD({ ...d, receipt_number: ev.target.value })} /></Field>
-          </Row>
-        )}
+        <PaymentFields
+          label="Payment status *"
+          options={["Paid in full", "Partial", "Unpaid"]}
+          paid={d.paid} onPaidChange={v => setD({ ...d, paid: v })}
+          paymentDate={d.payment_date} onPaymentDateChange={v => setD({ ...d, payment_date: v })}
+          receiptNumber={d.receipt_number} onReceiptChange={v => setD({ ...d, receipt_number: v })}
+          receiptLabel="FIRS receipt number"
+          showDetails={p => p === "Paid in full" || p === "Partial"}
+        />
       </Section>
 
-      <Section letter="E" title="Declaration">
-        <Row>
-          <Field label="Authorised Signatory *"><TextInput value={e.signatory_name} onChange={ev => setE({ ...e, signatory_name: ev.target.value })} /></Field>
-          <Field label="Designation *"><TextInput value={e.designation} onChange={ev => setE({ ...e, designation: ev.target.value })} /></Field>
-        </Row>
-        <Field label="Date *"><TextInput type="date" value={e.date} onChange={ev => setE({ ...e, date: ev.target.value })} /></Field>
-      </Section>
+      <DeclarationSection
+        letter="E"
+        signatoryName={e.signatory_name} onSignatoryChange={v => setE({ ...e, signatory_name: v })}
+        designation={e.designation} onDesignationChange={v => setE({ ...e, designation: v })}
+        date={e.date} onDateChange={v => setE({ ...e, date: v })}
+      />
     </div>
   );
 }

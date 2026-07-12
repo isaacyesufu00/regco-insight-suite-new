@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Section, Field, Row, TextInput, NumberInput, Computed, fmt } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, fmt, num, PaymentFields } from "./FormShell";
 
 export interface NDICPremiumPayload {
   section_a: Record<string, string>;
@@ -16,8 +16,6 @@ interface Props {
   reportingYear: string;
   onValidChange: (valid: boolean, payload: NDICPremiumPayload) => void;
 }
-
-const num = (s: string) => parseFloat(s) || 0;
 
 export default function NDICPremiumForm({ institutionName, cbnLicense, reportingYear, onValidChange }: Props) {
   const [a, setA] = useState({
@@ -77,18 +75,15 @@ export default function NDICPremiumForm({ institutionName, cbnLicense, reporting
           <Field label="Premium Rate — NDIC MFB Category"><TextInput value="0.40%" readOnly /></Field>
         </Row>
         <Computed label={`₦${fmt(totalInsured)} × 0.40% = Premium Payable`} value={premiumPayable} prefix="₦" />
-        <Field label="Has premium been paid? *">
-          <select value={c.paid} onChange={ev => setC({ ...c, paid: ev.target.value })}
-            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
-            <option value="">Select…</option><option>Yes</option><option>No</option>
-          </select>
-        </Field>
-        {c.paid === "Yes" && (
-          <Row>
-            <Field label="Date of payment"><TextInput type="date" value={c.payment_date} onChange={ev => setC({ ...c, payment_date: ev.target.value })} /></Field>
-            <Field label="NDIC receipt number"><TextInput value={c.receipt_number} onChange={ev => setC({ ...c, receipt_number: ev.target.value })} /></Field>
-          </Row>
-        )}
+        <PaymentFields
+          label="Has premium been paid? *"
+          options={["Yes", "No"]}
+          paid={c.paid} onPaidChange={v => setC({ ...c, paid: v })}
+          paymentDate={c.payment_date} onPaymentDateChange={v => setC({ ...c, payment_date: v })}
+          receiptNumber={c.receipt_number} onReceiptChange={v => setC({ ...c, receipt_number: v })}
+          dateLabel="Date of payment" receiptLabel="NDIC receipt number"
+          showDetails={p => p === "Yes"}
+        />
       </Section>
 
       <Section letter="D" title="Deposit Breakdown by Type">

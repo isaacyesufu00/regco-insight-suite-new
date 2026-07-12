@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { Section, Field, Row, TextInput, NumberInput, Computed, fmt } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, fmt, num, tableInputStyle, TableHeader, AddRowButton, RemoveRowButton } from "./FormShell";
 
 export interface ExposureRow {
   id: string;
@@ -31,7 +30,6 @@ interface Props {
   onValidChange: (valid: boolean, payload: SingleObligorPayload) => void;
 }
 
-const num = (s: string) => parseFloat(s) || 0;
 const newRow = (): ExposureRow => ({
   id: Math.random().toString(36).slice(2),
   borrower_name: "", borrower_type: "Corporate", account_number: "", sector: "Trade",
@@ -65,7 +63,7 @@ export default function NDICSingleObligorForm({ institutionName, cbnLicense, per
     setRows(rs => rs.map(r => r.id === id ? { ...r, ...patch } : r));
   const removeRow = (id: string) => setRows(rs => rs.length > 1 ? rs.filter(r => r.id !== id) : rs);
 
-  const sel: React.CSSProperties = { width: "100%", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6, padding: "6px 8px", fontSize: 12, background: "#FFF" };
+  const sel = tableInputStyle;
 
   return (
     <div>
@@ -87,13 +85,7 @@ export default function NDICSingleObligorForm({ institutionName, cbnLicense, per
       <Section letter="C" title="Large Exposures">
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: "#F5F5F0" }}>
-                {["Borrower", "Type", "Account #", "Sector", "Facility ₦", "Outstanding ₦", "% Cap", "Collateral", "Coll. ₦", "Class", "DPD", ""].map(h => (
-                  <th key={h} style={{ textAlign: "left", padding: "8px 6px", fontWeight: 600, color: "#0A0A0A", borderBottom: "1px solid rgba(0,0,0,0.12)", whiteSpace: "nowrap" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
+            <TableHeader columns={["Borrower", "Type", "Account #", "Sector", "Facility ₦", "Outstanding ₦", "% Cap", "Collateral", "Coll. ₦", "Class", "DPD", ""]} />
             <tbody>
               {rows.map(r => {
                 const pct = capital > 0 ? (num(r.outstanding) / capital) * 100 : 0;
@@ -128,10 +120,7 @@ export default function NDICSingleObligorForm({ institutionName, cbnLicense, per
                     </td>
                     <td style={{ padding: "4px" }}><input type="number" style={sel} value={r.days_past_due} onChange={ev => updateRow(r.id, { days_past_due: ev.target.value })} /></td>
                     <td style={{ padding: "4px" }}>
-                      <button type="button" onClick={() => removeRow(r.id)} disabled={rows.length === 1}
-                        style={{ background: "transparent", border: "none", color: rows.length === 1 ? "#CCC" : "#0A0A0A", cursor: rows.length === 1 ? "not-allowed" : "pointer", padding: 4 }}>
-                        <Trash2 size={14} />
-                      </button>
+                      <RemoveRowButton onClick={() => removeRow(r.id)} disabled={rows.length === 1} />
                     </td>
                   </tr>
                 );
@@ -139,10 +128,7 @@ export default function NDICSingleObligorForm({ institutionName, cbnLicense, per
             </tbody>
           </table>
         </div>
-        <button type="button" onClick={() => setRows([...rows, newRow()])}
-          style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, background: "#FFF", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", color: "#0A0A0A" }}>
-          <Plus size={14} /> Add exposure row
-        </button>
+        <AddRowButton label="Add exposure row" onClick={() => setRows([...rows, newRow()])} />
       </Section>
 
       <Section letter="D" title="Summary">
