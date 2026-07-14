@@ -64,9 +64,9 @@ const Footer = () => (
         {/* Brand column */}
         <AnimateIn delay={0}>
           <div>
-            <p style={{ fontWeight: 700, fontSize: 17, color: "#1D1D1F", marginBottom: 12 }}>RegCo</p>
+            <p style={{ fontWeight: 700, fontSize: 17, color: "#1D1D1F", marginBottom: 12 }}>RegCo<span style={{color:"#CA0101"}}>.</span></p>
             <p style={{ fontSize: 13, color: "#6E6E73", lineHeight: 1.7, maxWidth: 220 }}>
-              Automated regulatory compliance for every licensed financial institution in Nigeria. CBN. NFIU. SCUML. NDIC. FIRS.
+              Automated regulatory compliance for every licensed financial institution in our market. CBN. NFIU. SCUML. NDIC. FIRS.
             </p>
           </div>
         </AnimateIn>
@@ -137,7 +137,7 @@ const Footer = () => (
             </span>
           ))}
         </div>
-        <span style={{ fontSize: 12, color: "#6E6E73" }}>🇳🇬 Nigeria</span>
+        <span style={{ fontSize: 12, color: "#6E6E73" }}>Global</span>
       </div>
     </div>
 

@@ -160,11 +160,11 @@ export const AuditTrackerSection = () => {
 
 /* ====== SECTION C — REGULATORY INTELLIGENCE ====== */
 export const RegulatoryIntelSection = () => {
-  const sources = ['Nairametrics', 'BusinessDay', 'Punch Nigeria', 'Vanguard', 'The Guardian'];
+  const sources = ['Nairametrics', 'BusinessDay', 'The Punch', 'Vanguard', 'The Guardian'];
   const news = [
     { src: 'Nairametrics', title: 'CBN raises monetary policy rate by 50 basis points', time: '12 min ago', unread: true },
     { src: 'BusinessDay', title: 'NDIC announces revised deposit insurance coverage limits', time: '2 hr ago', unread: true },
-    { src: 'Punch Nigeria', title: 'NFIU issues advisory on virtual asset service providers', time: '5 hr ago', unread: false },
+    { src: 'The Punch', title: 'NFIU issues advisory on virtual asset service providers', time: '5 hr ago', unread: false },
     { src: 'Vanguard', title: 'CBN circular on AML/CFT compliance for microfinance banks', time: '1 day ago', unread: false },
   ];
   return (
@@ -174,7 +174,7 @@ export const RegulatoryIntelSection = () => {
           <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 16 }}>NEW — REGULATORY INTELLIGENCE</p>
           <WordReveal text="CBN circulars. Industry news. Monthly tasks." color="#FFFFFF" />
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.65)', margin: '20px 0 28px', lineHeight: 1.55, maxWidth: 460 }}>
-            Six Nigerian regulatory and banking sources, automatically refreshed every three hours. Plus a monthly task checklist that resets itself.
+            Six regulatory and banking sources, automatically refreshed every three hours. Plus a monthly task checklist that resets itself.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {sources.map((s) => (

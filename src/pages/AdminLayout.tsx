@@ -2,12 +2,13 @@ import { useEffect } from "react";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useNavigate, Outlet, NavLink } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
-import { Users, UserPlus, MessageSquare, Building2 } from "lucide-react";
+import { Users, UserPlus, MessageSquare, Building2, FileCog } from "lucide-react";
 
 const adminNav = [
   { label: "Clients", to: "/admin/clients", icon: Users },
   { label: "Onboard Client", to: "/admin/onboard", icon: UserPlus },
   { label: "Demo Requests", to: "/admin/demos", icon: MessageSquare },
+  { label: "Report Templates", to: "/admin/templates", icon: FileCog },
 ];
 
 const AdminLayout = () => {

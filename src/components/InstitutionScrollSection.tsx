@@ -26,7 +26,7 @@ const stages = [
   {
     label: "FINANCE COMPANIES AND BDCs",
     headline: "The forgotten sector. Until now.",
-    body: "BDCs and finance companies face some of the strictest AML/CFT reporting requirements in the Nigerian financial system. NFIU reporting, SCUML registration, CBN forex returns — RegCo handles all of it.",
+    body: "BDCs and finance companies face some of the strictest AML/CFT reporting requirements in the regulated financial system. NFIU reporting, SCUML registration, CBN forex returns — RegCo handles all of it.",
     stat: "STR filing: within 72 hours of detection",
     building: "M20,180 L20,80 L50,60 L100,60 L130,80 L130,180 M40,180 L40,90 L75,75 L110,90 L110,180 M60,180 L60,100 L90,100 L90,180 M55,70 L95,70 M35,120 L35,150 M115,120 L115,150",
   },
@@ -72,7 +72,7 @@ const InstitutionScrollSection = () => {
         {/* Persistent header */}
         <div className="absolute top-16 left-0 right-0 text-center px-6">
           <h2 style={{ fontWeight: 700, fontSize: "clamp(28px, 4vw, 52px)", color: "white" }}>
-            Built for every licensed financial institution in Nigeria.
+            Built for every licensed financial institution in our market.
           </h2>
         </div>
 

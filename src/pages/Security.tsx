@@ -67,7 +67,7 @@ const accessRight = [
 ];
 
 const badges = [
-  { icon: Flag, line1: "NDPA 2023", line2: "Nigeria Data Protection Act aligned" },
+  { icon: Flag, line1: "NDPA 2023", line2: "Data Protection Act aligned" },
   { icon: FileCheck, line1: "Data Processing Agreement", line2: "Signed with every client before access" },
   { icon: Building, line1: "CAC Registered", line2: "Registered with Corporate Affairs Commission" },
   { icon: ShieldCheck, line1: "SOC 2 Infrastructure", line2: "Built on SOC 2 Type 2 certified infrastructure" },
@@ -92,7 +92,7 @@ const Security = () => (
           viewport={{ once: true }} transition={{ duration: 0.5, delay: 0.1 }}
           className="mt-5 text-background/80 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed"
         >
-          RegCo was built from the ground up for Nigerian financial institutions. Every architectural decision we have made prioritises the security and confidentiality of your institution's data.
+          RegCo was built from the ground up for regulated financial institutions. Every architectural decision we have made prioritises the security and confidentiality of your institution's data.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
@@ -102,7 +102,7 @@ const Security = () => (
           {[
             ["AES-256", "Encryption at rest"],
             ["TLS 1.3", "Encryption in transit"],
-            ["NDPA 2023", "Nigerian data protection aligned"],
+            ["NDPA 2023", "Data Protection Act aligned"],
           ].map(([bold, sub]) => (
             <span key={bold} className="inline-flex items-center gap-2 rounded-full border border-background/20 bg-background/10 px-4 py-2 text-sm text-background">
               <span className="font-semibold">{bold}</span>
@@ -162,7 +162,7 @@ const Security = () => (
               Your CBS export data is processed once to generate your report. All file access is controlled through time-limited signed URLs that expire automatically after 30 minutes. No uploaded file is ever publicly accessible.
             </p>
             <p>
-              Every client relationship is governed by a Data Processing Agreement that is accepted before accessing the platform. RegCo operates in alignment with the Nigeria Data Protection Act 2023.
+              Every client relationship is governed by a Data Processing Agreement that is accepted before accessing the platform. RegCo operates in alignment with the Data Protection Act 2023.
             </p>
           </motion.div>
           <motion.div

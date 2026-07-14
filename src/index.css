@@ -2,138 +2,339 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ═══ COLUMN-INSPIRED REGCO DESIGN SYSTEM v2 ═══ */
-:root {
-  --bg-page: #f5f5f7;
-  --bg-white: #ffffff;
-  --bg-dark: #0d1c2c;
-  --bg-dark-2: #0f2133;
-  --bg-dark-card: rgba(255,255,255,0.04);
-  --tx-primary: #1c2e4a;
-  --tx-secondary: #5a6a7e;
-  --tx-muted: #94a3b8;
-  --tx-on-dark: rgba(255,255,255,0.9);
-  --tx-muted-dark: rgba(255,255,255,0.5);
-  --ac-teal: #0b8c6e;
-  --ac-teal-light: #e6f7f3;
-  --ac-teal-dark: #0daf89;
-  --bd-light: rgba(28,46,74,0.08);
-  --bd-dark: rgba(255,255,255,0.08);
-  --font-head: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Inter', -apple-system, system-ui, sans-serif;
-  --r-btn: 6px;
-  --r-card: 10px;
-  --r-sm: 4px;
-  --sh-card: 0 1px 3px rgba(28,46,74,0.06), 0 8px 24px rgba(28,46,74,0.08);
-  --sh-float: 0 4px 6px rgba(28,46,74,0.04), 0 20px 48px rgba(28,46,74,0.12);
-  --sh-dark-card: 0 1px 0 rgba(255,255,255,0.07), 0 20px 40px rgba(0,0,0,0.3);
-}
+/* ============================================================
+   RegCo — Black & White system (Harvey / Rogo inspired)
+   Apple system font stack across the board. No webfonts.
+   Marketing = strict B/W + hairline grey.
+   Dashboard adds Atlassian operational accents.
+   ============================================================ */
 
 @layer base {
   :root {
-    --background: 0 0% 96.1%;
-    --foreground: 0 0% 11.4%;
+    /* Hero (Kota-style) tokens — blue palette derived from boardroom illustration */
+   --hero-page: #CFE0EE;
+   --hero-card: #EAF2F8;
+   --hero-card-shadow: #B6CFE0;
+   --hero-illus-card: #A9C8DE;
+   --hero-illus-shadow: #8AB0CC;
+   --hero-ink: #0A0A0A;
+   --hero-sub: #2A2A2A;
+
+    /* shadcn semantic tokens (HSL components) */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 11.4%;
+    --card-foreground: 0 0% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 11.4%;
+    --popover-foreground: 0 0% 4%;
 
-    --primary: 211 100% 40%;
+    --primary: 0 0% 4%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 11.4%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 4%;
 
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 42%;
 
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 11.4%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 4%;
 
-    --destructive: 0 79% 56%;
+    --destructive: 0 65% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 0% / 0.08;
-    --input: 0 0% 0% / 0.1;
-    --ring: 211 100% 40%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 4%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --success: 142 71% 45%;
+    --success: 152 60% 28%;
     --success-foreground: 0 0% 100%;
-    --warning: 36 100% 52%;
+    --warning: 36 80% 40%;
     --warning-foreground: 0 0% 100%;
-    --info: 211 100% 40%;
+    --info: 215 100% 40%;
     --info-foreground: 0 0% 100%;
 
+    /* Sidebar (kept for shadcn compat — same B/W palette) */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 11.4%;
-    --sidebar-primary: 0 0% 11.4%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 0 0% 4%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96.1%;
-    --sidebar-accent-foreground: 0 0% 11.4%;
-    --sidebar-border: 0 0% 0% / 0.06;
-    --sidebar-ring: 211 100% 40%;
+    --sidebar-accent: 0 0% 96%;
+    --sidebar-accent-foreground: 0 0% 4%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 4%;
 
-    /* Apple design tokens */
-    --apple-bg: #F5F5F7;
-    --apple-white: #FFFFFF;
-    --apple-dark: #1D1D1F;
-    --apple-black: #000000;
-    --apple-text: #1D1D1F;
-    --apple-text-secondary: #6E6E73;
-    --apple-text-tertiary: #86868B;
-    --apple-link: #0066CC;
-    --apple-border: rgba(0,0,0,0.08);
-    --apple-radius-card: 18px;
-    --apple-radius-large: 28px;
-    --apple-radius-pill: 980px;
-    --apple-shadow: 0 2px 20px rgba(0,0,0,0.08);
-    --apple-shadow-hover: 0 12px 48px rgba(0,0,0,0.14);
-    --apple-transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    --apple-green: #34C759;
-    --apple-orange: #FF9F0A;
-    --apple-red: #FF3B30;
-    --apple-grey: #8E8E93;
+    /* Marketing palette (strict B/W) */
+    --bg:        #FFFFFF;
+    --bg-inverse:#0A0A0A;
+    --ink:       #0A0A0A;
+    --ink-2:     #3A3A3A;
+    --ink-3:     #6B6B6B;
+    --ink-4:     #A8A8A8;
+    --line:      #E5E5E5;
+    --line-2:    #F0F0F0;
+
+    /* Dashboard operational accents */
+    --navy:        #172B4D;
+    --blue:        #0052CC;
+    --blue-soft:   #DEEBFF;
+    --green:       #00875A;
+    --green-soft:  #E3FCEF;
+    --red:         #BF2600;
+    --red-soft:    #FFEBE6;
+    --rail-bg:     #F4F5F7;
+    --rail-border: #DFE1E6;
+
+    /* Helvetica everywhere */
+    --font-sans:    "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-mono:    ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+
+    /* ---------- Legacy compatibility shims ---------- */
+    /* Older pages reference these tokens; map them onto the new B/W palette
+       so nothing breaks while we migrate. */
+    --paper:    #FFFFFF;
+    --paper-2:  #F5F5F5;
+    --ink-muted:#6B6B6B;
+    --rust:     #0A0A0A;          /* CTA hover used to flip to rust — now stays ink */
+    --rust-dark:#000000;
   }
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
+
+  html,
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-display, .font-serif {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
 @layer utilities {
-  .apple-font {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
-  }
+  /* Font helpers — all map to the Apple stack, mono stays mono. */
+  .font-sans  { font-family: var(--font-sans); }
+  .font-serif { font-family: var(--font-sans); font-weight: 600; letter-spacing: -0.02em; }
+  .font-mono  { font-family: var(--font-mono); }
+
+  /* Surface helpers */
+  .bg-paper       { background-color: #FFFFFF; }
+  .bg-paper-2     { background-color: #F5F5F5; }
+  .bg-ink         { background-color: var(--ink); }
+  .text-ink       { color: var(--ink); }
+  .text-ink-2     { color: var(--ink-2); }
+  .text-ink-3     { color: var(--ink-3); }
+  .text-ink-muted { color: var(--ink-3); }
+  .text-rust      { color: var(--ink); }
+  .border-paper-2 { border-color: #E5E5E5; }
+  .border-ink-10  { border-color: #E5E5E5; }
+  .border-ink-15  { border-color: #E0E0E0; }
+
+  .hairline       { border-top: 1px solid var(--line); }
+
+  /* Containers (balanced — 1200 max, 24px gutter) */
+  .container-site    { max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+  .container-narrow  { max-width: 720px;  margin-inline: auto; padding-inline: 24px; }
+  /* Back-compat aliases */
+  .container-editorial { max-width: 1200px; margin-inline: auto; padding-inline: 24px; }
+
+  /* Type scale */
+  .text-display { font-size: clamp(40px, 5.6vw, 56px); line-height: 1.05; letter-spacing: -0.02em; font-weight: 600; }
+  .text-h2      { font-size: clamp(28px, 3.4vw, 36px); line-height: 1.15; letter-spacing: -0.015em; font-weight: 600; }
+  .text-h3      { font-size: 22px; line-height: 1.3;  letter-spacing: -0.01em; font-weight: 600; }
+  .text-body    { font-size: 15px; line-height: 1.55; }
+  .text-small   { font-size: 13px; line-height: 1.5; }
+  .text-kpi     { font-family: var(--font-mono); font-size: 28px; line-height: 1.1; letter-spacing: -0.02em; }
+
+  /* Sections */
+  .section-pad   { padding-block: 56px; }
+  @media (min-width: 768px) { .section-pad { padding-block: 80px; } }
 }
 
-/* Marquee animation */
+/* Motion */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fade-up 0.4s ease-out both; }
+
 @keyframes marquee-left {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  0% { transform: translateX(0); } 100% { transform: translateX(-50%); }
 }
-@keyframes marquee-right {
-  0% { transform: translateX(-50%); }
-  100% { transform: translateX(0); }
-}
-.animate-marquee-left {
-  animation: marquee-left 45s linear infinite;
-}
-.animate-marquee-right {
-  animation: marquee-right 40s linear infinite;
+.animate-marquee-left { animation: marquee-left 45s linear infinite; }
+
+/* ============================================================
+   Legacy class shims (Atlassian-era + Apple-era components)
+   Mapped onto the new B/W palette so we don't have to touch
+   every old component during the rewrite.
+   ============================================================ */
+:root {
+  --font-display: var(--font-sans);
+  --font-body:    var(--font-sans);
+
+  --blue-900: #0A0A0A;
+  --blue-800: #0A0A0A;
+  --blue-700: #0A0A0A;
+  --blue-600: #0A0A0A;
+  --blue-400: #3A3A3A;
+  --blue-200: #E5E5E5;
+  --blue-100: #F0F0F0;
+  --blue-50:  #F7F7F7;
+
+  --n-900: #0A0A0A;
+  --n-800: #171717;
+  --n-700: #262626;
+  --n-600: #404040;
+  --n-500: #6B6B6B;
+  --n-400: #8A8A8A;
+  --n-300: #A8A8A8;
+  --n-200: #C8C8C8;
+  --n-100: #D8D8D8;
+  --n-70:  #E5E5E5;
+  --n-40:  #EFEFEF;
+  --n-30:  #F5F5F5;
+  --n-20:  #F9F9F9;
+  --n-0:   #FFFFFF;
+
+  --green-500: #00875A;
+  --green-100: #E3FCEF;
+  --orange-500: #0A0A0A;
+  --purple-500: #0A0A0A;
+  --teal-500:   #0A0A0A;
+
+  --shadow-sm: 0 1px 0 rgba(0,0,0,0.04);
+  --shadow-md: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-xl: 0 8px 24px rgba(0,0,0,0.08);
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  --apple-bg:               #FFFFFF;
+  --apple-white:            #FFFFFF;
+  --apple-dark:             #0A0A0A;
+  --apple-black:            #0A0A0A;
+  --apple-text:             #0A0A0A;
+  --apple-text-secondary:   #6B6B6B;
+  --apple-text-tertiary:    #A8A8A8;
+  --apple-link:             #0A0A0A;
+  --apple-border:           #E5E5E5;
+  --apple-radius-card:      8px;
+  --apple-radius-large:     12px;
+  --apple-radius-pill:      999px;
+  --apple-shadow:           none;
+  --apple-shadow-hover:     0 2px 8px rgba(0,0,0,0.06);
+  --apple-transition:       all 0.2s ease;
+  --apple-green:            #00875A;
+  --apple-orange:           #0A0A0A;
+  --apple-red:              #BF2600;
+  --apple-grey:             #A8A8A8;
 }
 
-/* CTA pulse */
-@keyframes ctaPulse {
-  0%, 100% { box-shadow: 0 0 80px rgba(0,102,204,0.08); }
-  50% { box-shadow: 0 0 200px rgba(0,102,204,0.18); }
+.atl-blue-underline, .blue-underline {
+  position: relative; display: inline-block; white-space: nowrap; color: var(--ink);
+  font-style: normal; font-weight: 600;
+}
+.atl-blue-underline::after, .blue-underline::after {
+  content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 2px; background: var(--ink); border-radius: 1px;
+}
+
+.atl-section    { padding: 80px 0; }
+.atl-section-sm { padding: 56px 0; }
+.atl-section-lg { padding: 96px 0; }
+.atl-container  { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--ink); color: #fff;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  padding: 0 18px; height: 38px; border-radius: 999px; border: none; cursor: pointer; text-decoration: none;
+  transition: background 0.2s; letter-spacing: 0;
+}
+.btn-primary:hover { background: #262626; }
+
+.btn-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; color: var(--ink);
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500;
+  padding: 0 18px; height: 38px; border-radius: 999px;
+  border: 1px solid var(--line); cursor: pointer; text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-secondary:hover { background: #F5F5F5; border-color: #BFBFBF; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: transparent; color: var(--ink);
+  font-size: 14px; font-weight: 500;
+  border: none; cursor: pointer; text-decoration: none;
+  padding: 8px 0; border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+.btn-ghost:hover { border-bottom-color: var(--ink); }
+
+.tag {
+  display: inline-flex; align-items: center;
+  background: transparent; color: var(--ink-3);
+  font-size: 11px; font-weight: 500;
+  padding: 4px 0; border-radius: 0;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  font-family: var(--font-mono);
+}
+
+.product-icon {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600; flex-shrink: 0;
+  background: #F5F5F5; color: var(--ink);
+}
+
+/* Mockup placeholders are deliberately hidden — no faux screenshots on marketing. */
+.screenshot-placeholder { display: none !important; }
+
+.hero-gradient { background: #FFFFFF; }
+.card-elevated { background: #fff; border: 1px solid var(--line); box-shadow: none; }
+
+/* ============================================================
+   Global light-mode toggle — inverts the entire site.
+   Media (images, video, canvas, embeds) is re-inverted so it
+   stays natural. Works uniformly across every route.
+   ============================================================ */
+html.regco-light {
+  filter: invert(1) hue-rotate(180deg);
+  background: #ffffff;
+}
+html.regco-light body { background: #ffffff; }
+html.regco-light img,
+html.regco-light video,
+html.regco-light canvas,
+html.regco-light svg image,
+html.regco-light iframe,
+html.regco-light picture,
+html.regco-light [data-no-invert] {
+  filter: invert(1) hue-rotate(180deg);
 }

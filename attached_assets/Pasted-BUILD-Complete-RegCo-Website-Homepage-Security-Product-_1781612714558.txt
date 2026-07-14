@@ -1,0 +1,1076 @@
+BUILD: Complete RegCo Website — Homepage, Security, Product, Company, About + FAQ
+Build the entire RegCo marketing website from scratch. All pages share the same design system. Every detail below is exact — follow it precisely. Screenshots will be provided separately; use <img> placeholder elements where screenshots go. Isaac will replace them in the Lovable asset panel.
+
+GLOBAL DESIGN SYSTEM — APPLY TO EVERY PAGE
+css/* Add to src/index.css */
+
+:root {
+  --font: 'Inter', -apple-system, system-ui, sans-serif;
+
+  /* Color palette */
+  --black: #0A0A0A;
+  --white: #FFFFFF;
+  --gray-900: #111111;
+  --gray-700: #374151;
+  --gray-500: #6B7280;
+  --gray-400: #9CA3AF;
+  --gray-200: #E5E7EB;
+  --gray-100: #F3F4F6;
+  --gray-50: #F9FAFB;
+
+  /* Green accents — muted, restrained */
+  --green-900: #14532D;
+  --green-700: #15803D;
+  --green-600: #16A34A;
+  --green-100: #DCFCE7;
+  --green-50: #F0FDF4;
+
+  /* Borders */
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.14);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 48px rgba(0,0,0,0.09), 0 2px 8px rgba(0,0,0,0.04);
+
+  /* Typography scale */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+  --text-4xl: 40px;
+  --text-display: clamp(36px, 5vw, 60px);
+  --text-hero: clamp(40px, 5.5vw, 68px);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--white);
+  color: var(--black);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+/* Accordion animation */
+@keyframes accordion-open {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 400px; }
+}
+
+/* Scroll animation base class */
+.scroll-fade-up {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+SHARED NAVBAR COMPONENT
+Create src/components/marketing/Navbar.tsx:
+tsximport { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { ChevronDown, FileText, Shield, Activity, Users, Newspaper, ClipboardCheck } from 'lucide-react';
+
+const productLinks = [
+  { icon: FileText, label: 'Report Generation', sub: '17 mandatory returns automated', href: '/product/reports' },
+  { icon: Activity, label: 'AML Monitoring', sub: 'Real-time transaction screening', href: '/product/transactions' },
+  { icon: Users, label: 'Customer 360', sub: 'Full customer intelligence', href: '/product/customer-360' },
+  { icon: Shield, label: 'Sanctions Screening', sub: 'Five global lists, 3 seconds', href: '/product/screening' },
+  { icon: Newspaper, label: 'Regulatory Intelligence', sub: 'CBN circulars and news feed', href: '/product/regulatory-intelligence' },
+  { icon: ClipboardCheck, label: 'Audit Tracker', sub: 'Examination findings, end to end', href: '/product/audit-tracker' },
+];
+
+export const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [productOpen, setProductOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => { setProductOpen(false); }, [location.pathname]);
+
+  return (
+    <header style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
+      height: '56px',
+      background: scrolled ? 'rgba(255,255,255,0.95)' : '#FFFFFF',
+      backdropFilter: scrolled ? 'blur(12px)' : 'none',
+      borderBottom: `1px solid ${scrolled ? 'rgba(0,0,0,0.08)' : 'transparent'}`,
+      transition: 'border-color 0.2s, background 0.2s',
+      display: 'flex', alignItems: 'center',
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+        {/* Logo */}
+        <Link to="/" style={{ fontSize: '16px', fontWeight: '700', color: '#0A0A0A', textDecoration: 'none', letterSpacing: '-0.4px', flexShrink: 0 }}>
+          RegCo
+        </Link>
+
+        {/* Center nav */}
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          {/* Product dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setProductOpen(p => !p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', border: 'none', background: 'transparent', fontSize: '14px', color: '#374151', cursor: 'pointer', borderRadius: '6px', fontFamily: 'var(--font)', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+            >
+              Product <ChevronDown size={13} style={{ transition: 'transform 0.2s', transform: productOpen ? 'rotate(180deg)' : 'none' }} />
+            </button>
+
+            {productOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                width: '520px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.09)',
+                borderRadius: '12px', padding: '8px', boxShadow: '0 16px 64px rgba(0,0,0,0.10)',
+                display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px',
+              }}>
+                <div style={{ gridColumn: '1/-1', padding: '8px 10px 8px', borderBottom: '1px solid rgba(0,0,0,0.06)', marginBottom: '2px' }}>
+                  <p style={{ fontSize: '11px', fontWeight: '600', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>Features</p>
+                </div>
+                {productLinks.map(item => (
+                  <Link key={item.label} to={item.href} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px', borderRadius: '8px', textDecoration: 'none', transition: 'background 0.1s' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F9FAFB'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                  >
+                    <div style={{ width: '30px', height: '30px', borderRadius: '7px', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <item.icon size={14} color="#374151" strokeWidth={1.7} />
+                    </div>
+                    <div>
+                      <p style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A', margin: '0 0 1px' }}>{item.label}</p>
+                      <p style={{ fontSize: '12px', color: '#6B7280', margin: 0 }}>{item.sub}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {[
+            { label: 'Security', href: '/security' },
+            { label: 'Who We Serve', href: '/who-we-serve' },
+            { label: 'Company', href: '/company' },
+            { label: 'About', href: '/about' },
+          ].map(link => (
+            <Link key={link.label} to={link.href} style={{ padding: '6px 12px', fontSize: '14px', color: '#374151', textDecoration: 'none', borderRadius: '6px', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right CTAs */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <Link to="/sign-in" style={{ fontSize: '14px', color: '#374151', textDecoration: 'none', padding: '6px 12px', borderRadius: '6px', letterSpacing: '-0.1px', transition: 'background 0.1s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#F3F4F6'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+          >
+            Log in
+          </Link>
+          <Link to="/book-demo" style={{ fontSize: '14px', fontWeight: '600', color: '#FFFFFF', background: '#16A34A', borderRadius: '7px', padding: '7px 18px', textDecoration: 'none', letterSpacing: '-0.1px', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
+          >
+            Request a demo
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+SHARED FOOTER COMPONENT
+Create src/components/marketing/Footer.tsx:
+tsximport { Link } from 'react-router-dom';
+
+export const Footer = () => (
+  <footer style={{ background: '#0A0A0A', color: '#FFFFFF', padding: '64px 0 40px' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr', gap: '48px', marginBottom: '48px' }}>
+        <div>
+          <p style={{ fontSize: '16px', fontWeight: '700', marginBottom: '12px', letterSpacing: '-0.3px' }}>RegCo</p>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: '240px' }}>
+            AI compliance for Nigerian licensed financial institutions.
+          </p>
+        </div>
+        {[
+          { heading: 'Product', links: [{ label: 'Features', href: '/product' }, { label: 'Security', href: '/security' }, { label: 'Pricing', href: '/pricing' }, { label: 'Request a demo', href: '/book-demo' }] },
+          { heading: 'Company', links: [{ label: 'About', href: '/about' }, { label: 'Company', href: '/company' }, { label: 'News', href: '/news' }, { label: 'Who We Serve', href: '/who-we-serve' }] },
+          { heading: 'Legal', links: [{ label: 'Privacy Policy', href: '/legal/privacy-policy' }, { label: 'Terms of Service', href: '/legal/terms-of-service' }, { label: 'Data Processing', href: '/legal/data-processing' }, { label: 'NDPC Compliance', href: '/legal/ndpc-compliance' }] },
+          { heading: 'Support', links: [{ label: 'Help Centre', href: '/contact/support' }, { label: 'Contact', href: '/contact/support' }, { label: 'Partnerships', href: '/contact/partnerships' }] },
+        ].map(col => (
+          <div key={col.heading}>
+            <p style={{ fontSize: '11px', fontWeight: '600', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '14px' }}>{col.heading}</p>
+            {col.links.map(link => (
+              <Link key={link.label} to={link.href} style={{ display: 'block', fontSize: '14px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', marginBottom: '9px', transition: 'color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#FFFFFF'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)'}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '28px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>RegCo Technologies Limited · Abuja, Nigeria · 2026</p>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>CBN · NFIU · SCUML · NDIC · FIRS · PENCOM</p>
+      </div>
+    </div>
+  </footer>
+);
+
+PAGE 1 — HOMEPAGE (/home)
+Create src/pages/marketing/Homepage.tsx. This is the main landing page. Every section must be built exactly.
+tsximport { useState, useEffect, useRef } from 'react';
+import { Navbar } from '@/components/marketing/Navbar';
+import { Footer } from '@/components/marketing/Footer';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+
+export default function Homepage() {
+  return (
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      <Navbar />
+      <HeroSection />
+      <LogoBar />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <DashboardSection />
+      <ReportsSection />
+      <FaqSection />
+      <FinalCtaSection />
+      <Footer />
+    </div>
+  );
+}
+HERO SECTION
+tsxconst HeroSection = () => (
+  <section style={{ paddingTop: '120px', paddingBottom: '100px', background: '#FFFFFF', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
+
+      {/* Left: copy */}
+      <div>
+        {/* Eyebrow label */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#F0FDF4', border: '1px solid #DCFCE7', borderRadius: '999px', padding: '4px 12px', marginBottom: '28px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A' }} />
+          <span style={{ fontSize: '12px', fontWeight: '600', color: '#15803D', letterSpacing: '0.02em' }}>Now in early access</span>
+        </div>
+
+        {/* Headline */}
+        <h1 style={{ fontSize: 'clamp(38px, 5vw, 62px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', lineHeight: 1.06, marginBottom: '20px' }}>
+          AI compliance for financial institutions.
+        </h1>
+
+        {/* Subheadline */}
+        <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, marginBottom: '36px', maxWidth: '440px' }}>
+          RegCo helps Nigerian banks, fintechs, and microfinance banks turn regulation into action — reports, audit trails, and compliance workflows, powered by AI.
+        </p>
+
+        {/* CTA buttons */}
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <Link to="/book-demo" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16A34A', color: '#FFFFFF', fontSize: '15px', fontWeight: '600', padding: '12px 26px', borderRadius: '8px', textDecoration: 'none', letterSpacing: '-0.1px', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
+          >
+            Request a demo <ChevronRight size={15} />
+          </Link>
+          <Link to="/product" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '15px', color: '#374151', textDecoration: 'none', fontWeight: '500', padding: '12px 4px', borderBottom: '1px solid transparent', transition: 'border-color 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderBottomColor = '#9CA3AF'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent'}
+          >
+            See how it works →
+          </Link>
+        </div>
+      </div>
+
+      {/* Right: product screenshot */}
+      {/* Isaac: upload your agent/dashboard screenshot to Lovable assets and replace the src below */}
+      <div style={{ position: 'relative' }}>
+        <div style={{ background: '#F3F4F6', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.07)', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.09)' }}>
+          <img
+            src="/lovable-uploads/hero-screenshot.png"
+            alt="RegCo Agent Interface"
+            style={{ width: '100%', display: 'block' }}
+          />
+        </div>
+        {/* Floating badge */}
+        <div style={{ position: 'absolute', bottom: '-16px', left: '24px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px', padding: '10px 16px', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16A34A' }} />
+          <span style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A' }}>16 regulators returns automated</span>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+LOGO / TRUST BAR
+tsxconst LogoBar = () => (
+  <section style={{ background: '#F9FAFB', borderBottom: '1px solid rgba(0,0,0,0.06)', padding: '28px 0' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+      <p style={{ fontSize: '12px', fontWeight: '500', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.1em', textAlign: 'center', marginBottom: '20px' }}>
+        Built for institutions regulated by
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '48px', flexWrap: 'wrap' }}>
+        {['CBN', 'NFIU', 'SCUML', 'NDIC', 'FIRS', 'PENCOM'].map(reg => (
+          <span key={reg} style={{ fontSize: '15px', fontWeight: '700', color: '#9CA3AF', letterSpacing: '0.05em' }}>{reg}</span>
+        ))}
+      </div>
+    </div>
+  </section>
+);
+FEATURES SECTION
+tsxconst features = [
+  {
+    number: '01',
+    headline: 'All 17 returns. One upload.',
+    body: 'RegCo reads your CBS trial balance and generates every mandatory regulatory return across CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM — in under 5 minutes. No templates. No data entry.',
+    img: '/lovable-uploads/feature-reports.png',
+  },
+  {
+    number: '02',
+    headline: 'Real-time AML monitoring.',
+    body: 'Six CBN-compliant AML rules applied to every transaction the moment it posts. CTRs, structuring, velocity anomalies, dormant reactivations — all surfaced within 2 seconds.',
+    img: '/lovable-uploads/feature-aml.png',
+  },
+  {
+    number: '03',
+    headline: 'Five sanctions lists. Three seconds.',
+    body: 'Screen any customer against the UN Security Council, OFAC SDN, EU Consolidated, UK HM Treasury, and CBN Watchlist simultaneously. Nigerian PEPs identified automatically.',
+    img: '/lovable-uploads/feature-screening.png',
+  },
+  {
+    number: '04',
+    headline: 'Board packs in 30 seconds.',
+    body: 'RegCo compiles your filings, AML activity, KYC metrics, and screening history into a formatted compliance committee report automatically every month.',
+    img: '/lovable-uploads/feature-boardpack.png',
+  },
+];
+
+const FeaturesSection = () => (
+  <section style={{ background: '#FFFFFF', padding: '100px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+
+      {/* Section header */}
+      <div style={{ marginBottom: '72px' }}>
+        <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>What RegCo does</p>
+        <h2 style={{ fontSize: 'clamp(28px, 3.5vw, 44px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-1.2px', lineHeight: 1.1, maxWidth: '520px' }}>
+          Everything a compliance team needs. In one place.
+        </h2>
+      </div>
+
+      {/* Alternating feature rows */}
+      {features.map((feat, i) => (
+        <motion.div
+          key={feat.number}
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: i % 2 === 0 ? '1fr 1fr' : '1fr 1fr',
+            gap: '64px',
+            alignItems: 'center',
+            paddingBottom: i < features.length - 1 ? '80px' : '0',
+            marginBottom: i < features.length - 1 ? '80px' : '0',
+            borderBottom: i < features.length - 1 ? '1px solid rgba(0,0,0,0.05)' : 'none',
+          }}
+        >
+          {/* Text side */}
+          <div style={{ order: i % 2 === 0 ? 1 : 2 }}>
+            <p style={{ fontSize: '11px', fontFamily: 'monospace', color: '#9CA3AF', marginBottom: '16px' }}>{feat.number}</p>
+            <h3 style={{ fontSize: 'clamp(22px, 2.8vw, 34px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', lineHeight: 1.15, marginBottom: '16px' }}>
+              {feat.headline}
+            </h3>
+            <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.75, marginBottom: '24px' }}>
+              {feat.body}
+            </p>
+            <Link to="/product" style={{ fontSize: '14px', fontWeight: '600', color: '#15803D', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', borderBottom: '1px solid #DCFCE7', paddingBottom: '2px', transition: 'border-color 0.15s' }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderBottomColor = '#16A34A'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderBottomColor = '#DCFCE7'}
+            >
+              Learn more →
+            </Link>
+          </div>
+
+          {/* Screenshot side */}
+          {/* Isaac: replace src with your screenshot for this feature */}
+          <div style={{ order: i % 2 === 0 ? 2 : 1 }}>
+            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 8px 40px rgba(0,0,0,0.07)' }}>
+              <img src={feat.img} alt={feat.headline} style={{ width: '100%', display: 'block' }} />
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  </section>
+);
+HOW IT WORKS SECTION
+tsxconst HowItWorksSection = () => (
+  <section style={{ background: '#F9FAFB', padding: '100px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+
+      <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>How it works</p>
+        <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 40px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-1px', lineHeight: 1.1 }}>
+          From CBS export to filed return. Five minutes.
+        </h2>
+      </div>
+
+      {/* Steps grid — 5 columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0', position: 'relative' }}>
+        {/* Horizontal connector line */}
+        <div style={{ position: 'absolute', top: '28px', left: '10%', right: '10%', height: '1px', background: 'rgba(0,0,0,0.08)', zIndex: 0 }} />
+
+        {[
+          { step: '01', title: 'Upload', body: 'Upload your CBS trial balance or transaction file. Any format — Excel, CSV.' },
+          { step: '02', title: 'Ask', body: 'Tell RegCo Agent what you need. "Generate my May CBN MFB return."' },
+          { step: '03', title: 'Analyse', body: 'RegCo validates your data — CAR, liquidity, NPL — against CBN thresholds.' },
+          { step: '04', title: 'Act', body: 'Confirm the details in the modal. RegCo generates the formatted return.' },
+          { step: '05', title: 'Report', body: 'Download the ready return, file it, and store it in your audit trail.' },
+        ].map((item, i) => (
+          <motion.div
+            key={item.step}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.09, duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            style={{ padding: '0 20px', textAlign: 'center', position: 'relative', zIndex: 1 }}
+          >
+            <div style={{ width: '56px', height: '56px', borderRadius: '14px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.09)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#16A34A', fontFamily: 'monospace' }}>{item.step}</span>
+            </div>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#0A0A0A', marginBottom: '8px', letterSpacing: '-0.2px' }}>{item.title}</h3>
+            <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65 }}>{item.body}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Screenshot below steps */}
+      {/* Isaac: upload a workflow screenshot */}
+      <div style={{ marginTop: '64px', borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 12px 48px rgba(0,0,0,0.07)' }}>
+        <img src="/lovable-uploads/workflow-screenshot.png" alt="RegCo workflow" style={{ width: '100%', display: 'block' }} />
+      </div>
+    </div>
+  </section>
+);
+DASHBOARD MONITORING SECTION
+tsxconst DashboardSection = () => (
+  <section style={{ background: '#0A0A0A', padding: '100px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
+
+        {/* Text */}
+        <motion.div
+          initial={{ opacity: 0, x: -24 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.65 }}
+        >
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>Live monitoring</p>
+          <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 40px)', fontWeight: '700', color: '#FFFFFF', letterSpacing: '-1px', lineHeight: 1.1, marginBottom: '20px' }}>
+            Your compliance health. At a glance.
+          </h2>
+          <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, marginBottom: '32px' }}>
+            Every transaction screened in real time. Every pending filing tracked with its deadline. Every AML flag surfaced with severity and context. Your compliance score updated automatically.
+          </p>
+          {[
+            'Live AML transaction screening across all channels',
+            'Compliance health score updated in real time',
+            'CBN deadline tracker with countdown per return',
+            'Instant alert for critical flags requiring review',
+          ].map(item => (
+            <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A', flexShrink: 0 }} />
+              <span style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)' }}>{item}</span>
+            </div>
+          ))}
+          <Link to="/book-demo" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16A34A', color: '#FFFFFF', fontSize: '14px', fontWeight: '600', padding: '11px 22px', borderRadius: '7px', textDecoration: 'none', marginTop: '16px', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
+          >
+            See the dashboard →
+          </Link>
+        </motion.div>
+
+        {/* Screenshot */}
+        {/* Isaac: upload your dashboard/monitoring screenshot */}
+        <motion.div initial={{ opacity: 0, x: 24 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.65, delay: 0.1 }}>
+          <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 20px 80px rgba(0,0,0,0.4)' }}>
+            <img src="/lovable-uploads/dashboard-screenshot.png" alt="RegCo Dashboard" style={{ width: '100%', display: 'block' }} />
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  </section>
+);
+REPORTS SECTION
+tsxconst ReportsSection = () => (
+  <section style={{ background: '#FFFFFF', padding: '100px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+
+      <div style={{ textAlign: 'center', marginBottom: '56px' }}>
+        <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>Reports and audit packs</p>
+        <h2 style={{ fontSize: 'clamp(26px, 3.2vw, 40px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-1px', lineHeight: 1.1 }}>
+          Every return. Every pack. Always audit-ready.
+        </h2>
+      </div>
+
+      {/* Three column cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginBottom: '56px' }}>
+        {[
+          { label: 'CBN', count: '6', desc: 'MFB Regulatory, Monetary Policy, Prudential, Forex, Board Governance, Consumer Protection' },
+          { label: 'NFIU · SCUML · NDIC', count: '6', desc: 'AML/CFT Report, Regulatory Return, International Transfers, Annual Compliance, Premium Return, Single Obligor' },
+          { label: 'FIRS · PENCOM', count: '5', desc: 'VAT at 7.5%, PAYE with pension deductions, WHT by payment type, Company Income Tax, and PENCOM pension remittance' },
+        ].map(item => (
+          <div key={item.label} style={{ background: '#F9FAFB', borderRadius: '12px', padding: '28px', border: '1px solid rgba(0,0,0,0.07)' }}>
+            <p style={{ fontSize: '11px', fontWeight: '700', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>{item.label}</p>
+            <p style={{ fontSize: '40px', fontWeight: '800', color: '#0A0A0A', letterSpacing: '-2px', marginBottom: '12px', lineHeight: 1 }}>{item.count}</p>
+            <p style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.65 }}>{item.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Screenshot */}
+      {/* Isaac: upload your reports/audit pack screenshot */}
+      <div style={{ borderRadius: '14px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 8px 40px rgba(0,0,0,0.06)' }}>
+        <img src="/lovable-uploads/reports-screenshot.png" alt="RegCo Reports" style={{ width: '100%', display: 'block' }} />
+      </div>
+    </div>
+  </section>
+);
+FAQ SECTION
+tsxconst faqs = [
+  { q: 'What is RegCo?', a: 'RegCo is an AI compliance platform for Nigerian licensed financial institutions. It automates mandatory regulatory filings, monitors transactions for AML violations, screens customers against sanctions lists, and helps compliance officers manage their entire regulatory workload from one interface.' },
+  { q: 'Who is RegCo for?', a: 'RegCo is built for compliance teams at CBN-licensed institutions: Unit MFBs, State MFBs, National MFBs, Primary Mortgage Banks, Finance Companies, and Commercial Banks. Any institution with mandatory filing obligations to CBN, NFIU, SCUML, NDIC, FIRS, or PENCOM will benefit.' },
+  { q: 'Can RegCo read uploaded documents?', a: 'Yes. Upload your CBS trial balance, loan portfolio, transaction CSV, or any compliance document. RegCo reads the file, validates the data, and uses it to generate the relevant returns or analysis.' },
+  { q: 'Can RegCo generate regulatory returns automatically?', a: 'Yes. RegCo Agent generates all 17 mandatory returns from your CBS export. You upload the file, confirm the period and details through a guided form, and RegCo produces the submission-ready return — in under 5 minutes.' },
+  { q: 'How does RegCo handle AML compliance?', a: 'RegCo applies six CBN-compliant AML rules to every transaction: CTR filing for amounts above NGN 5 million, structuring detection, velocity monitoring, round-figure flagging, dormant account reactivation detection, and narration mismatch analysis. Critical flags are surfaced within 2 seconds of transaction posting.' },
+  { q: 'Is RegCo secure for regulated institutions?', a: 'Yes. RegCo uses PKCE authentication, row-level security on all data, input sanitization, 8-hour session timeouts, encrypted storage, and is registered with the Nigeria Data Protection Commission (NDPC) under the NDPA 2023. Your institution\'s data is isolated from all other clients at the database level.' },
+  { q: 'Does RegCo replace our compliance officer?', a: 'No. RegCo is a tool for compliance officers, not a replacement. It handles the mechanical work — data entry, formatting, calculations, deadline tracking — so your compliance officer can focus on judgment, interpretation, and decision-making.' },
+  { q: 'How do I get started?', a: 'Request a demo using the button on this page. We will schedule a walkthrough, configure your institution profile, and have you generating your first return in under 30 minutes.' },
+];
+
+const FaqSection = () => {
+  const [open, setOpen] = useState<number | null>(null);
+
+  return (
+    <section style={{ background: '#FFFFFF', padding: '100px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+      <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 40px' }}>
+
+        <div style={{ marginBottom: '48px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>Frequently asked questions</p>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 38px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', lineHeight: 1.12, marginBottom: '8px' }}>
+            Common questions from banks, fintechs, and compliance teams.
+          </h2>
+        </div>
+
+        {faqs.map((faq, i) => (
+          <div key={i} style={{ borderBottom: '1px solid rgba(0,0,0,0.07)' }}>
+            <button
+              onClick={() => setOpen(open === i ? null : i)}
+              style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font)' }}
+            >
+              <span style={{ fontSize: '15px', fontWeight: '600', color: '#0A0A0A', lineHeight: 1.4, paddingRight: '24px', letterSpacing: '-0.1px' }}>{faq.q}</span>
+              <ChevronDown size={16} color="#9CA3AF" style={{ flexShrink: 0, transition: 'transform 0.22s', transform: open === i ? 'rotate(180deg)' : 'none' }} />
+            </button>
+            {open === i && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                style={{ overflow: 'hidden' }}
+              >
+                <p style={{ fontSize: '15px', color: '#6B7280', lineHeight: 1.75, paddingBottom: '20px' }}>{faq.a}</p>
+              </motion.div>
+            )}
+          </div>
+        ))}
+
+        <div style={{ marginTop: '40px', textAlign: 'center' }}>
+          <p style={{ fontSize: '15px', color: '#6B7280', marginBottom: '16px' }}>Still have questions? We are here to help.</p>
+          <Link to="/book-demo" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16A34A', color: '#FFFFFF', fontSize: '14px', fontWeight: '600', padding: '11px 22px', borderRadius: '7px', textDecoration: 'none', transition: 'background 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
+          >
+            Request a demo →
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+FINAL CTA SECTION
+tsxconst FinalCtaSection = () => (
+  <section style={{ background: '#0A0A0A', padding: '120px 0' }}>
+    <div style={{ maxWidth: '760px', margin: '0 auto', padding: '0 40px', textAlign: 'center' }}>
+      <h2 style={{ fontSize: 'clamp(32px, 4.5vw, 56px)', fontWeight: '700', color: '#FFFFFF', letterSpacing: '-2px', lineHeight: 1.06, marginBottom: '20px' }}>
+        AI compliance for your institution. Ready in 30 minutes.
+      </h2>
+      <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, marginBottom: '36px', maxWidth: '500px', margin: '0 auto 36px' }}>
+        Join Nigerian financial institutions that file faster, screen smarter, and never miss a CBN deadline.
+      </p>
+      <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', alignItems: 'center' }}>
+        <Link to="/book-demo" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16A34A', color: '#FFFFFF', fontSize: '15px', fontWeight: '600', padding: '13px 28px', borderRadius: '8px', textDecoration: 'none', transition: 'background 0.15s' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#15803D'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#16A34A'}
+        >
+          Request a demo
+        </Link>
+        <Link to="/product" style={{ fontSize: '15px', color: 'rgba(255,255,255,0.6)', textDecoration: 'none', padding: '13px 4px', transition: 'color 0.15s' }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = '#FFFFFF'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)'}
+        >
+          See how it works →
+        </Link>
+      </div>
+    </div>
+  </section>
+);
+
+PAGE 2 — SECURITY PAGE (/security)
+Create src/pages/marketing/SecurityPage.tsx:
+tsxexport default function SecurityPage() {
+  return (
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      <Navbar />
+
+      {/* Hero */}
+      <section style={{ padding: '120px 0 80px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Security</p>
+          <h1 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', lineHeight: 1.07, marginBottom: '20px', maxWidth: '700px' }}>
+            Security built for regulated financial institutions.
+          </h1>
+          <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, maxWidth: '560px' }}>
+            RegCo is designed for compliance teams handling sensitive financial data. Every technical decision prioritises trust, auditability, and control.
+          </p>
+        </div>
+      </section>
+
+      {/* Three pillars */}
+      <section style={{ padding: '80px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
+          {[
+            { title: 'No training on your data', body: 'Your institution\'s financial data, customer records, and CBS exports are never used to train or update any AI model. Your data is used only to generate your regulatory outputs and nothing else.' },
+            { title: 'Isolated data environments', body: 'Row-level security at the PostgreSQL level means every query is scoped to your institution only. It is architecturally impossible for one client\'s data to be accessed by another.' },
+            { title: 'Full audit visibility', body: 'Every agent action, report generation, screening result, and user activity is logged with a timestamp, user identity, and outcome. Your trail is always ready for CBN examiners.' },
+          ].map(item => (
+            <div key={item.title} style={{ background: '#FFFFFF', padding: '40px 36px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#0A0A0A', marginBottom: '12px', letterSpacing: '-0.3px' }}>{item.title}</h3>
+              <p style={{ fontSize: '15px', color: '#6B7280', lineHeight: 1.75, margin: 0 }}>{item.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Security details — 8 items in 2-column grid */}
+      <section style={{ padding: '80px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '48px' }}>
+            Security architecture
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
+            {[
+              { title: 'PKCE Authentication', body: 'The most secure Supabase auth flow. Every session uses a code verifier and challenge. No tokens are exposed in URLs or logs.' },
+              { title: 'Row-Level Security', body: 'All data access is filtered at the PostgreSQL level to your institution. No application-layer workaround can override this.' },
+              { title: 'Input Sanitisation', body: 'All user inputs are sanitised before reaching the database. SQL injection, XSS, and injection attacks are blocked at the application layer.' },
+              { title: 'Encrypted at Rest and in Transit', body: 'All data encrypted at rest (AES-256) and in transit (TLS 1.3). Storage bucket access requires authenticated sessions.' },
+              { title: 'Rate Limiting and Lockout', body: 'Login attempts are limited to 5 per 15 minutes per device. Repeated failures trigger an automatic lockout.' },
+              { title: 'Session Timeout', body: 'Sessions expire after 8 hours of inactivity and require re-authentication. This matches CBN security guidelines for financial system access.' },
+              { title: 'NDPC Registration', body: 'RegCo is registered with the Nigeria Data Protection Commission as both Data Controller and Data Processor under the NDPA 2023.' },
+              { title: 'No Vendor Lock-in', body: 'Your data lives in your Supabase project. You can export everything at any time. We hold nothing proprietary over your institution\'s records.' },
+            ].map(item => (
+              <div key={item.title} style={{ background: '#FFFFFF', padding: '32px 36px' }}>
+                <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#0A0A0A', marginBottom: '8px', letterSpacing: '-0.2px' }}>{item.title}</h3>
+                <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.7, margin: 0 }}>{item.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Compliance table */}
+      <section style={{ padding: '80px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '20px' }}>
+              NDPC registered. CBN-ready architecture.
+            </h2>
+            <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.75, marginBottom: '28px' }}>
+              RegCo operates a formal Data Processing Agreement with every client institution. Our security posture meets CBN Baseline Standards for Automated AML Solutions.
+            </p>
+            <Link to="/book-demo" style={{ fontSize: '14px', fontWeight: '600', color: '#15803D', textDecoration: 'none', borderBottom: '1px solid #DCFCE7', paddingBottom: '2px' }}>
+              Talk to us about security →
+            </Link>
+          </div>
+          <div>
+            {[
+              { label: 'NDPC Registration', value: 'Registered' },
+              { label: 'Data Processing Agreement', value: 'Available for all clients' },
+              { label: 'CBN AML Baseline Standards', value: 'Compliant' },
+              { label: 'NDPA 2023', value: 'Compliant' },
+              { label: 'Data Residency', value: 'Nigeria / Supabase US-East' },
+              { label: 'Encryption', value: 'AES-256 + TLS 1.3' },
+            ].map(item => (
+              <div key={item.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                <span style={{ fontSize: '14px', color: '#6B7280' }}>{item.label}</span>
+                <span style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A' }}>{item.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ padding: '80px 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', padding: '0 40px' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '12px' }}>Need more security detail?</h2>
+          <p style={{ fontSize: '16px', color: '#6B7280', marginBottom: '28px', lineHeight: 1.7 }}>Our team will walk you through our architecture, compliance posture, and data handling practices in a dedicated security conversation.</p>
+          <Link to="/book-demo" style={{ display: 'inline-flex', background: '#16A34A', color: '#FFFFFF', fontSize: '14px', fontWeight: '600', padding: '12px 24px', borderRadius: '7px', textDecoration: 'none' }}>
+            Request a security briefing →
+          </Link>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+PAGE 3 — PRODUCT PAGE (/product)
+Create src/pages/marketing/ProductPage.tsx:
+tsxconst productFeatures = [
+  { tag: 'AI Agent', headline: 'Ask. RegCo does it.', body: 'Talk to RegCo Agent in plain English. Ask it to generate a return, screen a customer, flag AML risks, or summarise your compliance position. It understands context, asks when it needs more, and executes the task.' },
+  { tag: 'Report Generation', headline: '17 returns. One conversation.', body: 'Upload your CBS trial balance once. RegCo generates every mandatory regulatory return across CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM. Validated against CBN thresholds before generating.' },
+  { tag: 'Document Analysis', headline: 'Upload. Extract. Understand.', body: 'Upload regulatory circulars, CBS exports, loan schedules, or policy documents. RegCo reads them, extracts the relevant data, and surfaces exactly what you need.' },
+  { tag: 'AML and Monitoring', headline: 'Catch every flag. Before CBN does.', body: 'Six CBN-compliant AML rules applied to every transaction. CTRs, structuring, velocity, round figures, dormant accounts, narration mismatch. All detected within 2 seconds.' },
+  { tag: 'Policies and SOPs', headline: 'Draft. Review. Distribute.', body: 'RegCo Agent drafts AML/CFT policies, KYC procedures, and compliance SOPs aligned to CBN guidelines. Edit inline, then save to your compliance vault.' },
+  { tag: 'Tasks and Deadlines', headline: 'Never miss a filing date.', body: 'Pre-populated monthly compliance task checklist. Deadline countdown per return type. Automated reminders. Every obligation tracked with its due date.' },
+  { tag: 'Audit Packs', headline: 'CBN examiners ask. You already have it.', body: 'RegCo compiles your filings, AML logs, case decisions, and evidence trails into a structured audit pack. One click. Full export. Ready for any examination.' },
+  { tag: 'Board Summaries', headline: 'Your board pack. 30 seconds.', body: 'Automated monthly compliance committee reports covering filings, AML activity, KYC rates, screening results, and outstanding issues. Formatted. Ready to distribute.' },
+];
+
+export default function ProductPage() {
+  return (
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      <Navbar />
+
+      {/* Hero */}
+      <section style={{ padding: '120px 0 80px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', textAlign: 'center' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>The product</p>
+          <h1 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', lineHeight: 1.07, marginBottom: '20px' }}>
+            RegCo is a compliance command center for regulated financial institutions.
+          </h1>
+          <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, maxWidth: '560px', margin: '0 auto 36px' }}>
+            Everything your compliance team needs to file correctly, monitor continuously, and stay audit-ready — in a single AI-powered interface.
+          </p>
+          <Link to="/book-demo" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#16A34A', color: '#FFFFFF', fontSize: '15px', fontWeight: '600', padding: '12px 26px', borderRadius: '8px', textDecoration: 'none' }}>
+            Request a demo →
+          </Link>
+        </div>
+
+        {/* Hero screenshot */}
+        {/* Isaac: upload your full product screenshot */}
+        <div style={{ maxWidth: '1000px', margin: '64px auto 0', padding: '0 40px' }}>
+          <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 20px 80px rgba(0,0,0,0.09)' }}>
+            <img src="/lovable-uploads/product-hero.png" alt="RegCo Product" style={{ width: '100%', display: 'block' }} />
+          </div>
+        </div>
+      </section>
+
+      {/* Feature sections — alternating layout */}
+      {productFeatures.map((feat, i) => (
+        <motion.section
+          key={feat.tag}
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          style={{ padding: '80px 0', background: i % 2 === 0 ? '#FFFFFF' : '#F9FAFB', borderBottom: '1px solid rgba(0,0,0,0.05)' }}
+        >
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'center' }}>
+            <div style={{ order: i % 2 === 0 ? 1 : 2 }}>
+              <p style={{ fontSize: '11px', fontWeight: '700', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>{feat.tag}</p>
+              <h2 style={{ fontSize: 'clamp(22px, 2.8vw, 34px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', lineHeight: 1.15, marginBottom: '16px' }}>{feat.headline}</h2>
+              <p style={{ fontSize: '15px', color: '#6B7280', lineHeight: 1.75, marginBottom: '24px' }}>{feat.body}</p>
+              <Link to="/book-demo" style={{ fontSize: '14px', fontWeight: '600', color: '#15803D', textDecoration: 'none', borderBottom: '1px solid #DCFCE7', paddingBottom: '2px' }}>
+                See this in action →
+              </Link>
+            </div>
+            {/* Isaac: upload a screenshot for each feature */}
+            <div style={{ order: i % 2 === 0 ? 2 : 1 }}>
+              <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.07)', boxShadow: '0 6px 32px rgba(0,0,0,0.06)', background: '#F3F4F6', minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={`/lovable-uploads/product-${i + 1}.png`} alt={feat.tag} style={{ width: '100%', display: 'block' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              </div>
+            </div>
+          </div>
+        </motion.section>
+      ))}
+
+      {/* How it works flow */}
+      <section style={{ padding: '80px 0', background: '#0A0A0A', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: 'clamp(24px, 3vw, 38px)', fontWeight: '700', color: '#FFFFFF', letterSpacing: '-0.8px', marginBottom: '48px' }}>
+            How RegCo works
+          </h2>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0', flexWrap: 'wrap' }}>
+            {['Upload', 'Ask', 'Analyse', 'Act', 'Report'].map((step, i, arr) => (
+              <>
+                <div key={step} style={{ textAlign: 'center', padding: '0 20px' }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#16A34A' }}>{`0${i + 1}`}</span>
+                  </div>
+                  <p style={{ fontSize: '14px', fontWeight: '600', color: '#FFFFFF' }}>{step}</p>
+                </div>
+                {i < arr.length - 1 && <span key={`arrow-${i}`} style={{ fontSize: '18px', color: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>→</span>}
+              </>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section style={{ padding: '80px 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', padding: '0 40px' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '16px' }}>
+            Ready to see RegCo in action?
+          </h2>
+          <p style={{ fontSize: '16px', color: '#6B7280', marginBottom: '28px' }}>We will walk you through the platform and configure it for your institution type in under 30 minutes.</p>
+          <Link to="/book-demo" style={{ display: 'inline-flex', background: '#16A34A', color: '#FFFFFF', fontSize: '15px', fontWeight: '600', padding: '12px 28px', borderRadius: '8px', textDecoration: 'none' }}>
+            Request a demo →
+          </Link>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+PAGE 4 — COMPANY PAGE (/company)
+Create src/pages/marketing/CompanyPage.tsx:
+tsxexport default function CompanyPage() {
+  return (
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      <Navbar />
+
+      {/* Hero */}
+      <section style={{ padding: '120px 0 80px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>Company</p>
+          <h1 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', lineHeight: 1.07, marginBottom: '20px', maxWidth: '680px' }}>
+            We build compliance tools for regulated financial institutions.
+          </h1>
+          <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, maxWidth: '520px' }}>
+            RegCo Technologies Limited is based in Abuja, Nigeria. We exist to help Nigerian banks, fintechs, and microfinance banks manage regulatory compliance with speed, clarity, and control.
+          </p>
+        </div>
+      </section>
+
+      {/* Sections */}
+      {[
+        { heading: 'Who we are', body: 'RegCo Technologies Limited is a compliance technology company building AI-powered tools for Nigerian licensed financial institutions. We serve MFBs, finance companies, PMBs, and commercial banks — any institution with mandatory regulatory obligations to the CBN, NFIU, SCUML, NDIC, FIRS, or PENCOM.' },
+        { heading: 'Our mission', body: 'Our mission is to make compliance simple, reliable, and automatic for every regulated financial institution in Nigeria. We believe that when compliance is easy, it happens. When it happens consistently, institutions are safer. When institutions are safer, the Nigerian financial system is stronger.' },
+        { heading: 'Why we built RegCo', body: 'Every licensed financial institution in Nigeria must file up to 17 mandatory regulatory returns per year. Most do this manually — in Excel, at 11pm before the deadline, with a compliance officer juggling every regulator at once. We built RegCo because the tools available to Nigerian compliance officers were inadequate for the complexity of what the CBN actually requires.' },
+        { heading: 'Our principles', body: 'We build accurate before fast. We design for compliance officers, not for demos. We are Nigeria-specific, not a foreign product adapted for Nigeria. We are transparent about what RegCo can and cannot do. And we build software that works five years from now.' },
+        { heading: 'How we work with financial institutions', body: 'We work directly with the Head of Compliance and the CEO at each institution. We configure the platform to match your CBS format, your regulatory profile, and your internal workflows. We provide onboarding support and are available throughout your first month to ensure everything is working correctly.' },
+      ].map((section, i) => (
+        <section key={section.heading} style={{ padding: '64px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', background: i % 2 === 0 ? '#FFFFFF' : '#F9FAFB' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '280px 1fr', gap: '80px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.2px', lineHeight: 1.3 }}>{section.heading}</h2>
+            <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.8 }}>{section.body}</p>
+          </div>
+        </section>
+      ))}
+
+      {/* Stats row */}
+      <section style={{ padding: '80px 0', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1px', background: 'rgba(0,0,0,0.07)', borderRadius: '14px', overflow: 'hidden' }}>
+          {[
+            { number: '17', label: 'Mandatory returns automated' },
+            { number: '5', label: 'Regulators covered' },
+            { number: '6', label: 'CBN AML rules applied per transaction' },
+            { number: '30s', label: 'To generate a compliance board pack' },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: '#FFFFFF', padding: '36px 32px' }}>
+              <p style={{ fontSize: '44px', fontWeight: '800', color: '#0A0A0A', letterSpacing: '-2px', marginBottom: '8px', lineHeight: 1 }}>{stat.number}</p>
+              <p style={{ fontSize: '14px', color: '#6B7280', lineHeight: 1.5, margin: 0 }}>{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Partnership CTA */}
+      <section style={{ padding: '80px 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', padding: '0 40px' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.8px', marginBottom: '12px' }}>
+            Work with RegCo
+          </h2>
+          <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.7, marginBottom: '28px' }}>
+            We partner with financial institutions, compliance consulting firms, and banking technology providers. Reach out to discuss how RegCo can support your work.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <Link to="/book-demo" style={{ display: 'inline-flex', background: '#16A34A', color: '#FFFFFF', fontSize: '14px', fontWeight: '600', padding: '11px 22px', borderRadius: '7px', textDecoration: 'none' }}>
+              Request a demo
+            </Link>
+            <Link to="/contact/partnerships" style={{ display: 'inline-flex', background: '#FFFFFF', color: '#0A0A0A', fontSize: '14px', fontWeight: '500', padding: '11px 22px', borderRadius: '7px', textDecoration: 'none', border: '1px solid rgba(0,0,0,0.12)' }}>
+              Partnership enquiries
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+PAGE 5 — ABOUT PAGE (/about)
+Create src/pages/marketing/AboutPage.tsx:
+tsxexport default function AboutPage() {
+  return (
+    <div style={{ background: '#FFFFFF', minHeight: '100vh' }}>
+      <Navbar />
+
+      {/* Hero */}
+      <section style={{ padding: '120px 0 80px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px' }}>About RegCo</p>
+          <h1 style={{ fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', lineHeight: 1.07, marginBottom: '20px', maxWidth: '720px' }}>
+            RegCo exists so compliance teams can focus on judgment, not data entry.
+          </h1>
+          <p style={{ fontSize: '18px', color: '#6B7280', lineHeight: 1.7, maxWidth: '520px' }}>
+            Every licensed financial institution in Nigeria carries a significant compliance burden. RegCo was built to carry the mechanical part of that burden so compliance officers can do their actual job.
+          </p>
+        </div>
+      </section>
+
+      {/* Mission */}
+      <section style={{ padding: '80px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', background: '#14532D' }}>
+        <div style={{ maxWidth: '780px', margin: '0 auto', padding: '0 40px' }}>
+          <p style={{ fontSize: '12px', fontWeight: '600', color: '#86EFAC', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '32px' }}>Our mission</p>
+          {[
+            { text: 'Every licensed financial institution in Nigeria must file up to 17 mandatory regulatory returns every year — to the CBN, NFIU, SCUML, NDIC, and FIRS. Most of them still do this manually. In Excel. At 11pm before the deadline.', large: true },
+            { text: 'The compliance officer is one of the most important people in any Nigerian bank. They sit between the institution and the regulator. Between the rules and the risk. Between a NGN 2,000,000 fine and a clean examination.', large: false },
+            { text: 'We built RegCo so they do not have to choose between doing their job well and doing it in time. RegCo Agent handles the filings, the AML screening, the sanctions checks, the board packs, and the audit trails — so compliance officers can focus on judgment, not data entry.', large: false },
+            { text: 'We believe Nigerian financial institutions deserve the same tools that the best financial institutions in the world have had for decades. That is what we are building.', large: false },
+          ].map((p, i) => (
+            <motion.p
+              key={i}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.6 }}
+              style={{ fontSize: p.large ? '20px' : '17px', color: p.large ? '#FFFFFF' : 'rgba(255,255,255,0.7)', lineHeight: 1.8, marginBottom: '24px', fontWeight: p.large ? '500' : '400', letterSpacing: '-0.1px' }}
+            >
+              {p.text}
+            </motion.p>
+          ))}
+          <div style={{ marginTop: '40px', paddingTop: '28px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            <p style={{ fontSize: '15px', fontWeight: '700', color: '#86EFAC', margin: '0 0 4px' }}>RegCo Technologies Limited</p>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>Abuja, Nigeria · 2024</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Problem → Solution narrative */}
+      {[
+        { heading: 'The problem we solve', body: 'Compliance officers at Nigerian financial institutions spend enormous amounts of time on mechanical work — extracting data from their core banking system, computing regulatory figures in Excel, manually formatting returns, tracking deadlines across five regulators, maintaining KYC records, and preparing for examinations. This work is important, repetitive, and unforgiving. A single error in a CBN return can trigger a sanction. A missed deadline costs the institution money. RegCo removes this mechanical burden.' },
+        { heading: 'Why we focus on financial institutions', body: 'Financial institutions carry one of the highest compliance burdens of any industry in Nigeria. The CBN alone requires six mandatory monthly or quarterly returns from every MFB. Add NFIU, SCUML, NDIC, FIRS, and PENCOM, and a Unit MFB compliance officer is managing 17 distinct reporting obligations per year. Most lack the tools, staff, or budget to do this well. RegCo was designed specifically for this context.' },
+        { heading: 'How RegCo helps compliance teams', body: 'RegCo gives compliance officers a single interface where they can generate every mandatory return, monitor every transaction for AML violations, screen every customer against five global sanctions lists, track every CBN deadline, maintain every KYC record, document every audit finding, and generate their monthly board pack — automatically. It is not a generic AI tool. It is a compliance command center for regulated Nigerian financial institutions.' },
+        { heading: 'Our approach to trust and accuracy', body: 'We are transparent about what RegCo can and cannot do. RegCo validates every balance sheet before generating a CBN return. It checks CAR, liquidity ratio, and NPL ratio against CBN-prescribed thresholds. It never generates a return it cannot validate. When it needs a figure from the user, it asks through a guided form. We would rather ask than guess.' },
+        { heading: 'What the future of RegCo looks like', body: 'RegCo is currently live with microfinance banks in Abuja. We are expanding to State MFBs, National MFBs, finance companies, and commercial banks. Our roadmap includes real-time CBS integration, automated STR filing, examination preparation packs, and multi-institution workspaces for compliance consulting firms.' },
+      ].map((section, i) => (
+        <motion.section
+          key={section.heading}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+          style={{ padding: '64px 0', borderBottom: '1px solid rgba(0,0,0,0.06)', background: i % 2 === 0 ? '#FFFFFF' : '#F9FAFB' }}
+        >
+          <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '280px 1fr', gap: '80px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-0.2px', lineHeight: 1.3 }}>{section.heading}</h2>
+            <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.8 }}>{section.body}</p>
+          </div>
+        </motion.section>
+      ))}
+
+      {/* Final CTA */}
+      <section style={{ padding: '100px 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: '560px', margin: '0 auto', padding: '0 40px' }}>
+          <h2 style={{ fontSize: '36px', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-1px', marginBottom: '16px' }}>
+            See RegCo in action.
+          </h2>
+          <p style={{ fontSize: '16px', color: '#6B7280', lineHeight: 1.7, marginBottom: '28px' }}>
+            We will walk you through a live demo tailored to your institution type.
+          </p>
+          <Link to="/book-demo" style={{ display: 'inline-flex', background: '#16A34A', color: '#FFFFFF', fontSize: '15px', fontWeight: '600', padding: '13px 28px', borderRadius: '8px', textDecoration: 'none' }}>
+            Request a demo →
+          </Link>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+}
+
+ROUTE CONFIGURATION
+In src/App.tsx, ensure all routes are registered:
+tsximport Homepage from '@/pages/marketing/Homepage';
+import SecurityPage from '@/pages/marketing/SecurityPage';
+import ProductPage from '@/pages/marketing/ProductPage';
+import CompanyPage from '@/pages/marketing/CompanyPage';
+import AboutPage from '@/pages/marketing/AboutPage';
+
+// Add these routes:
+<Route path="/" element={<Homepage />} />
+<Route path="/security" element={<SecurityPage />} />
+<Route path="/product" element={<ProductPage />} />
+<Route path="/company" element={<CompanyPage />} />
+<Route path="/about" element={<AboutPage />} />
+
+SCROLL ANIMATION — ADD TO ALL SECTIONS
+Add this useEffect once in a useScrollReveal.ts hook and use it on every section:
+typescript// src/hooks/useScrollReveal.ts
+import { useEffect } from 'react';
+
+export const useScrollReveal = () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.08, rootMargin: '-40px 0px' }
+    );
+    document.querySelectorAll('.scroll-fade-up').forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+};
+Call useScrollReveal() at the top of each page component and add className="scroll-fade-up" to every section wrapper.
+
+Deploy: git add -A && git commit -m "feat: Complete website — Homepage, Security, Product, Company, About, FAQ, Footer" && git push origin main

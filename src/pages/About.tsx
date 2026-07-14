@@ -23,7 +23,7 @@ const steps = [
 
 const features = [
   { icon: ShieldCheck, title: "Gold-Standard Accuracy", desc: "Every report is validated against CBN formatting and calculation rules." },
-  { icon: Landmark, title: "Built for Nigerian Compliance", desc: "Purpose-built for CBN, NFIU, SCUML, and NDIC regulatory frameworks." },
+  { icon: Landmark, title: "Built for Regulated Compliance", desc: "Purpose-built for CBN, NFIU, SCUML, and NDIC regulatory frameworks." },
   { icon: Lock, title: "Bank-Grade Security", desc: "End-to-end encryption with SOC 2 compliant infrastructure." },
   { icon: Headphones, title: "Dedicated Support", desc: "Our compliance specialists are available to assist your team." },
 ];
@@ -39,7 +39,7 @@ const About = () => {
           <motion.div initial="hidden" animate="visible" variants={fadeUp} custom={0} className="text-center max-w-3xl mx-auto">
             <span className="text-sm font-semibold text-primary tracking-wide uppercase">Our Mission</span>
             <h1 className="mt-3 text-4xl md:text-5xl lg:text-6xl font-extrabold font-display text-foreground tracking-tight leading-[1.1]">
-              Eliminating the compliance burden on Nigerian financial institutions.
+              Eliminating the compliance burden on regulated financial institutions.
             </h1>
             <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               Regulatory reporting should never be the reason a bank faces sanctions. We built the infrastructure so your team can focus on banking, not paperwork.
@@ -57,7 +57,7 @@ const About = () => {
             </motion.div>
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1} className="space-y-5 text-muted-foreground leading-relaxed">
               <p>
-                Every quarter, compliance officers at Nigerian banks and microfinance banks spend days — sometimes weeks — manually compiling CBN regulatory returns. The process involves pulling data from core banking systems, reformatting it into the exact templates the CBN requires, cross-checking calculations, and praying nothing was missed before the deadline.
+                Every quarter, compliance officers at regulated banks and microfinance banks spend days — sometimes weeks — manually compiling CBN regulatory returns. The process involves pulling data from core banking systems, reformatting it into the exact templates the CBN requires, cross-checking calculations, and praying nothing was missed before the deadline.
               </p>
               <p>
                 When something does go wrong — a missed deadline, a formatting error, or an incorrect figure — the consequences are severe. CBN penalties start at ₦2,000,000 and can escalate quickly. For smaller institutions like unit MFBs, a single sanction can represent a significant portion of their annual revenue.
@@ -145,7 +145,7 @@ const About = () => {
               <h3 className="text-lg font-bold text-foreground">Founder & CEO</h3>
               <p className="text-sm text-primary font-medium mt-1">Former Compliance Professional</p>
               <p className="text-sm text-muted-foreground mt-3 leading-relaxed">
-                Built RegCo after seeing firsthand how much time Nigerian MFBs waste on manual regulatory submissions.
+                Built RegCo after seeing firsthand how much time MFBs waste on manual regulatory submissions.
               </p>
             </motion.div>
           </div>
@@ -160,7 +160,7 @@ const About = () => {
               Ready to simplify your compliance reporting?
             </h2>
             <p className="mt-4 text-background/70 text-lg">
-              Join hundreds of Nigerian financial institutions already using RegCo.
+              Join hundreds of regulated financial institutions already using RegCo.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button asChild size="lg" className="rounded-full px-8 text-base font-semibold">
@@ -184,7 +184,7 @@ const About = () => {
         <div className="container mx-auto px-4 lg:px-8 text-center">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
             <MapPin className="w-4 h-4" />
-            Headquartered in Abuja, Nigeria. Serving financial institutions nationwide.
+            Headquartered in our HQ city. Serving financial institutions nationwide.
           </p>
         </div>
       </section>

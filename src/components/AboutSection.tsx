@@ -26,12 +26,12 @@ const AboutSection = () => {
         </AnimateIn>
         <AnimateIn delay={0.1}>
           <h2 style={{ fontWeight: 700, fontSize: "clamp(32px, 4vw, 52px)", color: "#1D1D1F", lineHeight: 1.1, letterSpacing: -1, maxWidth: 800 }}>
-            Nigeria has over 2,000 licensed financial institutions. Every single one files regulatory returns manually.
+            There are over 2,000 licensed financial institutions in our serviceable market. Every single one files regulatory returns manually.
           </h2>
         </AnimateIn>
         <AnimateIn delay={0.2}>
           <p style={{ fontSize: 21, color: "#6E6E73", lineHeight: 1.75, maxWidth: 720, marginTop: 24 }}>
-            Every month, compliance teams across Nigeria's microfinance banks, commercial banks, primary mortgage banks, and finance companies spend three to five days preparing CBN returns in Excel. They cross-reference figures from multiple systems, manually calculate ratios, format documents to CBN specifications, and pray the balance sheet reconciles before the 10th deadline. One transposed digit triggers a minimum ₦2,000,000 CBN fine. The problem is not the people — it is the process.
+            Every month, compliance teams across microfinance banks, commercial banks, primary mortgage banks, and finance companies spend three to five days preparing CBN returns in Excel. They cross-reference figures from multiple systems, manually calculate ratios, format documents to CBN specifications, and pray the balance sheet reconciles before the 10th deadline. One transposed digit triggers a minimum ₦2,000,000 CBN fine. The problem is not the people — it is the process.
           </p>
         </AnimateIn>
 
@@ -50,7 +50,7 @@ const AboutSection = () => {
             }}
           >
             {[
-              { value: 900, suffix: "+", label: "Licensed MFBs in Nigeria alone" },
+              { value: 900, suffix: "+", label: "Licensed MFBs in our serviceable market" },
               { value: 13, suffix: "", label: "Mandatory return types per institution" },
             ].map((s, i) => (
               <div key={i} className="flex-1 text-center">
@@ -77,7 +77,7 @@ const AboutSection = () => {
           >
             <p style={{ fontWeight: 700, fontSize: 13, color: "#86868B", textTransform: "uppercase", letterSpacing: "0.08em" }}>Our Mission</p>
             <h3 style={{ fontWeight: 700, fontSize: 36, color: "#1D1D1F", lineHeight: 1.2, marginTop: 16 }}>
-              To make regulatory compliance invisible for every licensed financial institution in Nigeria.
+              To make regulatory compliance invisible for every licensed financial institution in our market.
             </h3>
           </motion.div>
           <motion.div
@@ -87,13 +87,13 @@ const AboutSection = () => {
             className="space-y-6"
           >
             <p style={{ fontSize: 17, color: "#6E6E73", lineHeight: 1.75 }}>
-              RegCo exists to eliminate the compliance gap between what Nigerian financial institutions are required to file and what they have the tools to file accurately. We believe a compliance officer's time is too valuable to spend reformatting Excel spreadsheets.
+              RegCo exists to eliminate the compliance gap between what regulated financial institutions are required to file and what they have the tools to file accurately. We believe a compliance officer's time is too valuable to spend reformatting Excel spreadsheets.
             </p>
             <p style={{ fontSize: 17, color: "#6E6E73", lineHeight: 1.75 }}>
               We built the platform that reads any CBS export format, maps every field to its regulatory equivalent, validates every figure before generating a single line of output, and delivers a submission-ready return in under five minutes. Not in five days.
             </p>
             <p style={{ fontSize: 17, color: "#6E6E73", lineHeight: 1.75 }}>
-              Every licensed institution in Nigeria — from the smallest Unit MFB in a market town to a national commercial bank with 400 branches — deserves access to the same quality of compliance infrastructure. RegCo is how we get there.
+              Every licensed institution in our market — from the smallest Unit MFB in a market town to a national commercial bank with 400 branches — deserves access to the same quality of compliance infrastructure. RegCo is how we get there.
             </p>
           </motion.div>
         </div>

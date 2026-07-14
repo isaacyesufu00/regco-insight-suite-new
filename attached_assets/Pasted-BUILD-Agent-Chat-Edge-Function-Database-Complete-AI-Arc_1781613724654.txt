@@ -1,0 +1,1368 @@
+BUILD: Agent Chat Edge Function + Database — Complete AI Architecture Fix
+The current agent repeats answers because conversation history is not being passed correctly to the model. This prompt fixes the entire AI architecture from the ground up. Run the SQL first, then deploy the edge function.
+
+SQL — Run This in Supabase SQL Editor Before Anything Else
+sql-- Drop and recreate agent tables cleanly
+DROP TABLE IF EXISTS agent_messages CASCADE;
+DROP TABLE IF EXISTS agent_conversations CASCADE;
+
+CREATE TABLE agent_conversations (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL DEFAULT 'New conversation',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE agent_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  conversation_id UUID REFERENCES agent_conversations(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL DEFAULT '',
+  action_type TEXT,
+  action_payload JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_agent_messages_conv ON agent_messages(conversation_id, created_at);
+CREATE INDEX idx_agent_conversations_user ON agent_conversations(user_id, updated_at DESC);
+
+ALTER TABLE agent_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agent_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users_own_conversations" ON agent_conversations FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "users_own_messages" ON agent_messages FOR ALL USING (auth.uid() = user_id);
+
+NOTIFY pgrst, 'reload schema';
+
+Edge Function — Create This File Exactly
+Create supabase/functions/agent-chat/index.ts with this complete content:
+typescriptimport { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
+const SYSTEM_PROMPT = `You are RegCo Agent — a compliance command center for Nigerian licensed financial institutions regulated by the CBN, NFIU, SCUML, NDIC, FIRS, and PENCOM.
+
+You serve compliance officers at Microfinance Banks (Unit, State, National), Primary Mortgage Banks, Finance Companies, and Commercial Banks.
+
+DOMAIN EXPERTISE:
+- All 17 mandatory regulatory returns: CBN (MFB Regulatory, Monetary Policy, Prudential, Forex, Board Governance, Consumer Protection), NFIU (AML/CFT Quarterly, Regulatory Return, International Transfers), SCUML Annual Compliance, NDIC (Premium Return at 0.40%, Single Obligor Quarterly), FIRS (VAT at 7.5%, PAYE with pension deductions of 8% employee + NHF 2.5% + NHIS 1.67%, WHT by payment type, CIT at 30% large / 20% medium / 0% small), PENCOM pension (18% total: 8% employee + 10% employer)
+- AML/CFT: CTR threshold NGN 5,000,000, structuring detection, 24-hour velocity threshold NGN 10,000,000, dormant account triggers, narration mismatch
+- CBN CAMEL loan classification: Pass (0% provision), Watch List (5%), Substandard (25%), Doubtful (50%), Loss (100%)
+- KYC/CDD: tiered KYC under CBN guidelines, BVN verification requirements
+- STR/CTR filing obligations and NFIU reporting formats
+- Sanctions: UN Security Council, OFAC SDN, EU Consolidated, UK HM Treasury, CBN Watchlist
+- PEP identification under Nigerian political context
+
+CRITICAL BEHAVIORAL RULES:
+1. ALWAYS respond to the most recent user message. NEVER repeat a previous answer. Check what was just asked and respond to THAT.
+2. Before every response, read the full conversation history above and confirm you are answering the LATEST message only.
+3. If you need a specific piece of information to complete a task, ask for exactly ONE thing. End your message with this exact tag on a new line: [NEED_INPUT:field_key:Human-readable label:Short explanation of why you need this]
+4. When you have enough information to generate a regulatory return, end with: [GENERATE_REPORT:report_type_key] where report_type_key is one of: mfb_regulatory, monetary_policy, prudential_return, forex_return, vat_return, paye, wht_return, cit_return, ndic_premium, ndic_single_obligor, scuml_annual, nfiu_amlcft, nfiu_regulatory, nfiu_international, pencom, board_governance, consumer_protection
+5. When retrieving data like AML flags, reports, or customer info, end with: [SHOW_DATA:data_type] where data_type is one of: aml_flags, reports, customers, audit_issues, screening_results
+6. Never pretend a task is done unless the tool confirms it.
+7. Keep explanations to 2-3 sentences. Be direct.
+8. Do not use emojis. Professional tone only.
+9. Always vary your responses — do not give the same opening sentence twice in a conversation.`;
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      { auth: { persistSession: false } }
+    );
+
+    const { messages, userId, conversationId } = await req.json();
+
+    // Validate — messages must be an array with at least one entry
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'No messages provided' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Get institution context to make the system prompt more specific
+    let institutionContext = '';
+    if (userId) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_name, cbn_license_category, compliance_lead_name')
+        .eq('id', userId)
+        .single();
+
+      if (profile) {
+        institutionContext = `\n\nCURRENT USER CONTEXT:\nInstitution: ${profile.company_name}\nLicense Type: ${profile.cbn_license_category}\nCompliance Officer: ${profile.compliance_lead_name}`;
+      }
+
+      // Get counts of pending items for proactive context
+      const [flagsResult, tasksResult] = await Promise.all([
+        supabase.from('transaction_reviews').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('review_status', 'pending'),
+        supabase.from('monthly_compliance_tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending').eq('month', new Date().toISOString().slice(0, 7)),
+      ]);
+
+      if ((flagsResult.count || 0) > 0 || (tasksResult.count || 0) > 0) {
+        institutionContext += `\nPending AML flags: ${flagsResult.count || 0}\nPending tasks this month: ${tasksResult.count || 0}`;
+      }
+    }
+
+    const openrouterKey = Deno.env.get('OPENROUTER_API_KEY');
+    const model = Deno.env.get('OPENROUTER_MODEL') || 'meta-llama/llama-3.1-8b-instruct:free';
+
+    if (!openrouterKey) {
+      console.error('OPENROUTER_API_KEY not set in Supabase secrets');
+      return new Response(JSON.stringify({ error: 'AI model not configured. Add OPENROUTER_API_KEY to Supabase Edge Function secrets.' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Build the messages array — CRITICAL: include ALL history plus system prompt
+    const apiMessages = [
+      // No separate system role in this array — it goes in the system parameter below
+      ...messages.map((m: { role: string; content: string }) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    ];
+
+    // Log the request for debugging — remove after confirming it works
+    console.log('=== AGENT CHAT REQUEST ===');
+    console.log('Model:', model);
+    console.log('Message count:', apiMessages.length);
+    console.log('Last message:', JSON.stringify(apiMessages[apiMessages.length - 1]));
+    console.log('=========================');
+
+    // Call OpenRouter with streaming
+    const openrouterResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openrouterKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://regco.com.ng',
+        'X-Title': 'RegCo Compliance Agent',
+      },
+      body: JSON.stringify({
+        model,
+        messages: apiMessages,
+        system: SYSTEM_PROMPT + institutionContext,
+        stream: true,
+        max_tokens: 1200,
+        temperature: 0.25,
+      }),
+    });
+
+    if (!openrouterResponse.ok) {
+      const errorText = await openrouterResponse.text();
+      console.error('OpenRouter error:', openrouterResponse.status, errorText);
+      return new Response(JSON.stringify({ error: `Model error: ${openrouterResponse.status}. ${errorText}` }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Stream the response directly back to the client
+    // The client will parse the SSE stream
+    return new Response(openrouterResponse.body, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
+  } catch (error) {
+    console.error('Agent chat error:', error);
+    return new Response(JSON.stringify({ error: error.message || 'Internal server error' }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
+Deploy the edge function:
+bashsupabase functions deploy agent-chat
+git add -A && git commit -m "feat: agent-chat edge function with OpenRouter streaming" && git push origin main
+
+
+PROMPT 2 — Complete Three-Panel Agent Frontend Rebuild
+Paste into Lovable after Prompt 1 is deployed:
+
+
+REBUILD: Complete Three-Panel Agent Interface — Harvey/Rogo Style, Working Conversation
+Completely rebuild the agent dashboard at /dashboard/agent. Delete any existing AgentPage, AgentSidebar, or AgentCenter component files entirely and replace them with the complete implementations below. The agent must stream responses, maintain full conversation history, and never repeat answers.
+
+TYPES FILE
+Create src/types/agent.ts:
+typescriptexport interface AgentMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  streaming?: boolean;
+  thinkingLabel?: string;
+  actionType?: string;
+  actionPayload?: Record<string, any>;
+  inlineData?: { type: string; data: any[] };
+  modalType?: string;
+  timestamp: Date;
+}
+
+export interface AgentConversation {
+  id: string;
+  title: string;
+  timeLabel: string;
+  updatedAt: string;
+}
+
+export interface RightPanelItem {
+  id: string;
+  type: 'source' | 'output' | 'report' | 'upload';
+  title: string;
+  subtitle?: string;
+  content?: string;
+  createdAt: Date;
+}
+
+export interface MissingInputDef {
+  fieldKey: string;
+  label: string;
+  description: string;
+}
+
+MAIN PAGE
+Create src/pages/dashboard/AgentPage.tsx:
+tsximport { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useProfile } from '@/contexts/ProfileContext';
+import { AgentSidebar } from '@/components/agent/AgentSidebar';
+import { AgentCenter } from '@/components/agent/AgentCenter';
+import { AgentRightPanel } from '@/components/agent/AgentRightPanel';
+import { AgentMissingInputModal } from '@/components/agent/AgentMissingInputModal';
+import { AgentReportModal } from '@/components/agent/AgentReportModal';
+import type { AgentMessage, AgentConversation, RightPanelItem, MissingInputDef } from '@/types/agent';
+
+export default function AgentPage() {
+  // ─── State ──────────────────────────────────────────────────────────────
+  const [conversations, setConversations] = useState<AgentConversation[]>([]);
+  const [activeConvId, setActiveConvId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [rightPanelTab, setRightPanelTab] = useState<'sources' | 'outputs' | 'reports' | 'uploads'>('outputs');
+  const [rightPanelItems, setRightPanelItems] = useState<RightPanelItem[]>([]);
+  const [missingInput, setMissingInput] = useState<MissingInputDef | null>(null);
+  const [reportModal, setReportModal] = useState<string | null>(null);
+  const [pendingTask, setPendingTask] = useState<string | null>(null);
+
+  // CRITICAL: use ref for messages to avoid stale closures in async functions
+  const messagesRef = useRef<AgentMessage[]>([]);
+  const activeConvIdRef = useRef<string | null>(null);
+
+  const { profile, institutionName, userInitial, userName } = useProfile();
+  const navigate = useNavigate();
+
+  // ─── Sync refs with state ────────────────────────────────────────────────
+  // This is the fix for repeated answers — always use the ref in async code
+  const setMessagesAndRef = useCallback((updater: AgentMessage[] | ((prev: AgentMessage[]) => AgentMessage[])) => {
+    setMessages(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      messagesRef.current = next;
+      return next;
+    });
+  }, []);
+
+  // ─── Load conversations on mount ─────────────────────────────────────────
+  useEffect(() => {
+    if (!profile?.id) return;
+    supabase
+      .from('agent_conversations')
+      .select('*')
+      .eq('user_id', profile.id)
+      .order('updated_at', { ascending: false })
+      .limit(25)
+      .then(({ data }) => {
+        if (data) {
+          setConversations(data.map(c => ({
+            ...c,
+            timeLabel: getTimeLabel(c.updated_at),
+          })));
+        }
+      });
+  }, [profile?.id]);
+
+  // ─── Load messages when conversation changes ──────────────────────────────
+  useEffect(() => {
+    activeConvIdRef.current = activeConvId;
+    if (!activeConvId) {
+      setMessagesAndRef([]);
+      return;
+    }
+    supabase
+      .from('agent_messages')
+      .select('*')
+      .eq('conversation_id', activeConvId)
+      .order('created_at', { ascending: true })
+      .then(({ data }) => {
+        if (data) {
+          const loaded = data.map(m => ({
+            id: m.id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            timestamp: new Date(m.created_at),
+            actionType: m.action_type || undefined,
+          }));
+          setMessagesAndRef(loaded);
+        }
+      });
+  }, [activeConvId]);
+
+  // ─── Create new conversation ──────────────────────────────────────────────
+  const createNewConversation = useCallback(() => {
+    setActiveConvId(null);
+    setMessagesAndRef([]);
+    setInputValue('');
+    setRightPanelItems([]);
+  }, []);
+
+  // ─── Select existing conversation ─────────────────────────────────────────
+  const selectConversation = useCallback((conv: AgentConversation) => {
+    setActiveConvId(conv.id);
+    setRightPanelItems([]);
+  }, []);
+
+  // ─── MAIN SUBMIT HANDLER — THE FIX FOR REPEATED ANSWERS ──────────────────
+  const handleSubmit = useCallback(async (userMessage: string, injectedContext?: string) => {
+    if (!userMessage.trim() || isLoading || !profile?.id) return;
+
+    const finalMessage = injectedContext
+      ? `${userMessage}\n\nAdditional context provided: ${injectedContext}`
+      : userMessage;
+
+    // Step 1: Add user message to UI immediately using the ref-backed setter
+    const userMsgId = `user-${Date.now()}`;
+    const userMsg: AgentMessage = {
+      id: userMsgId,
+      role: 'user',
+      content: finalMessage,
+      timestamp: new Date(),
+    };
+    setMessagesAndRef(prev => [...prev, userMsg]);
+    setInputValue('');
+    setIsLoading(true);
+    setMissingInput(null);
+
+    // Step 2: Get or create conversation
+    let convId = activeConvIdRef.current;
+    if (!convId) {
+      const { data: newConv } = await supabase
+        .from('agent_conversations')
+        .insert({
+          user_id: profile.id,
+          title: finalMessage.slice(0, 60) + (finalMessage.length > 60 ? '…' : ''),
+        })
+        .select()
+        .single();
+
+      if (newConv) {
+        convId = newConv.id;
+        setActiveConvId(convId);
+        activeConvIdRef.current = convId;
+        setConversations(prev => [{
+          ...newConv,
+          timeLabel: 'Today',
+        }, ...prev]);
+      }
+    }
+
+    // Step 3: Save user message to DB
+    if (convId) {
+      await supabase.from('agent_messages').insert({
+        conversation_id: convId,
+        user_id: profile.id,
+        role: 'user',
+        content: finalMessage,
+      });
+
+      // Update conversation timestamp
+      supabase.from('agent_conversations').update({ updated_at: new Date().toISOString() }).eq('id', convId);
+    }
+
+    // Step 4: Build API message history from the REF (not stale state)
+    // Include ALL previous messages PLUS the new user message
+    // This is the key fix — we use messagesRef.current which always has latest value
+    const currentMessages = messagesRef.current;
+    const apiMessages = currentMessages
+      .filter(m => m.role === 'user' || (m.role === 'assistant' && m.content && m.content.length > 0))
+      .map(m => ({ role: m.role, content: m.content }));
+
+    // Verify the last message in apiMessages is the user's new message
+    // (It should be because we already called setMessagesAndRef above)
+    const lastMsg = apiMessages[apiMessages.length - 1];
+    if (!lastMsg || lastMsg.content !== finalMessage) {
+      // Safety: append if somehow not there
+      apiMessages.push({ role: 'user', content: finalMessage });
+    }
+
+    console.log('[Agent] Sending to model. Message count:', apiMessages.length);
+    console.log('[Agent] Latest message:', apiMessages[apiMessages.length - 1]);
+
+    // Step 5: Show thinking animation
+    const thinkingId = `thinking-${Date.now()}`;
+    setMessagesAndRef(prev => [...prev, {
+      id: thinkingId,
+      role: 'assistant',
+      content: '',
+      streaming: true,
+      thinkingLabel: 'Thinking…',
+      timestamp: new Date(),
+    }]);
+
+    // Step 6: Call agent-chat edge function with streaming
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No auth session');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            messages: apiMessages,
+            userId: profile.id,
+            conversationId: convId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+        throw new Error(errorJson.error || `Request failed with status ${response.status}`);
+      }
+
+      if (!response.body) throw new Error('No response body from agent');
+
+      // Step 7: Read the stream and update the message in real time
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = '';
+      let currentThinkingLabel = 'Reading your request…';
+
+      // Update thinking label progressively
+      const thinkingLabels = ['Reading your request…', 'Checking compliance context…', 'Preparing response…'];
+      let labelIndex = 0;
+      const labelInterval = setInterval(() => {
+        if (labelIndex < thinkingLabels.length - 1) {
+          labelIndex++;
+          currentThinkingLabel = thinkingLabels[labelIndex];
+          setMessagesAndRef(prev => prev.map(m =>
+            m.id === thinkingId ? { ...m, thinkingLabel: currentThinkingLabel } : m
+          ));
+        }
+      }, 600);
+
+      // Read stream chunks
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || !trimmed.startsWith('data: ')) continue;
+
+          const data = trimmed.slice(6).trim();
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              accumulated += delta;
+              // Once we start receiving tokens, switch from thinking to streaming
+              setMessagesAndRef(prev => prev.map(m =>
+                m.id === thinkingId
+                  ? { ...m, content: accumulated, thinkingLabel: undefined }
+                  : m
+              ));
+            }
+          } catch {
+            // Skip malformed SSE lines — they are normal in streaming
+          }
+        }
+      }
+
+      clearInterval(labelInterval);
+
+      // Step 8: Parse action tags from the complete response
+      let cleanContent = accumulated.trim();
+      let actionType: string | undefined;
+      let modalType: string | undefined;
+      let needInput: MissingInputDef | undefined;
+
+      // Parse [GENERATE_REPORT:type]
+      const reportMatch = cleanContent.match(/\[GENERATE_REPORT:([a-z_]+)\]/);
+      if (reportMatch) {
+        modalType = reportMatch[1];
+        cleanContent = cleanContent.replace(reportMatch[0], '').trim();
+      }
+
+      // Parse [SHOW_DATA:type]
+      const dataMatch = cleanContent.match(/\[SHOW_DATA:([a-z_]+)\]/);
+      if (dataMatch) {
+        actionType = `show_data:${dataMatch[1]}`;
+        cleanContent = cleanContent.replace(dataMatch[0], '').trim();
+      }
+
+      // Parse [NEED_INPUT:key:label:description]
+      const inputMatch = cleanContent.match(/\[NEED_INPUT:([^:]+):([^:]+):([^\]]+)\]/);
+      if (inputMatch) {
+        needInput = { fieldKey: inputMatch[1], label: inputMatch[2], description: inputMatch[3] };
+        cleanContent = cleanContent.replace(inputMatch[0], '').trim();
+      }
+
+      // Step 9: Finalize the message
+      const finalAssistantId = `assistant-${Date.now()}`;
+      setMessagesAndRef(prev => prev
+        .filter(m => m.id !== thinkingId)
+        .concat({
+          id: finalAssistantId,
+          role: 'assistant',
+          content: cleanContent,
+          streaming: false,
+          actionType,
+          modalType,
+          timestamp: new Date(),
+        })
+      );
+
+      // Step 10: Execute parsed actions
+      if (needInput) {
+        setTimeout(() => setMissingInput(needInput), 300);
+      }
+
+      if (modalType) {
+        setTimeout(() => setReportModal(modalType!), 300);
+      }
+
+      if (actionType?.startsWith('show_data:')) {
+        const dataType = actionType.replace('show_data:', '');
+        await fetchAndShowData(dataType);
+      }
+
+      // Step 11: Save assistant response to DB
+      if (convId && cleanContent) {
+        await supabase.from('agent_messages').insert({
+          conversation_id: convId,
+          user_id: profile.id,
+          role: 'assistant',
+          content: cleanContent,
+          action_type: actionType || modalType || null,
+        });
+      }
+
+      // Step 12: Add to right panel outputs
+      if (cleanContent.length > 200) {
+        setRightPanelItems(prev => [{
+          id: finalAssistantId,
+          type: 'output',
+          title: finalMessage.slice(0, 50),
+          subtitle: new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
+          content: cleanContent,
+          createdAt: new Date(),
+        }, ...prev].slice(0, 20));
+        setRightPanelTab('outputs');
+      }
+
+    } catch (error: any) {
+      console.error('[Agent] Error:', error);
+      clearInterval && clearInterval(undefined);
+      setMessagesAndRef(prev => prev
+        .filter(m => m.id !== thinkingId)
+        .concat({
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          content: `Something went wrong: ${error.message || 'Connection error'}. Please try again.`,
+          timestamp: new Date(),
+        })
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isLoading, profile?.id]);
+
+  // ─── Fetch data for inline display ───────────────────────────────────────
+  const fetchAndShowData = async (dataType: string) => {
+    if (!profile?.id) return;
+    let data: any[] = [];
+
+    if (dataType === 'aml_flags') {
+      const { data: flags } = await supabase
+        .from('transaction_reviews')
+        .select('*')
+        .eq('user_id', profile.id)
+        .eq('review_status', 'pending')
+        .order('transaction_date', { ascending: false })
+        .limit(8);
+      data = flags || [];
+    } else if (dataType === 'reports') {
+      const { data: reports } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(8);
+      data = reports || [];
+    } else if (dataType === 'audit_issues') {
+      const { data: issues } = await supabase
+        .from('audit_issues')
+        .select('*')
+        .eq('user_id', profile.id)
+        .in('status', ['open', 'in_progress', 'overdue'])
+        .limit(8);
+      data = issues || [];
+    }
+
+    if (data.length > 0) {
+      setRightPanelItems(prev => [{
+        id: `data-${Date.now()}`,
+        type: 'source',
+        title: `${dataType.replace(/_/g, ' ')} — ${data.length} items`,
+        subtitle: 'Retrieved from RegCo database',
+        content: JSON.stringify(data),
+        createdAt: new Date(),
+      }, ...prev].slice(0, 20));
+      setRightPanelTab('sources');
+    }
+  };
+
+  // ─── Handle report modal submit ───────────────────────────────────────────
+  const handleReportSubmit = async (data: Record<string, any>) => {
+    setReportModal(null);
+    setIsLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-report`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+          body: JSON.stringify({ user_id: profile?.id, ...data }),
+        }
+      );
+      const result = await res.json();
+
+      const resultMsg: AgentMessage = {
+        id: `report-result-${Date.now()}`,
+        role: 'assistant',
+        content: result.success
+          ? `Your ${data.report_config?.label || 'report'} has been generated successfully. Download it below.`
+          : `Report generation failed: ${result.error || 'unknown error'}. Please try again.`,
+        timestamp: new Date(),
+        actionType: result.success ? `download:${result.report_id}` : undefined,
+      };
+      setMessagesAndRef(prev => [...prev, resultMsg]);
+
+      if (result.success) {
+        setRightPanelItems(prev => [{
+          id: result.report_id,
+          type: 'report',
+          title: data.report_config?.label || 'Generated Report',
+          subtitle: new Date().toLocaleDateString('en-NG'),
+          createdAt: new Date(),
+        }, ...prev]);
+        setRightPanelTab('reports');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      width: '100vw',
+      background: '#FFFFFF',
+      overflow: 'hidden',
+      fontFamily: "'Inter', -apple-system, system-ui, sans-serif",
+    }}>
+      <AgentSidebar
+        institutionName={institutionName}
+        userInitial={userInitial}
+        userName={userName}
+        conversations={conversations}
+        activeConvId={activeConvId}
+        onSelectConversation={selectConversation}
+        onNewConversation={createNewConversation}
+      />
+
+      <AgentCenter
+        messages={messages}
+        inputValue={inputValue}
+        isLoading={isLoading}
+        institutionName={institutionName}
+        onInputChange={setInputValue}
+        onSubmit={handleSubmit}
+        onToggleRightPanel={() => setRightPanelOpen(p => !p)}
+        reportModal={reportModal}
+        onDismissReportModal={() => setReportModal(null)}
+        onReportSubmit={handleReportSubmit}
+        profile={profile}
+      />
+
+      <AnimatePresence>
+        {rightPanelOpen && (
+          <AgentRightPanel
+            activeTab={rightPanelTab}
+            items={rightPanelItems}
+            onTabChange={setRightPanelTab}
+            onClose={() => setRightPanelOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {missingInput && (
+        <AgentMissingInputModal
+          field={missingInput}
+          pendingTask={pendingTask}
+          onSubmit={(value) => {
+            const context = `${missingInput.label}: ${value}`;
+            setMissingInput(null);
+            handleSubmit(`Please continue with this information: ${value}`, context);
+          }}
+          onDismiss={() => setMissingInput(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function getTimeLabel(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  if (diff < 86400000 && now.getDate() === date.getDate()) return 'Today';
+  if (diff < 172800000) return 'Yesterday';
+  return date.toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
+}
+
+AGENT SIDEBAR COMPONENT
+Create src/components/agent/AgentSidebar.tsx:
+tsximport { Home, Activity, Newspaper, FileText, ClipboardCheck, Shield, Settings, HelpCircle, Search, PanelLeft } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import type { AgentConversation } from '@/types/agent';
+
+interface AgentSidebarProps {
+  institutionName: string;
+  userInitial: string;
+  userName: string;
+  conversations: AgentConversation[];
+  activeConvId: string | null;
+  onSelectConversation: (c: AgentConversation) => void;
+  onNewConversation: () => void;
+}
+
+export const AgentSidebar = ({
+  institutionName, userInitial, userName,
+  conversations, activeConvId,
+  onSelectConversation, onNewConversation,
+}: AgentSidebarProps) => {
+  const navigate = useNavigate();
+
+  const navItems = [
+    { icon: Home, label: 'Dashboard', action: () => onNewConversation() },
+    { icon: Activity, label: 'Live Monitoring', action: () => navigate('/dashboard/transactions') },
+    { icon: Newspaper, label: 'Regulatory News', action: () => navigate('/dashboard/regulatory-intelligence') },
+    { icon: FileText, label: 'My Reports', action: () => navigate('/dashboard/reports') },
+    { icon: Shield, label: 'Screening', action: () => navigate('/dashboard/screening') },
+    { icon: ClipboardCheck, label: 'Audit', action: () => navigate('/dashboard/audit-tracker') },
+  ];
+
+  return (
+    <aside style={{
+      width: '216px',
+      flexShrink: 0,
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      background: '#FFFFFF',
+      borderRight: '1px solid rgba(0,0,0,0.08)',
+    }}>
+      {/* Header row: avatar + search + collapse */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 14px 8px' }}>
+        <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: '#0A0A0A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#FFFFFF' }}>{userInitial}</span>
+        </div>
+        <div style={{ display: 'flex', gap: '2px' }}>
+          <button style={{ padding: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.4)', borderRadius: '5px', display: 'flex' }}>
+            <Search size={14} />
+          </button>
+          <button style={{ padding: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.4)', borderRadius: '5px', display: 'flex' }}>
+            <PanelLeft size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Institution name */}
+      <div style={{ padding: '0 14px 10px' }}>
+        <p style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {institutionName || 'RegCo'}
+        </p>
+      </div>
+
+      {/* New conversation */}
+      <div style={{ padding: '0 10px 10px' }}>
+        <button onClick={onNewConversation} style={{
+          width: '100%', height: '30px', background: 'transparent',
+          border: '1px solid rgba(0,0,0,0.14)', borderRadius: '7px',
+          fontSize: '13px', fontWeight: '400', color: 'rgba(0,0,0,0.7)',
+          cursor: 'pointer', fontFamily: 'inherit', letterSpacing: '-0.1px',
+          transition: 'background 0.12s',
+        }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.04)'}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+        >
+          New conversation
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div style={{ height: '1px', background: 'rgba(0,0,0,0.07)', margin: '0 0 6px' }} />
+
+      {/* Navigation */}
+      <nav style={{ padding: '2px 8px', flex: 1, overflowY: 'auto' }}>
+        {navItems.map(item => (
+          <button
+            key={item.label}
+            onClick={item.action}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '9px',
+              padding: '6px 8px', borderRadius: '6px', background: 'transparent',
+              border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgba(0,0,0,0.6)',
+              fontFamily: 'inherit', textAlign: 'left', marginBottom: '1px',
+              transition: 'background 0.1s, color 0.1s',
+            }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(0,0,0,0.05)'; el.style.color = '#0A0A0A'; }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'rgba(0,0,0,0.6)'; }}
+          >
+            <item.icon size={14} strokeWidth={1.7} style={{ flexShrink: 0 }} />
+            {item.label}
+          </button>
+        ))}
+
+        {/* Conversation history */}
+        {conversations.length > 0 && (
+          <>
+            <p style={{ fontSize: '10px', fontWeight: '600', color: 'rgba(0,0,0,0.35)', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '10px 8px 5px', margin: 0 }}>
+              History
+            </p>
+            {conversations.map(conv => (
+              <button
+                key={conv.id}
+                onClick={() => onSelectConversation(conv)}
+                style={{
+                  width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+                  padding: '6px 8px', borderRadius: '6px', marginBottom: '1px',
+                  background: activeConvId === conv.id ? 'rgba(0,0,0,0.06)' : 'transparent',
+                  border: 'none', cursor: 'pointer', textAlign: 'left',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => { if (activeConvId !== conv.id) (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.04)'; }}
+                onMouseLeave={e => { if (activeConvId !== conv.id) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <span style={{ fontSize: '13px', color: '#0A0A0A', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>{conv.title}</span>
+                <span style={{ fontSize: '11px', color: 'rgba(0,0,0,0.35)', marginTop: '1px' }}>{conv.timeLabel}</span>
+              </button>
+            ))}
+          </>
+        )}
+      </nav>
+
+      {/* Bottom: Settings + Help */}
+      <div style={{ padding: '8px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+        {[
+          { icon: Settings, label: 'Settings', action: () => navigate('/dashboard/settings') },
+          { icon: HelpCircle, label: 'Help', action: () => window.open('mailto:support@regco.com.ng') },
+        ].map(item => (
+          <button key={item.label} onClick={item.action} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '9px', padding: '6px 8px', borderRadius: '6px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'rgba(0,0,0,0.5)', fontFamily: 'inherit', marginBottom: '1px', transition: 'background 0.1s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.04)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+          >
+            <item.icon size={14} strokeWidth={1.7} />
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </aside>
+  );
+};
+
+AGENT CENTER COMPONENT
+Create src/components/agent/AgentCenter.tsx:
+tsximport { useRef, useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Paperclip, ArrowUp, ChevronDown, Database, LayoutGrid, SlidersHorizontal } from 'lucide-react';
+import type { AgentMessage } from '@/types/agent';
+import { AgentReportModal } from './AgentReportModal';
+
+const QUICK_ACTIONS = [
+  'Generate my CBN MFB Return',
+  'Screen a customer',
+  'Show pending AML flags',
+  'Generate my VAT Return',
+];
+
+const SOURCE_CHIPS = [
+  { label: 'CBN Circulars', dotColor: '#1B4332' },
+  { label: 'My Reports', dotColor: '#1A3A6B' },
+  { label: 'Sanctions Lists', dotColor: '#6B1A1A' },
+  { label: 'Manage', dotColor: '#3A3A3A' },
+];
+
+interface AgentCenterProps {
+  messages: AgentMessage[];
+  inputValue: string;
+  isLoading: boolean;
+  institutionName: string;
+  onInputChange: (v: string) => void;
+  onSubmit: (msg: string) => void;
+  onToggleRightPanel: () => void;
+  reportModal: string | null;
+  onDismissReportModal: () => void;
+  onReportSubmit: (data: any) => void;
+  profile: any;
+}
+
+export const AgentCenter = ({
+  messages, inputValue, isLoading, institutionName,
+  onInputChange, onSubmit, onToggleRightPanel,
+  reportModal, onDismissReportModal, onReportSubmit, profile,
+}: AgentCenterProps) => {
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isInConversation = messages.some(m => m.role === 'user');
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (ta) { ta.style.height = 'auto'; ta.style.height = `${Math.min(ta.scrollHeight, 180)}px`; }
+  }, [inputValue]);
+
+  const handleKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+      e.preventDefault();
+      if (inputValue.trim()) onSubmit(inputValue.trim());
+    }
+  };
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', background: '#FFFFFF', overflow: 'hidden', position: 'relative' }}>
+
+      {/* HOME STATE — when no conversation yet */}
+      {!isInConversation && (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '0 24px', overflowY: 'auto' }}>
+
+          {/* Top right: shared button */}
+          <div style={{ width: '100%', maxWidth: '680px', display: 'flex', justifyContent: 'flex-end', padding: '16px 0 0' }}>
+            <button onClick={onToggleRightPanel} style={{ fontSize: '12px', color: 'rgba(0,0,0,0.4)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              Context panel
+            </button>
+          </div>
+
+          {/* Large institution name */}
+          <div style={{ marginTop: '40px', marginBottom: '20px' }}>
+            <h1 style={{ fontFamily: "'Lora', Georgia, serif", fontSize: 'clamp(40px, 5.5vw, 64px)', fontWeight: '700', color: '#0A0A0A', letterSpacing: '-2px', margin: 0, lineHeight: 1, textAlign: 'center' }}>
+              {institutionName || 'RegCo'}
+            </h1>
+          </div>
+
+          {/* Quick action pills */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {QUICK_ACTIONS.map(action => (
+              <button key={action} onClick={() => { onInputChange(action); onSubmit(action); }} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#FFFFFF', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '999px', padding: '7px 15px', fontSize: '13px', color: 'rgba(0,0,0,0.65)', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.3)'; (e.currentTarget as HTMLElement).style.color = '#0A0A0A'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.12)'; (e.currentTarget as HTMLElement).style.color = 'rgba(0,0,0,0.65)'; }}
+              >
+                {action}
+              </button>
+            ))}
+          </div>
+
+          {/* Main input card */}
+          <InputCard inputValue={inputValue} isLoading={isLoading} onInputChange={onInputChange} handleKey={handleKey} onSubmit={onSubmit} textareaRef={textareaRef} showDropdowns />
+
+          {/* Source chips */}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap', justifyContent: 'center', maxWidth: '680px' }}>
+            {SOURCE_CHIPS.map(chip => (
+              <button key={chip.label} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'transparent', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '999px', padding: '5px 12px', fontSize: '12px', color: 'rgba(0,0,0,0.55)', cursor: 'pointer', fontFamily: 'inherit', transition: 'border-color 0.15s' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.3)'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0,0,0,0.1)'}
+              >
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: chip.dotColor, flexShrink: 0 }} />
+                {chip.label} +
+              </button>
+            ))}
+          </div>
+
+          {/* Spacer */}
+          <div style={{ flex: 1, minHeight: '40px' }} />
+        </div>
+      )}
+
+      {/* CONVERSATION STATE */}
+      {isInConversation && (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '32px 24px 16px' }}>
+          <div style={{ maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {messages.map(msg => (
+              <AgentMessageBubble key={msg.id} msg={msg} profile={profile} onReportSubmit={onReportSubmit} onDismissReportModal={onDismissReportModal} />
+            ))}
+            <div ref={bottomRef} />
+          </div>
+        </div>
+      )}
+
+      {/* INPUT pinned at bottom during conversation */}
+      {isInConversation && (
+        <div style={{ padding: '12px 24px 20px', borderTop: '1px solid rgba(0,0,0,0.07)' }}>
+          <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+            <InputCard inputValue={inputValue} isLoading={isLoading} onInputChange={onInputChange} handleKey={handleKey} onSubmit={onSubmit} textareaRef={textareaRef} showDropdowns={false} />
+          </div>
+        </div>
+      )}
+
+      {/* Report modal */}
+      <AnimatePresence>
+        {reportModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '24px' }}
+            onClick={(e) => { if (e.target === e.currentTarget) onDismissReportModal(); }}
+          >
+            <motion.div initial={{ scale: 0.97, y: 12 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.97 }} style={{ width: '100%', maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <AgentReportModal
+                reportType={reportModal}
+                institutionName={profile?.company_name || ''}
+                isGenerating={isLoading}
+                onDismiss={onDismissReportModal}
+                onSubmit={onReportSubmit}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── Message Bubble Component ─────────────────────────────────────────────
+const AgentMessageBubble = ({ msg, profile, onReportSubmit, onDismissReportModal }: { msg: AgentMessage; profile: any; onReportSubmit: any; onDismissReportModal: any }) => {
+  if (msg.role === 'user') {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ background: '#F0F0EE', borderRadius: '12px 12px 2px 12px', padding: '11px 15px', maxWidth: '75%' }}>
+          <p style={{ fontSize: '14px', color: '#0A0A0A', margin: 0, lineHeight: 1.65, fontFamily: 'inherit' }}>{msg.content}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Thinking state — dots animation
+  if (msg.streaming && !msg.content && msg.thinkingLabel) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 0' }}>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          {[0, 1, 2].map(i => (
+            <motion.div key={i} animate={{ opacity: [0.25, 1, 0.25] }} transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }} style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'rgba(0,0,0,0.45)' }} />
+          ))}
+        </div>
+        <span style={{ fontSize: '13px', color: 'rgba(0,0,0,0.4)', fontFamily: 'inherit' }}>{msg.thinkingLabel}</span>
+      </div>
+    );
+  }
+
+  // Streaming or complete assistant message
+  return (
+    <div style={{ maxWidth: '85%' }}>
+      <p style={{ fontSize: '14px', color: '#0A0A0A', margin: '0 0 12px', lineHeight: 1.75, fontFamily: 'inherit', whiteSpace: 'pre-wrap' }}>
+        {msg.content}
+        {msg.streaming && msg.content && <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }} style={{ display: 'inline-block', width: '2px', height: '14px', background: '#0A0A0A', marginLeft: '2px', verticalAlign: 'text-bottom' }} />}
+      </p>
+
+      {/* Download action for completed reports */}
+      {msg.actionType?.startsWith('download:') && (
+        <button
+          onClick={async () => {
+            const reportId = msg.actionType!.replace('download:', '');
+            const { data } = await supabase.from('reports').select('content, report_type').eq('id', reportId).single();
+            if (data?.content) {
+              const blob = new Blob([data.content], { type: 'text/plain;charset=utf-8' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `RegCo_${data.report_type}_${new Date().toISOString().slice(0,10)}.txt`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            }
+          }}
+          style={{ fontSize: '13px', fontWeight: '500', color: '#0A0A0A', background: '#F0F0EE', border: '1px solid rgba(0,0,0,0.1)', borderRadius: '6px', padding: '7px 16px', cursor: 'pointer', fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+        >
+          Download report
+        </button>
+      )}
+    </div>
+  );
+};
+
+// ─── Input Card (reused in home state and conversation state) ─────────────
+const InputCard = ({ inputValue, isLoading, onInputChange, handleKey, onSubmit, textareaRef, showDropdowns }: any) => (
+  <div style={{ background: '#F7F7F5', border: '1px solid rgba(0,0,0,0.09)', borderRadius: '12px', overflow: 'hidden' }}>
+    {showDropdowns && (
+      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px 0' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', fontSize: '12px', color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Regulator <ChevronDown size={11} />
+        </button>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', fontSize: '12px', color: 'rgba(0,0,0,0.45)', cursor: 'pointer', fontFamily: 'inherit' }}>
+          Prompts <ChevronDown size={11} />
+        </button>
+      </div>
+    )}
+    <textarea
+      ref={textareaRef}
+      value={inputValue}
+      onChange={e => onInputChange(e.target.value)}
+      onKeyDown={handleKey}
+      placeholder="Ask RegCo Agent anything. Type @ to attach a CBS file or document."
+      disabled={isLoading}
+      rows={showDropdowns ? 3 : 2}
+      style={{ width: '100%', padding: showDropdowns ? '10px 16px 8px' : '12px 16px 8px', background: 'transparent', border: 'none', outline: 'none', fontSize: '14px', color: '#0A0A0A', fontFamily: 'inherit', resize: 'none', lineHeight: 1.6, boxSizing: 'border-box', display: 'block' }}
+    />
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 12px 10px' }}>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'rgba(0,0,0,0.4)', padding: '5px 8px', borderRadius: '5px', fontFamily: 'inherit' }}>
+          <Paperclip size={13} /> Files
+        </button>
+        <button style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: 'rgba(0,0,0,0.4)', padding: '5px 8px', borderRadius: '5px', fontFamily: 'inherit' }}>
+          <Database size={13} /> Sources
+        </button>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <button style={{ padding: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.3)', display: 'flex' }}><LayoutGrid size={14} /></button>
+        <button style={{ padding: '5px', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.3)', display: 'flex' }}><SlidersHorizontal size={14} /></button>
+        <div style={{ width: '1px', height: '16px', background: 'rgba(0,0,0,0.1)' }} />
+        <button
+          onClick={() => { if (inputValue.trim() && !isLoading) onSubmit(inputValue.trim()); }}
+          disabled={!inputValue.trim() || isLoading}
+          style={{ background: 'none', border: 'none', cursor: inputValue.trim() && !isLoading ? 'pointer' : 'default', color: inputValue.trim() && !isLoading ? '#0A0A0A' : 'rgba(0,0,0,0.2)', display: 'flex', padding: '5px' }}
+        >
+          <ArrowUp size={16} />
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Add this import at top of file ──────────────────────────────────────
+import { supabase } from '@/integrations/supabase/client';
+
+AGENT RIGHT PANEL
+Create src/components/agent/AgentRightPanel.tsx:
+tsximport { motion } from 'framer-motion';
+import { X, FileText, Download } from 'lucide-react';
+import type { RightPanelItem } from '@/types/agent';
+
+const TABS = ['sources', 'outputs', 'reports', 'uploads'] as const;
+
+export const AgentRightPanel = ({
+  activeTab, items, onTabChange, onClose,
+}: {
+  activeTab: string;
+  items: RightPanelItem[];
+  onTabChange: (t: any) => void;
+  onClose: () => void;
+}) => {
+  const filtered = items.filter(i => {
+    if (activeTab === 'sources') return i.type === 'source';
+    if (activeTab === 'outputs') return i.type === 'output';
+    if (activeTab === 'reports') return i.type === 'report';
+    if (activeTab === 'uploads') return i.type === 'upload';
+    return false;
+  });
+
+  return (
+    <motion.aside
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+      style={{
+        width: '300px', flexShrink: 0,
+        height: '100vh', display: 'flex', flexDirection: 'column',
+        background: '#FFFFFF', borderLeft: '1px solid rgba(0,0,0,0.08)',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 14px 0' }}>
+        <p style={{ fontSize: '13px', fontWeight: '600', color: '#0A0A0A', margin: 0 }}>Context</p>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.4)', padding: '4px', display: 'flex' }}>
+          <X size={14} />
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '8px 10px 0', gap: '2px' }}>
+        {TABS.map(tab => (
+          <button key={tab} onClick={() => onTabChange(tab)} style={{
+            flex: 1, padding: '6px 4px', background: 'none', border: 'none',
+            cursor: 'pointer', fontSize: '11px', fontWeight: activeTab === tab ? '600' : '400',
+            color: activeTab === tab ? '#0A0A0A' : 'rgba(0,0,0,0.45)',
+            borderBottom: activeTab === tab ? '2px solid #0A0A0A' : '2px solid transparent',
+            textTransform: 'capitalize', fontFamily: 'inherit', marginBottom: '-1px',
+            transition: 'color 0.15s',
+          }}>
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px' }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: '32px 16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '13px', color: 'rgba(0,0,0,0.35)', margin: 0, lineHeight: 1.65 }}>
+              {activeTab === 'outputs' && 'Agent responses and generated content will appear here.'}
+              {activeTab === 'reports' && 'Generated regulatory returns will appear here.'}
+              {activeTab === 'sources' && 'Data retrieved during your session will appear here.'}
+              {activeTab === 'uploads' && 'Uploaded files will appear here.'}
+            </p>
+          </div>
+        ) : (
+          filtered.map(item => (
+            <div key={item.id} style={{ background: '#F7F7F5', borderRadius: '8px', padding: '12px', marginBottom: '8px', border: '1px solid rgba(0,0,0,0.07)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px' }}>
+                <FileText size={13} color="rgba(0,0,0,0.4)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600', color: '#0A0A0A', margin: '0 0 2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</p>
+                  {item.subtitle && <p style={{ fontSize: '11px', color: 'rgba(0,0,0,0.4)', margin: 0 }}>{item.subtitle}</p>}
+                </div>
+              </div>
+              {item.content && item.content.length < 400 && (
+                <p style={{ fontSize: '12px', color: 'rgba(0,0,0,0.55)', margin: '0 0 8px', lineHeight: 1.55 }}>
+                  {item.content.slice(0, 200)}{item.content.length > 200 ? '…' : ''}
+                </p>
+              )}
+              {(item.type === 'report' || item.type === 'output') && (
+                <button style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: 'rgba(0,0,0,0.5)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}>
+                  <Download size={11} /> Download
+                </button>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </motion.aside>
+  );
+};
+
+MISSING INPUT MODAL
+Create src/components/agent/AgentMissingInputModal.tsx:
+tsximport { useState } from 'react';
+import { motion } from 'framer-motion';
+import { X } from 'lucide-react';
+import type { MissingInputDef } from '@/types/agent';
+
+export const AgentMissingInputModal = ({
+  field, pendingTask, onSubmit, onDismiss,
+}: {
+  field: MissingInputDef;
+  pendingTask: string | null;
+  onSubmit: (value: string) => void;
+  onDismiss: () => void;
+}) => {
+  const [value, setValue] = useState('');
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '24px' }}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        style={{ background: '#FFFFFF', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.1)', padding: '24px', width: '100%', maxWidth: '420px', boxShadow: '0 8px 40px rgba(0,0,0,0.12)' }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div>
+            <p style={{ fontSize: '15px', fontWeight: '600', color: '#0A0A0A', margin: '0 0 4px', fontFamily: 'inherit' }}>Additional information needed</p>
+            <p style={{ fontSize: '13px', color: 'rgba(0,0,0,0.5)', margin: 0, fontFamily: 'inherit' }}>{field.description}</p>
+          </div>
+          <button onClick={onDismiss} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(0,0,0,0.4)', padding: '2px', marginLeft: '12px', flexShrink: 0 }}>
+            <X size={15} />
+          </button>
+        </div>
+
+        <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#0A0A0A', marginBottom: '6px', fontFamily: 'inherit' }}>
+          {field.label}
+        </label>
+        <input
+          type="text"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && value.trim()) onSubmit(value.trim()); }}
+          placeholder={`Enter ${field.label.toLowerCase()}...`}
+          autoFocus
+          style={{ width: '100%', height: '40px', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', padding: '0 12px', fontSize: '14px', color: '#0A0A0A', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: '#F7F7F5', marginBottom: '14px', transition: 'border-color 0.15s' }}
+          onFocus={e => (e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.4)'}
+          onBlur={e => (e.target as HTMLElement).style.borderColor = 'rgba(0,0,0,0.14)'}
+        />
+
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button onClick={onDismiss} style={{ fontSize: '13px', color: 'rgba(0,0,0,0.5)', background: 'none', border: '1px solid rgba(0,0,0,0.12)', borderRadius: '7px', padding: '8px 16px', cursor: 'pointer', fontFamily: 'inherit' }}>
+            Cancel
+          </button>
+          <button
+            onClick={() => { if (value.trim()) onSubmit(value.trim()); }}
+            disabled={!value.trim()}
+            style={{ fontSize: '13px', fontWeight: '600', color: '#FFFFFF', background: value.trim() ? '#0A0A0A' : 'rgba(0,0,0,0.15)', border: 'none', borderRadius: '7px', padding: '8px 20px', cursor: value.trim() ? 'pointer' : 'default', fontFamily: 'inherit', transition: 'background 0.15s' }}
+          >
+            Continue
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+ROUTE CONFIGURATION
+In src/App.tsx, ensure these routes exist:
+tsximport AgentPage from '@/pages/dashboard/AgentPage';
+
+// After login redirect to agent
+<Route path="/dashboard" element={<Navigate to="/dashboard/agent" replace />} />
+<Route path="/dashboard/agent" element={<ProtectedRoute><AgentPage /></ProtectedRoute>} />
+
+Deploy: supabase functions deploy agent-chat && git add -A && git commit -m "feat: Complete three-panel agent — working conversation, streaming, right panel, missing input modal" && git push origin main

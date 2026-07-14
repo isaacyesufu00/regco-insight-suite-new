@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CookieConsent from "@/components/CookieConsent";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { Navigate } from "react-router-dom";
 import Contact from "./pages/Contact";
@@ -52,11 +54,28 @@ import DataProcessingPage from "./pages/legal/DataProcessingPage";
 import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
+import DashboardWorkspace from "./pages/DashboardWorkspace";
+import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
+import Homepage from "./pages/marketing/Homepage";
+import SecurityPage from "./pages/marketing/SecurityPage";
+import NewProductPage from "./pages/marketing/ProductPage";
+import NewCompanyPage from "./pages/marketing/CompanyPage";
+import AboutPage from "./pages/marketing/AboutPage";
+import ProductAutomatedReturns from "./pages/marketing/ProductAutomatedReturns";
+import ProductLiveScreening from "./pages/marketing/ProductLiveScreening";
+import ProductTransactionMonitoring from "./pages/marketing/ProductTransactionMonitoring";
+import ProductAuditTrail from "./pages/marketing/ProductAuditTrail";
+import AdminTemplates from "./pages/AdminTemplates";
+import AdminTemplateEditor from "./pages/AdminTemplateEditor";
+import EditorialProduct from "./pages/Product";
+import EditorialAboutUs from "./pages/AboutUs";
+import EditorialWhoWeServe from "./pages/WhoWeServe";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <ThemeProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -66,7 +85,9 @@ const App = () => (
           <ProfileProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/home-legacy" element={<Homepage />} />
+            <Route path="/login" element={<Navigate to="/sign-in" replace />} />
+            <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
             <Route path="/signup" element={<Navigate to="/sign-up" replace />} />
             <Route path="/contact" element={<Contact />} />
@@ -77,7 +98,18 @@ const App = () => (
             <Route path="/auth/callback" element={<AuthConfirm />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
-            <Route path="/security" element={<Security />} />
+            <Route path="/security" element={<SecurityPage />} />
+            <Route path="/product" element={<EditorialProduct />} />
+            <Route path="/product-legacy" element={<NewProductPage />} />
+            <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
+            <Route path="/product/live-screening" element={<ProductLiveScreening />} />
+            <Route path="/product/transaction-monitoring" element={<ProductTransactionMonitoring />} />
+            <Route path="/product/audit-trail" element={<ProductAuditTrail />} />
+            <Route path="/about-us" element={<EditorialAboutUs />} />
+            <Route path="/who-we-serve" element={<EditorialWhoWeServe />} />
+            <Route path="/who-we-serve-legacy" element={<WhoWeServePage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/company" element={<NewCompanyPage />} />
             {/* Blog */}
             <Route path="/blog/updates" element={<BlogUpdates />} />
             <Route path="/blog/updates/:slug" element={<BlogUpdateDetail />} />
@@ -92,10 +124,11 @@ const App = () => (
             <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
             <Route path="/contact/support" element={<SupportPage />} />
             <Route path="/contact/partnerships" element={<PartnershipsPage />} />
+            <Route path="/about" element={<AboutPage />} />
             {/* Redirect old public pages to homepage */}
-            <Route path="/about" element={<Navigate to="/#about" replace />} />
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
             <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
+            <Route path="/dashboard/agent" element={<Navigate to="/dashboard" replace />} />
             <Route
               path="/dashboard"
               element={
@@ -104,7 +137,7 @@ const App = () => (
                 </ProtectedRoute>
               }
             >
-              <Route index element={<DashboardHome />} />
+              <Route index element={<DashboardWorkspace />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="new-report" element={<NewReport />} />
               <Route path="data-sources" element={<Navigate to="/dashboard/transactions" replace />} />
@@ -132,6 +165,8 @@ const App = () => (
               <Route path="clients/:id" element={<AdminClientDetail />} />
               <Route path="onboard" element={<AdminOnboard />} />
               <Route path="demos" element={<AdminDemos />} />
+              <Route path="templates" element={<AdminTemplates />} />
+              <Route path="templates/:id" element={<AdminTemplateEditor />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -140,6 +175,7 @@ const App = () => (
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

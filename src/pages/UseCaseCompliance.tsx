@@ -40,7 +40,7 @@ const UseCaseCompliance = () => (
             Give Your Compliance Team Their Time Back.
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            RegCo is built around the daily reality of Nigerian compliance officers — tight deadlines, changing templates, and zero tolerance for errors.
+            RegCo is built around the daily reality of compliance officers — tight deadlines, changing templates, and zero tolerance for errors.
           </p>
         </motion.div>
       </div>

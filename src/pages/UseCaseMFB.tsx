@@ -39,7 +39,7 @@ const UseCaseMFB = () => (
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold font-display text-foreground tracking-tight leading-[1.1]">
-            Built for Microfinance Banks.<br />Made for Nigeria.
+            Built for Microfinance Banks.<br />Made for regulated finance.
           </h1>
           <p className="mt-6 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             RegCo understands the unique CBN reporting obligations of unit, state, and national MFBs — so your compliance team can stop wrestling with Excel and start submitting with confidence.

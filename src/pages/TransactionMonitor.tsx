@@ -201,7 +201,7 @@ export default function TransactionMonitor() {
   const generateAndDownloadSTR = async (tx: UnifiedTx, existingRef?: string) => {
     const inst = institutionName || profile?.company_name || "INSTITUTION";
     const strRef = existingRef || `STR-${inst.replace(/\s/g, "").slice(0, 6).toUpperCase()}-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`;
-    const content = `NIGERIAN FINANCIAL INTELLIGENCE UNIT
+    const content = `FINANCIAL INTELLIGENCE UNIT
 SUSPICIOUS TRANSACTION REPORT (STR)
 ============================================================
 REPORT REFERENCE:    ${strRef}

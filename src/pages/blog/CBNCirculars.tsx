@@ -39,7 +39,7 @@ const Card = ({ c, i }: { c: typeof circulars[number]; i: number }) => {
 
 const CBNCirculars = () => (
   <PageShell>
-    <PageHero label="CBN CIRCULARS" title="Recent CBN Regulatory Updates" subtitle="Key circulars and guidelines from the Central Bank of Nigeria relevant to licensed financial institutions." />
+    <PageHero label="CBN CIRCULARS" title="Recent CBN Regulatory Updates" subtitle="Key circulars and guidelines from the the Central Bank relevant to licensed financial institutions." />
     <ContentSection>
       <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 12, padding: 20, marginBottom: 28 }}>
         <p style={{ fontSize: 14, color: "#3A3A3A", lineHeight: 1.65, margin: 0 }}>

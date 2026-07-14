@@ -50,7 +50,7 @@ const LISTS_CHECKED = [
   "OFAC SDN",
   "EU Consolidated",
   "UK HM Treasury",
-  "Nigerian PEP Database",
+  "Domestic PEP Database",
 ];
 
 const riskColor = (r: string) => {
@@ -533,9 +533,10 @@ function ListStatusTab() {
   const [syncing, setSyncing] = useState(false);
 
   const load = async () => {
+    const sb = supabase as any;
     const [{ data: logs }, { data: entries }] = await Promise.all([
-      supabase.from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
-      supabase.from("sanctions_entries").select("list_name").limit(20000),
+      sb.from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
+      sb.from("sanctions_entries").select("list_name").limit(20000),
     ]);
     setSyncLogs(logs || []);
     const c: Record<string, number> = {};
