@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
-  Shield, FileCheck, ClipboardCheck, Newspaper,
+  Shield, FileCheck, ClipboardCheck, Newspaper, ShieldAlert,
   Calendar, Settings, HelpCircle, MessageSquare,
   PanelLeftClose, PanelLeft, LogOut,
 } from "lucide-react";
@@ -23,6 +23,7 @@ const ITEMS: NavItem[] = [
   { path: "/dashboard/calendar",                 label: "Calendar",           icon: Calendar,        feature: null,                                    group: "Reporting" },
   { path: "/dashboard/customers",                label: "Customers",          icon: Users,           feature: "customerIntelligence",                  group: "Intelligence" },
   { path: "/dashboard/transactions",             label: "Monitoring",         icon: Activity,        feature: "transactionMonitor",                    group: "Intelligence" },
+  { path: "/dashboard/aml-rules",                label: "Rules & alerts",     icon: ShieldAlert,     feature: "transactionMonitor",                    group: "Intelligence" },
   { path: "/dashboard/screening",                label: "Screening",          icon: Shield,          feature: "sanctionsScreening",                    group: "Intelligence" },
   { path: "/dashboard/board-pack",               label: "Board pack",         icon: FileCheck,       feature: "boardPack",                             group: "Governance" },
   { path: "/dashboard/audit-tracker",            label: "Audit",              icon: ClipboardCheck,  feature: "auditTracker",                          group: "Governance" },

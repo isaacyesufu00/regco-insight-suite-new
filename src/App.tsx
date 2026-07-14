@@ -25,6 +25,7 @@ import DashboardSettings from "./pages/DashboardSettings";
 import ComplianceCalendar from "./pages/ComplianceCalendar";
 import DashboardTutorial from "./pages/DashboardTutorial";
 import TransactionMonitor from "./pages/TransactionMonitor";
+import AmlRules from "./pages/AmlRules";
 import Customer360 from "./pages/Customer360";
 import Screening from "./pages/Screening";
 import RegulatoryIntelligence from "./pages/RegulatoryIntelligence";
@@ -146,6 +147,7 @@ const App = () => (
               <Route path="support" element={<SupportTickets />} />
               <Route path="tutorial" element={<DashboardTutorial />} />
               <Route path="transactions" element={<FeatureGate feature="transactionMonitor"><TransactionMonitor /></FeatureGate>} />
+              <Route path="aml-rules" element={<FeatureGate feature="transactionMonitor"><AmlRules /></FeatureGate>} />
               <Route path="customers" element={<FeatureGate feature="customerIntelligence" requiredTier="State MFB"><Customer360 /></FeatureGate>} />
               <Route path="screening" element={<FeatureGate feature="sanctionsScreening" requiredTier="State MFB"><Screening /></FeatureGate>} />
               <Route path="regulatory-intelligence" element={<RegulatoryIntelligence />} />

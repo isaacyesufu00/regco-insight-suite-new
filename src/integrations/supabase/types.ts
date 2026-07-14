@@ -2823,6 +2823,57 @@ export type Database = {
         }
         Relationships: []
       }
+      transaction_alerts: {
+        Row: {
+          case_id: string | null
+          category: string
+          created_at: string
+          customer_id: string | null
+          evidence: Json
+          id: string
+          rule_code: string
+          rule_title: string
+          score: number
+          severity: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          case_id?: string | null
+          category: string
+          created_at?: string
+          customer_id?: string | null
+          evidence?: Json
+          id?: string
+          rule_code: string
+          rule_title: string
+          score?: number
+          severity?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          case_id?: string | null
+          category?: string
+          created_at?: string
+          customer_id?: string | null
+          evidence?: Json
+          id?: string
+          rule_code?: string
+          rule_title?: string
+          score?: number
+          severity?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       transaction_reviews: {
         Row: {
           account_number: string | null
@@ -2883,6 +2934,51 @@ export type Database = {
           transaction_date?: string
           upload_batch_id?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      transaction_rules: {
+        Row: {
+          category: string
+          citation: string | null
+          created_at: string
+          description: string
+          enabled: boolean
+          id: string
+          regulator: string | null
+          rule_code: string
+          severity: string
+          threshold: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          citation?: string | null
+          created_at?: string
+          description: string
+          enabled?: boolean
+          id?: string
+          regulator?: string | null
+          rule_code: string
+          severity?: string
+          threshold?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          citation?: string | null
+          created_at?: string
+          description?: string
+          enabled?: boolean
+          id?: string
+          regulator?: string | null
+          rule_code?: string
+          severity?: string
+          threshold?: Json
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3314,6 +3410,11 @@ export type Database = {
           }
       current_institution_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      fn_evaluate_transaction: { Args: { p_txn_id: string }; Returns: number }
+      fn_rescan_transactions: {
+        Args: { p_limit?: number; p_user_id: string }
+        Returns: number
+      }
       get_institution_id: { Args: never; Returns: string }
       has_role: {
         Args: {
