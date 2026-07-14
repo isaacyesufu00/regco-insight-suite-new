@@ -1,127 +1,199 @@
-// CBS webhook receiver — authenticates via x-api-key, screens AML rules,
-// inserts into unified_transactions. NEVER exposes how it works internally.
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, x-api-key, authorization",
-};
-
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
-
-async function sha256(input: string): Promise<string> {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+function toHex(bytes) {
+return Array.from(bytes).map(function (b) {
+return b.toString(16).padStart(2, "0");
+}).join("");
 }
 
-interface ScreenInput {
-  amount: number;
-  narration?: string;
-  channel?: string;
-  account_number?: string;
+function timingSafeEqual(a, b) {
+if (typeof a !== "string" || typeof b !== "string") return false;
+if (a.length !== b.length) return false;
+let out = 0;
+for (let i = 0; i < a.length; i++) {
+out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+}
+return out === 0;
 }
 
-function screen(t: ScreenInput): { is_flagged: boolean; severity?: string; reason?: string; rule?: string } {
-  const amt = Number(t.amount) || 0;
-  const narration = (t.narration || "").toLowerCase();
-
-  if (amt >= 5_000_000) {
-    return { is_flagged: true, severity: "critical", rule: "CTR", reason: `Single transaction ₦${amt.toLocaleString("en-NG")} meets/exceeds the ₦5,000,000 Currency Transaction Report threshold.` };
-  }
-  if (amt >= 4_500_000 && amt < 5_000_000 && amt % 1000 === 0) {
-    return { is_flagged: true, severity: "high", rule: "STRUCTURING", reason: `Round-figure ₦${amt.toLocaleString("en-NG")} positioned just below CTR threshold — possible structuring.` };
-  }
-  if (amt >= 1_000_000 && amt % 500_000 === 0) {
-    return { is_flagged: true, severity: "medium", rule: "ROUND_FIGURE", reason: `Round-figure ₦${amt.toLocaleString("en-NG")} ≥ ₦1M may indicate layering.` };
-  }
-  if (/\b(cash|bearer|courier|hawala)\b/.test(narration)) {
-    return { is_flagged: true, severity: "high", rule: "NARRATION_KEYWORD", reason: `Narration contains high-risk keyword: "${narration.match(/\b(cash|bearer|courier|hawala)\b/)?.[0]}"` };
-  }
-  return { is_flagged: false };
+async function hmacSha256Hex(secret, message) {
+const key = await crypto.subtle.importKey(
+"raw",
+new TextEncoder().encode(secret),
+{ name: "HMAC", hash: "SHA-256" },
+false,
+["sign"],
+);
+const sig = await crypto.subtle.sign(
+"HMAC",
+key,
+new TextEncoder().encode(message),
+);
+return toHex(new Uint8Array(sig));
 }
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
+function isHex64(value) {
+return typeof value === "string" && /^[0-9a-f]{64}$/i.test(value);
+}
 
-  const apiKey = req.headers.get("x-api-key");
-  if (!apiKey) return json({ error: "Missing x-api-key header" }, 401);
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  const keyHash = await sha256(apiKey);
-  const { data: keyRow } = await supabase
-    .from("webhook_api_keys")
-    .select("user_id, active")
-    .eq("key_hash", keyHash)
-    .maybeSingle();
-
-  if (!keyRow || !keyRow.active) return json({ error: "Invalid API key" }, 401);
-  const userId = keyRow.user_id as string;
-
-  let body: Record<string, unknown>;
-  try { body = await req.json(); } catch { return json({ error: "Invalid JSON body" }, 400); }
-
-  const account_number = String(body.account_number ?? "").trim();
-  const customer_name = String(body.customer_name ?? "").trim();
-  const amount = Number(body.amount);
-  const transaction_type = String(body.transaction_type ?? "").trim() || null;
-  const transaction_date = body.transaction_date ? new Date(String(body.transaction_date)).toISOString() : new Date().toISOString();
-  const narration = body.narration ? String(body.narration) : null;
-  const channel = body.channel ? String(body.channel) : null;
-  const branch_code = body.branch_code ? String(body.branch_code) : null;
-
-  if (!account_number || !customer_name || !Number.isFinite(amount)) {
-    return json({ error: "account_number, customer_name and amount are required" }, 400);
-  }
-
-  // Try to attach to known customer by account number
-  const { data: acctMatch } = await supabase
-    .from("customer_accounts")
-    .select("customer_id")
-    .eq("user_id", userId)
-    .eq("account_number", account_number)
-    .maybeSingle();
-
-  const screening = screen({ amount, narration: narration ?? "", channel: channel ?? "", account_number });
-
-  const { data: inserted, error } = await supabase
-    .from("unified_transactions")
-    .insert({
-      user_id: userId,
-      customer_id: acctMatch?.customer_id ?? null,
-      account_number,
-      customer_name,
-      amount,
-      transaction_type,
-      transaction_date,
-      narration,
-      channel,
-      branch_code,
-      is_flagged: screening.is_flagged,
-      flag_severity: screening.severity ?? null,
-      flag_reason: screening.reason ?? null,
-      flag_rule: screening.rule ?? null,
-      review_status: screening.is_flagged ? "pending" : "cleared",
-    })
-    .select("id, is_flagged, flag_severity")
-    .single();
-
-  if (error) return json({ error: "Failed to record transaction" }, 500);
-
-  await supabase.from("webhook_api_keys").update({ last_used_at: new Date().toISOString() }).eq("user_id", userId);
-
-  return json({
-    id: inserted.id,
-    status: inserted.is_flagged ? "flagged" : "cleared",
-    severity: inserted.flag_severity,
-  });
+Deno.serve(async function (req) {
+try {
+if (req.method !== "POST") {
+return new Response(
+JSON.stringify({ ok: false, error: "method_not_allowed" }),
+{ status: 405, headers: { "content-type": "application/json" } },
+);
+}
+const apiKeyPrefix = req.headers.get("x-api-key-prefix") || "";
+const apiKey = req.headers.get("x-api-key") || "";
+const signature = (req.headers.get("x-signature") || "").toLowerCase();
+const timestamp = req.headers.get("x-timestamp") || "";
+const idempotencyKey = req.headers.get("x-idempotency-key") || "";
+if (!apiKeyPrefix || !apiKey || !signature || !timestamp || !idempotencyKey) {
+return new Response(
+JSON.stringify({ ok: false, error: "missing_headers" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+if (!isHex64(signature)) {
+return new Response(
+JSON.stringify({ ok: false, error: "invalid_signature_format" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+if (!/^[0-9]+$/.test(timestamp)) {
+return new Response(
+JSON.stringify({ ok: false, error: "invalid_timestamp" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+if (idempotencyKey.length < 8 || idempotencyKey.length > 128) {
+return new Response(
+JSON.stringify({ ok: false, error: "invalid_idempotency_key" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+const rawBody = await req.text();
+if (rawBody.length > 1024 * 1024) {
+return new Response(
+JSON.stringify({ ok: false, error: "payload_too_large" }),
+{ status: 413, headers: { "content-type": "application/json" } },
+);
+}
+let payload;
+try {
+payload = JSON.parse(rawBody);
+} catch (_err) {
+return new Response(
+JSON.stringify({ ok: false, error: "invalid_json" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+const ts = Number(timestamp);
+if (!Number.isSafeInteger(ts)) {
+return new Response(
+JSON.stringify({ ok: false, error: "invalid_timestamp" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+const skewMs = Math.abs(Date.now() - ts);
+if (skewMs > 5 * 60 * 1000) {
+return new Response(
+JSON.stringify({ ok: false, error: "timestamp_skew_too_large" }),
+{ status: 401, headers: { "content-type": "application/json" } },
+);
+}
+const secret =
+Deno.env.get("RECEIVE_TRANSACTION_HMAC_SECRET") ||
+Deno.env.get("HMAC_SECRET") ||
+"regco-sentinel-v1";
+const canonical =
+"v1\nPOST\nreceive-transaction\n" +
+timestamp +
+"\n" +
+idempotencyKey +
+"\n" +
+rawBody;
+const expectedSignature = await hmacSha256Hex(secret, canonical);
+if (!timingSafeEqual(signature, expectedSignature)) {
+return new Response(
+JSON.stringify({ ok: false, error: "bad_signature" }),
+{ status: 401, headers: { "content-type": "application/json" } },
+);
+}
+const supabaseUrl = Deno.env.get("SUPABASE_URL");
+const serviceRoleKey =
+Deno.env.get("REGCO_SERVICE_ROLE_KEY") ||
+Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+if (!supabaseUrl || !serviceRoleKey) {
+return new Response(
+JSON.stringify({ ok: false, error: "missing_supabase_env" }),
+{ status: 500, headers: { "content-type": "application/json" } },
+);
+}
+const supabase = createClient(supabaseUrl, serviceRoleKey, {
+auth: { persistSession: false },
+});
+const institutionId = payload.institution_id || null;
+if (!institutionId) {
+return new Response(
+JSON.stringify({ ok: false, error: "missing_institution_id" }),
+{ status: 400, headers: { "content-type": "application/json" } },
+);
+}
+const { data: existing, error: existingError } = await supabase
+.from("receive_transaction_requests")
+.select("id, transaction_id")
+.eq("institution_id", institutionId)
+.eq("idempotency_key", idempotencyKey)
+.maybeSingle();
+if (existingError) {
+return new Response(
+JSON.stringify({ ok: false, error: existingError.message }),
+{ status: 500, headers: { "content-type": "application/json" } },
+);
+}
+if (existing && existing.transaction_id) {
+return new Response(
+JSON.stringify({
+ok: true,
+duplicate: true,
+request_id: existing.id,
+transaction_id: existing.transaction_id,
+}),
+{ status: 200, headers: { "content-type": "application/json" } },
+);
+}
+const { data: result, error: rpcError } = await supabase.rpc(
+"ingest_transaction_webhook",
+{
+p_institution_id: institutionId,
+p_idempotency_key: idempotencyKey,
+p_request_signature: signature,
+p_raw_payload: payload,
+},
+);
+if (rpcError) {
+return new Response(
+JSON.stringify({ ok: false, error: rpcError.message }),
+{ status: 500, headers: { "content-type": "application/json" } },
+);
+}
+return new Response(
+JSON.stringify({
+ok: true,
+duplicate: false,
+result: result,
+}),
+{ status: 200, headers: { "content-type": "application/json" } },
+);
+} catch (err) {
+return new Response(
+JSON.stringify({
+ok: false,
+error: err instanceof Error ? err.message : "unknown_error",
+}),
+{ status: 500, headers: { "content-type": "application/json" } },
+);
+}
 });
