@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       account_actions: {
@@ -67,6 +92,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cases"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "account_actions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
           },
         ]
       }
@@ -339,6 +371,125 @@ export type Database = {
           },
         ]
       }
+      aml_alert_status_history: {
+        Row: {
+          alert_id: string
+          changed_at: string
+          changed_by: string | null
+          from_status: string | null
+          id: string
+          to_status: string
+        }
+        Insert: {
+          alert_id: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: string | null
+          id?: string
+          to_status: string
+        }
+        Update: {
+          alert_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: string | null
+          id?: string
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_alert_status_history_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "aml_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aml_alert_status_history_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["alert_id"]
+          },
+        ]
+      }
+      aml_alerts: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          evidence: Json
+          id: string
+          institution_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rule_id: string
+          score: number
+          severity: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          evidence?: Json
+          id?: string
+          institution_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id: string
+          score?: number
+          severity: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          evidence?: Json
+          id?: string
+          institution_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id?: string
+          score?: number
+          severity?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_alerts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aml_alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "aml_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aml_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "monitored_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aml_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_ctr_due"
+            referencedColumns: ["transaction_id"]
+          },
+        ]
+      }
       aml_decisions: {
         Row: {
           created_at: string
@@ -401,6 +552,98 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      aml_review_events: {
+        Row: {
+          alert_id: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          institution_id: string
+          new_status: string
+          note: string | null
+          old_status: string
+        }
+        Insert: {
+          alert_id: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          institution_id: string
+          new_status: string
+          note?: string | null
+          old_status: string
+        }
+        Update: {
+          alert_id?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          institution_id?: string
+          new_status?: string
+          note?: string | null
+          old_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_review_events_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "aml_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aml_review_events_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["alert_id"]
+          },
+        ]
+      }
+      aml_rules: {
+        Row: {
+          created_at: string | null
+          id: string
+          institution_id: string
+          is_active: boolean
+          name: string
+          rule_code: string
+          rule_type: string
+          severity: string | null
+          threshold: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          is_active?: boolean
+          name: string
+          rule_code: string
+          rule_type: string
+          severity?: string | null
+          threshold?: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          is_active?: boolean
+          name?: string
+          rule_code?: string
+          rule_type?: string
+          severity?: string | null
+          threshold?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_rules_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       audit_issues: {
         Row: {
@@ -510,48 +753,43 @@ export type Database = {
       audit_logs: {
         Row: {
           action: string
-          actor_id: string
           created_at: string
-          entity_id: string
-          entity_type: string
+          curr_hash: string
+          entity: string
+          entity_id: string | null
           id: string
-          institution_id: string
-          payload: Json | null
+          payload: Json
+          prev_hash: string
+          user_id: string | null
         }
         Insert: {
           action: string
-          actor_id: string
           created_at?: string
-          entity_id: string
-          entity_type: string
+          curr_hash: string
+          entity: string
+          entity_id?: string | null
           id?: string
-          institution_id?: string
-          payload?: Json | null
+          payload: Json
+          prev_hash: string
+          user_id?: string | null
         }
         Update: {
           action?: string
-          actor_id?: string
           created_at?: string
-          entity_id?: string
-          entity_type?: string
+          curr_hash?: string
+          entity?: string
+          entity_id?: string | null
           id?: string
-          institution_id?: string
-          payload?: Json | null
+          payload?: Json
+          prev_hash?: string
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "audit_logs_institution_id_fkey"
-            columns: ["institution_id"]
-            isOneToOne: false
-            referencedRelation: "institutions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       audit_trail: {
         Row: {
           action: string
-          actor_id: string
+          actor_id: string | null
           alert_id: string
           created_at: string
           id: string
@@ -559,7 +797,7 @@ export type Database = {
         }
         Insert: {
           action: string
-          actor_id: string
+          actor_id?: string | null
           alert_id: string
           created_at?: string
           id?: string
@@ -567,7 +805,7 @@ export type Database = {
         }
         Update: {
           action?: string
-          actor_id?: string
+          actor_id?: string | null
           alert_id?: string
           created_at?: string
           id?: string
@@ -580,6 +818,50 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alerts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      case_alerts: {
+        Row: {
+          alert_id: string
+          case_id: string
+        }
+        Insert: {
+          alert_id: string
+          case_id: string
+        }
+        Update: {
+          alert_id?: string
+          case_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_alerts_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "aml_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_alerts_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["alert_id"]
+          },
+          {
+            foreignKeyName: "case_alerts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_alerts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
           },
         ]
       }
@@ -627,6 +909,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "cases"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_artifacts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
           },
         ]
       }
@@ -678,18 +967,73 @@ export type Database = {
             referencedRelation: "cases"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "case_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
+          },
+        ]
+      }
+      case_status_history: {
+        Row: {
+          case_id: string
+          changed_at: string
+          changed_by: string | null
+          from_status: string | null
+          id: string
+          note: string | null
+          to_status: string
+        }
+        Insert: {
+          case_id: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          to_status: string
+        }
+        Update: {
+          case_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: string | null
+          id?: string
+          note?: string | null
+          to_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "case_status_history_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "case_status_history_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
+          },
         ]
       }
       cases: {
         Row: {
           assignee_id: string | null
+          close_reason: string | null
           closed_at: string | null
+          closed_by: string | null
           created_at: string
           customer_id: string | null
           id: string
           institution_id: string
           opened_at: string
           severity: string
+          sla_due_at: string | null
           status: string
           summary: string | null
           title: string
@@ -700,13 +1044,16 @@ export type Database = {
         }
         Insert: {
           assignee_id?: string | null
+          close_reason?: string | null
           closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
           institution_id: string
           opened_at?: string
           severity?: string
+          sla_due_at?: string | null
           status?: string
           summary?: string | null
           title: string
@@ -717,13 +1064,16 @@ export type Database = {
         }
         Update: {
           assignee_id?: string | null
+          close_reason?: string | null
           closed_at?: string | null
+          closed_by?: string | null
           created_at?: string
           customer_id?: string | null
           id?: string
           institution_id?: string
           opened_at?: string
           severity?: string
+          sla_due_at?: string | null
           status?: string
           summary?: string | null
           title?: string
@@ -1029,7 +1379,8 @@ export type Database = {
       }
       customer_accounts: {
         Row: {
-          account_number: string
+          account_number: string | null
+          account_number_hash: string
           account_type: string | null
           balance: number | null
           branch: string | null
@@ -1042,7 +1393,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          account_number: string
+          account_number?: string | null
+          account_number_hash: string
           account_type?: string | null
           balance?: number | null
           branch?: string | null
@@ -1055,7 +1407,8 @@ export type Database = {
           user_id: string
         }
         Update: {
-          account_number?: string
+          account_number?: string | null
+          account_number_hash?: string
           account_type?: string | null
           balance?: number | null
           branch?: string | null
@@ -1068,6 +1421,59 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      customer_beneficial_owners: {
+        Row: {
+          bvn_hash: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          is_25pct_controller: boolean | null
+          owner_name: string
+          ownership_pct: number
+          screening_matches: Json
+          screening_risk_level: string
+          screening_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bvn_hash?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          is_25pct_controller?: boolean | null
+          owner_name: string
+          ownership_pct: number
+          screening_matches?: Json
+          screening_risk_level?: string
+          screening_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          bvn_hash?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          is_25pct_controller?: boolean | null
+          owner_name?: string
+          ownership_pct?: number
+          screening_matches?: Json
+          screening_risk_level?: string
+          screening_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_beneficial_owners_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customer_kyc: {
         Row: {
@@ -1125,37 +1531,58 @@ export type Database = {
       }
       customers: {
         Row: {
-          account_number: string
+          account_number_hash: string
           bvn_hash: string | null
+          bvn_verified: boolean
+          bvn_verified_at: string | null
           created_at: string | null
           customer_segment: string
+          dob: string | null
           email_hash: string | null
-          full_name: string
+          full_name_hash: string
           id: string
           institution_id: string
+          kyc_attempts: number
+          kyc_status: string
+          locked_until: string | null
           phone_hash: string | null
+          pii_migration_reviewed: boolean
         }
         Insert: {
-          account_number: string
+          account_number_hash: string
           bvn_hash?: string | null
+          bvn_verified?: boolean
+          bvn_verified_at?: string | null
           created_at?: string | null
           customer_segment: string
+          dob?: string | null
           email_hash?: string | null
-          full_name: string
+          full_name_hash: string
           id?: string
           institution_id: string
+          kyc_attempts?: number
+          kyc_status?: string
+          locked_until?: string | null
           phone_hash?: string | null
+          pii_migration_reviewed?: boolean
         }
         Update: {
-          account_number?: string
+          account_number_hash?: string
           bvn_hash?: string | null
+          bvn_verified?: boolean
+          bvn_verified_at?: string | null
           created_at?: string | null
           customer_segment?: string
+          dob?: string | null
           email_hash?: string | null
-          full_name?: string
+          full_name_hash?: string
           id?: string
           institution_id?: string
+          kyc_attempts?: number
+          kyc_status?: string
+          locked_until?: string | null
           phone_hash?: string | null
+          pii_migration_reviewed?: boolean
         }
         Relationships: []
       }
@@ -1229,33 +1656,33 @@ export type Database = {
       }
       demo_requests: {
         Row: {
-          company_name: string
+          company_name_hash: string | null
           created_at: string
-          email: string
-          full_name: string
+          email_hash: string | null
+          full_name_hash: string | null
           id: string
           message: string | null
-          phone: string | null
+          phone_hash: string | null
           report_type: string | null
         }
         Insert: {
-          company_name: string
+          company_name_hash?: string | null
           created_at?: string
-          email: string
-          full_name: string
+          email_hash?: string | null
+          full_name_hash?: string | null
           id?: string
           message?: string | null
-          phone?: string | null
+          phone_hash?: string | null
           report_type?: string | null
         }
         Update: {
-          company_name?: string
+          company_name_hash?: string | null
           created_at?: string
-          email?: string
-          full_name?: string
+          email_hash?: string | null
+          full_name_hash?: string | null
           id?: string
           message?: string | null
-          phone?: string | null
+          phone_hash?: string | null
           report_type?: string | null
         }
         Relationships: []
@@ -1371,6 +1798,56 @@ export type Database = {
         }
         Relationships: []
       }
+      eod_reconciliation: {
+        Row: {
+          created_at: string
+          ctr_generated: number
+          details: Json
+          exceptions_count: number
+          id: string
+          institution_id: string
+          recon_date: string
+          status: string
+          str_due: number
+          total_amount: number
+          total_transactions: number
+        }
+        Insert: {
+          created_at?: string
+          ctr_generated?: number
+          details?: Json
+          exceptions_count?: number
+          id?: string
+          institution_id: string
+          recon_date: string
+          status: string
+          str_due?: number
+          total_amount: number
+          total_transactions: number
+        }
+        Update: {
+          created_at?: string
+          ctr_generated?: number
+          details?: Json
+          exceptions_count?: number
+          id?: string
+          institution_id?: string
+          recon_date?: string
+          status?: string
+          str_due?: number
+          total_amount?: number
+          total_transactions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eod_reconciliation_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       filing_schedules: {
         Row: {
           created_at: string
@@ -1403,6 +1880,168 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      fraud_alerts: {
+        Row: {
+          created_at: string | null
+          customer_id: string
+          evidence: Json
+          id: string
+          institution_id: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          rule_id: string
+          score: number
+          severity: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id: string
+          evidence?: Json
+          id?: string
+          institution_id: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id: string
+          score?: number
+          severity: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string
+          evidence?: Json
+          id?: string
+          institution_id?: string
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          rule_id?: string
+          score?: number
+          severity?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_alerts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "fraud_rules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "monitored_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fraud_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_ctr_due"
+            referencedColumns: ["transaction_id"]
+          },
+        ]
+      }
+      fraud_review_events: {
+        Row: {
+          alert_id: string
+          changed_at: string | null
+          changed_by: string | null
+          id: string
+          institution_id: string
+          new_status: string
+          note: string | null
+          old_status: string
+        }
+        Insert: {
+          alert_id: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          institution_id: string
+          new_status: string
+          note?: string | null
+          old_status: string
+        }
+        Update: {
+          alert_id?: string
+          changed_at?: string | null
+          changed_by?: string | null
+          id?: string
+          institution_id?: string
+          new_status?: string
+          note?: string | null
+          old_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_review_events_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "fraud_alerts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fraud_rules: {
+        Row: {
+          created_at: string | null
+          id: string
+          institution_id: string
+          is_active: boolean
+          name: string
+          rule_code: string
+          rule_type: string
+          severity: string
+          threshold: Json
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          is_active?: boolean
+          name: string
+          rule_code: string
+          rule_type: string
+          severity?: string
+          threshold?: Json
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          is_active?: boolean
+          name?: string
+          rule_code?: string
+          rule_type?: string
+          severity?: string
+          threshold?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fraud_rules_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fraud_signals: {
         Row: {
@@ -1464,6 +2103,250 @@ export type Database = {
             foreignKeyName: "fraud_signals_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goaml_exports: {
+        Row: {
+          created_at: string
+          generated_by: string | null
+          id: string
+          institution_id: string
+          period_end: string
+          period_start: string
+          raw_xml: string
+          record_count: number
+          report_type: string
+          status: string
+          submitted_at: string | null
+          xml_sha256: string
+        }
+        Insert: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          institution_id: string
+          period_end: string
+          period_start: string
+          raw_xml: string
+          record_count?: number
+          report_type: string
+          status?: string
+          submitted_at?: string | null
+          xml_sha256: string
+        }
+        Update: {
+          created_at?: string
+          generated_by?: string | null
+          id?: string
+          institution_id?: string
+          period_end?: string
+          period_start?: string
+          raw_xml?: string
+          record_count?: number
+          report_type?: string
+          status?: string
+          submitted_at?: string | null
+          xml_sha256?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goaml_exports_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      identity_review_events: {
+        Row: {
+          change_reason: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          institution_id: string
+          metadata: Json
+          new_status: string
+          old_status: string
+          screening_id: string
+        }
+        Insert: {
+          change_reason: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          institution_id: string
+          metadata?: Json
+          new_status: string
+          old_status: string
+          screening_id: string
+        }
+        Update: {
+          change_reason?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          institution_id?: string
+          metadata?: Json
+          new_status?: string
+          old_status?: string
+          screening_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_review_events_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "identity_screening"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      identity_screening: {
+        Row: {
+          checks_requested: string[] | null
+          created_at: string
+          customer_id: string | null
+          duplicate_of: string | null
+          id: string
+          institution_id: string
+          metadata: Json
+          provider: string | null
+          provider_payload: Json | null
+          provider_reference: string | null
+          provider_status: string | null
+          result_status: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          rule_code: string | null
+          score: number
+          screening_source: string
+          screening_type: string
+          subject_hash: string
+          subject_type: string
+          updated_at: string
+          verification_url: string | null
+        }
+        Insert: {
+          checks_requested?: string[] | null
+          created_at?: string
+          customer_id?: string | null
+          duplicate_of?: string | null
+          id?: string
+          institution_id: string
+          metadata?: Json
+          provider?: string | null
+          provider_payload?: Json | null
+          provider_reference?: string | null
+          provider_status?: string | null
+          result_status?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          rule_code?: string | null
+          score?: number
+          screening_source: string
+          screening_type: string
+          subject_hash: string
+          subject_type: string
+          updated_at?: string
+          verification_url?: string | null
+        }
+        Update: {
+          checks_requested?: string[] | null
+          created_at?: string
+          customer_id?: string | null
+          duplicate_of?: string | null
+          id?: string
+          institution_id?: string
+          metadata?: Json
+          provider?: string | null
+          provider_payload?: Json | null
+          provider_reference?: string | null
+          provider_status?: string | null
+          result_status?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          risk_score?: number | null
+          rule_code?: string | null
+          score?: number
+          screening_source?: string
+          screening_type?: string
+          subject_hash?: string
+          subject_type?: string
+          updated_at?: string
+          verification_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "identity_screening_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "identity_screening_duplicate_of_fkey"
+            columns: ["duplicate_of"]
+            isOneToOne: false
+            referencedRelation: "identity_screening"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "identity_screening_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      institution_kyc_configs: {
+        Row: {
+          created_at: string | null
+          dojah_app_id_enc: string | null
+          dojah_secret_enc: string | null
+          institution_id: string
+          is_active: boolean
+          provider: string
+          smile_api_key_enc: string | null
+          smile_partner_id_enc: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dojah_app_id_enc?: string | null
+          dojah_secret_enc?: string | null
+          institution_id: string
+          is_active?: boolean
+          provider: string
+          smile_api_key_enc?: string | null
+          smile_partner_id_enc?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dojah_app_id_enc?: string | null
+          dojah_secret_enc?: string | null
+          institution_id?: string
+          is_active?: boolean
+          provider?: string
+          smile_api_key_enc?: string | null
+          smile_partner_id_enc?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "institution_kyc_configs_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: true
             referencedRelation: "institutions"
             referencedColumns: ["id"]
           },
@@ -1668,6 +2551,97 @@ export type Database = {
         }
         Relationships: []
       }
+      kyc_attempts: {
+        Row: {
+          check_type: string
+          created_at: string | null
+          id: string
+          institution_id: string
+          provider: string
+          request_payload: Json | null
+          response_payload: Json | null
+          screening_id: string
+          status: string
+        }
+        Insert: {
+          check_type: string
+          created_at?: string | null
+          id?: string
+          institution_id: string
+          provider: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          screening_id: string
+          status: string
+        }
+        Update: {
+          check_type?: string
+          created_at?: string | null
+          id?: string
+          institution_id?: string
+          provider?: string
+          request_payload?: Json | null
+          response_payload?: Json | null
+          screening_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_attempts_screening_id_fkey"
+            columns: ["screening_id"]
+            isOneToOne: false
+            referencedRelation: "identity_screening"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kyc_provider_config: {
+        Row: {
+          created_at: string | null
+          dojah_app_id: string | null
+          dojah_secret_key_encrypted: string | null
+          enabled_checks: string[] | null
+          fallback_provider: string
+          institution_id: string
+          primary_provider: string
+          smile_api_key_encrypted: string | null
+          smile_partner_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dojah_app_id?: string | null
+          dojah_secret_key_encrypted?: string | null
+          enabled_checks?: string[] | null
+          fallback_provider?: string
+          institution_id: string
+          primary_provider?: string
+          smile_api_key_encrypted?: string | null
+          smile_partner_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dojah_app_id?: string | null
+          dojah_secret_key_encrypted?: string | null
+          enabled_checks?: string[] | null
+          fallback_provider?: string
+          institution_id?: string
+          primary_provider?: string
+          smile_api_key_encrypted?: string | null
+          smile_partner_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_provider_config_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: true
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyc_records: {
         Row: {
           address_verified: boolean | null
@@ -1760,27 +2734,144 @@ export type Database = {
           },
         ]
       }
+      kyc_verifications: {
+        Row: {
+          created_at: string
+          customer_id: string
+          id: string
+          institution_id: string
+          match_score: number | null
+          provider: string
+          provider_ref: string | null
+          request_hash: string
+          response_encrypted: string | null
+          status: string
+          verification_type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          id?: string
+          institution_id: string
+          match_score?: number | null
+          provider: string
+          provider_ref?: string | null
+          request_hash: string
+          response_encrypted?: string | null
+          status: string
+          verification_type: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          id?: string
+          institution_id?: string
+          match_score?: number | null
+          provider?: string
+          provider_ref?: string | null
+          request_hash?: string
+          response_encrypted?: string | null
+          status?: string
+          verification_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_kyc_cust"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_kyc_inst"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           attempt_count: number
-          email: string
+          email_hash: string | null
           id: string
           last_attempt_at: string | null
           locked_until: string | null
         }
         Insert: {
           attempt_count?: number
-          email: string
+          email_hash?: string | null
           id?: string
           last_attempt_at?: string | null
           locked_until?: string | null
         }
         Update: {
           attempt_count?: number
-          email?: string
+          email_hash?: string | null
           id?: string
           last_attempt_at?: string | null
           locked_until?: string | null
+        }
+        Relationships: []
+      }
+      monitored_transactions: {
+        Row: {
+          amount: number
+          channel: string
+          counterparty_account: string | null
+          counterparty_name: string | null
+          created_at: string | null
+          currency: string
+          customer_id: string
+          device_id: string | null
+          direction: string
+          external_ref: string
+          geo_city: string | null
+          geo_country: string | null
+          id: string
+          institution_id: string
+          ip_address: string | null
+          occurred_at: string
+          risk_score_at_time: number | null
+        }
+        Insert: {
+          amount: number
+          channel: string
+          counterparty_account?: string | null
+          counterparty_name?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_id: string
+          device_id?: string | null
+          direction: string
+          external_ref: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          institution_id: string
+          ip_address?: string | null
+          occurred_at?: string
+          risk_score_at_time?: number | null
+        }
+        Update: {
+          amount?: number
+          channel?: string
+          counterparty_account?: string | null
+          counterparty_name?: string | null
+          created_at?: string | null
+          currency?: string
+          customer_id?: string
+          device_id?: string | null
+          direction?: string
+          external_ref?: string
+          geo_city?: string | null
+          geo_country?: string | null
+          id?: string
+          institution_id?: string
+          ip_address?: string | null
+          occurred_at?: string
+          risk_score_at_time?: number | null
         }
         Relationships: []
       }
@@ -1861,6 +2952,57 @@ export type Database = {
           },
         ]
       }
+      nfiu_reports: {
+        Row: {
+          case_id: string
+          created_at: string
+          filed_at: string | null
+          id: string
+          report_type: string
+          status: string
+          updated_at: string
+          user_id: string
+          xml_content: string | null
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          filed_at?: string | null
+          id?: string
+          report_type: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          xml_content?: string | null
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          filed_at?: string | null
+          id?: string
+          report_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          xml_content?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfiu_reports_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nfiu_reports_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
+          },
+        ]
+      }
       pending_submissions: {
         Row: {
           amountNGN: number
@@ -1906,7 +3048,7 @@ export type Database = {
           country: string | null
           created_at: string
           date_of_birth: string | null
-          full_name: string
+          full_name_hash: string | null
           id: string
           position: string | null
           source: string | null
@@ -1918,7 +3060,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
-          full_name: string
+          full_name_hash?: string | null
           id?: string
           position?: string | null
           source?: string | null
@@ -1930,7 +3072,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
-          full_name?: string
+          full_name_hash?: string | null
           id?: string
           position?: string | null
           source?: string | null
@@ -1985,13 +3127,13 @@ export type Database = {
         Row: {
           account_status: string
           cbn_license_category: string | null
-          company_name: string | null
-          compliance_lead_name: string | null
+          company_name_hash: string | null
+          compliance_lead_name_hash: string | null
           created_at: string
-          full_name: string | null
+          full_name_hash: string | null
           id: string
           notification_email_report_ready: boolean
-          phone: string | null
+          phone_hash: string | null
           rc_number: string | null
           reporting_api_key: string | null
           tutorial_completed: boolean
@@ -1999,13 +3141,13 @@ export type Database = {
         Insert: {
           account_status?: string
           cbn_license_category?: string | null
-          company_name?: string | null
-          compliance_lead_name?: string | null
+          company_name_hash?: string | null
+          compliance_lead_name_hash?: string | null
           created_at?: string
-          full_name?: string | null
+          full_name_hash?: string | null
           id: string
           notification_email_report_ready?: boolean
-          phone?: string | null
+          phone_hash?: string | null
           rc_number?: string | null
           reporting_api_key?: string | null
           tutorial_completed?: boolean
@@ -2013,13 +3155,13 @@ export type Database = {
         Update: {
           account_status?: string
           cbn_license_category?: string | null
-          company_name?: string | null
-          compliance_lead_name?: string | null
+          company_name_hash?: string | null
+          compliance_lead_name_hash?: string | null
           created_at?: string
-          full_name?: string | null
+          full_name_hash?: string | null
           id?: string
           notification_email_report_ready?: boolean
-          phone?: string | null
+          phone_hash?: string | null
           rc_number?: string | null
           reporting_api_key?: string | null
           tutorial_completed?: boolean
@@ -2072,6 +3214,119 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "queue_jobs_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      receive_transaction_requests: {
+        Row: {
+          created_at: string
+          id: string
+          idempotency_key: string
+          institution_id: string
+          raw_payload: Json
+          request_signature: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          idempotency_key: string
+          institution_id: string
+          raw_payload: Json
+          request_signature: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          idempotency_key?: string
+          institution_id?: string
+          raw_payload?: Json
+          request_signature?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
+      regulatory_filings: {
+        Row: {
+          case_id: string | null
+          created_at: string
+          currency: string
+          customer_id: string | null
+          due_at: string
+          filed_at: string | null
+          filing_ref: string | null
+          filing_type: string
+          id: string
+          institution_id: string
+          status: string
+          total_amount: number
+          transaction_ids: string[]
+          transactions_snapshot: Json
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_at: string
+          filed_at?: string | null
+          filing_ref?: string | null
+          filing_type: string
+          id?: string
+          institution_id: string
+          status?: string
+          total_amount: number
+          transaction_ids?: string[]
+          transactions_snapshot?: Json
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          created_at?: string
+          currency?: string
+          customer_id?: string | null
+          due_at?: string
+          filed_at?: string | null
+          filing_ref?: string | null
+          filing_type?: string
+          id?: string
+          institution_id?: string
+          status?: string
+          total_amount?: number
+          transaction_ids?: string[]
+          transactions_snapshot?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regulatory_filings_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regulatory_filings_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "regulatory_filings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regulatory_filings_institution_id_fkey"
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
@@ -2445,6 +3700,50 @@ export type Database = {
           },
         ]
       }
+      risk_profiles: {
+        Row: {
+          assessed_at: string
+          created_at: string | null
+          customer_id: string
+          expires_at: string | null
+          factors: Json
+          id: string
+          institution_id: string
+          risk_score: number
+          risk_tier: string
+        }
+        Insert: {
+          assessed_at?: string
+          created_at?: string | null
+          customer_id: string
+          expires_at?: string | null
+          factors?: Json
+          id?: string
+          institution_id: string
+          risk_score: number
+          risk_tier: string
+        }
+        Update: {
+          assessed_at?: string
+          created_at?: string | null
+          customer_id?: string
+          expires_at?: string | null
+          factors?: Json
+          id?: string
+          institution_id?: string
+          risk_score?: number
+          risk_tier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_profiles_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       risk_scores: {
         Row: {
           created_at: string | null
@@ -2631,9 +3930,9 @@ export type Database = {
           matches_found: number
           notes: string | null
           screened_by: string | null
-          search_bvn: string | null
+          search_bvn_hash: string | null
           search_date: string
-          search_name: string
+          search_name_hash: string | null
           user_id: string
         }
         Insert: {
@@ -2647,9 +3946,9 @@ export type Database = {
           matches_found?: number
           notes?: string | null
           screened_by?: string | null
-          search_bvn?: string | null
+          search_bvn_hash?: string | null
           search_date?: string
-          search_name: string
+          search_name_hash?: string | null
           user_id: string
         }
         Update: {
@@ -2663,9 +3962,9 @@ export type Database = {
           matches_found?: number
           notes?: string | null
           screened_by?: string | null
-          search_bvn?: string | null
+          search_bvn_hash?: string | null
           search_date?: string
-          search_name?: string
+          search_name_hash?: string | null
           user_id?: string
         }
         Relationships: []
@@ -2781,48 +4080,6 @@ export type Database = {
         }
         Relationships: []
       }
-      transaction_events: {
-        Row: {
-          account_number_hash: string
-          amount: number
-          bvn_hash: string
-          channel: string | null
-          created_at: string
-          customer_id: string
-          entity_type: string
-          id: string
-          institution_id: string
-          path: string
-          phone_hash: string
-        }
-        Insert: {
-          account_number_hash: string
-          amount: number
-          bvn_hash: string
-          channel?: string | null
-          created_at?: string
-          customer_id: string
-          entity_type?: string
-          id?: string
-          institution_id: string
-          path?: string
-          phone_hash: string
-        }
-        Update: {
-          account_number_hash?: string
-          amount?: number
-          bvn_hash?: string
-          channel?: string | null
-          created_at?: string
-          customer_id?: string
-          entity_type?: string
-          id?: string
-          institution_id?: string
-          path?: string
-          phone_hash?: string
-        }
-        Relationships: []
-      }
       transaction_alerts: {
         Row: {
           case_id: string | null
@@ -2872,17 +4129,183 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_alerts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "cases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_alerts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_str_due"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "transaction_alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_alerts_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "unified_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_events: {
+        Row: {
+          account_number_hash: string
+          amount: number
+          bvn_hash: string
+          channel: string | null
+          created_at: string
+          customer_id: string
+          entity_type: string
+          id: string
+          institution_id: string
+          path: string
+          phone_hash: string
+        }
+        Insert: {
+          account_number_hash: string
+          amount: number
+          bvn_hash: string
+          channel?: string | null
+          created_at?: string
+          customer_id: string
+          entity_type?: string
+          id?: string
+          institution_id: string
+          path?: string
+          phone_hash: string
+        }
+        Update: {
+          account_number_hash?: string
+          amount?: number
+          bvn_hash?: string
+          channel?: string | null
+          created_at?: string
+          customer_id?: string
+          entity_type?: string
+          id?: string
+          institution_id?: string
+          path?: string
+          phone_hash?: string
+        }
         Relationships: []
+      }
+      transaction_ingestion_events: {
+        Row: {
+          created_at: string
+          error: string | null
+          id: string
+          idempotency_key: string
+          institution_id: string
+          payload: Json
+          request_hash: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key: string
+          institution_id: string
+          payload: Json
+          request_hash: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error?: string | null
+          id?: string
+          idempotency_key?: string
+          institution_id?: string
+          payload?: Json
+          request_hash?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_ingestion_events_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_ingestion_events_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transaction_review_events: {
+        Row: {
+          change_reason: string | null
+          changed_at: string
+          changed_by: string | null
+          id: string
+          institution_id: string | null
+          metadata: Json
+          new_review_status: string
+          old_review_status: string | null
+          transaction_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          institution_id?: string | null
+          metadata?: Json
+          new_review_status: string
+          old_review_status?: string | null
+          transaction_id: string
+        }
+        Update: {
+          change_reason?: string | null
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          institution_id?: string | null
+          metadata?: Json
+          new_review_status?: string
+          old_review_status?: string | null
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_review_events_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "unified_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transaction_reviews: {
         Row: {
-          account_number: string | null
+          account_number_hash: string | null
           amount: number | null
           case_number: string | null
           channel: string | null
           created_at: string
           customer_id: string | null
-          customer_name: string | null
+          customer_name_hash: string | null
           flag_reason: string | null
           flag_severity: string | null
           flag_type: string | null
@@ -2896,13 +4319,13 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          account_number?: string | null
+          account_number_hash?: string | null
           amount?: number | null
           case_number?: string | null
           channel?: string | null
           created_at?: string
           customer_id?: string | null
-          customer_name?: string | null
+          customer_name_hash?: string | null
           flag_reason?: string | null
           flag_severity?: string | null
           flag_type?: string | null
@@ -2916,13 +4339,13 @@ export type Database = {
           user_id: string
         }
         Update: {
-          account_number?: string | null
+          account_number_hash?: string | null
           amount?: number | null
           case_number?: string | null
           channel?: string | null
           created_at?: string
           customer_id?: string | null
-          customer_name?: string | null
+          customer_name_hash?: string | null
           flag_reason?: string | null
           flag_severity?: string | null
           flag_type?: string | null
@@ -3022,26 +4445,32 @@ export type Database = {
       }
       unified_transactions: {
         Row: {
-          account_number: string | null
+          account_number_hash: string | null
           amount: number
           balance_after: number | null
           branch_code: string | null
           channel: string | null
+          checker_group_id: string | null
           counterparty: string | null
+          counterparty_hash: string | null
           created_at: string
           currency: string | null
           customer_id: string | null
-          customer_name: string | null
+          customer_name_hash: string | null
           description: string | null
+          description_hash: string | null
           flag_reason: string | null
           flag_rule: string | null
           flag_severity: string | null
           id: string
+          institution_id: string | null
           is_flagged: boolean
           narration: string | null
+          narration_hash: string | null
           reference: string | null
           review_notes: string | null
           review_status: string
+          status: string | null
           str_filed_at: string | null
           str_reference: string | null
           transaction_date: string
@@ -3050,26 +4479,32 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          account_number?: string | null
+          account_number_hash?: string | null
           amount?: number
           balance_after?: number | null
           branch_code?: string | null
           channel?: string | null
+          checker_group_id?: string | null
           counterparty?: string | null
+          counterparty_hash?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
-          customer_name?: string | null
+          customer_name_hash?: string | null
           description?: string | null
+          description_hash?: string | null
           flag_reason?: string | null
           flag_rule?: string | null
           flag_severity?: string | null
           id?: string
+          institution_id?: string | null
           is_flagged?: boolean
           narration?: string | null
+          narration_hash?: string | null
           reference?: string | null
           review_notes?: string | null
           review_status?: string
+          status?: string | null
           str_filed_at?: string | null
           str_reference?: string | null
           transaction_date?: string
@@ -3078,26 +4513,32 @@ export type Database = {
           user_id: string
         }
         Update: {
-          account_number?: string | null
+          account_number_hash?: string | null
           amount?: number
           balance_after?: number | null
           branch_code?: string | null
           channel?: string | null
+          checker_group_id?: string | null
           counterparty?: string | null
+          counterparty_hash?: string | null
           created_at?: string
           currency?: string | null
           customer_id?: string | null
-          customer_name?: string | null
+          customer_name_hash?: string | null
           description?: string | null
+          description_hash?: string | null
           flag_reason?: string | null
           flag_rule?: string | null
           flag_severity?: string | null
           id?: string
+          institution_id?: string | null
           is_flagged?: boolean
           narration?: string | null
+          narration_hash?: string | null
           reference?: string | null
           review_notes?: string | null
           review_status?: string
+          status?: string | null
           str_filed_at?: string | null
           str_reference?: string | null
           transaction_date?: string
@@ -3105,7 +4546,15 @@ export type Database = {
           transaction_type?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "unified_transactions_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -3230,7 +4679,7 @@ export type Database = {
         Row: {
           created_at: string
           entity_type: string | null
-          full_name: string
+          full_name_hash: string | null
           id: string
           institution_id: string
           is_global: boolean | null
@@ -3242,7 +4691,7 @@ export type Database = {
         Insert: {
           created_at?: string
           entity_type?: string | null
-          full_name: string
+          full_name_hash?: string | null
           id?: string
           institution_id?: string
           is_global?: boolean | null
@@ -3254,7 +4703,7 @@ export type Database = {
         Update: {
           created_at?: string
           entity_type?: string | null
-          full_name?: string
+          full_name_hash?: string | null
           id?: string
           institution_id?: string
           is_global?: boolean | null
@@ -3379,7 +4828,113 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      pii_high_risk_plaintext: {
+        Row: {
+          column_default: string | null
+          column_name: unknown
+          data_type: string | null
+          is_nullable: string | null
+          ordinal_position: number | null
+          table_name: unknown
+        }
+        Relationships: []
+      }
+      pii_plaintext_inventory: {
+        Row: {
+          column_default: string | null
+          column_name: unknown
+          data_type: string | null
+          is_nullable: string | null
+          ordinal_position: number | null
+          table_name: unknown
+        }
+        Relationships: []
+      }
+      v_ctr_due: {
+        Row: {
+          amount: number | null
+          channel: string | null
+          ctr_due_at: string | null
+          currency: string | null
+          customer_id: string | null
+          external_ref: string | null
+          institution_id: string | null
+          occurred_at: string | null
+          threshold_amount: number | null
+          transaction_id: string | null
+        }
+        Relationships: []
+      }
+      v_ctr_thresholds: {
+        Row: {
+          currency: string | null
+          institution_id: string | null
+          threshold_amount: number | null
+        }
+        Insert: {
+          currency?: never
+          institution_id?: string | null
+          threshold_amount?: never
+        }
+        Update: {
+          currency?: never
+          institution_id?: string | null
+          threshold_amount?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_rules_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_eod_exceptions: {
+        Row: {
+          external_ref: string | null
+          id: string | null
+          institution_id: string | null
+          reason: string | null
+        }
+        Relationships: []
+      }
+      v_eod_reconciliation: {
+        Row: {
+          ctr_generated: number | null
+          exceptions_count: number | null
+          institution_id: string | null
+          recon_date: string | null
+          status: string | null
+          total_amount: number | null
+          total_transactions: number | null
+        }
+        Relationships: []
+      }
+      v_str_due: {
+        Row: {
+          alert_id: string | null
+          case_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          evidence: Json | null
+          institution_id: string | null
+          score: number | null
+          severity: string | null
+          str_due_at: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aml_alerts_institution_id_fkey"
+            columns: ["institution_id"]
+            isOneToOne: false
+            referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       aml_core_decision: {
@@ -3389,6 +4944,51 @@ export type Database = {
           risk_level: string
           rule_hit: string
         }[]
+      }
+      approve_identity_screening: {
+        Args: { p_new_status: string; p_notes: string; p_screening_id: string }
+        Returns: {
+          checks_requested: string[] | null
+          created_at: string
+          customer_id: string | null
+          duplicate_of: string | null
+          id: string
+          institution_id: string
+          metadata: Json
+          provider: string | null
+          provider_payload: Json | null
+          provider_reference: string | null
+          provider_status: string | null
+          result_status: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          risk_score: number | null
+          rule_code: string | null
+          score: number
+          screening_source: string
+          screening_type: string
+          subject_hash: string
+          subject_type: string
+          updated_at: string
+          verification_url: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "identity_screening"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      build_goaml_export: {
+        Args: {
+          p_generated_by?: string
+          p_institution_id: string
+          p_period_end: string
+          p_period_start: string
+          p_report_type: string
+        }
+        Returns: string
       }
       compile_returns_to_xml:
         | {
@@ -3408,14 +5008,113 @@ export type Database = {
             }
             Returns: string
           }
+      current_actor_id: { Args: never; Returns: string }
       current_institution_id: { Args: never; Returns: string }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
+      fn_append_audit_log: {
+        Args: {
+          p_action: string
+          p_entity: string
+          p_entity_id: string
+          p_payload: Json
+          p_user_id: string
+        }
+        Returns: string
+      }
+      fn_atomic_kyc_success:
+        | {
+            Args: {
+              p_bvn_hash: string
+              p_customer_id: string
+              p_institution_id: string
+              p_score: number
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_bvn_hash: string
+              p_customer_id: string
+              p_institution_id: string
+              p_match_score: number
+              p_provider: string
+              p_provider_ref: string
+              p_request_hash: string
+              p_response_enc: string
+              p_status: string
+            }
+            Returns: undefined
+          }
+      fn_decrypt_pii: { Args: { p_cipher: string }; Returns: string }
+      fn_encrypt_pii: { Args: { p_data: string }; Returns: string }
+      fn_eod_reconcile: {
+        Args: { p_date: string; p_institution_id: string }
+        Returns: {
+          created_at: string
+          ctr_generated: number
+          details: Json
+          exceptions_count: number
+          id: string
+          institution_id: string
+          recon_date: string
+          status: string
+          str_due: number
+          total_amount: number
+          total_transactions: number
+        }
+        SetofOptions: {
+          from: "*"
+          to: "eod_reconciliation"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_eod_signoff: {
+        Args: { p_date: string; p_officer: string }
+        Returns: string
+      }
       fn_evaluate_transaction: { Args: { p_txn_id: string }; Returns: number }
+      fn_generate_daily_ctr: {
+        Args: { p_date: string; p_institution_id: string }
+        Returns: number
+      }
+      fn_hash_bvn: { Args: { p_bvn: string }; Returns: string }
+      fn_metadata_has_pii: { Args: { p_meta: Json }; Returns: boolean }
       fn_rescan_transactions: {
         Args: { p_limit?: number; p_user_id: string }
         Returns: number
       }
+      fn_verify_audit_chain: {
+        Args: never
+        Returns: {
+          actual_hash: string
+          expected_hash: string
+          failed_log_id: string
+          is_valid: boolean
+          total_checked: number
+        }[]
+      }
       get_institution_id: { Args: never; Returns: string }
+      get_pending_maker_checker_backlog: {
+        Args: { p_customer_id?: string }
+        Returns: {
+          amount: number
+          created_at: string
+          customer_id: string
+          is_overdue: boolean
+          review_status: string
+          sla_deadline: string
+          transaction_id: string
+        }[]
+      }
+      has_institution_role: {
+        Args: {
+          p_institution_id: string
+          p_profile_id: string
+          p_roles: string[]
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -3423,7 +5122,41 @@ export type Database = {
         }
         Returns: boolean
       }
+      ingest_signed_transaction: {
+        Args: {
+          p_api_key: string
+          p_body_text: string
+          p_idempotency_key: string
+          p_key_hash_secret: string
+          p_key_prefix: string
+          p_payload: Json
+          p_signature: string
+          p_timestamp: string
+        }
+        Returns: {
+          queue_job_id: string
+          status: string
+          transaction_id: string
+        }[]
+      }
+      ingest_transaction_webhook: {
+        Args: {
+          p_idempotency_key: string
+          p_institution_id: string
+          p_raw_payload: Json
+          p_request_signature: string
+        }
+        Returns: string
+      }
+      is_alert_admin: {
+        Args: { p_institution_id: string; p_profile_id: string }
+        Returns: boolean
+      }
       is_checker: {
+        Args: { p_institution_id: string; p_profile_id: string }
+        Returns: boolean
+      }
+      is_maker: {
         Args: { p_institution_id: string; p_profile_id: string }
         Returns: boolean
       }
@@ -3481,8 +5214,48 @@ export type Database = {
               similarity: number
             }[]
           }
+      review_aml_alert: {
+        Args: { p_alert_id: string; p_new_status: string; p_note: string }
+        Returns: undefined
+      }
+      review_fraud_alert: {
+        Args: { p_alert_id: string; p_new_status: string; p_note: string }
+        Returns: undefined
+      }
+      review_identity_screening: {
+        Args: { p_new_status: string; p_note: string; p_screening_id: string }
+        Returns: undefined
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      transition_alert: {
+        Args: {
+          p_actor_id: string
+          p_alert_id: string
+          p_comment?: string
+          p_new_status: string
+        }
+        Returns: {
+          assigned_to: string | null
+          checker_comment: string | null
+          checker_id: string | null
+          created_at: string | null
+          id: string
+          institution_id: string
+          maker_comment: string | null
+          maker_id: string | null
+          rule_id: string | null
+          severity: string | null
+          status: string | null
+          transaction_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "alerts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       aml_job_status: "queued" | "processing" | "completed" | "failed"
@@ -3612,6 +5385,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       aml_job_status: ["queued", "processing", "completed", "failed"],

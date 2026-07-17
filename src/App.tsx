@@ -30,6 +30,9 @@ import Screening from "./pages/Screening";
 import RegulatoryIntelligence from "./pages/RegulatoryIntelligence";
 import BoardPack from "./pages/BoardPack";
 import AuditTracker from "./pages/AuditTracker";
+import AmlRules from "./pages/AmlRules";
+import AuditLog from "./pages/AuditLog";
+import NfiuReports from "./pages/NfiuReports";
 import FeatureGate from "./components/FeatureGate";
 import AdminLayout from "./pages/AdminLayout";
 import AdminClients from "./pages/AdminClients";
@@ -151,6 +154,9 @@ const App = () => (
               <Route path="regulatory-intelligence" element={<RegulatoryIntelligence />} />
               <Route path="board-pack" element={<FeatureGate feature="boardPack" requiredTier="State MFB"><BoardPack /></FeatureGate>} />
               <Route path="audit-tracker" element={<FeatureGate feature="auditTracker" requiredTier="State MFB"><AuditTracker /></FeatureGate>} />
+              <Route path="aml-rules" element={<AmlRules />} />
+              <Route path="audit-log" element={<AuditLog />} />
+              <Route path="nfiu-reports" element={<NfiuReports />} />
             </Route>
             <Route
               path="/admin"

@@ -4,7 +4,7 @@ import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
   Shield, FileCheck, ClipboardCheck, Newspaper,
   Calendar, Settings, HelpCircle, MessageSquare,
-  PanelLeftClose, PanelLeft, LogOut,
+  PanelLeftClose, PanelLeft, LogOut, ShieldAlert, History, FileWarning
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -24,8 +24,11 @@ const ITEMS: NavItem[] = [
   { path: "/dashboard/customers",                label: "Customers",          icon: Users,           feature: "customerIntelligence",                  group: "Intelligence" },
   { path: "/dashboard/transactions",             label: "Monitoring",         icon: Activity,        feature: "transactionMonitor",                    group: "Intelligence" },
   { path: "/dashboard/screening",                label: "Screening",          icon: Shield,          feature: "sanctionsScreening",                    group: "Intelligence" },
+  { path: "/dashboard/aml-rules",                 label: "Rules & alerts",     icon: ShieldAlert,     feature: "transactionMonitor",                    group: "Intelligence" },
   { path: "/dashboard/board-pack",               label: "Board pack",         icon: FileCheck,       feature: "boardPack",                             group: "Governance" },
   { path: "/dashboard/audit-tracker",            label: "Audit",              icon: ClipboardCheck,  feature: "auditTracker",                          group: "Governance" },
+  { path: "/dashboard/audit-log",                  label: "Audit log",          icon: History,         feature: "auditTracker",                          group: "Governance" },
+  { path: "/dashboard/nfiu-reports",               label: "NFIU reports",       icon: FileWarning,     feature: "auditTracker",                          group: "Governance" },
   { path: "/dashboard/regulatory-intelligence",  label: "Intelligence",       icon: Newspaper,       feature: "regulatoryIntelligence",                group: "Governance" },
   { path: "/dashboard/settings",                 label: "Settings",           icon: Settings,        feature: null,                                    group: "Account" },
   { path: "/dashboard/tutorial",                 label: "Help",               icon: HelpCircle,      feature: null,                                    group: "Account" },
