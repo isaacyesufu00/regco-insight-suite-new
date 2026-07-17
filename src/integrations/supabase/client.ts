@@ -2,15 +2,13 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
-const SUPABASE_URL =
-  import.meta.env.VITE_SUPABASE_URL ||
-  "https://pdplkprcomjslilznbsl.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkcGxrcHJjb21qc2xpbHpuYnNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NjcwODMsImV4cCI6MjA4NzU0MzA4M30.GnQp2-SaExoOz5XT_iW3Gs7JXO7HYXuarSoTrY3c9ZM";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error("Missing platform configuration. Please contact support.");
+  throw new Error(
+    "Missing Supabase configuration. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY in your environment (.env)."
+  );
 }
 
 export const supabase = createClient<Database>(
