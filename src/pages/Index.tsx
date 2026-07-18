@@ -663,9 +663,9 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
             style={{
-              fontFamily: HELV, fontSize: 14, fontWeight: 400,
+              fontFamily: HELV, fontSize: 12, fontWeight: 400,
               letterSpacing: "0.35em", textTransform: "uppercase",
-              color: "rgba(248,245,241,0.7)", marginBottom: 28,
+              color: "rgba(248,245,241,0.7)", marginBottom: 24,
             }}
           >
             REGCO • CBN COMPLIANCE PLATFORM
@@ -676,7 +676,7 @@ function Hero() {
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
             style={{
               fontFamily: HELV, fontWeight: 700, color: "#F8F5F1",
-              fontSize: "clamp(42px, 6.5vw, 84px)", lineHeight: 0.97,
+              fontSize: "clamp(26px, 3.4vw, 44px)", lineHeight: 0.97,
               letterSpacing: "-0.02em", margin: 0, maxWidth: "14ch",
             }}
           >
@@ -690,9 +690,9 @@ function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
             style={{
-              fontFamily: HELV, fontSize: "clamp(18px, 1.6vw, 22px)",
+              fontFamily: HELV, fontSize: "clamp(13px, 0.95vw, 15px)",
               color: "rgba(255,255,255,0.88)", maxWidth: 620,
-              margin: "40px 0 0", lineHeight: 1.5,
+              margin: "32px 0 0", lineHeight: 1.5,
             }}
           >
             RegCo connects to your core banking system and handles the compliance
