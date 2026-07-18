@@ -393,27 +393,3 @@ html.regco-light .regco-nav {
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
 }
-
-/* ============================================================
-   Mockups / data-viz figures on the homepage — keep their text
-   light in BOTH modes so it stays readable on the dark cards.
-   ============================================================ */
-.regco-mockup,
-.regco-mockup * {
-  color: #F8F5F1 !important;
-}
-
-/* ============================================================
-   CTA buttons stay BLACK in both modes. The .dark token flip
-   would otherwise turn bg-ink buttons light.
-   ============================================================ */
-.regco-cta,
-.regco-cta * {
-  color: #FFFFFF !important;
-}
-.dark .bg-ink {
-  background-color: #0A0A0A !important;
-}
-.dark .text-\[var\(--paper\)\] {
-  color: #FFFFFF !important;
-}

@@ -245,7 +245,7 @@ function HeatmapScenario({ title, data }: { title: string; data: Cell[] }) {
 
 function Figure1() {
   return (
-    <div className="regco-mockup">
+    <div>
       <div style={{
         background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
         padding: 32,
@@ -296,7 +296,7 @@ const OVERALL = [
 
 function RankedBars() {
   return (
-    <div className="regco-mockup">
+    <div>
       <div style={{
         background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
         padding: 32, display: "flex", flexDirection: "column", gap: 18,
@@ -349,7 +349,7 @@ function GroupedBars() {
   const CHART_H = 320;
   const seriesColors = [SERIES.gpt, SERIES.fable, SERIES.gemini, SERIES.opus];
   return (
-    <div className="regco-mockup">
+    <div>
       <div style={{
         background: C.surface, border: `1px solid ${C.rule}`, borderRadius: 4,
         padding: 32,
