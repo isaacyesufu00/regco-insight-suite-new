@@ -6,11 +6,19 @@ const LOVABLE_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions'
 const DEFAULT_OPENROUTER_MODEL = Deno.env.get('OPENROUTER_MODEL') || 'google/gemini-2.5-flash';
 const LOVABLE_MODEL = 'google/gemini-3-flash-preview';
 
-const corsHeaders: Record<string, string> = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 type AgentRole = 'user' | 'assistant' | 'system';
 type AgentMessage = { role: AgentRole; content: string };
@@ -18,7 +26,7 @@ type AgentMessage = { role: AgentRole; content: string };
 function jsonResponse(body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
   });
 }
 
@@ -29,7 +37,7 @@ function isAgentMessage(value: unknown): value is AgentMessage {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) });
   if (req.method !== 'POST') return jsonResponse({ error: 'Method not allowed' }, 405);
 
   const startedAt = Date.now();

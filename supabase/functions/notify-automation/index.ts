@@ -1,11 +1,19 @@
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS_HEADERS });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   try {
@@ -37,7 +45,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ received: true, message: 'Report processing started' }),
       {
         status: 200,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       },
     );
   } catch (error: any) {
@@ -46,7 +54,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       },
     );
   }

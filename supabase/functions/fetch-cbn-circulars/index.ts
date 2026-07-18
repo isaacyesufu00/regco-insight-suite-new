@@ -2,14 +2,22 @@
 // Public endpoint — verify_jwt disabled in config.toml. Uses service role for upsert.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -44,6 +52,6 @@ Deno.serve(async (req) => {
   }
 
   return new Response(JSON.stringify({ success: true, stored }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 });

@@ -1,10 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // Escape a string for safe inclusion inside an XML text node / attribute.
 function xmlEscape(value: unknown): string {
@@ -31,7 +39,7 @@ function xmlDate(value: string | undefined | null): string {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -39,7 +47,7 @@ serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -49,7 +57,7 @@ serve(async (req) => {
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -58,7 +66,7 @@ serve(async (req) => {
     if (!case_id) {
       return new Response(JSON.stringify({ error: "case_id is required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -74,7 +82,7 @@ serve(async (req) => {
     if (!userId) {
       return new Response(JSON.stringify({ error: "Unauthorized: User ID not found" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -90,7 +98,7 @@ serve(async (req) => {
     if (!kase) {
       return new Response(JSON.stringify({ error: "Case not found or access denied" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -245,13 +253,13 @@ ${(artifacts || [])
         filing_number: filingNo,
         xml_content: xml,
       }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("generate-nfiu-report unexpected error:", err);
     return new Response(JSON.stringify({ error: "An internal error occurred." }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

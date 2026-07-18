@@ -1,9 +1,21 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // Public endpoint — invoked by cron daily and manually from dashboard.
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -240,5 +252,5 @@ Deno.serve(async (req) => {
     lists_with_errors: totalErrors,
     results,
     synced_at: new Date().toISOString(),
-  }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }), { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
 });

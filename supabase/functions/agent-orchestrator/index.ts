@@ -13,17 +13,25 @@ import {
 import { createOpenAICompatible } from "npm:@ai-sdk/openai-compatible@1.0.19";
 import { z } from "npm:zod@3";
 
-const corsHeaders: Record<string, string> = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 // ------------ helpers ------------
 function err(status: number, message: string) {
   return new Response(JSON.stringify({ error: message }), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 }
 
@@ -570,7 +578,7 @@ Report-generation workflow: when the user asks to generate/file a return, (1) ca
 
 // ------------ main handler ------------
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return err(405, "Method not allowed");
   if (!LOVABLE_API_KEY && !OPENROUTER_API_KEY) {
     return err(500, "AI service not configured (missing LOVABLE_API_KEY or OPENROUTER_API_KEY)");
@@ -659,7 +667,7 @@ Deno.serve(async (req) => {
   });
 
   return result.toUIMessageStreamResponse({
-    headers: { ...corsHeaders, "X-Conversation-Id": conversationId ?? "" },
+    headers: { ...corsHeaders(req), "X-Conversation-Id": conversationId ?? "" },
     onError: (e) => {
       const msg = e instanceof Error ? e.message : String(e);
       console.error("stream error:", msg);

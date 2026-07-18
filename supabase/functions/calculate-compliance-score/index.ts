@@ -1,19 +1,27 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
     const { user_id } = await req.json();
     if (!user_id) {
-      return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: "user_id required" }), { status: 400, headers: corsHeaders(req) });
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -28,7 +36,7 @@ Deno.serve(async (req) => {
       .eq("is_active", true);
 
     if (!assignedTypes || assignedTypes.length === 0) {
-      return new Response(JSON.stringify({ score: 100, breakdown: [] }), { headers: corsHeaders });
+      return new Response(JSON.stringify({ score: 100, breakdown: [] }), { headers: corsHeaders(req) });
     }
 
     // Get all reports for user
@@ -133,8 +141,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ score, breakdown }), { headers: corsHeaders });
+    return new Response(JSON.stringify({ score, breakdown }), { headers: corsHeaders(req) });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders(req) });
   }
 });

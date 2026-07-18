@@ -10,10 +10,18 @@ const AI_MODELS = [
   'google/gemini-2.5-flash-lite',
 ];
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+// Fail-closed CORS: only reflect the configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
 
 // ─── SYSTEM PROMPTS PER REPORT TYPE ───────────────────────────────────────────
 
@@ -1225,7 +1233,7 @@ function buildReportText(reportType: string, financialData: Record<string, numbe
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS_HEADERS });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
@@ -1398,7 +1406,7 @@ Deno.serve(async (req: Request) => {
         }, serviceRoleKey);
         return new Response(JSON.stringify({ success: true, status: 'ERROR', error: errMsg }), {
           status: 200,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
 
@@ -1518,7 +1526,7 @@ Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
         }, serviceRoleKey);
         return new Response(JSON.stringify({ success: true, status: 'ERROR', error: errorMsg }), {
           status: 200,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
 
@@ -1539,7 +1547,7 @@ Other Liabilities: ₦${otherLiabilities.toLocaleString('en-NG')}
         }, serviceRoleKey);
         return new Response(JSON.stringify({ success: true, status: 'ERROR', error: validationError }), {
           status: 200,
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
 
@@ -1672,7 +1680,7 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
 
       return new Response(JSON.stringify({ success: true, status: 'ERROR' }), {
         status: 200,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -1792,7 +1800,7 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
 
   } catch (error: any) {
@@ -1808,7 +1816,7 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
     }
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   }
 });
