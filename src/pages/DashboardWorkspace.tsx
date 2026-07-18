@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ComplianceOverview from "./ComplianceOverview";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ComposedChart,
@@ -369,68 +370,7 @@ const ReturnsView = ({ d }: { d: WorkspaceData }) => (
 );
 
 // ─── Workspace shell ───────────────────────────────────────────────────
+// The /dashboard index now renders the dark Compliance Intelligence Overview.
 export default function DashboardWorkspace() {
-  const [tab, setTab] = useState<TabId>("fraud");
-  const { user } = useAuth();
-  const { userName } = useProfile();
-  const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!user) return;
-    // Resolve the user's institution, preferring an active institution record
-    // (guards against dangling institution_users rows pointing at deleted orgs).
-    supabase
-      .from("institution_users")
-      .select("institution_id, institutions(status)")
-      .eq("user_id", user.id)
-      .limit(1)
-      .then(({ data }) => {
-        const row = (data as any[])?.[0];
-        setInstitutionId(row?.institution_id || undefined);
-      });
-  }, [user?.id]);
-
-  const d = useWorkspaceData(user?.id, institutionId);
-
-  // Lightweight presence ping
-  useEffect(() => { void supabase.auth.getUser(); }, []);
-
-  return (
-    <div className="min-h-screen flex flex-col">
-      <header className="sticky top-0 z-10 bg-white border-b border-[var(--line)]">
-        <div className="px-6 h-14 flex items-end justify-between">
-          <nav className="flex items-center gap-6 h-full">
-            {TABS.map((t) => {
-              const active = tab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className="relative h-full text-[13.5px] font-medium tracking-tight transition-colors"
-                  style={{ color: active ? "var(--navy)" : "var(--ink-3)" }}
-                >
-                  {t.label}
-                  {active && (
-                    <span className="absolute left-0 right-0 -bottom-px h-[2px]" style={{ background: "var(--blue)" }} />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)]">
-            {userName ? `Officer · ${userName}` : "Workspace"}
-          </div>
-        </div>
-      </header>
-
-      <div className="flex-1 px-6 py-6 bg-[#FAFBFC]">
-        <div className="max-w-[1100px] mx-auto">
-          {tab === "fraud"    && <FraudView d={d} />}
-          {tab === "identity" && <IdentityView d={d} />}
-          {tab === "returns"  && <ReturnsView d={d} />}
-        </div>
-      </div>
-    </div>
-  );
+  return <ComplianceOverview />;
 }
