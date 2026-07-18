@@ -2,16 +2,25 @@
 // Returns the plaintext key ONCE. Subsequent reads only return the prefix.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-  "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
-};
+// Fail-closed CORS: only reflect a configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain
+// (e.g. https://regco-insight-suite.vercel.app) before deploy.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "content-type, authorization, apikey, x-client-info",
+    "Vary": "Origin",
+  };
+}
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 
 async function sha256(input: string): Promise<string> {
@@ -27,7 +36,7 @@ function generateKey(): string {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
   const auth = req.headers.get("Authorization");
   if (!auth) return json({ error: "Unauthorized" }, 401);

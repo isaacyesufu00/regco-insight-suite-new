@@ -1,10 +1,35 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+// Fail-closed CORS: only reflect a configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain
+// (e.g. https://regco-insight-suite.vercel.app) before deploy.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Vary": "Origin",
+  };
+}
+
+// Extract the caller's auth.uid() from the verified JWT without a network
+// round-trip to the Auth server.
+function callerUid(req: Request): string | null {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "");
+  if (!token) return null;
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  try {
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    return payload.sub ?? null;
+  } catch {
+    return null;
+  }
+}
 
 async function fetchTimeout(url: string, opts: RequestInit, ms = 10000) {
   const c = new AbortController();
@@ -19,7 +44,7 @@ async function fetchTimeout(url: string, opts: RequestInit, ms = 10000) {
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders(req) });
   }
 
   try {
@@ -27,7 +52,16 @@ serve(async (req) => {
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // Resolve the verified caller's auth.uid() from the JWT.
+    const caller = callerUid(req);
+    if (!caller) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -37,7 +71,7 @@ serve(async (req) => {
     } catch {
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -45,7 +79,7 @@ serve(async (req) => {
     if (!customer_id || !rc_number) {
       return new Response(JSON.stringify({ error: "customer_id and rc_number are required" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -56,7 +90,19 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // 1. Fetch customer and verify existence / retrieve user_id (tenant context)
+    // 1. Enforce tenant isolation: the caller must own this customer.
+    const { data: owns, error: ownErr } = await admin.rpc("fn_user_owns_customer", {
+      p_user_id: caller,
+      p_customer_id: customer_id,
+    });
+    if (ownErr || !owns) {
+      return new Response(JSON.stringify({ error: "Forbidden: customer does not belong to your institution" }), {
+        status: 403,
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Fetch customer (ownership already verified) for tenant context.
     const { data: customer, error: custError } = await admin
       .from("customers")
       .select("id, institution_id, full_name")
@@ -66,29 +112,12 @@ serve(async (req) => {
     if (custError || !customer) {
       return new Response(JSON.stringify({ error: "Customer not found" }), {
         status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
-    // Since customers uses institution_id for tenant, let's lookup a matching profile in that institution to get a valid user_id
-    const { data: profile } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("institution_id", customer.institution_id)
-      .limit(1)
-      .single();
-    
-    // Default to the sub claim in the token if we can't find a profile
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claims } = await admin.auth.getClaims(token);
-    const userId = profile?.id || claims?.claims?.sub;
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "Could not resolve valid user context" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    // The actor for the beneficial-owner audit row is the verified caller.
+    const userId = caller;
 
     // 2. Fetch KYC configuration to determine provider (Dojah / Mock)
     const { data: cfg } = await admin
@@ -303,7 +332,7 @@ serve(async (req) => {
       }),
       {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders(req), "Content-Type": "application/json" },
       }
     );
 
@@ -311,7 +340,7 @@ serve(async (req) => {
     console.error("cac-lookup unexpected error:", err);
     return new Response(JSON.stringify({ error: "An internal error occurred." }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

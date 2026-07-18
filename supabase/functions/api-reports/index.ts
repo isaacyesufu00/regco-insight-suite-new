@@ -2,24 +2,33 @@
 // Authenticates with an x-api-key header that matches profiles.reporting_api_key.
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "x-api-key, content-type",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-};
+// Fail-closed CORS: only reflect a configured production origin.
+// Set CORS_ALLOWED_ORIGIN in Supabase function env to the Vercel domain
+// (e.g. https://regco-insight-suite.vercel.app) before deploy.
+function corsHeaders(req: Request): HeadersInit {
+  const allowed = Deno.env.get("CORS_ALLOWED_ORIGIN");
+  const origin = req.headers.get("origin");
+  const allow = allowed && origin === allowed ? allowed : "";
+  return {
+    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Headers": "x-api-key, content-type",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Vary": "Origin",
+  };
+}
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "GET") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 405, headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
   const apiKey = req.headers.get("x-api-key");
   if (!apiKey || apiKey.length < 16) {
     return new Response(JSON.stringify({ error: "Missing or invalid x-api-key header" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -36,7 +45,7 @@ Deno.serve(async (req) => {
 
   if (!profile) {
     return new Response(JSON.stringify({ error: "Invalid API key" }), {
-      status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 401, headers: { ...corsHeaders(req), "Content-Type": "application/json" },
     });
   }
 
@@ -51,6 +60,6 @@ Deno.serve(async (req) => {
     institution: profile.company_name,
     reports: reports || [],
   }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders(req), "Content-Type": "application/json" },
   });
 });
