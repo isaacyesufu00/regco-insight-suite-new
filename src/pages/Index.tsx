@@ -705,7 +705,7 @@ function Hero() {
             transition={{ duration: 1.0, delay: 0.6, ease: "easeOut" }}
             style={{ marginTop: 40 }}
           >
-            <CreamCTA to="/book-demo">Book a Demo</CreamCTA>
+            <CreamCTA to="/book-demo" hero>Book a Demo</CreamCTA>
           </motion.div>
       </div>
     </section>

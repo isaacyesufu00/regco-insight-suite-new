@@ -69,19 +69,28 @@ export function ScrollRuler({ active, total }: { active: number; total: number }
   );
 }
 
-export function CreamCTA({ children, href = "#", to }: { children: React.ReactNode; href?: string; to?: string }) {
+export function CreamCTA({ children, href = "#", to, hero = false }: { children: React.ReactNode; href?: string; to?: string; hero?: boolean }) {
   const [hover, setHover] = useState(false);
-  const style: React.CSSProperties = {
-    display: "inline-flex", alignItems: "center", gap: 8,
-    background: hover ? "#222222" : "#0A0A0A", color: "#FFFFFF",
-    border: "1px solid rgba(255,255,255,0.18)",
-    borderRadius: 9999, padding: "14px 24px",
-    fontFamily: HELV, fontSize: 15, fontWeight: 500,
-    textDecoration: "none", transition: "background 150ms ease",
-  };
+  // Hero CTA is excluded from the global black-CTA rule — keeps the cream look.
+  const style: React.CSSProperties = hero
+    ? {
+        display: "inline-flex", alignItems: "center", gap: 8,
+        background: hover ? C.creamHi : C.cream, color: "#0A0A0A",
+        borderRadius: 9999, padding: "14px 24px",
+        fontFamily: HELV, fontSize: 15, fontWeight: 500,
+        textDecoration: "none", transition: "background 150ms ease",
+      }
+    : {
+        display: "inline-flex", alignItems: "center", gap: 8,
+        background: hover ? "#222222" : "#0A0A0A", color: "#FFFFFF",
+        border: "1px solid rgba(255,255,255,0.18)",
+        borderRadius: 9999, padding: "14px 24px",
+        fontFamily: HELV, fontSize: 15, fontWeight: 500,
+        textDecoration: "none", transition: "background 150ms ease",
+      };
   const inner = (<>{children} <ArrowRight size={16} strokeWidth={1.75} /></>);
-  if (to) return <Link to={to} className="regco-cta" style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</Link>;
-  return <a href={href} className="regco-cta" style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</a>;
+  if (to) return <Link to={to} className={hero ? undefined : "regco-cta"} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</Link>;
+  return <a href={href} className={hero ? undefined : "regco-cta"} style={style} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}>{inner}</a>;
 }
 
 export const H1: React.CSSProperties = {
