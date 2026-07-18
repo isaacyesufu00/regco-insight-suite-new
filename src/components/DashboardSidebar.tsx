@@ -3,7 +3,7 @@ import { useLocation, useNavigate, NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
   Shield, FileCheck, ClipboardCheck, Newspaper,
-  Calendar, Settings, HelpCircle, MessageSquare,
+  Calendar, Settings, HelpCircle,
   PanelLeftClose, PanelLeft, LogOut, ShieldAlert, History, FileWarning
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,7 +17,6 @@ type NavItem = { path: string; label: string; icon: any; feature: keyof FeatureS
 
 const ITEMS: NavItem[] = [
   { path: "/dashboard",                          label: "Overview",           icon: LayoutDashboard, feature: null,                       exact: true, group: "Workspace" },
-  { path: "/dashboard/agent",                    label: "Agent",              icon: MessageSquare,   feature: null,                                    group: "Workspace" },
   { path: "/dashboard/reports",                  label: "Reports",            icon: FileText,        feature: null,                                    group: "Reporting" },
   { path: "/dashboard/new-report",               label: "New report",         icon: FilePlus,        feature: "reportGeneration",                      group: "Reporting" },
   { path: "/dashboard/calendar",                 label: "Calendar",           icon: Calendar,        feature: null,                                    group: "Reporting" },

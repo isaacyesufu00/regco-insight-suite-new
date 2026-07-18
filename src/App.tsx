@@ -57,6 +57,7 @@ import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
 import DashboardWorkspace from "./pages/DashboardWorkspace";
+import DashboardInsights from "./pages/DashboardInsights";
 import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
 import Homepage from "./pages/marketing/Homepage";
 import SecurityPage from "./pages/marketing/SecurityPage";
@@ -139,6 +140,7 @@ const App = () => (
               }
             >
               <Route index element={<DashboardWorkspace />} />
+              <Route path="insights" element={<DashboardInsights />} />
               <Route path="reports" element={<MyReports />} />
               <Route path="new-report" element={<NewReport />} />
               <Route path="data-sources" element={<Navigate to="/dashboard/transactions" replace />} />
