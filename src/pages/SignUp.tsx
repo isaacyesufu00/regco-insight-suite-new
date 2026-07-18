@@ -70,7 +70,7 @@ export default function SignUp() {
   };
 
   return (
-    <div className="regco-page" style={{ minHeight: "100vh", background: C.page, color: C.ink }}>
+    <div style={{ minHeight: "100vh", background: C.page, color: C.ink }}>
       <Nav />
       <main style={{ paddingTop: 160, paddingBottom: 120 }}>
         <div style={{ maxWidth: 1120, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 96 }}>
