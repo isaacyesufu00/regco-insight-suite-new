@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import { ArrowRight, Check } from "lucide-react";
 
 /* =========================================================
@@ -10,6 +11,16 @@ import { ArrowRight, Check } from "lucide-react";
 
 const HELV = 'Helvetica Neue, Helvetica, Arial, sans-serif';
 const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+
+function useViewport() {
+  const [w, setW] = useState(typeof window !== "undefined" ? window.innerWidth : 1280);
+  useEffect(() => {
+    const onResize = () => setW(window.innerWidth);
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  return w;
+}
 
 const C = {
   page:   "#0A0A0A",
@@ -50,15 +61,25 @@ function hex(h: string) {
 
 /* ---------- top nav ---------- */
 function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
     <header style={{
       position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 50,
-      background: C.page,
+      background: scrolled ? "rgba(0,0,0,0.85)" : "transparent",
+      backdropFilter: scrolled ? "saturate(180%) blur(12px)" : "none",
+      WebkitBackdropFilter: scrolled ? "saturate(180%) blur(12px)" : "none",
+      transition: "background 0.4s ease, backdrop-filter 0.4s ease",
       display: "flex", alignItems: "center", justifyContent: "space-between",
       padding: "0 32px 0 24px",
       fontFamily: HELV,
     }}>
-      <Link to="/" style={{ textDecoration: "none", color: C.ink, lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
+      <Link to="/" style={{ textDecoration: "none", color: "#F8F5F1", lineHeight: 1.05, letterSpacing: "0.04em", fontWeight: 700, fontSize: 15 }}>
         <div>{"\n\n"}REGCO</div>
         <div>{"\n"}</div>
       </Link>
@@ -77,7 +98,7 @@ function Nav() {
   );
 }
 const navLink: React.CSSProperties = {
-  fontFamily: HELV, fontSize: 15, color: C.ink, textDecoration: "none",
+  fontFamily: HELV, fontSize: 15, color: "#F8F5F1", textDecoration: "none",
 };
 
 
@@ -440,24 +461,7 @@ export default function Index() {
       <ScrollRuler active={active} total={SECTION_COUNT} />
 
       {/* HERO */}
-      <section data-ruler-id="0" style={{ paddingTop: 200, paddingBottom: 140 }}>
-        <div style={Col}>
-          <div style={{ ...Mono, fontSize: 12, letterSpacing: "0.16em", textTransform: "uppercase", marginBottom: 32 }}>
-            REGCO · COMPLIANCE PLATFORM
-          </div>
-          <h1 style={H1}>
-            Compliance automation for banks that can't afford to miss a filing.
-          </h1>
-          <p style={{ ...Lede, marginTop: 32, maxWidth: 640 }}>
-            RegCo connects to your core banking system and handles<br />
-            the compliance work your team does manually: screening<br />
-            customers, generating returns, and keeping an audit trail.
-          </p>
-          <div style={{ marginTop: 40 }}>
-            <CreamCTA to="/book-demo">Book a demo</CreamCTA>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* SECTION 1 — WHAT WE MEASURE */}
       <section data-ruler-id="1" style={{ paddingTop: 96, paddingBottom: 96 }}>
@@ -613,5 +617,98 @@ export default function Index() {
       </footer>
 
     </div>
+  );
+}
+
+/* ---------- hero (image, full viewport) ---------- */
+function Hero() {
+  const w = useViewport();
+  const padX = w < 640 ? 24 : w < 1024 ? 48 : 80;
+  const padBottom = w < 640 ? 40 : 80;
+  return (
+    <section
+      data-ruler-id="0"
+      style={{
+        position: "relative", minHeight: "100vh", width: "100%", overflow: "hidden",
+        display: "flex", alignItems: "flex-end",
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.5, ease: "easeOut" }}
+        style={{
+          position: "absolute", inset: 0, zIndex: 0,
+          backgroundImage: "url(/hero-paperwork.png)",
+          backgroundSize: "cover", backgroundPosition: "center",
+          backgroundColor: "#1a1714",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute", inset: 0, zIndex: 1,
+          background:
+            "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), radial-gradient(120% 120% at 20% 90%, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 60%)",
+        }}
+      />
+      <div
+        style={{
+          position: "relative", zIndex: 2, width: "100%",
+          padding: `0 ${padX}px ${padBottom}px`,
+        }}
+      >
+        <div style={Col}>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+            style={{
+              fontFamily: HELV, fontSize: 14, fontWeight: 400,
+              letterSpacing: "0.35em", textTransform: "uppercase",
+              color: "rgba(248,245,241,0.7)", marginBottom: 28,
+            }}
+          >
+            REGCO • CBN COMPLIANCE PLATFORM
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            style={{
+              fontFamily: HELV, fontWeight: 700, color: "#F8F5F1",
+              fontSize: "clamp(42px, 6.5vw, 84px)", lineHeight: 0.97,
+              letterSpacing: "-0.02em", margin: 0, maxWidth: "14ch",
+            }}
+          >
+            Compliance automation<br />
+            for banks that can't<br />
+            afford to miss<br />
+            a filing.
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            style={{
+              fontFamily: HELV, fontSize: "clamp(18px, 1.6vw, 22px)",
+              color: "rgba(255,255,255,0.88)", maxWidth: 620,
+              margin: "40px 0 0", lineHeight: 1.5,
+            }}
+          >
+            RegCo connects to your core banking system and handles the compliance
+            work your team does manually — screening customers, generating
+            returns, and keeping an audit trail.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.0, delay: 0.6, ease: "easeOut" }}
+            style={{ marginTop: 40 }}
+          >
+            <CreamCTA to="/book-demo">Book a Demo</CreamCTA>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 }
