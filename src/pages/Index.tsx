@@ -676,12 +676,11 @@ function Hero() {
           style={{
             fontFamily: HELV, fontWeight: 700, color: "#F8F5F1",
             fontSize: "clamp(26px, 3.4vw, 44px)", lineHeight: 0.97,
-            letterSpacing: "-0.02em", margin: 0, maxWidth: "14ch",
+            letterSpacing: "-0.02em", margin: 0, maxWidth: "20ch",
           }}
         >
           Compliance automation<br />
-          for banks that can't<br />
-          afford to miss a filing.
+          for banks that can't afford to miss a filing.
         </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
