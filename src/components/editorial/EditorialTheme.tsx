@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export const HELV = 'Helvetica Neue, Helvetica, Arial, sans-serif';
 export const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
@@ -29,8 +30,9 @@ const navLink: React.CSSProperties = {
 };
 
 export function Nav() {
+  const { theme, toggle } = useTheme();
   return (
-    <header className="regco-nav" style={{
+    <header style={{
       position: "fixed", top: 0, left: 0, right: 0, height: 72, zIndex: 50,
       background: C.page,
       display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -44,6 +46,23 @@ export function Nav() {
         {NAV_ITEMS.map(([l, to]) => (
           <Link key={l} to={to} style={navLink}>{l}</Link>
         ))}
+        <button
+          onClick={toggle}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={theme === "dark" ? "Light mode" : "Dark mode"}
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: 34, height: 34, borderRadius: 9999,
+            background: "transparent", color: C.ink,
+            border: `1px solid ${C.rule}`,
+            cursor: "pointer", padding: 0, marginLeft: 4,
+            transition: "background 150ms ease, border-color 150ms ease",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = C.surface)}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+        >
+          {theme === "dark" ? <Sun size={15} strokeWidth={1.75} /> : <Moon size={15} strokeWidth={1.75} />}
+        </button>
       </nav>
     </header>
   );

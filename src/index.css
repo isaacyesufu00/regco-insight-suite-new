@@ -335,11 +335,3 @@ html.regco-light .regco-page {
   background: #ffffff !important;
   color: #0A0A0A !important;
 }
-html.regco-light .regco-nav {
-  background: rgba(255,255,255,0.85) !important;
-  backdrop-filter: saturate(180%) blur(12px);
-  -webkit-backdrop-filter: saturate(180%) blur(12px);
-}
-html.regco-light .regco-nav a {
-  color: #0A0A0A !important;
-}
