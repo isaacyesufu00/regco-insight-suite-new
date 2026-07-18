@@ -417,10 +417,3 @@ html.regco-light .regco-nav {
 .dark .text-\[var\(--paper\)\] {
   color: #FFFFFF !important;
 }
-/* shadcn default Button uses bg-primary, which flips light in dark mode */
-.dark .bg-primary {
-  background-color: #0A0A0A !important;
-}
-.dark .text-primary-foreground {
-  color: #FFFFFF !important;
-}
