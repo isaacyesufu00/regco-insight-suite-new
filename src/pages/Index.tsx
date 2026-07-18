@@ -629,8 +629,7 @@ function Hero() {
     <section
       data-ruler-id="0"
       style={{
-        position: "relative", minHeight: "100vh", width: "100%", overflow: "hidden",
-        display: "flex", alignItems: "flex-end",
+        position: "relative", height: "100vh", width: "100%", overflow: "hidden",
       }}
     >
       <motion.div
@@ -653,38 +652,37 @@ function Hero() {
       />
       <div
         style={{
-          position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 2, width: "100%",
+          position: "absolute", left: 0, bottom: 0, zIndex: 2, width: "100%",
+          maxWidth: 900, textAlign: "left",
           padding: `0 ${padX}px ${padBottom}px`,
         }}
       >
-        <div style={Col}>
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
-            style={{
-              fontFamily: HELV, fontSize: 12, fontWeight: 400,
-              letterSpacing: "0.35em", textTransform: "uppercase",
-              color: "rgba(248,245,241,0.7)", marginBottom: 24,
-            }}
-          >
-            REGCO • CBN COMPLIANCE PLATFORM
-          </motion.div>
-          <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-            style={{
-              fontFamily: HELV, fontWeight: 700, color: "#F8F5F1",
-              fontSize: "clamp(26px, 3.4vw, 44px)", lineHeight: 0.97,
-              letterSpacing: "-0.02em", margin: 0, maxWidth: "14ch",
-            }}
-          >
-            Compliance automation<br />
-            for banks that can't<br />
-            afford to miss<br />
-            a filing.
-          </motion.h1>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
+          style={{
+            fontFamily: HELV, fontSize: 12, fontWeight: 400,
+            letterSpacing: "0.35em", textTransform: "uppercase",
+            color: "rgba(248,245,241,0.7)", marginBottom: 24,
+          }}
+        >
+          REGCO • CBN COMPLIANCE PLATFORM
+        </motion.div>
+        <motion.h1
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+          style={{
+            fontFamily: HELV, fontWeight: 700, color: "#F8F5F1",
+            fontSize: "clamp(26px, 3.4vw, 44px)", lineHeight: 0.97,
+            letterSpacing: "-0.02em", margin: 0, maxWidth: "14ch",
+          }}
+        >
+          Compliance automation<br />
+          for banks that can't<br />
+          afford to miss a filing.
+        </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -707,7 +705,6 @@ function Hero() {
           >
             <CreamCTA to="/book-demo">Book a Demo</CreamCTA>
           </motion.div>
-        </div>
       </div>
     </section>
   );
