@@ -658,7 +658,6 @@ function Hero() {
         }}
       >
         <motion.div
-          className="regco-hero-eyebrow"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1, ease: "easeOut" }}
@@ -671,7 +670,6 @@ function Hero() {
           REGCO • CBN COMPLIANCE PLATFORM
         </motion.div>
         <motion.h1
-          className="regco-hero-title"
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
@@ -685,7 +683,6 @@ function Hero() {
           for banks that can't afford to miss a filing.
         </motion.h1>
           <motion.p
-            className="regco-hero-body"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
