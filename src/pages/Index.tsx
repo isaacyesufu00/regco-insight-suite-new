@@ -624,7 +624,7 @@ export default function Index() {
 function Hero() {
   const w = useViewport();
   const padX = w < 640 ? 24 : w < 1024 ? 48 : 80;
-  const padBottom = w < 640 ? 40 : 80;
+  const padBottom = w < 640 ? 16 : 32;
   return (
     <section
       data-ruler-id="0"
