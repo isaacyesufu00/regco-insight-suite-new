@@ -104,6 +104,47 @@
   }
 }
 
+/* ============================================================
+   DARK theme tokens — applied when <html> has .dark (default app theme).
+   Inverts the B/W marketing/dashboard/auth palette so token-driven
+   pages render dark. Editorial pages use hardcoded inline dark colors
+   and are unaffected.
+   ============================================================ */
+.dark {
+  --background: 0 0% 4%;
+  --foreground: 0 0% 96%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 96%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 96%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 12%;
+  --secondary-foreground: 0 0% 96%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 65%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 96%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 0 0% 80%;
+
+  --bg:        #0A0A0A;
+  --bg-inverse:#FFFFFF;
+  --ink:       #F2F2F2;
+  --ink-2:     #C9C9C9;
+  --ink-3:     #8A8A8A;
+  --ink-4:     #5C5C5C;
+  --line:      #2A2A2A;
+  --line-2:    #1A1A1A;
+
+  --paper:    #0A0A0A;
+  --paper-2:  #161616;
+  --ink-muted:#8A8A8A;
+  --rust:     #F2F2F2;
+  --rust-dark:#FFFFFF;
+}
+
 @layer base {
   * { @apply border-border; }
 
@@ -320,9 +361,10 @@
 .card-elevated { background: #fff; border: 1px solid var(--line); box-shadow: none; }
 
 /* ============================================================
-   Global light-mode — white background with black text.
-   !important overrides the inline background/color set on
-   page root divs (which would otherwise beat class rules).
+   Global light-mode — white background, BLACK text everywhere
+   except the hero (which stays light-on-image).
+   Universal color override beats inline styles; hero text is
+   re-asserted to stay light. The hero CTA keeps dark-on-cream.
    ============================================================ */
 html.regco-light {
   background: #ffffff;
@@ -335,11 +377,19 @@ html.regco-light .regco-page {
   background: #ffffff !important;
   color: #0A0A0A !important;
 }
+/* every piece of text turns black in light mode */
+html.regco-light,
+html.regco-light * {
+  color: #0A0A0A !important;
+}
+/* hero text stays light over the dark image */
+html.regco-light .regco-hero-eyebrow,
+html.regco-light .regco-hero-title,
+html.regco-light .regco-hero-body {
+  color: #F8F5F1 !important;
+}
 html.regco-light .regco-nav {
   background: rgba(255,255,255,0.85) !important;
   backdrop-filter: saturate(180%) blur(12px);
   -webkit-backdrop-filter: saturate(180%) blur(12px);
-}
-html.regco-light .regco-nav a {
-  color: #0A0A0A !important;
 }
