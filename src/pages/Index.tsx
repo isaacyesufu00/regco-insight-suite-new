@@ -653,7 +653,7 @@ function Hero() {
       />
       <div
         style={{
-          position: "relative", zIndex: 2, width: "100%",
+          position: "absolute", left: 0, right: 0, bottom: 0, zIndex: 2, width: "100%",
           padding: `0 ${padX}px ${padBottom}px`,
         }}
       >
