@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ComposedChart,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
+import { Loader2 } from "lucide-react";
 
 type TabId = "fraud" | "identity" | "returns";
 
@@ -41,6 +43,148 @@ const SectionTitle: React.FC<{ children: React.ReactNode; right?: React.ReactNod
   </div>
 );
 
+const Pill: React.FC<{ status: string }> = ({ status }) => {
+  const m =
+    status === "hit"    ? { bg: "var(--red-soft)",   fg: "var(--red)" } :
+    status === "review" ? { bg: "#FFF7E6",            fg: "#B8862A" } :
+    status === "flagged" ? { bg: "var(--red-soft)",  fg: "var(--red)" } :
+    status === "clean"  ? { bg: "var(--green-soft)", fg: "var(--green)" } :
+                          { bg: "var(--green-soft)", fg: "var(--green)" };
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-mono uppercase tracking-[0.1em]"
+      style={{ background: m.bg, color: m.fg }}
+    >
+      {status}
+    </span>
+  );
+};
+
+const StatusBadge: React.FC<{ s: string }> = ({ s }) => {
+  const key = (s || "").toLowerCase();
+  const m =
+    key === "acknowledged" ? { bg: "var(--green-soft)", fg: "var(--green)" } :
+    key === "submitted"     ? { bg: "var(--blue-soft)",  fg: "var(--blue)" } :
+    key === "validating"    ? { bg: "#FFF7E6",           fg: "#B8862A" } :
+    key === "ready"         ? { bg: "var(--green-soft)", fg: "var(--green)" } :
+    key === "failed"        ? { bg: "var(--red-soft)",   fg: "var(--red)" } :
+                              { bg: "#F4F5F7",           fg: "var(--ink-3)" };
+  return (
+    <span
+      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-mono uppercase tracking-[0.1em]"
+      style={{ background: m.bg, color: m.fg }}
+    >
+      {s}
+    </span>
+  );
+};
+
+const EmptyState: React.FC<{ label: string }> = ({ label }) => (
+  <div className="px-5 py-10 text-center text-[12.5px] text-[var(--ink-3)]">
+    No {label} yet — data appears here as activity is recorded.
+  </div>
+);
+
+// ─── Live data hook ────────────────────────────────────────────────────
+interface WorkspaceData {
+  loading: boolean;
+  // Fraud & AML
+  txn7d: number;
+  amlTotal: number;
+  amlOpen: number;
+  flagged: number;
+  flaggedAmount: number;
+  // Identity & Screening
+  screened24h: number;
+  sanctionsHits: number;
+  pepMatches: number;
+  uboComplete: number;
+  uboTotal: number;
+  owners: { owner_name: string; ownership_pct: number; screening_status: string }[];
+  sanctions: { list_name: string; entity_details: any; match_score: number }[];
+  // Returns
+  returnTypes: number;
+  filedReady: number;
+  failed: number;
+  processing: number;
+  reports: { report_name: string; report_type: string | null; regulator: string | null; status: string; created_at: string }[];
+}
+
+const emptyData: WorkspaceData = {
+  loading: true,
+  txn7d: 0, amlTotal: 0, amlOpen: 0, flagged: 0, flaggedAmount: 0,
+  screened24h: 0, sanctionsHits: 0, pepMatches: 0, uboComplete: 0, uboTotal: 0,
+  owners: [], sanctions: [],
+  returnTypes: 0, filedReady: 0, failed: 0, processing: 0, reports: [],
+};
+
+function useWorkspaceData(userId: string | undefined, institutionId: string | undefined) {
+  const [data, setData] = useState<WorkspaceData>(emptyData);
+
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      const inst = institutionId;
+      const since7d = new Date(Date.now() - 7 * 864e5).toISOString();
+      const since24h = new Date(Date.now() - 864e5).toISOString();
+
+      const [txnRes, amlRes, flaggedRes, screenedRes, sancRes, pepRes, uboRes, typesRes, reportsRes] = await Promise.all([
+        inst ? supabase.from("unified_transactions").select("id", { count: "exact", head: true }).eq("institution_id", inst).gte("transaction_date", since7d) : Promise.resolve({ count: 0 }),
+        inst ? supabase.from("aml_alerts").select("id, status", { count: "exact" }).eq("institution_id", inst) : Promise.resolve({ data: [] as any, count: 0 }),
+        inst ? supabase.from("unified_transactions").select("amount", { count: "exact" }).eq("institution_id", inst).eq("is_flagged", true) : Promise.resolve({ data: [] as any, count: 0 }),
+        inst ? supabase.from("screening_results").select("id", { count: "exact", head: true }).eq("institution_id", inst).gte("search_date", since24h) : Promise.resolve({ count: 0 }),
+        inst ? supabase.from("sanctions_screen_results").select("id, list_name, entity_details, match_score").eq("institution_id", inst).gte("match_score", 0.7) : Promise.resolve({ data: [] as any }),
+        inst ? supabase.from("pep_screen_results").select("id", { count: "exact", head: true }).eq("institution_id", inst) : Promise.resolve({ count: 0 }),
+        inst ? supabase.from("customer_beneficial_owners").select("owner_name, ownership_pct, screening_status").eq("user_id", userId) : Promise.resolve({ data: [] as any }),
+        supabase.from("institution_report_types").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("is_active", true),
+        supabase.from("reports").select("report_name, report_type, regulator, status, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(20),
+      ]);
+
+      if (cancelled) return;
+
+      const amlRows = (amlRes as any)?.data || [];
+      const uboRows = (uboRes as any)?.data || [];
+      const sancRows = (sancRes as any)?.data || [];
+      const flaggedRows = (flaggedRes as any)?.data || [];
+
+      const flaggedAmount = flaggedRows.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
+      const uboScored = uboRows.filter((o: any) => o.screening_status && o.screening_status !== "pending").length;
+
+      setData({
+        loading: false,
+        txn7d: (txnRes as any)?.count || 0,
+        amlTotal: (amlRes as any)?.count || 0,
+        amlOpen: amlRows.filter((a: any) => a.status === "open" || a.status === "new").length,
+        flagged: (flaggedRes as any)?.count || 0,
+        flaggedAmount,
+        screened24h: (screenedRes as any)?.count || 0,
+        sanctionsHits: sancRows.length,
+        pepMatches: (pepRes as any)?.count || 0,
+        uboComplete: uboScored,
+        uboTotal: uboRows.length,
+        owners: uboRows,
+        sanctions: sancRows,
+        returnTypes: (typesRes as any)?.count || 0,
+        filedReady: (reportsRes as any)?.data?.filter((r: any) => r.status === "ready").length || 0,
+        failed: (reportsRes as any)?.data?.filter((r: any) => r.status === "failed").length || 0,
+        processing: (reportsRes as any)?.data?.filter((r: any) => r.status === "processing").length || 0,
+        reports: (reportsRes as any)?.data || [],
+      });
+    })();
+    return () => { cancelled = true; };
+  }, [userId, institutionId]);
+
+  return data;
+}
+
+const fmtNaira = (n: number) => {
+  if (n >= 1e9) return `₦${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `₦${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `₦${(n / 1e3).toFixed(0)}K`;
+  return `₦${n}`;
+};
+
 // ─── Tab 1: Fraud & AML ────────────────────────────────────────────────
 const trendData = [
   { d: "Mon", volume: 12400, anomaly: 14 },
@@ -52,26 +196,17 @@ const trendData = [
   { d: "Sun", volume: 7800,  anomaly: 4 },
 ];
 
-const ledgerRows = [
-  { id: "TXN-92041", entity: "Adebayo Holdings Ltd",  rule: "CBN Rule 4 — Split deposits",      score: 0.92 },
-  { id: "TXN-92038", entity: "Okonkwo, C.",            rule: "Velocity > ₦10M in 24h",          score: 0.81 },
-  { id: "TXN-92033", entity: "Sunrise Trading Co.",    rule: "Counter-party in OFAC SDN",       score: 0.97 },
-  { id: "TXN-92027", entity: "Mensah, A.",             rule: "Narration mismatch — invoice",    score: 0.64 },
-  { id: "TXN-92019", entity: "Globalpay Holdings",      rule: "Structuring — 11 sub-CTR debits", score: 0.88 },
-  { id: "TXN-92014", entity: "Bola Estates Ltd",       rule: "Dormant account reactivation",    score: 0.45 },
-];
-
-const FraudView = () => (
+const FraudView = ({ d }: { d: WorkspaceData }) => (
   <div className="space-y-5">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <KPI label="Processing latency" value="87ms"  delta="−4ms (target <100ms)" tone="positive" />
-      <KPI label="Alerts triaged"     value="142"   delta="+18 vs last week" />
-      <KPI label="False-positive ratio" value="6.4%" delta="−1.1pp" tone="positive" />
-      <KPI label="Cleared volume (₦)" value="₦4.82B" delta="+₦480M wk" tone="positive" />
+      <KPI label="Transactions (7d)" value={d.loading ? "…" : d.txn7d.toLocaleString()} delta={d.txn7d ? "live" : "no activity"} />
+      <KPI label="AML alerts (open)" value={d.loading ? "…" : `${d.amlOpen}`} delta={d.amlTotal ? `${d.amlTotal} total` : "none"} tone={d.amlOpen ? "negative" : "neutral"} />
+      <KPI label="Flagged txns" value={d.loading ? "…" : `${d.flagged}`} delta={d.flagged ? "review queue" : "clear"} tone={d.flagged ? "negative" : "positive"} />
+      <KPI label="Flagged value" value={d.loading ? "…" : fmtNaira(d.flaggedAmount)} delta={d.flaggedAmount ? "under review" : "—"} />
     </div>
 
     <Card>
-      <SectionTitle right={<span className="text-[11px] font-mono text-[var(--ink-3)]">Last 7 days</span>}>
+      <SectionTitle right={<span className="text-[11px] font-mono text-[var(--ink-3)]">Illustrative · last 7 days</span>}>
         Transaction volume vs anomalous activity
       </SectionTitle>
       <div style={{ width: "100%", height: 260 }}>
@@ -92,106 +227,67 @@ const FraudView = () => (
       </div>
     </Card>
 
-    <Card className="!p-0">
-      <div className="px-5 pt-5 pb-3 flex items-baseline justify-between">
-        <h3 className="text-[14px] font-semibold text-[var(--navy)]">Smart risk ledger</h3>
-        <span className="text-[11px] font-mono text-[var(--ink-3)]">6 of 142</span>
-      </div>
-      <table className="w-full text-[13px]">
-        <thead>
-          <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
-            <th className="px-5 py-2.5 font-normal">Transaction</th>
-            <th className="px-5 py-2.5 font-normal">Entity</th>
-            <th className="px-5 py-2.5 font-normal">Triggering control</th>
-            <th className="px-5 py-2.5 font-normal text-right">Risk</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ledgerRows.map((r) => {
-            const tone = r.score >= 0.85 ? "var(--red)" : r.score >= 0.6 ? "#B8862A" : "var(--green)";
-            return (
-              <tr key={r.id} className="border-t border-[var(--line)]">
-                <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{r.id}</td>
-                <td className="px-5 py-3 text-[var(--navy)]">{r.entity}</td>
-                <td className="px-5 py-3 text-[var(--ink-2)]">{r.rule}</td>
-                <td className="px-5 py-3 font-mono text-right" style={{ color: tone }}>{r.score.toFixed(2)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <Card>
+      <SectionTitle>Live signals</SectionTitle>
+      {d.loading ? (
+        <div className="py-10 flex justify-center"><Loader2 className="animate-spin" size={22} /></div>
+      ) : d.amlTotal === 0 && d.flagged === 0 ? (
+        <EmptyState label="AML alerts or flagged transactions" />
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[13px]">
+          <div><span className="font-mono text-[20px] text-[var(--navy)]">{d.amlTotal}</span><p className="text-[var(--ink-3)]">AML alerts</p></div>
+          <div><span className="font-mono text-[20px] text-[var(--navy)]">{d.amlOpen}</span><p className="text-[var(--ink-3)]">open</p></div>
+          <div><span className="font-mono text-[20px] text-[var(--navy)]">{d.flagged}</span><p className="text-[var(--ink-3)]">flagged txns</p></div>
+          <div><span className="font-mono text-[20px] text-[var(--navy)]">{fmtNaira(d.flaggedAmount)}</span><p className="text-[var(--ink-3)]">flagged value</p></div>
+        </div>
+      )}
     </Card>
   </div>
 );
 
 // ─── Tab 2: Identity & Screening ───────────────────────────────────────
-const owners = [
-  { name: "Adebayo Holdings Ltd",  cac: "RC-1284091", ubo: "Adebayo, T.",   stake: "62%", verified: true },
-  { name: "Globalpay Holdings Ltd", cac: "RC-3041928", ubo: "Okeke, F.",     stake: "100%", verified: true },
-  { name: "Bola Estates Ltd",      cac: "RC-1990842", ubo: "Bola, J.",      stake: "55%", verified: false },
-  { name: "Sunrise Trading Co.",   cac: "RC-2811209", ubo: "Ahmed, K.",     stake: "70%", verified: true },
-];
-
-const sanctions = [
-  { name: "Okonkwo, Chidi",  bvn: "2210***482", un: "clear", ofac: "clear", eu: "clear",  hmt: "clear", cbn: "clear" },
-  { name: "Mensah, Akua",    bvn: "1947***203", un: "clear", ofac: "hit",   eu: "clear",  hmt: "clear", cbn: "clear" },
-  { name: "Adebayo, Tunde",  bvn: "3072***118", un: "clear", ofac: "clear", eu: "clear",  hmt: "clear", cbn: "clear" },
-  { name: "Sani, Musa",      bvn: "1184***937", un: "clear", ofac: "clear", eu: "review", hmt: "clear", cbn: "clear" },
-];
-
-const Pill: React.FC<{ status: string }> = ({ status }) => {
-  const m =
-    status === "hit"    ? { bg: "var(--red-soft)",   fg: "var(--red)" } :
-    status === "review" ? { bg: "#FFF7E6",            fg: "#B8862A" } :
-                          { bg: "var(--green-soft)", fg: "var(--green)" };
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-mono uppercase tracking-[0.1em]"
-      style={{ background: m.bg, color: m.fg }}
-    >
-      {status}
-    </span>
-  );
-};
-
-const IdentityView = () => (
+const IdentityView = ({ d }: { d: WorkspaceData }) => (
   <div className="space-y-5">
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <KPI label="Customers screened (24h)" value="1,284" delta="+96" tone="positive" />
-      <KPI label="Sanctions hits"           value="3"     delta="2 OFAC · 1 EU" tone="negative" />
-      <KPI label="PEP matches"              value="12"    delta="9 pending review" />
-      <KPI label="UBO completeness"         value="94.2%" delta="+1.3pp" tone="positive" />
+      <KPI label="Customers screened (24h)" value={d.loading ? "…" : `${d.screened24h}`} delta={d.screened24h ? "live" : "none today"} />
+      <KPI label="Sanctions hits" value={d.loading ? "…" : `${d.sanctionsHits}`} delta={d.sanctionsHits ? "review" : "clear"} tone={d.sanctionsHits ? "negative" : "positive"} />
+      <KPI label="PEP matches" value={d.loading ? "…" : `${d.pepMatches}`} delta={d.pepMatches ? "pending review" : "none"} />
+      <KPI
+        label="UBO completeness"
+        value={d.loading ? "…" : d.uboTotal ? `${Math.round((d.uboComplete / d.uboTotal) * 100)}%` : "—"}
+        delta={d.uboTotal ? `${d.uboComplete}/${d.uboTotal} scored` : "no owners"}
+      />
     </div>
 
     <Card className="!p-0">
       <div className="px-5 pt-5 pb-3">
-        <h3 className="text-[14px] font-semibold text-[var(--navy)]">Corporate alignment matrix</h3>
-        <p className="text-[11.5px] text-[var(--ink-3)] mt-1">Beneficial owners reconciled against CAC.</p>
+        <h3 className="text-[14px] font-semibold text-[var(--navy)]">Beneficial owners</h3>
+        <p className="text-[11.5px] text-[var(--ink-3)] mt-1">Reconciled against CAC via cac-lookup.</p>
       </div>
-      <table className="w-full text-[13px]">
-        <thead>
-          <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
-            <th className="px-5 py-2.5 font-normal">Entity</th>
-            <th className="px-5 py-2.5 font-normal">CAC No.</th>
-            <th className="px-5 py-2.5 font-normal">Ultimate beneficial owner</th>
-            <th className="px-5 py-2.5 font-normal">Stake</th>
-            <th className="px-5 py-2.5 font-normal text-right">CAC status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {owners.map((o) => (
-            <tr key={o.cac} className="border-t border-[var(--line)]">
-              <td className="px-5 py-3 text-[var(--navy)]">{o.name}</td>
-              <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{o.cac}</td>
-              <td className="px-5 py-3 text-[var(--ink-2)]">{o.ubo}</td>
-              <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{o.stake}</td>
-              <td className="px-5 py-3 text-right">
-                <Pill status={o.verified ? "verified" : "review"} />
-              </td>
+      {d.loading ? (
+        <div className="py-10 flex justify-center"><Loader2 className="animate-spin" size={22} /></div>
+      ) : d.owners.length === 0 ? (
+        <EmptyState label="beneficial owners" />
+      ) : (
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
+              <th className="px-5 py-2.5 font-normal">Owner</th>
+              <th className="px-5 py-2.5 font-normal">Stake</th>
+              <th className="px-5 py-2.5 font-normal text-right">CAC status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {d.owners.map((o, i) => (
+              <tr key={i} className="border-t border-[var(--line)]">
+                <td className="px-5 py-3 text-[var(--navy)]">{o.owner_name}</td>
+                <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{o.ownership_pct}%</td>
+                <td className="px-5 py-3 text-right"><Pill status={o.screening_status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </Card>
 
     <Card className="!p-0">
@@ -199,137 +295,108 @@ const IdentityView = () => (
         <h3 className="text-[14px] font-semibold text-[var(--navy)]">Sanctions verification board</h3>
         <p className="text-[11.5px] text-[var(--ink-3)] mt-1">Cross-checked against UN, OFAC, EU, UK HMT, CBN watchlists.</p>
       </div>
-      <table className="w-full text-[13px]">
-        <thead>
-          <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
-            <th className="px-5 py-2.5 font-normal">Customer</th>
-            <th className="px-5 py-2.5 font-normal">BVN</th>
-            <th className="px-5 py-2.5 font-normal">UN</th>
-            <th className="px-5 py-2.5 font-normal">OFAC</th>
-            <th className="px-5 py-2.5 font-normal">EU</th>
-            <th className="px-5 py-2.5 font-normal">HMT</th>
-            <th className="px-5 py-2.5 font-normal">CBN</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sanctions.map((s) => (
-            <tr key={s.bvn} className="border-t border-[var(--line)]">
-              <td className="px-5 py-3 text-[var(--navy)]">{s.name}</td>
-              <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{s.bvn}</td>
-              <td className="px-5 py-3"><Pill status={s.un} /></td>
-              <td className="px-5 py-3"><Pill status={s.ofac} /></td>
-              <td className="px-5 py-3"><Pill status={s.eu} /></td>
-              <td className="px-5 py-3"><Pill status={s.hmt} /></td>
-              <td className="px-5 py-3"><Pill status={s.cbn} /></td>
+      {d.loading ? (
+        <div className="py-10 flex justify-center"><Loader2 className="animate-spin" size={22} /></div>
+      ) : d.sanctions.length === 0 ? (
+        <EmptyState label="sanctions matches" />
+      ) : (
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
+              <th className="px-5 py-2.5 font-normal">List</th>
+              <th className="px-5 py-2.5 font-normal">Entity</th>
+              <th className="px-5 py-2.5 font-normal text-right">Score</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {d.sanctions.map((s, i) => (
+              <tr key={i} className="border-t border-[var(--line)]">
+                <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{s.list_name}</td>
+                <td className="px-5 py-3 text-[var(--navy)]">{s.entity_details?.matched_name || "—"}</td>
+                <td className="px-5 py-3 font-mono text-right" style={{ color: "var(--red)" }}>{s.match_score?.toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </Card>
   </div>
 );
 
 // ─── Tab 3: Regulatory Returns ─────────────────────────────────────────
-type ReturnRow = { code: string; name: string; cycle: string; due: string; status: "Draft" | "Validating" | "Submitted" | "Acknowledged" };
-
-const returns: ReturnRow[] = [
-  { code: "CBN",  name: "MFB Quarterly Return",          cycle: "Quarterly", due: "28 Jun", status: "Draft" },
-  { code: "CBN",  name: "Monetary Policy Return",         cycle: "Monthly",   due: "05 Jul", status: "Validating" },
-  { code: "CBN",  name: "Prudential Return",              cycle: "Quarterly", due: "30 Jun", status: "Draft" },
-  { code: "NDIC", name: "Premium Assessment (0.40%)",     cycle: "Quarterly", due: "30 Jun", status: "Submitted" },
-  { code: "NDIC", name: "Single-Obligor Disclosure",      cycle: "Quarterly", due: "30 Jun", status: "Acknowledged" },
-  { code: "NFIU", name: "AML/CFT Quarterly",              cycle: "Quarterly", due: "15 Jul", status: "Draft" },
-  { code: "NFIU", name: "CTR — June",                     cycle: "Daily",     due: "05 Jul", status: "Validating" },
-  { code: "NFIU", name: "International Transfers",        cycle: "Monthly",   due: "05 Jul", status: "Draft" },
-  { code: "SCUML",name: "Annual Compliance",              cycle: "Annual",    due: "31 Dec", status: "Draft" },
-  { code: "FIRS", name: "VAT (7.5%)",                     cycle: "Monthly",   due: "21 Jul", status: "Draft" },
-  { code: "FIRS", name: "PAYE",                           cycle: "Monthly",   due: "10 Jul", status: "Submitted" },
-  { code: "FIRS", name: "WHT",                            cycle: "Monthly",   due: "21 Jul", status: "Draft" },
-];
-
-const StatusBadge: React.FC<{ s: ReturnRow["status"] }> = ({ s }) => {
-  const m =
-    s === "Acknowledged" ? { bg: "var(--green-soft)", fg: "var(--green)" } :
-    s === "Submitted"    ? { bg: "var(--blue-soft)",  fg: "var(--blue)" } :
-    s === "Validating"   ? { bg: "#FFF7E6",           fg: "#B8862A" } :
-                           { bg: "#F4F5F7",           fg: "var(--ink-3)" };
-  return (
-    <span
-      className="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-mono uppercase tracking-[0.1em]"
-      style={{ background: m.bg, color: m.fg }}
-    >
-      {s}
-    </span>
-  );
-};
-
-const ReturnsView = () => {
-  const buckets = ["Daily", "Monthly", "Quarterly", "Annual"];
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <KPI label="Returns due (30d)"  value="12"  delta="4 this week" />
-        <KPI label="Filed YTD"          value="47"  delta="100% on time" tone="positive" />
-        <KPI label="Validation errors"  value="3"   delta="−6 vs last cycle" tone="positive" />
-        <KPI label="Avg. compile time"  value="6m"  delta="−42% vs manual" tone="positive" />
-      </div>
-
-      {buckets.map((b) => {
-        const rows = returns.filter((r) => r.cycle === b);
-        if (!rows.length) return null;
-        return (
-          <Card key={b} className="!p-0">
-            <div className="px-5 pt-5 pb-3 flex items-baseline justify-between">
-              <h3 className="text-[14px] font-semibold text-[var(--navy)]">{b} returns</h3>
-              <span className="text-[11px] font-mono text-[var(--ink-3)]">{rows.length}</span>
-            </div>
-            <table className="w-full text-[13px]">
-              <thead>
-                <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
-                  <th className="px-5 py-2.5 font-normal w-20">Regulator</th>
-                  <th className="px-5 py-2.5 font-normal">Return</th>
-                  <th className="px-5 py-2.5 font-normal w-24">Due</th>
-                  <th className="px-5 py-2.5 font-normal w-32">Status</th>
-                  <th className="px-5 py-2.5 font-normal w-32 text-right">Export</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => (
-                  <tr key={`${r.code}-${r.name}`} className="border-t border-[var(--line)]">
-                    <td className="px-5 py-3 font-mono text-[11px] tracking-[0.1em] text-[var(--ink-3)]">{r.code}</td>
-                    <td className="px-5 py-3 text-[var(--navy)]">{r.name}</td>
-                    <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{r.due}</td>
-                    <td className="px-5 py-3"><StatusBadge s={r.status} /></td>
-                    <td className="px-5 py-3 text-right">
-                      <button className="h-7 px-3 text-[11.5px] font-mono uppercase tracking-[0.1em] border border-[var(--line)] rounded text-[var(--navy)] hover:bg-[#F5F5F5]">
-                        XML
-                      </button>
-                      <button className="ml-1 h-7 px-3 text-[11.5px] font-mono uppercase tracking-[0.1em] border border-[var(--line)] rounded text-[var(--navy)] hover:bg-[#F5F5F5]">
-                        JSON
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-        );
-      })}
+const ReturnsView = ({ d }: { d: WorkspaceData }) => (
+  <div className="space-y-5">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <KPI label="Return types" value={d.loading ? "…" : `${d.returnTypes}`} delta="configured" />
+      <KPI label="Filed (ready)" value={d.loading ? "…" : `${d.filedReady}`} delta="ready to submit" tone="positive" />
+      <KPI label="Processing" value={d.loading ? "…" : `${d.processing}`} delta="running" />
+      <KPI label="Failed" value={d.loading ? "…" : `${d.failed}`} delta={d.failed ? "need attention" : "none"} tone={d.failed ? "negative" : "neutral"} />
     </div>
-  );
-};
+
+    <Card className="!p-0">
+      <div className="px-5 pt-5 pb-3 flex items-baseline justify-between">
+        <h3 className="text-[14px] font-semibold text-[var(--navy)]">Recent reports</h3>
+        <span className="text-[11px] font-mono text-[var(--ink-3)]">{d.reports.length}</span>
+      </div>
+      {d.loading ? (
+        <div className="py-10 flex justify-center"><Loader2 className="animate-spin" size={22} /></div>
+      ) : d.reports.length === 0 ? (
+        <EmptyState label="reports" />
+      ) : (
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="text-left text-[11px] font-mono uppercase tracking-[0.14em] text-[var(--ink-3)] border-t border-[var(--line)]">
+              <th className="px-5 py-2.5 font-normal">Report</th>
+              <th className="px-5 py-2.5 font-normal">Regulator</th>
+              <th className="px-5 py-2.5 font-normal">Created</th>
+              <th className="px-5 py-2.5 font-normal text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {d.reports.map((r, i) => (
+              <tr key={i} className="border-t border-[var(--line)]">
+                <td className="px-5 py-3 text-[var(--navy)]">{r.report_name}</td>
+                <td className="px-5 py-3 font-mono text-[12.5px] text-[var(--ink-2)]">{r.regulator || r.report_type || "—"}</td>
+                <td className="px-5 py-3 text-[var(--ink-2)]">{new Date(r.created_at).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}</td>
+                <td className="px-5 py-3 text-right"><StatusBadge s={r.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Card>
+  </div>
+);
 
 // ─── Workspace shell ───────────────────────────────────────────────────
 export default function DashboardWorkspace() {
   const [tab, setTab] = useState<TabId>("fraud");
+  const { user } = useAuth();
   const { userName } = useProfile();
+  const [institutionId, setInstitutionId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!user) return;
+    // Resolve the user's institution, preferring an active institution record
+    // (guards against dangling institution_users rows pointing at deleted orgs).
+    supabase
+      .from("institution_users")
+      .select("institution_id, institutions(status)")
+      .eq("user_id", user.id)
+      .limit(1)
+      .then(({ data }) => {
+        const row = (data as any[])?.[0];
+        setInstitutionId(row?.institution_id || undefined);
+      });
+  }, [user?.id]);
+
+  const d = useWorkspaceData(user?.id, institutionId);
 
   // Lightweight presence ping
   useEffect(() => { void supabase.auth.getUser(); }, []);
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Top tab bar */}
       <header className="sticky top-0 z-10 bg-white border-b border-[var(--line)]">
         <div className="px-6 h-14 flex items-end justify-between">
           <nav className="flex items-center gap-6 h-full">
@@ -344,10 +411,7 @@ export default function DashboardWorkspace() {
                 >
                   {t.label}
                   {active && (
-                    <span
-                      className="absolute left-0 right-0 -bottom-px h-[2px]"
-                      style={{ background: "var(--blue)" }}
-                    />
+                    <span className="absolute left-0 right-0 -bottom-px h-[2px]" style={{ background: "var(--blue)" }} />
                   )}
                 </button>
               );
@@ -360,12 +424,11 @@ export default function DashboardWorkspace() {
         </div>
       </header>
 
-      {/* Canvas body */}
       <div className="flex-1 px-6 py-6 bg-[#FAFBFC]">
         <div className="max-w-[1100px] mx-auto">
-          {tab === "fraud"    && <FraudView />}
-          {tab === "identity" && <IdentityView />}
-          {tab === "returns"  && <ReturnsView />}
+          {tab === "fraud"    && <FraudView d={d} />}
+          {tab === "identity" && <IdentityView d={d} />}
+          {tab === "returns"  && <ReturnsView d={d} />}
         </div>
       </div>
     </div>

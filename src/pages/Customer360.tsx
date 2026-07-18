@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Search, Loader2, ChevronRight, ChevronLeft, CreditCard, Activity,
-  AlertTriangle, Shield, Ban, CheckCircle, FileText, Filter,
+  AlertTriangle, Shield, Ban, CheckCircle, FileText, Filter, Globe,
 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -51,6 +52,8 @@ export default function Customer360() {
   const [alerts, setAlerts] = useState<any[]>([]);
   const [sanctionsMatches, setSanctionsMatches] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"accounts" | "transactions" | "kyc" | "alerts" | "sanctions">("accounts");
+  const [adverseMedia, setAdverseMedia] = useState<any | null>(null);
+  const [adverseScanning, setAdverseScanning] = useState(false);
 
   // tx filters
   const [dateFrom, setDateFrom] = useState("");
@@ -139,8 +142,24 @@ export default function Customer360() {
       setTransactions(txRes.data || []);
       setAlerts((alertsRes as any).data || []);
       setSanctionsMatches(sanctionsRes.data || []);
+      setAdverseMedia(null);
     } finally {
       setLoadingProfile(false);
+    }
+  };
+
+  const runAdverseMedia = async () => {
+    if (!selectedCustomer) return;
+    setAdverseScanning(true);
+    setAdverseMedia(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("adverse-media-scan", {
+        body: { name: selectedCustomer.full_name },
+      });
+      if (error) { toast.error(error.message || "Adverse media scan failed"); return; }
+      setAdverseMedia(data as any);
+    } finally {
+      setAdverseScanning(false);
     }
   };
 
@@ -300,6 +319,13 @@ export default function Customer360() {
                     {customerKyc?.kyc_status === "complete" ? "COMPLETE ✓" : "INCOMPLETE ⚠"}
                   </p>
                 </div>
+                <button
+                  onClick={runAdverseMedia}
+                  disabled={adverseScanning}
+                  style={{ height: "100%", padding: "0 16px", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "8px", color: "#FFFFFF", fontSize: "13px", fontWeight: 600, cursor: adverseScanning ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                >
+                  {adverseScanning ? <><Loader2 size={14} className="animate-spin" /> Scanning…</> : <><Globe size={14} /> Adverse Media</>}
+                </button>
               </div>
             </div>
 
@@ -323,6 +349,34 @@ export default function Customer360() {
                 );
               })}
             </div>
+
+            {/* Adverse media result */}
+            {adverseMedia && (
+              <div style={{ background: "#FFFFFF", borderRadius: "12px", border: "1px solid rgba(0,0,0,0.07)", padding: "20px", marginBottom: "20px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <h3 style={{ fontSize: "14px", fontWeight: 700, color: "#0A0A0A", margin: 0 }}>Adverse Media Scan</h3>
+                  <span style={{
+                    background: (adverseMedia.risk_level === "high" || adverseMedia.risk_level === "critical") ? "#FEE2E2" : adverseMedia.risk_level === "none" ? "#DCFCE7" : "#FEF3C7",
+                    color: (adverseMedia.risk_level === "high" || adverseMedia.risk_level === "critical") ? "#991B1B" : adverseMedia.risk_level === "none" ? "#166534" : "#854D0E",
+                    padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, textTransform: "uppercase",
+                  }}>
+                    {adverseMedia.risk_level || "unknown"} risk
+                  </span>
+                </div>
+                <p style={{ fontSize: "13px", color: "#475569", margin: "0 0 10px", lineHeight: 1.5 }}>{adverseMedia.summary}</p>
+                {adverseMedia.findings?.length > 0 && (
+                  <ul style={{ margin: 0, paddingLeft: 18 }}>
+                    {adverseMedia.findings.map((f: any, i: number) => (
+                      <li key={i} style={{ fontSize: "12.5px", color: "#475569", marginBottom: 4 }}>
+                        <strong>{f.title}</strong> {f.source ? `— ${f.source}` : ""}
+                        {f.severity ? ` (${f.severity})` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {adverseMedia.cached && <p style={{ fontSize: "11px", color: "#9B9B9B", margin: "8px 0 0" }}>Served from 24h cache.</p>}
+              </div>
+            )}
 
             {/* Tabs */}
             <div style={{ display: "flex", gap: "4px", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: "20px" }}>

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
-type Tab = "quick" | "batch" | "history" | "status";
+type Tab = "quick" | "batch" | "history" | "status" | "cac";
 
 interface SanctionsMatch {
   id: string;
@@ -253,6 +253,7 @@ export default function Screening() {
         <button style={tabBtn(tab === "batch")} onClick={() => setTab("batch")}>Batch Screen</button>
         <button style={tabBtn(tab === "history")} onClick={() => setTab("history")}>Screening History</button>
         <button style={tabBtn(tab === "status")} onClick={() => setTab("status")}>List Status</button>
+        <button style={tabBtn(tab === "cac")} onClick={() => setTab("cac")}>CAC / UBO</button>
       </div>
 
       {/* === QUICK SCREEN === */}
@@ -523,6 +524,9 @@ export default function Screening() {
 
       {/* === LIST STATUS === */}
       {tab === "status" && <ListStatusTab />}
+
+      {/* === CAC / UBO === */}
+      {tab === "cac" && <CacLookupTab />}
     </div>
   );
 }
@@ -611,6 +615,120 @@ function ListStatusTab() {
           and Regulation at the CBN, then contact support to ingest the updated list.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ─── CAC / UBO Lookup ──────────────────────────────────────────────────
+interface CacCustomer { id: string; full_name: string; rc_number: string | null }
+interface CacOwner { name: string; share_pct: number; is_controller: boolean; screening: { status: string; risk_level: string; matches: number } }
+
+function CacLookupTab() {
+  const { user } = useAuth();
+  const [customers, setCustomers] = useState<CacCustomer[]>([]);
+  const [customerId, setCustomerId] = useState("");
+  const [rcNumber, setRcNumber] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ company_name: string; rc_number: string; owners: CacOwner[] } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const sb = supabase as any;
+    sb.from("customers")
+      .select("id, full_name, rc_number")
+      .eq("user_id", user.id)
+      .limit(50)
+      .then(({ data }: any) => setCustomers((data as CacCustomer[]) || []));
+  }, [user?.id]);
+
+  const runLookup = async () => {
+    if (!customerId || !rcNumber.trim()) { toast.error("Select a customer and enter an RC number"); return; }
+    setLoading(true);
+    setResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("cac-lookup", {
+        body: { customer_id: customerId, rc_number: rcNumber.trim(), company_name: companyName.trim() || undefined },
+      });
+      if (error) { toast.error(error.message || "CAC lookup failed"); return; }
+      setResult(data as any);
+      toast.success("CAC lookup complete");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", height: 44, borderRadius: 8,
+    border: "1px solid rgba(0,0,0,0.12)", background: "#F5F5F0",
+    padding: "0 14px", fontSize: 14, outline: "none", boxSizing: "border-box",
+  };
+
+  return (
+    <div style={{ background: "#FFFFFF", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 12, padding: 24 }}>
+      <div style={{ marginBottom: 18 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 700, color: "#0A0A0A", margin: "0 0 4px" }}>CAC / Beneficial Owner Lookup</h2>
+        <p style={{ fontSize: 12, color: "#6B6B6B", margin: 0 }}>Resolve a customer's RC to its CAC-registered directors and screen each against sanctions &amp; PEP lists.</p>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", marginBottom: 6, display: "block" }}>Customer *</label>
+          <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} style={inputStyle}>
+            <option value="">Select a customer…</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.full_name}{c.rc_number ? ` (${c.rc_number})` : ""}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", marginBottom: 6, display: "block" }}>RC Number *</label>
+          <input value={rcNumber} onChange={(e) => setRcNumber(e.target.value)} placeholder="e.g. RC-1284091" style={inputStyle} />
+        </div>
+      </div>
+
+      <div style={{ marginBottom: 16 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: "#0A0A0A", marginBottom: 6, display: "block" }}>Company Name (optional)</label>
+        <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Leave blank to use stored name" style={inputStyle} />
+      </div>
+
+      <button onClick={runLookup} disabled={loading} style={{ height: 40, padding: "0 20px", background: "#0A0A0A", color: "#FFFFFF", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", display: "inline-flex", alignItems: "center", gap: 6 }}>
+        {loading ? <><Loader2 size={14} className="animate-spin" /> Looking up…</> : <><Database size={14} /> Run CAC Lookup</>}
+      </button>
+
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          <p style={{ fontSize: 13, fontWeight: 700, color: "#0A0A0A", margin: "0 0 4px" }}>{result.company_name} · {result.rc_number}</p>
+          {result.owners.length === 0 ? (
+            <p style={{ fontSize: 12, color: "#6B6B6B" }}>No directors returned.</p>
+          ) : (
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: 8 }}>
+              <thead style={{ background: "#F5F5F0" }}>
+                <tr>
+                  <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#6B6B6B", fontSize: 11, textTransform: "uppercase" }}>Director</th>
+                  <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#6B6B6B", fontSize: 11, textTransform: "uppercase" }}>Stake</th>
+                  <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#6B6B6B", fontSize: 11, textTransform: "uppercase" }}>Controller</th>
+                  <th style={{ padding: "10px 12px", textAlign: "left", fontWeight: 600, color: "#6B6B6B", fontSize: 11, textTransform: "uppercase" }}>Screening</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.owners.map((o, i) => (
+                  <tr key={i} style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+                    <td style={{ padding: "10px 12px", color: "#0A0A0A", fontWeight: 500 }}>{o.name}</td>
+                    <td style={{ padding: "10px 12px", color: "#0A0A0A" }}>{o.share_pct}%</td>
+                    <td style={{ padding: "10px 12px", color: "#6B6B6B" }}>{o.is_controller ? "Yes (≥25%)" : "No"}</td>
+                    <td style={{ padding: "10px 12px" }}>
+                      <span style={{ background: o.screening.status === "clean" ? "#DCFCE7" : "#FEE2E2", color: o.screening.status === "clean" ? "#166534" : "#991B1B", padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>
+                        {o.screening.status.toUpperCase()} · {o.screening.risk_level}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
     </div>
   );
 }
