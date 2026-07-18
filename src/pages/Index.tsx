@@ -571,7 +571,7 @@ export default function Index() {
       <section id="mission" data-ruler-id="9" style={{ paddingTop: 128, paddingBottom: 128 }}>
         <div style={Col}>
           <div style={{ ...Mono, marginBottom: 24 }}>
-            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo Compliance</Link>
+            <Link to="/" style={{ color: C.ink3, textDecoration: "none" }}>‹ RegCo</Link>
           </div>
           <h2 style={H1}>We exist to make compliance<br />a system, not a<br />manual process.</h2>
           <p style={{ ...Body, marginTop: 40 }}>
@@ -611,9 +611,9 @@ export default function Index() {
         display: "flex", justifyContent: "space-between", alignItems: "center",
       }}>
         <div style={{ fontFamily: HELV, fontWeight: 700, fontSize: 13, color: C.ink, letterSpacing: "0.04em", lineHeight: 1.05 }}>
-          <div>REGCO</div><div>COMPLIANCE</div>
+          <div>REGCO</div>
         </div>
-        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo Compliance</div>
+        <div style={{ ...Mono, fontSize: 12 }}>© 2026 RegCo</div>
       </footer>
 
     </div>
