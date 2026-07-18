@@ -320,7 +320,9 @@
 .card-elevated { background: #fff; border: 1px solid var(--line); box-shadow: none; }
 
 /* ============================================================
-   Global light-mode — white background with white text.
+   Global light-mode — white background with black text.
+   !important overrides the inline background/color set on
+   page root divs (which would otherwise beat class rules).
    ============================================================ */
 html.regco-light {
   background: #ffffff;
@@ -328,4 +330,8 @@ html.regco-light {
 html.regco-light body {
   background: #ffffff;
   color: #0A0A0A;
+}
+html.regco-light .regco-page {
+  background: #ffffff !important;
+  color: #0A0A0A !important;
 }

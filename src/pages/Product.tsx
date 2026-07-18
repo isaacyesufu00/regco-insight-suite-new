@@ -14,7 +14,7 @@ const ROWS = [
 export default function Product() {
   const active = useRulerActive(3);
   return (
-    <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
+    <div className="regco-page" style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
       <Nav />
       <ScrollRuler active={active} total={3} />
 

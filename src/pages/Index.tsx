@@ -456,7 +456,7 @@ export default function Index() {
   }, []);
 
   return (
-    <div style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
+    <div className="regco-page" style={{ background: C.page, color: C.ink, minHeight: "100vh", fontFamily: HELV }}>
       <Nav />
       <ScrollRuler active={active} total={SECTION_COUNT} />
 
