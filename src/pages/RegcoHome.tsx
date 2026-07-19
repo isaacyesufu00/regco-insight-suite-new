@@ -59,8 +59,7 @@ function Banner() {
           color: "#FFFFFFE6", display: "flex", flexWrap: "wrap", justifyContent: "center",
           fontSize: 16, lineHeight: 1.5, textAlign: "center", textWrap: "pretty",
         }}>
-          RegCo closes $30M Series A at $300M valuation and surpasses $100M revenue run rate
-          <a href="#" style={{ color: "#FFFFFFE6", marginLeft: 4, textDecoration: "none" }}>Read blog↗</a>
+          RegCo is currently in the design phase — building the AI operating system for compliance.
         </div>
       </div>
     </div>
@@ -144,16 +143,16 @@ function Hero() {
   );
 }
 
-/* ---------- backed by marquee ---------- */
-const BACKERS = ["Access Bank", "Sterling Bank", "Moniepoint", "CBN", "NDIC", "NFIU"];
-const MARQUEE = [...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS];
+/* ---------- institutions we comply with marquee ---------- */
+const COMPLIANCE = ["CBN", "NFIU", "NDIC", "FIRS", "SEC", "NDPC", "CAC", "ICPC"];
+const MARQUEE = [...COMPLIANCE, ...COMPLIANCE, ...COMPLIANCE, ...COMPLIANCE, ...COMPLIANCE, ...COMPLIANCE];
 
 function BackedBy() {
   return (
     <div style={{ background: T.canvas, paddingBlock: "48px 32px", paddingInline: 16 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
         <div style={{ color: T.inkB3, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textAlign: "center", textWrap: "balance" }}>
-          Backed by angels from
+          Institutions we comply with
         </div>
         <div style={{
           marginTop: 32, maxWidth: 640, width: "100%", overflow: "clip",
@@ -162,14 +161,14 @@ function BackedBy() {
         }}>
           <div style={{ display: "flex", alignItems: "center", width: "max-content", animation: "regco-marquee 30s linear infinite" }}>
             {MARQUEE.map((n, i) => (
-              <div key={i} style={{ flexShrink: 0, marginRight: 56 }}>
-                <div style={{ height: 28, width: 120, background: "rgba(0,0,0,0.5)", borderRadius: 2, maskImage: "linear-gradient(90deg,#000,#000)", WebkitMaskImage: "linear-gradient(90deg,#000,#000)" }} title={n} />
+              <div key={i} style={{ flexShrink: 0, marginRight: 56, fontFamily: SANS, fontWeight: 600, fontSize: 20, color: T.ink66, letterSpacing: "-0.01em" }} title={n}>
+                {n}
               </div>
             ))}
           </div>
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, lineHeight: 1.4, textAlign: "center", marginTop: 40, textWrap: "pretty" }}>
-          Powering regulated institutions across Nigeria
+          Aligned to Nigerian regulatory and statutory requirements
         </div>
       </div>
     </div>
