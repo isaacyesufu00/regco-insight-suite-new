@@ -305,12 +305,42 @@ const ComplianceOverview = () => {
     return parts.join(" ");
   }, [o, isSample]);
 
-  const indicators = [
-    { icon: <CheckCircle2 size={15} strokeWidth={2} />, color: T.green, label: "AML Monitoring Healthy" },
-    { icon: <CheckCircle2 size={15} strokeWidth={2} />, color: T.green, label: "Regulatory Reports Complete" },
-    { icon: <AlertTriangle size={15} strokeWidth={2} />, color: T.amber, label: o.kycPending ? `${o.kycPending} Manual Reviews Pending` : "Manual Reviews Pending" },
-    { icon: <ShieldAlert size={15} strokeWidth={2} />, color: T.red, label: o.fraudCritical ? `${o.fraudCritical} High-Risk Alerts Escalated` : "High-Risk Alerts Escalated" },
-    { icon: <Shield size={15} strokeWidth={2} />, color: T.blue, label: "Audit Trail Verified" },
+  const todos = [
+    {
+      done: !o.fraudCritical,
+      label: o.fraudCritical ? `Review ${o.fraudCritical} critical fraud alert${o.fraudCritical === 1 ? "" : "s"}` : "Critical fraud alerts cleared",
+      detail: o.fraudCritical ? "High-severity AML alerts await manual escalation." : "No high-severity alerts open.",
+      to: "/dashboard/transactions",
+      action: "Open Fraud Queue",
+    },
+    {
+      done: o.reports.failed === 0 && o.reports.pending === 0,
+      label: o.reports.pending ? `${o.reports.pending} regulatory return${o.reports.pending === 1 ? "" : "s"} pending` : "Regulatory returns up to date",
+      detail: o.reports.pending ? "Pending filings need submission before deadlines." : `${o.reports.submitted} submitted this cycle.`,
+      to: "/dashboard/nfiu-reports",
+      action: "Generate Returns",
+    },
+    {
+      done: !o.kycPending,
+      label: o.kycPending ? `Clear ${o.kycPending} manual KYC review${o.kycPending === 1 ? "" : "s"}` : "KYC reviews current",
+      detail: o.kycPending ? "Identities awaiting compliance sign-off." : "No manual reviews queued.",
+      to: "/dashboard/screening",
+      action: "Open Screening",
+    },
+    {
+      done: o.auditIntegrity >= 100,
+      label: "Verify audit trail integrity",
+      detail: "Confirm governance log is tamper-protected and complete.",
+      to: "/dashboard/audit-log",
+      action: "Open Audit Log",
+    },
+    {
+      done: o.suspicious === 0,
+      label: o.suspicious ? `Investigate ${o.suspicious} suspicious transaction${o.suspicious === 1 ? "" : "s"}` : "Suspicious transactions reviewed",
+      detail: o.suspicious ? "Auto-escalated items need disposition." : "No open investigations.",
+      to: "/dashboard/transactions",
+      action: "Open Investigations",
+    },
   ];
 
   const domainTotal = o.domains.reduce((s, d) => s + d.score, 0);
@@ -457,15 +487,38 @@ const ComplianceOverview = () => {
               <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
                 boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
               <div className="relative">
-                <h3 className="text-[16px] font-semibold tracking-tight" style={{ color: T.text }}>Compliance Intelligence</h3>
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-[16px] font-semibold tracking-tight" style={{ color: T.text }}>Compliance To-Do</h3>
+                  <span className="text-[11px] font-medium tabular-nums" style={{ color: T.muted }}>
+                    {todos.filter((t) => t.done).length}/{todos.length} done
+                  </span>
+                </div>
 
-                <p className="text-[13px] leading-[1.7] text-[var(--text2)] mt-5 font-medium">{aiSummary}</p>
-
-                <div className="mt-7 space-y-3.5">
-                  {indicators.map((ind, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span style={{ color: ind.color }}>{ind.icon}</span>
-                      <span className="text-[13px] font-medium" style={{ color: T.text2 }}>{ind.label}</span>
+                <div className="mt-6 space-y-2.5">
+                  {todos.map((t, i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-2xl p-3.5 transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                      <span className="grid place-items-center w-[20px] h-[20px] rounded-full mt-0.5 shrink-0"
+                        style={{
+                          background: t.done ? "rgba(66,230,149,0.14)" : "rgba(255,255,255,0.04)",
+                          border: `1px solid ${t.done ? T.green : T.borderHi}`,
+                          color: t.done ? T.green : "transparent",
+                        }}>
+                        {t.done && <CheckCircle2 size={13} strokeWidth={2.5} />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-semibold leading-snug" style={{ color: t.done ? T.muted : T.text }}>{t.label}</p>
+                        {t.detail && <p className="text-[11.5px] text-[var(--text2)] mt-1 leading-relaxed">{t.detail}</p>}
+                        {t.to && (
+                          <Link to={t.to}
+                            className="mt-2 inline-flex items-center gap-1.5 text-[11.5px] font-medium transition-colors"
+                            style={{ color: T.text2 }}
+                            onMouseEnter={(e) => (e.currentTarget.style.color = T.text)}
+                            onMouseLeave={(e) => (e.currentTarget.style.color = T.text2)}>
+                            {t.action || "Open"} <ArrowUpRight size={13} strokeWidth={2} />
+                          </Link>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -473,7 +526,7 @@ const ComplianceOverview = () => {
                 <div className="mt-auto pt-7">
                   <div className="border-t" style={{ borderColor: T.border }} />
                   <p className="text-[11px] text-[var(--muted)] mt-4">
-                    {o.lastCalcAt ? `Generated ${new Date(o.lastCalcAt).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}` : "Generated just now"}
+                    {o.lastCalcAt ? `Updated ${new Date(o.lastCalcAt).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}` : "Updated just now"}
                   </p>
                 </div>
               </div>
