@@ -70,6 +70,16 @@ function Nav() {
   ];
   return (
     <div style={{ background: T.canvas, fontFamily: SANS, position: "sticky", top: 0, zIndex: 50 }}>
+      <style>{`
+        .regco-nav-link .regco-underline {
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.25s ease;
+        }
+        .regco-nav-link:hover .regco-underline {
+          transform: scaleX(1);
+        }
+      `}</style>
       <div style={{
         maxWidth: MAX, margin: "0 auto", height: 70, paddingInline: 32,
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24,
@@ -79,9 +89,9 @@ function Nav() {
         </Link>
         <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
           {links.map((x) => (
-            <Link key={x.l} to={x.to} style={{ position: "relative", color: T.inkCC, fontSize: 14, fontWeight: 500, textDecoration: "none", lineHeight: 1.43 }}>
+            <Link key={x.l} to={x.to} className="regco-nav-link" style={{ position: "relative", color: T.inkCC, fontSize: 14, fontWeight: 500, textDecoration: "none", lineHeight: 1.43 }}>
               <span style={{ display: "block", textAlign: "center" }}>{x.l}</span>
-              <span style={{ position: "absolute", bottom: -2, left: 0, height: 1, width: "100%", background: T.inkE6 }} />
+              <span className="regco-underline" style={{ position: "absolute", bottom: -2, left: 0, height: 1, width: "100%", background: T.inkE6 }} />
             </Link>
           ))}
         </nav>
