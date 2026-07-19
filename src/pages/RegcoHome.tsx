@@ -108,20 +108,20 @@ function Hero() {
         <div style={{ maxWidth: 688, margin: "0 auto", paddingInline: 16 }}>
           <div>
             <div style={{ color: T.ink, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, maxWidth: 401.856, textWrap: "balance" }}>
-              Compliance. Fraud. Identity. Governance. One AI operating system.
+              Compliance intelligence for financial institutions.
             </div>
           </div>
           <div>
             <div style={{ maxWidth: 550.16, marginTop: 20 }}>
               <span style={{ display: "inline-block", color: T.ink8C, fontFamily: SERIF, fontSize: 20, lineHeight: 1.2, textWrap: "pretty" }}>
-                RegCo gives regulated institutions a single AI-powered platform to automate reporting, detect fraud, and stay continuously compliant.
+                Compliance shouldn’t begin after an audit. The future of regulatory operations is continuous monitoring, intelligent detection, and automated reporting — so every transaction, customer, and regulatory return is always ready for review.
               </span>
             </div>
           </div>
           <div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 32 }}>
-              <DarkPill><Link to="/book-demo" style={{ color: T.canvasTone, textDecoration: "none" }}>Book a demo</Link></DarkPill>
-              <LightChip><Link to="/sign-in" style={{ color: T.inkCC, textDecoration: "none" }}>Login</Link></LightChip>
+              <DarkPill><Link to="/book-demo" style={{ color: T.canvasTone, textDecoration: "none" }}>Start Demo</Link></DarkPill>
+              <LightChip><Link to="/product" style={{ color: T.inkCC, textDecoration: "none" }}>Explore Platform</Link></LightChip>
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ function BackedBy() {
     <div style={{ background: T.canvas, paddingBlock: "48px 32px", paddingInline: 16 }}>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
         <div style={{ color: T.inkB3, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textAlign: "center", textWrap: "balance" }}>
-          Institutions we comply with
+          Trusted by compliance leaders building the future of financial services.
         </div>
         <div style={{
           marginTop: 32, maxWidth: 640, width: "100%", overflow: "clip",
@@ -168,7 +168,7 @@ function BackedBy() {
           </div>
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, lineHeight: 1.4, textAlign: "center", marginTop: 40, textWrap: "pretty" }}>
-          Aligned to Nigerian regulatory and statutory requirements
+          Purpose-built for regulated financial institutions.
         </div>
       </div>
     </div>
@@ -184,17 +184,17 @@ function Narrative() {
           Problem
         </div>
         <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-          Compliance teams and regulated institutions are hitting walls with fragmented, manual processes.
+          Financial institutions are drowning in fragmented compliance operations.
         </div>
         <div style={{ marginTop: 16 }}>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginBottom: 16, textWrap: "pretty" }}>
-            Today’s tools generate reports. But they struggle with real work. Because real work isn’t just filings — it’s decisions, tradeoffs, and context. That judgment doesn’t live in spreadsheets — it lives inside your experts.
+            Fraud teams investigate suspicious activity. Compliance officers prepare regulatory returns. Risk teams monitor exposure. Internal audit tracks governance. Identity teams screen customers. Every department works with different tools, disconnected data, and manual workflows.
           </div>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginBottom: 16, textWrap: "pretty" }}>
-            Expertise has never been captured. Until now.
+            The result is duplicated work, delayed reporting, operational blind spots, and unnecessary regulatory risk.
           </div>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, textWrap: "pretty" }}>
-            The most valuable compliance knowledge isn’t written down. It exists in how professionals think — not just answers, but reasoning, decisions, tradeoffs, and context. We work with domain experts to capture that thinking, then structure it into an operating system institutions can run on.
+            Compliance shouldn’t exist as separate departments. It should operate as one intelligent system.
           </div>
         </div>
       </div>
@@ -203,7 +203,7 @@ function Narrative() {
         <div>
           <div style={{ borderRadius: 4, boxShadow: "inset 0 0 0 1px #0000001A", overflow: "clip", aspectRatio: "2720 / 1161" }}>
             <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #EFEFEA 0%, #E4E4DD 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ fontFamily: SANS, fontSize: 14, color: T.ink66 }}>Workflow screenshot</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: T.ink66 }}>RegCo dashboard</span>
             </div>
           </div>
         </div>
@@ -211,13 +211,16 @@ function Narrative() {
 
       <div style={{ maxWidth: NARROW, margin: "56px auto 0", paddingInline: 16 }}>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, lineHeight: 1.45, marginBottom: 16, textWrap: "pretty" }}>
-          Our solution
+          Our Solution
         </div>
         <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-          We turn real-world compliance work into an operating system.
+          One AI platform for fraud, compliance, identity, governance, and regulatory reporting.
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginTop: 16, textWrap: "pretty" }}>
-          RegCo is an applied compliance platform purpose-built for Nigerian regulated institutions. Models trained on outputs plateau. Models trained on reasoning improve. We build a system that reflects how experts actually solve problems — step by step, decision by decision.
+          RegCo continuously analyzes operational data across your institution, detects suspicious activity, validates customer identity, monitors governance controls, prepares regulatory submissions, and provides compliance teams with one real-time operational picture.
+        </div>
+        <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginTop: 16, textWrap: "pretty" }}>
+          Instead of reacting to audits… your institution stays continuously prepared.
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginTop: 16, textWrap: "pretty" }}>
           Our platform includes:
@@ -229,10 +232,10 @@ function Narrative() {
 
 /* ---------- data types grid ---------- */
 const DATA_TYPES = [
-  { t: "Regulatory Reporting (SFT)", d: "CBN, NFIU, NDIC and FIRS returns with structured prompt–response pairs and chain-of-thought traces — teaching the platform how to file accurately across every institution." },
-  { t: "AML & Fraud Rubrics", d: "Expert-designed detection prompts with grading frameworks for suspicious activity and fraud — turning subjective judgment into scalable, auditable signals." },
-  { t: "Screening Environments (API / MCP)", d: "Custom environments across BVN, NIN, CAC, and watchlist services — enabling validation and evaluation of compliance checks in real workflows." },
-  { t: "Audit Trajectories", d: "Human-demonstrated interactions across the compliance workspace — teaching the platform to navigate examinations and remediations end-to-end." },
+  { t: "Fraud Detection", d: "Real-time monitoring of customer behavior, account activity, transactions, velocity patterns, and anomaly detection using machine learning designed specifically for financial institutions." },
+  { t: "Identity & Screening", d: "Continuous customer verification against sanctions lists, politically exposed persons, adverse media, watchlists, and onboarding requirements to reduce compliance exposure before risk enters the institution." },
+  { t: "Regulatory Reporting", d: "Automatically generate CBN returns, validate financial data, reconcile reporting inconsistencies, and prepare submission-ready reports without manual spreadsheet workflows." },
+  { t: "Audit & Governance", d: "Track internal controls, monitor policy compliance, record every action with immutable audit trails, and provide management with complete governance visibility across the organization." },
 ];
 
 function DataTypes() {
@@ -270,9 +273,9 @@ function Divider() {
 
 /* ---------- research ---------- */
 const POSTS = [
-  { t: "How We Improved Regulatory Filing Accuracy by Over 5x Using Expert Traces", d: "How expert-curated workflows and tooling lifted filing accuracy more than 5x — and what it says about training compliance AI.", date: "Mar 31, 2026" },
-  { t: "Compliance expertise, reimagined", d: "Capturing how experts think — turning real-world decisions, judgment, and workflows into a system institutions can run on.", date: "Apr 9, 2026" },
-  { t: "Solving the Last Mile Problem in Partnership with Leading Institutions", d: "Encoding domain-specific excellence into forms machines can learn — so the platform thinks and executes like real-world experts.", date: "Apr 28, 2026" },
+  { t: "How AI changes regulatory reporting", d: "Discover how automated validation removes manual reconciliation and reduces reporting preparation from days to minutes.", tag: "Platform Insights", date: "June 2026" },
+  { t: "The future of continuous compliance", d: "Why quarterly audits are becoming obsolete as financial institutions adopt continuous monitoring and real-time governance.", tag: "Research", date: "June 2026" },
+  { t: "Why compliance teams need one operating system", d: "How combining fraud detection, identity verification, governance, and reporting creates stronger regulatory outcomes.", tag: "Industry", date: "July 2026" },
 ];
 
 function Research() {
@@ -282,13 +285,13 @@ function Research() {
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24 }}>
           <div style={{ maxWidth: 640 }}>
             <div style={{ color: T.inkCC, fontFamily: SANS, fontSize: 24, fontWeight: 500, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-              Research
+              Built from regulatory operations — not generic AI.
             </div>
             <p style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, lineHeight: 1.45, marginTop: 8, marginBottom: 0, textWrap: "pretty" }}>
-              Our approach starts with research: where exactly do compliance teams break down in real institutional contexts? Why do these failure modes exist? We take a proactive stance — every regulated domain has its own patterns.
+              Modern AI can summarize documents. But regulatory compliance demands evidence, traceability, governance, explainability, and confidence. RegCo combines artificial intelligence with structured compliance logic, regulatory frameworks, and institutional workflows so recommendations remain transparent, auditable, and regulator-ready.
             </p>
           </div>
-          <LightChip><Link to="/blog/updates" style={{ color: T.inkCC, textDecoration: "none" }}>More research</Link></LightChip>
+          <LightChip><Link to="/blog/updates" style={{ color: T.inkCC, textDecoration: "none" }}>Learn more</Link></LightChip>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16, marginTop: 32 }}>
@@ -308,7 +311,7 @@ function Research() {
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16 }}>
                     <span style={{ background: T.inkCC, width: 6, height: 10, flexShrink: 0 }} />
-                    <span style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, fontWeight: 500, lineHeight: 1 }}>Blog</span>
+                    <span style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, fontWeight: 500, lineHeight: 1 }}>{p.tag}</span>
                     <span style={{ color: T.ink26, fontFamily: SANS, fontSize: 14, lineHeight: 1 }}>·</span>
                     <span style={{ color: T.ink66, fontFamily: SANS, fontSize: 14, lineHeight: 1 }}>{p.date}</span>
                   </div>
@@ -335,14 +338,14 @@ function CareersCTA() {
             <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, padding: 24 }}>
               <div style={{ maxWidth: 549.248 }}>
                 <div style={{ color: T.canvasTone, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-                  Careers
+                  Build the future of regulatory technology.
                 </div>
                 <p style={{ color: "#FFFFFFCC", fontFamily: SANS, fontSize: 14, lineHeight: 1.45, marginTop: 12, marginBottom: 0, textWrap: "pretty" }}>
-                  We’re hiring for engineering, operations, and compliance roles to help us accelerate AI for regulated institutions. Join the team revolutionizing regulatory technology in Nigeria.
+                  We’re building the next generation of compliance infrastructure for financial institutions across Africa. Join engineers, designers, compliance specialists, and researchers creating AI systems trusted by regulated organizations.
                 </p>
               </div>
               <div style={{ display: "flex", flexShrink: 0, gap: 6 }}>
-                <span style={{ color: T.canvasTone, fontFamily: SANS, fontSize: 14, fontWeight: 500, textDecoration: "underline 1px #FFFFFF66", textUnderlineOffset: 4 }}>See open roles</span>
+                <span style={{ color: T.canvasTone, fontFamily: SANS, fontSize: 14, fontWeight: 500, textDecoration: "underline 1px #FFFFFF66", textUnderlineOffset: 4 }}>View Opportunities</span>
                 <span style={{ color: T.canvasTone, fontFamily: SANS, fontSize: 14, fontWeight: 500 }}>↗</span>
               </div>
             </div>
@@ -356,10 +359,10 @@ function CareersCTA() {
 /* ---------- footer ---------- */
 function Footer() {
   const cols = [
-    { h: "Product", items: ["Regulatory Reporting", "Fraud Detection", "Identity & Screening", "Audit & Governance", "AI Assistant"] },
-    { h: "Company", items: ["About", "Careers", "Security", "Contact"] },
-    { h: "Social", items: ["LinkedIn", "X"] },
-    { h: "Terms & Policies", items: ["Terms of Service", "Privacy Policy"] },
+    { h: "Platform", items: ["Overview", "Fraud Detection", "Identity Screening", "Audit & Governance", "Regulatory Reporting", "AI Compliance Brain"] },
+    { h: "Company", items: ["About", "Customers", "Pricing", "Careers", "Contact"] },
+    { h: "Resources", items: ["Documentation", "Knowledge Base", "Compliance Guides", "Blog", "Platform Updates"] },
+    { h: "Legal", items: ["Privacy Policy", "Terms of Service", "Security", "Data Processing Agreement", "Responsible AI"] },
   ];
   return (
     <div style={{ background: T.canvas }}>
@@ -380,7 +383,9 @@ function Footer() {
               </div>
             ))}
             <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 12, fontWeight: 500, lineHeight: 1.33, textWrap: "pretty" }}>
-              RegCo © 2026
+              © 2026 RegCo
+              <br />
+              Compliance Intelligence for Financial Institutions.
             </div>
           </div>
         </div>
