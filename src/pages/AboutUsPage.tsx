@@ -153,7 +153,7 @@ export default function AboutUsPage() {
             <div
               key={i}
               style={{
-                color: T.meta, fontFamily: SANS, fontSize: 21, fontWeight: 600,
+                color: T.meta, fontFamily: SERIF, fontSize: 21, fontWeight: 600,
                 letterSpacing: "-0.21px", lineHeight: 1.55, textWrap: "pretty",
                 marginBottom: i < PARAS.length - 1 ? "29.4px" : 0,
                 marginTop: i === PARAS.length - 1 ? "21px" : 0,
