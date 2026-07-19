@@ -59,7 +59,7 @@ function Banner() {
           color: "#FFFFFFE6", display: "flex", flexWrap: "wrap", justifyContent: "center",
           fontSize: 16, lineHeight: 1.5, textAlign: "center", textWrap: "pretty",
         }}>
-          AfterQuery closes $30M Series A at $300M valuation and surpasses $100M revenue run rate
+          RegCo closes $30M Series A at $300M valuation and surpasses $100M revenue run rate
           <a href="#" style={{ color: "#FFFFFFE6", marginLeft: 4, textDecoration: "none" }}>Read blog↗</a>
         </div>
       </div>
@@ -67,29 +67,34 @@ function Banner() {
   );
 }
 
-/* ---------- nav (4 empty links, Careers + Get data) ---------- */
+/* ---------- nav: Home, Product, Who we serve, About + Login / Book demo ---------- */
 function Nav() {
+  const links = [
+    { l: "Home", to: "/" },
+    { l: "Product", to: "/product" },
+    { l: "Who we serve", to: "/who-we-serve" },
+    { l: "About", to: "/about" },
+  ];
   return (
     <div style={{ background: T.canvas, fontFamily: SANS, position: "sticky", top: 0, zIndex: 50 }}>
       <div style={{
         maxWidth: MAX, margin: "0 auto", height: 70, paddingInline: 32,
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24,
       }}>
-        <div style={{ display: "flex", alignItems: "center" }}>
-          {/* logo placeholder (Paper SVG) */}
-          <div style={{ height: 22, width: 96, background: T.ink, borderRadius: 3, opacity: 0.85 }} />
-        </div>
+        <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+          <span style={{ color: T.ink, fontWeight: 700, fontSize: 20, letterSpacing: "-0.02em" }}>RegCo</span>
+        </Link>
         <nav style={{ display: "flex", alignItems: "center", gap: 28 }}>
-          {[0, 1, 2, 3].map((i) => (
-            <a key={i} href="#" style={{ position: "relative", color: T.inkCC, fontSize: 14, fontWeight: 500, textDecoration: "none", lineHeight: 1.43 }}>
-              <span style={{ display: "block", minWidth: 48, textAlign: "center" }}>Link</span>
+          {links.map((x) => (
+            <Link key={x.l} to={x.to} style={{ position: "relative", color: T.inkCC, fontSize: 14, fontWeight: 500, textDecoration: "none", lineHeight: 1.43 }}>
+              <span style={{ display: "block", textAlign: "center" }}>{x.l}</span>
               <span style={{ position: "absolute", bottom: -2, left: 0, height: 1, width: "100%", background: T.inkE6 }} />
-            </a>
+            </Link>
           ))}
         </nav>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <LightChip>Careers</LightChip>
-          <DarkPill href="#">Get data</DarkPill>
+          <LightChip><Link to="/sign-in" style={{ color: T.inkCC, textDecoration: "none" }}>Login</Link></LightChip>
+          <DarkPill><Link to="/book-demo" style={{ color: T.canvasTone, textDecoration: "none" }}>Book a demo</Link></DarkPill>
         </div>
       </div>
     </div>
@@ -104,20 +109,20 @@ function Hero() {
         <div style={{ maxWidth: 688, margin: "0 auto", paddingInline: 16 }}>
           <div>
             <div style={{ color: T.ink, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, maxWidth: 401.856, textWrap: "balance" }}>
-              We teach machines how experts think.
+              Compliance. Fraud. Identity. Governance. One AI operating system.
             </div>
           </div>
           <div>
             <div style={{ maxWidth: 550.16, marginTop: 20 }}>
               <span style={{ display: "inline-block", color: T.ink8C, fontFamily: SERIF, fontSize: 20, lineHeight: 1.2, textWrap: "pretty" }}>
-                The future of AI won’t be trained on more data, it will be trained on better thinking.
+                RegCo gives regulated institutions a single AI-powered platform to automate reporting, detect fraud, and stay continuously compliant.
               </span>
             </div>
           </div>
           <div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 32 }}>
-              <DarkPill href="#">Get data</DarkPill>
-              <LightChip>Explore research</LightChip>
+              <DarkPill><Link to="/book-demo" style={{ color: T.canvasTone, textDecoration: "none" }}>Book a demo</Link></DarkPill>
+              <LightChip><Link to="/sign-in" style={{ color: T.inkCC, textDecoration: "none" }}>Login</Link></LightChip>
             </div>
           </div>
         </div>
@@ -140,7 +145,7 @@ function Hero() {
 }
 
 /* ---------- backed by marquee ---------- */
-const BACKERS = ["Anthropic", "DeepMind", "Meta", "OpenAI", "Google", "Microsoft"];
+const BACKERS = ["Access Bank", "Sterling Bank", "Moniepoint", "CBN", "NDIC", "NFIU"];
 const MARQUEE = [...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS, ...BACKERS];
 
 function BackedBy() {
@@ -164,7 +169,7 @@ function BackedBy() {
           </div>
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, lineHeight: 1.4, textAlign: "center", marginTop: 40, textWrap: "pretty" }}>
-          Powering every frontier AI research lab
+          Powering regulated institutions across Nigeria
         </div>
       </div>
     </div>
@@ -180,17 +185,17 @@ function Narrative() {
           Problem
         </div>
         <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-          AI researchers and enterprises are hitting walls with suboptimal data solutions.
+          Compliance teams and regulated institutions are hitting walls with fragmented, manual processes.
         </div>
         <div style={{ marginTop: 16 }}>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginBottom: 16, textWrap: "pretty" }}>
-            Today’s models can generate answers. But they struggle with real work. Because real work isn’t just outputs. It’s decisions, tradeoffs, and context. That knowledge doesn’t live on the internet — it lives inside experts.
+            Today’s tools generate reports. But they struggle with real work. Because real work isn’t just filings — it’s decisions, tradeoffs, and context. That judgment doesn’t live in spreadsheets — it lives inside your experts.
           </div>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginBottom: 16, textWrap: "pretty" }}>
             Expertise has never been captured. Until now.
           </div>
           <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, textWrap: "pretty" }}>
-            The most valuable knowledge isn’t written down. It exists in how professionals think — not just answers, but reasoning, decisions, tradeoffs, and context. We work with domain experts to capture that thinking, then structure it into training data models can learn from.
+            The most valuable compliance knowledge isn’t written down. It exists in how professionals think — not just answers, but reasoning, decisions, tradeoffs, and context. We work with domain experts to capture that thinking, then structure it into an operating system institutions can run on.
           </div>
         </div>
       </div>
@@ -210,13 +215,13 @@ function Narrative() {
           Our solution
         </div>
         <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>
-          We turn real-world work into training data.
+          We turn real-world compliance work into an operating system.
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginTop: 16, textWrap: "pretty" }}>
-          AfterQuery is an applied research lab curating data solutions for frontier foundation model development. Models trained on outputs plateau. Models trained on reasoning improve. We build datasets that reflect how experts actually solve problems — step by step, decision by decision.
+          RegCo is an applied compliance platform purpose-built for Nigerian regulated institutions. Models trained on outputs plateau. Models trained on reasoning improve. We build a system that reflects how experts actually solve problems — step by step, decision by decision.
         </div>
         <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, fontWeight: 500, lineHeight: 1.45, marginTop: 16, textWrap: "pretty" }}>
-          Our data includes:
+          Our platform includes:
         </div>
       </div>
     </div>
@@ -225,10 +230,10 @@ function Narrative() {
 
 /* ---------- data types grid ---------- */
 const DATA_TYPES = [
-  { t: "Supervised Fine-Tuning (SFT)", d: "High-quality prompt–response pairs and chain-of-thought reasoning traces — teaching models how to behave across complex tasks." },
-  { t: "Reinforcement Learning + Rubrics", d: "Expert-designed prompts with grading frameworks for reasoning and code generation — turning subjective judgment into scalable reward signals." },
-  { t: "Agent Environments (API / MCP)", d: "Custom environments across APIs, tools, and services — enabling training and evaluation of agents in real workflows." },
-  { t: "Computer Use Trajectories", d: "Human-demonstrated interactions across browser and desktop environments — teaching models to navigate and operate software end-to-end." },
+  { t: "Regulatory Reporting (SFT)", d: "CBN, NFIU, NDIC and FIRS returns with structured prompt–response pairs and chain-of-thought traces — teaching the platform how to file accurately across every institution." },
+  { t: "AML & Fraud Rubrics", d: "Expert-designed detection prompts with grading frameworks for suspicious activity and fraud — turning subjective judgment into scalable, auditable signals." },
+  { t: "Screening Environments (API / MCP)", d: "Custom environments across BVN, NIN, CAC, and watchlist services — enabling validation and evaluation of compliance checks in real workflows." },
+  { t: "Audit Trajectories", d: "Human-demonstrated interactions across the compliance workspace — teaching the platform to navigate examinations and remediations end-to-end." },
 ];
 
 function DataTypes() {
@@ -266,9 +271,9 @@ function Divider() {
 
 /* ---------- research ---------- */
 const POSTS = [
-  { t: "How We Improved Terminal-Bench 2.0 Scores by Over 5x Using Tinker and Harbor", d: "How expert-curated trajectories and tooling lifted Terminal-Bench 2.0 scores more than 5x — and what it says about training agents.", date: "Mar 31, 2026" },
-  { t: "Human expertise, reimagined", d: "Capturing how experts think — turning real-world decisions, judgment, and workflows into training data models can learn from.", date: "Apr 9, 2026" },
-  { t: "Solving the Last Mile Problem in Partnership with The Raine Group", d: "Encoding domain-specific excellence into forms machines can learn — so agents think and execute like real-world experts.", date: "Apr 28, 2026" },
+  { t: "How We Improved Regulatory Filing Accuracy by Over 5x Using Expert Traces", d: "How expert-curated workflows and tooling lifted filing accuracy more than 5x — and what it says about training compliance AI.", date: "Mar 31, 2026" },
+  { t: "Compliance expertise, reimagined", d: "Capturing how experts think — turning real-world decisions, judgment, and workflows into a system institutions can run on.", date: "Apr 9, 2026" },
+  { t: "Solving the Last Mile Problem in Partnership with Leading Institutions", d: "Encoding domain-specific excellence into forms machines can learn — so the platform thinks and executes like real-world experts.", date: "Apr 28, 2026" },
 ];
 
 function Research() {
@@ -281,10 +286,10 @@ function Research() {
               Research
             </div>
             <p style={{ color: T.ink99, fontFamily: SANS, fontSize: 18, lineHeight: 1.45, marginTop: 8, marginBottom: 0, textWrap: "pretty" }}>
-              Our approach starts with research: where exactly do models break down in real professional contexts? Why do these failure modes exist? We take a proactive stance — every domain has its own failure patterns.
+              Our approach starts with research: where exactly do compliance teams break down in real institutional contexts? Why do these failure modes exist? We take a proactive stance — every regulated domain has its own patterns.
             </p>
           </div>
-          <LightChip>More research</LightChip>
+          <LightChip><Link to="/blog/updates" style={{ color: T.inkCC, textDecoration: "none" }}>More research</Link></LightChip>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 16, marginTop: 32 }}>
@@ -334,7 +339,7 @@ function CareersCTA() {
                   Careers
                 </div>
                 <p style={{ color: "#FFFFFFCC", fontFamily: SANS, fontSize: 14, lineHeight: 1.45, marginTop: 12, marginBottom: 0, textWrap: "pretty" }}>
-                  We’re hiring for engineering, operations, and research roles to help us accelerate AI training data solutions. Join the team revolutionizing AI Research and Training.
+                  We’re hiring for engineering, operations, and compliance roles to help us accelerate AI for regulated institutions. Join the team revolutionizing regulatory technology in Nigeria.
                 </p>
               </div>
               <div style={{ display: "flex", flexShrink: 0, gap: 6 }}>
@@ -352,8 +357,8 @@ function CareersCTA() {
 /* ---------- footer ---------- */
 function Footer() {
   const cols = [
-    { h: "Lab", items: ["Research & Blog", "Leaderboards", "Knowledge"] },
-    { h: "Company", items: ["Products", "For Enterprises", "Careers"] },
+    { h: "Product", items: ["Regulatory Reporting", "Fraud Detection", "Identity & Screening", "Audit & Governance", "AI Assistant"] },
+    { h: "Company", items: ["About", "Careers", "Security", "Contact"] },
     { h: "Social", items: ["LinkedIn", "X"] },
     { h: "Terms & Policies", items: ["Terms of Service", "Privacy Policy"] },
   ];
@@ -376,7 +381,7 @@ function Footer() {
               </div>
             ))}
             <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 12, fontWeight: 500, lineHeight: 1.33, textWrap: "pretty" }}>
-              AfterQuery © 2026
+              RegCo © 2026
             </div>
           </div>
         </div>
