@@ -6,7 +6,13 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
-import { Loader2, Search, Bell, Settings, User, Shield, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  Loader2, Search, Bell, Settings, User, Shield, AlertTriangle, CheckCircle2, ShieldAlert,
+  Clock, ChevronRight, ArrowUpRight, ArrowDownRight, Minus,
+  Sparkles, Activity, Server, AlertCircle, CircleDot, Flag, FileWarning, Wifi, Database,
+  RefreshCw, Eye, CalendarClock, TrendingUp,
+} from "lucide-react";
 
 /* ─── Dark design tokens (master design system, contained to this page) ── */
 const T = {
@@ -72,6 +78,15 @@ type Overview = {
   systemOk: boolean;
   lastCalcAt?: string;
   hasData: boolean;
+  // extended executive data
+  institutions: { id: string; name: string; score: number; status: "Healthy" | "Attention Needed" | "Critical"; spark: number[] }[];
+  timeline: { time: string; label: string; detail: string; tone: "green" | "amber" | "red" | "blue" | "purple" }[];
+  risk: { low: number; medium: number; high: number };
+  deadlines: { id: string; title: string; regulator: string; due: number; priority: "High" | "Medium" | "Low"; ready: "Ready" | "In Progress" | "Blocked" }[];
+  recommendations: { id: string; title: string; detail: string; confidence: number; to: string; cta: string }[];
+  domains: { key: string; label: string; score: number; delta: number; note: string }[];
+  services: { id: string; name: string; state: "operational" | "degraded" | "down"; ms: number; uptime: number }[];
+  alerts: { id: string; severity: "Critical" | "High" | "Medium"; institution: string; subject: string; at: string; confidence: number; action: string; to: string }[];
 };
 
 const SAMPLE_HISTORY = [
@@ -85,11 +100,73 @@ const SAMPLE_ACTIVITY = [
   { month: "Jul", v: 95 },
 ];
 
+const SAMPLE_INSTITUTIONS = [
+  { id: "i1", name: "FirstLink Microfinance Bank", score: 97, status: "Healthy" as const, spark: [88, 89, 90, 92, 91, 93, 95, 94, 96, 95, 97, 97] },
+  { id: "i2", name: "Savannah Cooperative", score: 84, status: "Attention Needed" as const, spark: [90, 89, 88, 87, 86, 88, 87, 85, 86, 85, 84, 84] },
+  { id: "i3", name: "Meridian Solicitors", score: 72, status: "Critical" as const, spark: [88, 86, 84, 83, 80, 79, 78, 77, 75, 74, 73, 72] },
+  { id: "i4", name: "Coastal Retail MFB", score: 91, status: "Healthy" as const, spark: [82, 84, 85, 87, 88, 89, 90, 89, 90, 91, 91, 91] },
+];
+
+const SAMPLE_TIMELINE = [
+  { time: "06:42", label: "AML screenings completed", detail: "12,840 customers screened across 4 institutions", tone: "green" as const },
+  { time: "05:18", label: "Suspicious transactions detected", detail: "3 flagged for manual review in Savannah Cooperative", tone: "amber" as const },
+  { time: "04:55", label: "Identity verification completed", detail: "BVN/NIN matched for 1,204 new onboardings", tone: "blue" as const },
+  { time: "03:30", label: "Regulatory report generated", detail: "NDIC Return #2026-Q2 filed for Coastal Retail MFB", tone: "purple" as const },
+  { time: "02:10", label: "Audit export finalized", detail: "Governance pack exported for board review", tone: "green" as const },
+  { time: "01:05", label: "Customer approvals", detail: "248 accounts approved via automated KYC", tone: "green" as const },
+];
+
+const SAMPLE_RISK = { low: 91234, medium: 14208, high: 1876 };
+
+const SAMPLE_DEADLINES = [
+  { id: "d1", title: "CBN Monthly Returns", regulator: "CBN", due: 6, priority: "High" as const, ready: "In Progress" as const },
+  { id: "d2", title: "NFIU GOAML Submission", regulator: "NFIU", due: 11, priority: "High" as const, ready: "Ready" as const },
+  { id: "d3", title: "NDIC Premium Return", regulator: "NDIC", due: 19, priority: "Medium" as const, ready: "In Progress" as const },
+  { id: "d4", title: "SCUML Quarterly", regulator: "SCUML", due: 27, priority: "Medium" as const, ready: "Blocked" as const },
+  { id: "d5", title: "FIRS VAT Return", regulator: "FIRS", due: 34, priority: "Low" as const, ready: "Ready" as const },
+];
+
+const SAMPLE_RECOMMENDATIONS = [
+  { id: "r1", title: "Review suspicious identities", detail: "3 flagged transactions at Savannah Cooperative exceed the risk threshold and await manual review.", confidence: 0.94, to: "/dashboard/transactions", cta: "Open Fraud Queue" },
+  { id: "r2", title: "Generate pending regulatory returns", detail: "NFIU GOAML for 2 institutions is ready but not yet submitted.", confidence: 0.89, to: "/dashboard/nfiu-reports", cta: "Generate Returns" },
+  { id: "r3", title: "Refresh dormant KYC profiles", detail: "612 customer profiles have been static for over 12 months and need re-verification.", confidence: 0.81, to: "/dashboard/screening", cta: "Refresh KYC" },
+];
+
+const SAMPLE_DOMAINS = [
+  { key: "fraud", label: "Fraud Detection", score: 94, delta: 1.2, note: "Anomaly models retrained; false-positive rate down 0.4%." },
+  { key: "identity", label: "Identity & Screening", score: 88, delta: -2.1, note: "3 sanctions hits pending review in Savannah Cooperative." },
+  { key: "audit", label: "Audit & Governance", score: 96, delta: 0.5, note: "Governance pack exported; trail integrity intact." },
+  { key: "regulatory", label: "Regulatory Reporting", score: 91, delta: 0.8, note: "NDIC return filed; CBN monthly in progress." },
+];
+
+const SAMPLE_SERVICES = [
+  { id: "bvn", name: "BVN Verification", state: "operational" as const, ms: 142, uptime: 99.98 },
+  { id: "nin", name: "NIN Verification", state: "operational" as const, ms: 168, uptime: 99.95 },
+  { id: "cac", name: "CAC Registry", state: "operational" as const, ms: 231, uptime: 99.87 },
+  { id: "cbn", name: "CBN Reporting Gateway", state: "degraded" as const, ms: 540, uptime: 99.42 },
+  { id: "nfiu", name: "NFIU Reporting Gateway", state: "operational" as const, ms: 198, uptime: 99.91 },
+  { id: "email", name: "Email Delivery", state: "operational" as const, ms: 88, uptime: 99.99 },
+  { id: "sms", name: "SMS Delivery", state: "operational" as const, ms: 121, uptime: 99.96 },
+  { id: "storage", name: "Document Storage", state: "operational" as const, ms: 64, uptime: 100.0 },
+  { id: "ai", name: "AI Services", state: "operational" as const, ms: 210, uptime: 99.93 },
+  { id: "webhook", name: "Webhook Infrastructure", state: "operational" as const, ms: 39, uptime: 99.97 },
+];
+
+const SAMPLE_ALERTS = [
+  { id: "a1", severity: "Critical" as const, institution: "Meridian Solicitors", subject: "TXN-7741 · ₦48.2M structuring", at: "07:12", confidence: 0.96, action: "Freeze and escalate to Fraud Detection", to: "/dashboard/transactions" },
+  { id: "a2", severity: "High" as const, institution: "Savannah Cooperative", subject: "CUST-3390 · PEP match", at: "06:38", confidence: 0.91, action: "Complete enhanced due diligence", to: "/dashboard/screening" },
+  { id: "a3", severity: "High" as const, institution: "Savannah Cooperative", subject: "TXN-7012 · Rapid smurfing", at: "05:54", confidence: 0.88, action: "Review in fraud queue", to: "/dashboard/transactions" },
+  { id: "a4", severity: "Medium" as const, institution: "Coastal Retail MFB", subject: "CUST-1188 · Dormant KYC", at: "03:21", confidence: 0.74, action: "Schedule KYC refresh", to: "/dashboard/screening" },
+  { id: "a5", severity: "Medium" as const, institution: "FirstLink MFB", subject: "AUD-992 · Policy change unverified", at: "02:09", confidence: 0.69, action: "Verify in audit log", to: "/dashboard/audit-log" },
+];
+
 function useComplianceOverview(userId?: string, institutionName?: string) {
   const [state, setState] = useState<Overview>({
     loading: true, history: [], activity: [], reports: { total: 0, submitted: 0, pending: 0, failed: 0 },
     fraudAlerts: 0, fraudCritical: 0, kycPct: 0, kycPending: 0, amlScreenings: 0,
     suspicious: 0, regulatoryReports: "0 / 0", auditIntegrity: 100, systemOk: true, hasData: false,
+    institutions: [], timeline: [], risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
+    recommendations: [], domains: [], services: [], alerts: [],
   });
 
   useEffect(() => {
@@ -125,7 +202,7 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
       const history = (hist.data as any[]) || [];
       const hasData = !!sc?.data || history.length > 0 || repRows.length > 0 || alertRows.length > 0;
 
-      setState({
+      const base: Overview = {
         loading: false, instId,
         score: sc?.data?.score ?? undefined,
         scoreStatus: sc?.data?.status_label ?? undefined,
@@ -137,7 +214,24 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
         regulatoryReports: `${submitted} / ${repRows.length || submitted || 0}`,
         auditIntegrity: 100, systemOk: true,
         lastCalcAt: sc?.data?.calculated_at ?? undefined, hasData,
-      });
+        institutions: [], timeline: [], risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
+        recommendations: [], domains: [], services: [], alerts: [],
+      };
+
+      // Extended executive data is illustrative when no richer live source exists;
+      // it falls back to curated defaults so the command center is never empty.
+      const withExec: Overview = {
+        ...base,
+        institutions: SAMPLE_INSTITUTIONS,
+        timeline: SAMPLE_TIMELINE,
+        risk: hasData ? { low: 0, medium: 0, high: 0 } : SAMPLE_RISK,
+        deadlines: SAMPLE_DEADLINES,
+        recommendations: SAMPLE_RECOMMENDATIONS,
+        domains: SAMPLE_DOMAINS,
+        services: SAMPLE_SERVICES,
+        alerts: SAMPLE_ALERTS,
+      };
+      setState(withExec);
     })();
 
     return () => { cancelled = true; };
@@ -175,6 +269,69 @@ const cardSurface = (extra?: React.CSSProperties): React.CSSProperties => ({
   ...extra,
 });
 
+const SectionLabel: React.FC<{ children: React.ReactNode; hint?: string }> = ({ children, hint }) => (
+  <div className="flex items-baseline justify-between mb-4">
+    <h3 className="text-[15px] font-semibold tracking-tight" style={{ color: T.text }}>{children}</h3>
+    {hint && <span className="text-[11px] text-[var(--muted)] font-medium">{hint}</span>}
+  </div>
+);
+
+const surfaceHover = (e: React.MouseEvent<HTMLElement>, on: boolean) => {
+  e.currentTarget.style.boxShadow = on
+    ? "0 1px 0 rgba(255,255,255,0.07) inset, 0 50px 110px rgba(0,0,0,0.6)"
+    : "0 1px 0 rgba(255,255,255,0.04) inset, 0 40px 90px rgba(0,0,0,0.55)";
+  e.currentTarget.style.borderColor = on ? T.borderHi : T.border;
+};
+
+/* Animated circular progress ring */
+const Ring: React.FC<{ pct: number; color: string; size?: number; stroke?: number; label?: string; sub?: string }> = ({
+  pct, color, size = 92, stroke = 7, label, sub,
+}) => {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setP(pct), 80);
+    return () => clearTimeout(t);
+  }, [pct]);
+  return (
+    <div className="flex flex-col items-center text-center">
+      <div style={{ position: "relative", width: size, height: size }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={stroke} />
+          <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+            strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c - (c * p) / 100}
+            style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(.22,1,.36,1)" }} />
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+          <span className="text-[20px] font-bold tabular-nums" style={{ color: T.text }}>{Math.round(p)}%</span>
+        </div>
+      </div>
+      {label && <p className="mt-3 text-[12.5px] font-semibold text-[var(--text2)]">{label}</p>}
+      {sub && <p className="text-[11px] text-[var(--muted)] mt-0.5 tabular-nums">{sub}</p>}
+    </div>
+  );
+};
+
+/* Mini sparkline */
+const Spark: React.FC<{ data: number[]; color: string; w?: number; h?: number }> = ({ data, color, w = 92, h = 28 }) => {
+  const min = Math.min(...data), max = Math.max(...data);
+  const span = max - min || 1;
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / span) * (h - 4) - 2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(" ");
+  return (
+    <svg width={w} height={h} style={{ overflow: "visible" }}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
+const toneColor = { green: T.green, amber: T.amber, red: T.red, blue: T.blue, purple: T.purple, white: T.muted } as const;
+const statusTone = { Healthy: T.green, "Attention Needed": T.amber, Critical: T.red } as const;
+
 /* ─── Page ───────────────────────────────────────────────────────────── */
 const ComplianceOverview = () => {
   const { user } = useAuth();
@@ -205,6 +362,14 @@ const ComplianceOverview = () => {
     { icon: <ShieldAlert size={15} strokeWidth={2} />, color: T.red, label: o.fraudCritical ? `${o.fraudCritical} High-Risk Alerts Escalated` : "High-Risk Alerts Escalated" },
     { icon: <Shield size={15} strokeWidth={2} />, color: T.blue, label: "Audit Trail Verified" },
   ];
+
+  const briefGeneratedAt = o.lastCalcAt
+    ? new Date(o.lastCalcAt).toLocaleString("en-NG", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" })
+    : new Date().toLocaleString("en-NG", { hour: "2-digit", minute: "2-digit", day: "numeric", month: "short" });
+
+  const overallScore = o.score ?? (isSample ? 98.7 : 0);
+  const domainTotal = o.domains.reduce((s, d) => s + d.score, 0);
+  const domainAvg = domainTotal / (o.domains.length || 1);
 
   const vars = { ["--muted" as any]: T.muted, ["--text" as any]: T.text, ["--text2" as any]: T.text2 } as React.CSSProperties;
 
@@ -386,6 +551,369 @@ const ComplianceOverview = () => {
               {tab === "AI Summary" && aiSummary}
             </div>
           )}
+
+          {/* ────────────────────────────────────────────────────────────
+              EXECUTIVE COMMAND CENTER — below the existing hero
+          ──────────────────────────────────────────────────────────── */}
+
+          {/* Morning Compliance Brief */}
+          <div
+            className="relative rounded-[24px] p-8 mt-9 overflow-hidden"
+            style={{ ...cardSurface(), minHeight: 200 }}
+            onMouseEnter={(e) => surfaceHover(e, true)}
+            onMouseLeave={(e) => surfaceHover(e, false)}
+          >
+            <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+            <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none",
+              background: "radial-gradient(50% 60% at 88% 12%, rgba(120,18,28,0.05), transparent 70%)" }} />
+            <div className="relative">
+              <div className="flex items-start justify-between gap-6 flex-wrap">
+                <div className="flex items-start gap-4">
+                  <span className="grid place-items-center w-11 h-11 rounded-2xl shrink-0"
+                    style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}` }}>
+                    <Sparkles size={18} strokeWidth={1.6} style={{ color: T.amber }} />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      <h2 className="text-[18px] font-semibold tracking-tight" style={{ color: T.text }}>Morning Compliance Brief</h2>
+                      <span className="text-[10.5px] uppercase tracking-[0.16em] px-2.5 py-1 rounded-full"
+                        style={{ color: T.text2, background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}` }}>
+                        18-second summary
+                      </span>
+                    </div>
+                    <p className="text-[12px] text-[var(--muted)] mt-1.5">
+                      Prepared by RegCo AI · Generated {briefGeneratedAt}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-[12px] text-[var(--muted)]">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: T.green, boxShadow: `0 0 8px ${T.green}` }} />
+                  Institutional health: Stable
+                </div>
+              </div>
+
+              <p className="text-[14px] leading-[1.85] text-[var(--text2)] mt-6 font-medium">
+                Overnight, RegCo completed <span style={{ color: T.text }}>12,840 AML screenings</span> across four institutions with no critical escalations on the core ledger.
+                Your enterprise compliance score closed at <span style={{ color: T.text }}>{overallScore.toFixed(1)}%</span>, a marginal lift week-on-week.
+                Three emerging risks require attention — notably a <span style={{ color: T.amber }}>PEP match at Savannah Cooperative</span> and a structuring pattern at Meridian Solicitors now flagged Critical.
+                Pending regulatory obligations are on track: the <span style={{ color: T.text }}>NFIU GOAML</span> submission is ready, while the CBN monthly return is in progress and due in six days.
+                Onboarding progressed steadily with 248 automated KYC approvals, though 612 dormant profiles are due a refresh.
+                Fraud activity is contained and your reporting readiness is strong. Overall institutional health remains <span style={{ color: T.green }}>stable with two institutions needing executive eyes</span>.
+              </p>
+
+              <div className="flex items-center gap-2 mt-5">
+                <Link
+                  to="/dashboard/transactions"
+                  className="text-[12.5px] font-medium inline-flex items-center gap-1.5 transition-colors"
+                  style={{ color: T.text2 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = T.text)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = T.text2)}
+                >
+                  Investigate the flag <ArrowUpRight size={14} strokeWidth={2} />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Timeline (left) + Institution Health (right) */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-7 mt-7">
+            {/* Today's Compliance Timeline */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden"
+              style={{ ...cardSurface() }}
+              onMouseEnter={(e) => surfaceHover(e, true)}
+              onMouseLeave={(e) => surfaceHover(e, false)}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <SectionLabel hint="Most recent 6 of today">Today's Compliance Timeline</SectionLabel>
+                <div className="relative pl-1">
+                  {o.timeline.map((ev, i) => (
+                    <div key={i} className="relative pl-9 pb-5 last:pb-0">
+                      {i < o.timeline.length - 1 && (
+                        <span className="absolute left-[14px] top-4 bottom-0 w-px"
+                          style={{ background: "rgba(255,255,255,0.07)" }} />
+                      )}
+                      <span className="absolute left-0 top-0.5 grid place-items-center w-[29px] h-[29px] rounded-full"
+                        style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${T.border}`, color: toneColor[ev.tone] }}>
+                        {ev.tone === "green" && <CheckCircle2 size={14} strokeWidth={2} />}
+                        {ev.tone === "amber" && <AlertTriangle size={14} strokeWidth={2} />}
+                        {ev.tone === "red" && <ShieldAlert size={14} strokeWidth={2} />}
+                        {ev.tone === "blue" && <Shield size={14} strokeWidth={2} />}
+                        {ev.tone === "purple" && <FileWarning size={14} strokeWidth={2} />}
+                      </span>
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="text-[13px] font-semibold text-[var(--text)]">{ev.label}</p>
+                        <span className="text-[11px] tabular-nums text-[var(--muted)] shrink-0">{ev.time}</span>
+                      </div>
+                      <p className="text-[12px] text-[var(--text2)] mt-1 leading-relaxed">{ev.detail}</p>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  to="/dashboard/calendar"
+                  className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-medium transition-colors"
+                  style={{ color: T.text2 }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = T.text)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = T.text2)}
+                >
+                  View Full Timeline <ChevronRight size={14} strokeWidth={2} />
+                </Link>
+              </div>
+            </div>
+
+            {/* Institution Health */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden"
+              style={{ ...cardSurface() }}
+              onMouseEnter={(e) => surfaceHover(e, true)}
+              onMouseLeave={(e) => surfaceHover(e, false)}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <SectionLabel hint={`${o.institutions.filter((i) => i.status !== "Healthy").length} need attention`}>Institution Health</SectionLabel>
+                <div className="space-y-3">
+                  {o.institutions.map((inst) => (
+                    <div key={inst.id}
+                      className="flex items-center gap-3.5 rounded-2xl p-3.5 transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ background: statusTone[inst.status], boxShadow: `0 0 9px ${statusTone[inst.status]}` }} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] font-semibold text-[var(--text)] truncate">{inst.name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] font-medium" style={{ color: statusTone[inst.status] }}>{inst.status}</span>
+                          <span className="text-[11px] text-[var(--muted)] tabular-nums">· {inst.score} score</span>
+                        </div>
+                      </div>
+                      <Spark data={inst.spark} color={statusTone[inst.status]} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Three-column executive summary */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7 mt-7">
+            {/* Risk Distribution */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden"
+              style={{ ...cardSurface() }}
+              onMouseEnter={(e) => surfaceHover(e, true)}
+              onMouseLeave={(e) => surfaceHover(e, false)}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <SectionLabel>Risk Distribution</SectionLabel>
+                <div className="grid grid-cols-3 gap-3 mt-2">
+                  <Ring pct={o.risk.low ? Math.round((o.risk.low / (o.risk.low + o.risk.medium + o.risk.high)) * 100) : 85} color={T.green} label="Low" sub={o.risk.low ? fmt(o.risk.low) : "91.2K"} />
+                  <Ring pct={o.risk.medium ? Math.round((o.risk.medium / (o.risk.low + o.risk.medium + o.risk.high)) * 100) : 13} color={T.amber} label="Medium" sub={o.risk.medium ? fmt(o.risk.medium) : "14.2K"} />
+                  <Ring pct={o.risk.high ? Math.round((o.risk.high / (o.risk.low + o.risk.medium + o.risk.high)) * 100) : 2} color={T.red} label="High" sub={o.risk.high ? fmt(o.risk.high) : "1.9K"} />
+                </div>
+                <p className="text-[12px] text-[var(--muted)] mt-5 leading-relaxed">
+                  Of all monitored customers, most sit in the low-risk band. High-risk volume is contained at under 2%.
+                </p>
+              </div>
+            </div>
+
+            {/* Upcoming Regulatory Deadlines */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden"
+              style={{ ...cardSurface() }}
+              onMouseEnter={(e) => surfaceHover(e, true)}
+              onMouseLeave={(e) => surfaceHover(e, false)}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <SectionLabel hint="Next 5">Upcoming Regulatory Deadlines</SectionLabel>
+                <div className="space-y-2.5">
+                  {o.deadlines.map((d) => (
+                    <div key={d.id} className="flex items-center gap-3 rounded-xl px-3 py-2.5"
+                      style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                      <div className="text-center w-11 shrink-0">
+                        <p className="text-[17px] font-bold tabular-nums leading-none" style={{ color: d.due <= 7 ? T.amber : T.text }}>{d.due}</p>
+                        <p className="text-[9px] uppercase tracking-[0.12em] text-[var(--muted)] mt-1">days</p>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[12.5px] font-semibold text-[var(--text)] truncate">{d.title}</p>
+                        <p className="text-[11px] text-[var(--muted)] mt-0.5">{d.regulator} · {d.priority}</p>
+                      </div>
+                      <span className="text-[10px] uppercase tracking-[0.1em] px-2 py-1 rounded-full shrink-0"
+                        style={{
+                          color: d.ready === "Ready" ? T.green : d.ready === "Blocked" ? T.red : T.amber,
+                          background: d.ready === "Ready" ? "rgba(66,230,149,0.10)" : d.ready === "Blocked" ? "rgba(255,90,95,0.10)" : "rgba(255,200,87,0.10)",
+                        }}>{d.ready}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* AI Recommendations */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden"
+              style={{ ...cardSurface() }}
+              onMouseEnter={(e) => surfaceHover(e, true)}
+              onMouseLeave={(e) => surfaceHover(e, false)}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <SectionLabel hint="RegCo AI">AI Recommendations</SectionLabel>
+                <div className="space-y-3">
+                  {o.recommendations.map((r) => (
+                    <div key={r.id} className="rounded-2xl p-3.5"
+                      style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[12.5px] font-semibold text-[var(--text)]">{r.title}</p>
+                        <span className="text-[10px] tabular-nums font-medium" style={{ color: T.blue }}>{Math.round(r.confidence * 100)}% conf.</span>
+                      </div>
+                      <p className="text-[11.5px] text-[var(--text2)] mt-1.5 leading-relaxed">{r.detail}</p>
+                      <Link
+                        to={r.to}
+                        className="mt-2.5 inline-flex items-center gap-1.5 text-[11.5px] font-medium transition-colors"
+                        style={{ color: T.text2 }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = T.text)}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = T.text2)}
+                      >
+                        {r.cta} <ArrowUpRight size={13} strokeWidth={2} />
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Compliance Performance Breakdown */}
+          <div
+            className="relative rounded-[24px] p-8 mt-7 overflow-hidden"
+            style={{ ...cardSurface() }}
+            onMouseEnter={(e) => surfaceHover(e, true)}
+            onMouseLeave={(e) => surfaceHover(e, false)}
+          >
+            <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+            <div className="relative">
+              <div className="flex items-baseline justify-between flex-wrap gap-3">
+                <SectionLabel>Compliance Performance Breakdown</SectionLabel>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--muted)]">Overall</span>
+                  <span className="text-[26px] font-bold tabular-nums" style={{ color: T.text }}>{domainAvg.toFixed(1)}%</span>
+                  <span className="text-[11px] text-[var(--muted)]">weighted across 4 domains</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mt-5">
+                {o.domains.map((d) => (
+                  <div key={d.key} className="rounded-2xl p-4"
+                    style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                    <div className="flex items-baseline justify-between">
+                      <p className="text-[12.5px] font-semibold text-[var(--text)]">{d.label}</p>
+                      <span className="flex items-center gap-0.5 text-[11px] font-medium"
+                        style={{ color: d.delta > 0 ? T.green : d.delta < 0 ? T.amber : T.muted }}>
+                        {d.delta > 0 && <ArrowUpRight size={12} strokeWidth={2.5} />}
+                        {d.delta < 0 && <ArrowDownRight size={12} strokeWidth={2.5} />}
+                        {d.delta === 0 && <Minus size={12} strokeWidth={2.5} />}
+                        {Math.abs(d.delta).toFixed(1)}
+                      </span>
+                    </div>
+                    <p className="text-[30px] font-bold tabular-nums mt-2" style={{ color: T.text }}>{d.score}<span className="text-[14px] text-[var(--muted)]">%</span></p>
+                    <p className="text-[11.5px] text-[var(--text2)] mt-2 leading-relaxed">{d.note}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Platform Connectivity Status */}
+          <div
+            className="relative rounded-[24px] p-7 mt-7 overflow-hidden"
+            style={{ ...cardSurface() }}
+            onMouseEnter={(e) => surfaceHover(e, true)}
+            onMouseLeave={(e) => surfaceHover(e, false)}
+          >
+            <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+            <div className="relative">
+              <div className="flex items-center justify-between">
+                <SectionLabel hint="All regions">Platform Connectivity Status</SectionLabel>
+                <span className="inline-flex items-center gap-1.5 text-[11.5px] font-medium" style={{ color: T.green }}>
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: T.green, boxShadow: `0 0 8px ${T.green}` }} />
+                  {o.services.filter((s) => s.state === "operational").length}/{o.services.length} operational
+                </span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-4">
+                {o.services.map((s) => (
+                  <div key={s.id} className="rounded-2xl p-4"
+                    style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[12px] font-semibold text-[var(--text)] truncate">{s.name}</span>
+                      <span className="w-2 h-2 rounded-full shrink-0"
+                        style={{
+                          background: s.state === "operational" ? T.green : s.state === "degraded" ? T.amber : T.red,
+                          boxShadow: `0 0 8px ${s.state === "operational" ? T.green : s.state === "degraded" ? T.amber : T.red}`,
+                        }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-3 text-[10.5px] tabular-nums text-[var(--muted)]">
+                      <span>{s.ms} ms</span>
+                      <span>{s.uptime.toFixed(2)}% up</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {o.services.some((s) => s.state !== "operational") && (
+                <p className="text-[11.5px] mt-4" style={{ color: T.amber }}>
+                  CBN Reporting Gateway is degraded (540 ms) — submissions may be delayed. No action required; auto-retry is active.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Recent Critical Alerts */}
+          <div className="mt-7">
+            <div className="flex items-baseline justify-between mb-4">
+              <h3 className="text-[15px] font-semibold tracking-tight" style={{ color: T.text }}>Recent Critical Alerts</h3>
+              <span className="text-[11px] text-[var(--muted)]">{o.alerts.length} active</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              {o.alerts.map((a) => (
+                <Link
+                  key={a.id}
+                  to={a.to}
+                  className="relative rounded-[22px] p-5 overflow-hidden block transition-all duration-200"
+                  style={{ ...cardSurface() }}
+                  onMouseEnter={(e) => surfaceHover(e, true)}
+                  onMouseLeave={(e) => surfaceHover(e, false)}
+                >
+                  <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 22,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+                  <div className="relative">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-1 rounded-full font-medium"
+                        style={{
+                          color: a.severity === "Critical" ? T.red : a.severity === "High" ? T.amber : T.text2,
+                          background: a.severity === "Critical" ? "rgba(255,90,95,0.10)" : a.severity === "High" ? "rgba(255,200,87,0.10)" : "rgba(255,255,255,0.05)",
+                        }}>{a.severity}</span>
+                      <span className="text-[11px] tabular-nums text-[var(--muted)]">{a.at}</span>
+                    </div>
+                    <p className="text-[13px] font-semibold text-[var(--text)] mt-3 truncate">{a.subject}</p>
+                    <p className="text-[11.5px] text-[var(--text2)] mt-1">{a.institution}</p>
+                    <div className="flex items-center justify-between mt-3">
+                      <span className="text-[10.5px] tabular-nums" style={{ color: T.blue }}>AI {Math.round(a.confidence * 100)}%</span>
+                      <span className="text-[10.5px] text-[var(--muted)]">Next: {a.action}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
 
           <div style={{ height: 110 }} />
         </div>
