@@ -139,10 +139,11 @@ function Hero() {
         <div style={{ maxWidth: 1136, margin: "80px auto 0", paddingInline: 16 }}>
           <div>
             <div style={{ borderRadius: 4, boxShadow: "inset 0 0 0 1px #0000001A", overflow: "clip", position: "relative", aspectRatio: "1040 / 419" }}>
-              {/* Paper webp placeholder */}
-              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #F2F2EC 0%, #E9E9E2 60%, #DEDCD3 100%)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontFamily: SANS, fontSize: 15, color: T.ink66, letterSpacing: "0.02em" }}>Product screenshot</span>
-              </div>
+              <img
+                src="/hero-paperwork.png"
+                alt="RegCo platform preview"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+              />
               {/* center logo mark placeholder (Paper SVG) */}
               <div style={{ position: "absolute", top: "50%", left: "50%", translate: "-50% -50%", width: 144, height: 118, background: T.ink, borderRadius: 4, opacity: 0.9 }} />
             </div>
