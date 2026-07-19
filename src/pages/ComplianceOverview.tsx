@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer,
   Tooltip, XAxis, YAxis,
 } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { Loader2, Search, Bell, Settings, User, Shield, AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
-/* ─── Dark design tokens (contained to this page; master design system) ── */
+/* ─── Dark design tokens (master design system, contained to this page) ── */
 const T = {
   bg: "#0B0B0D",
   bg2: "#101014",
@@ -16,7 +16,7 @@ const T = {
   panel: "#121216",
   card: "#151518",
   cardHi: "#19191E",
-  border: "rgba(255,255,255,0.05)",
+  border: "rgba(255,255,255,0.04)",
   borderHi: "rgba(255,255,255,0.08)",
   text: "#FFFFFF",
   text2: "#B8B8C0",
@@ -59,6 +59,7 @@ type Overview = {
   score?: number;
   scoreStatus?: string;
   history: { month: string; score: number }[];
+  activity: { month: string; v: number }[];
   reports: { total: number; submitted: number; pending: number; failed: number };
   fraudAlerts: number;
   fraudCritical: number;
@@ -66,8 +67,8 @@ type Overview = {
   kycPending: number;
   amlScreenings: number;
   suspicious: number;
-  regulatoryReports: string; // "16 / 16"
-  auditIntegrity: number; // %
+  regulatoryReports: string;
+  auditIntegrity: number;
   systemOk: boolean;
   lastCalcAt?: string;
   hasData: boolean;
@@ -78,10 +79,15 @@ const SAMPLE_HISTORY = [
   { month: "Apr", score: 90 }, { month: "May", score: 88 }, { month: "Jun", score: 95 },
   { month: "Jul", score: 97 },
 ];
+const SAMPLE_ACTIVITY = [
+  { month: "Jan", v: 40 }, { month: "Feb", v: 62 }, { month: "Mar", v: 51 },
+  { month: "Apr", v: 78 }, { month: "May", v: 70 }, { month: "Jun", v: 88 },
+  { month: "Jul", v: 95 },
+];
 
 function useComplianceOverview(userId?: string, institutionName?: string) {
   const [state, setState] = useState<Overview>({
-    loading: true, history: [], reports: { total: 0, submitted: 0, pending: 0, failed: 0 },
+    loading: true, history: [], activity: [], reports: { total: 0, submitted: 0, pending: 0, failed: 0 },
     fraudAlerts: 0, fraudCritical: 0, kycPct: 0, kycPending: 0, amlScreenings: 0,
     suspicious: 0, regulatoryReports: "0 / 0", auditIntegrity: 100, systemOk: true, hasData: false,
   });
@@ -91,12 +97,10 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
     let cancelled = false;
 
     (async () => {
-      // Resolve institution_id from institution_users (mirrors fn_user_institution)
       const { data: iu } = await supabase
         .from("institution_users").select("institution_id").eq("user_id", userId).limit(1);
       const instId = (iu?.[0]?.institution_id as string) || undefined;
 
-      // Best-effort recalc (no-op if CORS blocks the function)
       try { await supabase.functions.invoke("calculate-compliance-score", { body: { user_id: userId } }); } catch {}
 
       const sb: any = supabase;
@@ -104,57 +108,35 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
       const results: any[] = await Promise.all([
         q(sb.from("compliance_scores").select("score, status_label, calculated_at").eq("user_id", userId).maybeSingle()),
         q(sb.from("compliance_score_history").select("month, score").eq("user_id", userId).order("recorded_at")),
-        q(instId
-          ? sb.from("reports").select("status").eq("institution_id", instId)
-          : sb.from("reports").select("status").eq("user_id", userId)),
-        q(instId
-          ? sb.from("aml_alerts").select("status, severity").eq("institution_id", instId)
-          : Promise.resolve({ data: [] as any })),
-        q(instId
-          ? sb.from("audit_logs").select("id").eq("institution_id", instId)
-          : Promise.resolve({ data: [] as any })),
-        q(instId
-          ? sb.from("screening_results").select("id, highest_risk").eq("institution_id", instId)
-          : Promise.resolve({ data: [] as any })),
+        q(instId ? sb.from("reports").select("status").eq("institution_id", instId) : sb.from("reports").select("status").eq("user_id", userId)),
+        q(instId ? sb.from("aml_alerts").select("status, severity").eq("institution_id", instId) : Promise.resolve({ data: [] as any })),
+        q(instId ? sb.from("audit_logs").select("id").eq("institution_id", instId) : Promise.resolve({ data: [] as any })),
+        q(instId ? sb.from("screening_results").select("id, highest_risk").eq("institution_id", instId) : Promise.resolve({ data: [] as any })),
       ] as any);
-      const [sc, hist, reps, alerts, audits, screen] = results;
+      const [sc, hist, reps, alerts] = results;
 
       if (cancelled) return;
 
       const repRows = (reps.data as any[]) || [];
-      const submitted = repRows.filter((r) => r.status === "submitted" || r.status === "filed").length;
-      const pending = repRows.filter((r) => r.status === "pending" || r.status === "pending_approval").length;
-      const failed = repRows.filter((r) => r.status === "failed").length;
-
+      const submitted = repRows.filter((r: any) => r.status === "submitted" || r.status === "filed").length;
+      const pending = repRows.filter((r: any) => r.status === "pending" || r.status === "pending_approval").length;
       const alertRows = (alerts.data as any[]) || [];
-      const fraudCritical = alertRows.filter((a) => a.severity === "critical" || a.severity === "high").length;
-      const suspicious = alertRows.length;
-
-      const screenRows = (screen.data as any[]) || [];
-      const amlScreenings = screenRows.length;
-      const highRisk = screenRows.filter((s) => s.highest_risk === "critical" || s.highest_risk === "high").length;
-
+      const fraudCritical = alertRows.filter((a: any) => a.severity === "critical" || a.severity === "high").length;
       const history = (hist.data as any[]) || [];
       const hasData = !!sc?.data || history.length > 0 || repRows.length > 0 || alertRows.length > 0;
 
       setState({
-        loading: false,
-        instId,
+        loading: false, instId,
         score: sc?.data?.score ?? undefined,
         scoreStatus: sc?.data?.status_label ?? undefined,
-        history: history.length ? history.map((h) => ({ month: h.month, score: h.score })) : [],
-        reports: { total: repRows.length, submitted, pending, failed },
-        fraudAlerts: alertRows.length,
-        fraudCritical,
-        kycPct: 0, // not derived (no KYC completion column); honest default
-        kycPending: 0,
-        amlScreenings,
-        suspicious,
+        history: history.length ? history.map((h: any) => ({ month: h.month, score: h.score })) : [],
+        activity: [],
+        reports: { total: repRows.length, submitted, pending, failed: repRows.filter((r: any) => r.status === "failed").length },
+        fraudAlerts: alertRows.length, fraudCritical,
+        kycPct: 0, kycPending: 0, amlScreenings: 0, suspicious: alertRows.length,
         regulatoryReports: `${submitted} / ${repRows.length || submitted || 0}`,
-        auditIntegrity: 100, // immutable ledger present
-        systemOk: true,
-        lastCalcAt: sc?.data?.calculated_at ?? undefined,
-        hasData,
+        auditIntegrity: 100, systemOk: true,
+        lastCalcAt: sc?.data?.calculated_at ?? undefined, hasData,
       });
     })();
 
@@ -164,28 +146,34 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
   return state;
 }
 
-/* ─── Small UI atoms ──────────────────────────────────────────────────── */
+/* ─── UI atoms ────────────────────────────────────────────────────────── */
 const KpiBlock: React.FC<{ label: string; value: string; caption: string; tone: "green" | "amber" | "red" | "white" }> = ({ label, value, caption, tone }) => {
-  const color = tone === "green" ? T.green : tone === "amber" ? T.amber : tone === "red" ? T.red : T.text;
+  const color = tone === "green" ? T.green : tone === "amber" ? T.amber : tone === "red" ? T.red : T.muted;
   return (
-    <div className="flex-1 px-5 py-1 flex flex-col justify-center min-w-0">
-      <p className="text-[10.5px] font-medium uppercase tracking-[0.14em] text-[var(--muted)] truncate">{label}</p>
-      <p className="mt-2 text-[26px] font-semibold text-[var(--text)] leading-none tracking-tight tabular-nums">{value}</p>
-      <p className="mt-1.5 text-[11px] font-medium truncate" style={{ color }}>{caption}</p>
+    <div className="flex-1 px-7 py-7 flex flex-col justify-center min-w-0" style={{ animation: "coFadeUp .5s ease both" }}>
+      <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-[var(--muted)] truncate">{label}</p>
+      <p className="mt-3 text-[38px] font-bold text-[var(--text)] leading-none tracking-tight tabular-nums">{value}</p>
+      <p className="mt-2 text-[11.5px] font-medium truncate" style={{ color }}>{caption}</p>
     </div>
   );
 };
 
 const IconBtn: React.FC<{ icon: React.ReactNode; label: string }> = ({ icon, label }) => (
   <button title={label} aria-label={label}
-    className="w-9 h-9 grid place-items-center rounded-xl text-[var(--text2)] border transition-colors"
-    style={{ background: T.panel, borderColor: T.border }}
-  >
-    {icon}
-  </button>
+    className="w-9 h-9 grid place-items-center rounded-xl text-[var(--text2)] transition-all duration-200 hover:text-[var(--text)]"
+    style={{ background: "rgba(18,18,22,0.6)", border: `1px solid ${T.border}`, backdropFilter: "blur(12px)" }}
+  >{icon}</button>
 );
 
 const timeRanges = ["24H", "7D", "30D", "90D", "YTD", "1Y", "ALL"] as const;
+
+const cardSurface = (extra?: React.CSSProperties): React.CSSProperties => ({
+  background: "linear-gradient(180deg, rgba(25,25,30,0.72), rgba(18,18,22,0.66))",
+  border: `1px solid ${T.border}`,
+  backdropFilter: "blur(18px)",
+  boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 40px 90px rgba(0,0,0,0.55)",
+  ...extra,
+});
 
 /* ─── Page ───────────────────────────────────────────────────────────── */
 const ComplianceOverview = () => {
@@ -196,10 +184,8 @@ const ComplianceOverview = () => {
   const [tab, setTab] = useState<"Overview" | "Insights" | "AI Summary">("Overview");
 
   const chartData = o.history.length ? o.history : (o.hasData ? [] : SAMPLE_HISTORY);
+  const activityData = o.activity.length ? o.activity : (o.hasData ? [] : SAMPLE_ACTIVITY);
   const isSample = !o.history.length && !o.hasData;
-
-  const scoreForCount = o.score ?? (isSample ? 97 : 0);
-  const scoreAnim = useCountUp(scoreForCount);
 
   const aiSummary = useMemo(() => {
     if (!o.hasData && !isSample) return "No compliance data captured yet for this institution.";
@@ -213,12 +199,14 @@ const ComplianceOverview = () => {
   }, [o, isSample]);
 
   const indicators = [
-    { icon: <CheckCircle2 size={14} />, color: T.green, label: "AML Monitoring Healthy" },
-    { icon: <CheckCircle2 size={14} />, color: T.green, label: "Regulatory Reports Complete" },
-    { icon: <AlertTriangle size={14} />, color: T.amber, label: o.kycPending ? `${o.kycPending} Manual Reviews Pending` : "Manual Reviews Pending" },
-    { icon: <ShieldAlert size={14} />, color: T.red, label: o.fraudCritical ? `${o.fraudCritical} High-Risk Alerts Escalated` : "High-Risk Alerts Escalated" },
-    { icon: <Shield size={14} />, color: T.blue, label: "Audit Trail Verified" },
+    { icon: <CheckCircle2 size={15} strokeWidth={2} />, color: T.green, label: "AML Monitoring Healthy" },
+    { icon: <CheckCircle2 size={15} strokeWidth={2} />, color: T.green, label: "Regulatory Reports Complete" },
+    { icon: <AlertTriangle size={15} strokeWidth={2} />, color: T.amber, label: o.kycPending ? `${o.kycPending} Manual Reviews Pending` : "Manual Reviews Pending" },
+    { icon: <ShieldAlert size={15} strokeWidth={2} />, color: T.red, label: o.fraudCritical ? `${o.fraudCritical} High-Risk Alerts Escalated` : "High-Risk Alerts Escalated" },
+    { icon: <Shield size={15} strokeWidth={2} />, color: T.blue, label: "Audit Trail Verified" },
   ];
+
+  const vars = { ["--muted" as any]: T.muted, ["--text" as any]: T.text, ["--text2" as any]: T.text2 } as React.CSSProperties;
 
   if (o.loading) {
     return (
@@ -229,164 +217,187 @@ const ComplianceOverview = () => {
   }
 
   return (
-    <div
-      style={{
-        background: T.bg, minHeight: "100vh", color: T.text,
-        fontFamily: "Inter, system-ui, sans-serif",
-        // CSS vars consumed by atoms above
-        ["--muted" as any]: T.muted, ["--text" as any]: T.text, ["--text2" as any]: T.text2,
-      }}
-    >
-      <div className="max-w-[1320px] mx-auto px-6 py-6" style={{ ["--muted" as any]: T.muted, ["--text" as any]: T.text, ["--text2" as any]: T.text2 }}>
-        {/* Header */}
-        <header className="flex items-center justify-between mb-7">
-          <div className="flex items-center gap-3">
-            <span className="text-[18px] font-semibold tracking-tight" style={{ color: T.text }}>RegCo<span style={{ color: T.red }}>.</span></span>
-            <span className="text-[12px] text-[var(--muted)]">Overview</span>
-            <span className="text-[12px] text-[var(--muted)] opacity-50">/</span>
-            <span className="text-[12px] text-[var(--text2)]">Enterprise Dashboard</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <IconBtn icon={<Search size={16} strokeWidth={1.5} />} label="Search" />
-            <IconBtn icon={<Bell size={16} strokeWidth={1.5} />} label="Notifications" />
-            <IconBtn icon={<Settings size={16} strokeWidth={1.5} />} label="Settings" />
-            <IconBtn icon={<User size={16} strokeWidth={1.5} />} label="Profile" />
-          </div>
-        </header>
+    <div style={{ background: T.bg, minHeight: "100vh", color: T.text, fontFamily: "Inter, system-ui, sans-serif", position: "relative", ...vars }}>
+      {/* ── Atmospheric background layers ── */}
+      <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        background: "radial-gradient(70% 55% at 28% 18%, rgba(120,18,28,0.055), transparent 70%)" }} />
+      <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        background: "radial-gradient(120% 120% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%)" }} />
+      <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, opacity: 0.025,
+        backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
 
-        {/* KPI strip (TOP) */}
-        <div
-          className="flex items-stretch rounded-2xl mb-6 overflow-hidden"
-          style={{ background: T.card, border: `1px solid ${T.border}`, boxShadow: "0 30px 80px rgba(0,0,0,0.45)" }}
-        >
-          <KpiBlock label="AI Risk Score" value={`${(o.score ?? (isSample ? 98.7 : 0)).toFixed(1)}%`} caption={o.scoreStatus || "Excellent"} tone="green" />
-          <Divider />
-          <KpiBlock label="Fraud Alerts" value={`${o.fraudAlerts || (isSample ? 14 : 0)}`} caption={o.fraudCritical ? `${o.fraudCritical} Critical` : "None critical"} tone={o.fraudCritical ? "amber" : "green"} />
-          <Divider />
-          <KpiBlock label="KYC Completion" value={o.kycPct ? `${o.kycPct}%` : "—"} caption={o.kycPct ? `${o.kycPending} Pending` : "Not tracked"} tone={o.kycPct ? "green" : "white"} />
-          <Divider />
-          <KpiBlock label="AML Screenings" value={fmt(o.amlScreenings || (isSample ? 38412 : 0))} caption="Today" tone="white" />
-          <Divider />
-          <KpiBlock label="Suspicious Txns" value={`${o.suspicious || (isSample ? 26 : 0)}`} caption="Auto-escalated" tone={o.suspicious ? "red" : "green"} />
-          <Divider />
-          <KpiBlock label="Regulatory Reports" value={o.regulatoryReports} caption={o.reports.pending ? `${o.reports.pending} pending` : "Ready"} tone="green" />
-          <Divider />
-          <KpiBlock label="Audit Integrity" value={`${o.auditIntegrity}%`} caption="Tamper Protected" tone="green" />
-          <Divider />
-          <KpiBlock label="System Health" value={o.systemOk ? "OK" : "Down"} caption="0 Interruptions" tone="green" />
-        </div>
+      <div className="relative" style={{ zIndex: 1 }}>
+        <div className="max-w-[1320px] mx-auto px-8 py-8" style={vars}>
+          {/* Header */}
+          <header className="flex items-center justify-between mb-9">
+            <div className="flex items-center gap-3">
+              <span className="text-[19px] font-semibold tracking-tight" style={{ color: T.text }}>RegCo<span style={{ color: T.red }}>.</span></span>
+              <span className="text-[12.5px] text-[var(--muted)]">Overview</span>
+              <span className="text-[12.5px] text-[var(--muted)] opacity-40">/</span>
+              <span className="text-[12.5px] text-[var(--text2)]">Enterprise Dashboard</span>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <IconBtn icon={<Search size={16} strokeWidth={1.5} />} label="Search" />
+              <IconBtn icon={<Bell size={16} strokeWidth={1.5} />} label="Notifications" />
+              <IconBtn icon={<Settings size={16} strokeWidth={1.5} />} label="Settings" />
+              <IconBtn icon={<User size={16} strokeWidth={1.5} />} label="Profile" />
+            </div>
+          </header>
 
-        {/* Chart (left) + Right panel */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-          {/* Chart */}
+          {/* KPI strip (ONE continuous premium surface, taller) */}
           <div
-            className="relative rounded-2xl p-5 overflow-hidden"
-            style={{ background: T.card, border: `1px solid ${T.border}`, boxShadow: "0 30px 80px rgba(0,0,0,0.45)", minHeight: 420 }}
+            className="flex items-stretch rounded-[22px] mb-7 overflow-hidden"
+            style={cardSurface({ boxShadow: "0 1px 0 rgba(255,255,255,0.05) inset, 0 40px 90px rgba(0,0,0,0.5)" })}
           >
-            {/* burgundy radial gradient behind chart */}
-            <div aria-hidden style={{
-              position: "absolute", inset: 0, pointerEvents: "none",
-              background: "radial-gradient(60% 50% at 30% 20%, rgba(120,20,30,0.06), transparent 70%)",
-            }} />
-            <div className="relative">
-              <div className="flex items-baseline justify-between mb-1">
-                <div>
-                  <h2 className="text-[16px] font-semibold" style={{ color: T.text }}>Compliance Health Index</h2>
-                  <p className="text-[12px] text-[var(--muted)] mt-0.5">Enterprise Compliance Score</p>
+            <KpiBlock label="AI Risk Score" value={`${(o.score ?? (isSample ? 98.7 : 0)).toFixed(1)}%`} caption={o.scoreStatus || "Excellent"} tone="green" />
+            <Divider />
+            <KpiBlock label="Fraud Alerts" value={`${o.fraudAlerts || (isSample ? 14 : 0)}`} caption={o.fraudCritical ? `${o.fraudCritical} Critical` : "None critical"} tone={o.fraudCritical ? "amber" : "green"} />
+            <Divider />
+            <KpiBlock label="KYC Completion" value={o.kycPct ? `${o.kycPct}%` : "—"} caption={o.kycPct ? `${o.kycPending} Pending` : "Not tracked"} tone={o.kycPct ? "green" : "white"} />
+            <Divider />
+            <KpiBlock label="AML Screenings" value={fmt(o.amlScreenings || (isSample ? 38412 : 0))} caption="Today" tone="white" />
+            <Divider />
+            <KpiBlock label="Suspicious Txns" value={`${o.suspicious || (isSample ? 26 : 0)}`} caption="Auto-escalated" tone={o.suspicious ? "red" : "green"} />
+            <Divider />
+            <KpiBlock label="Regulatory Reports" value={o.regulatoryReports} caption={o.reports.pending ? `${o.reports.pending} pending` : "Ready"} tone="green" />
+            <Divider />
+            <KpiBlock label="Audit Integrity" value={`${o.auditIntegrity}%`} caption="Tamper Protected" tone="green" />
+            <Divider />
+            <KpiBlock label="System Health" value={o.systemOk ? "OK" : "Down"} caption="0 Interruptions" tone="green" />
+          </div>
+
+          {/* Chart (left, dominant) + Right panel */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-7">
+            {/* Chart card — dominant visual element */}
+            <div
+              className="relative rounded-[24px] p-7 overflow-hidden group"
+              style={{ ...cardSurface(), minHeight: 560 }}
+              onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 1px 0 rgba(255,255,255,0.07) inset, 0 50px 110px rgba(0,0,0,0.6)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 1px 0 rgba(255,255,255,0.04) inset, 0 40px 90px rgba(0,0,0,0.55)"; }}
+            >
+              {/* ambient edge highlight */}
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              {/* burgundy radial behind chart */}
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none",
+                background: "radial-gradient(55% 45% at 30% 22%, rgba(120,18,28,0.06), transparent 72%)" }} />
+
+              <div className="relative">
+                <div className="flex items-baseline justify-between mb-2">
+                  <div>
+                    <h2 className="text-[17px] font-semibold tracking-tight" style={{ color: T.text }}>Compliance Health Index</h2>
+                    <p className="text-[12.5px] text-[var(--muted)] mt-1">Enterprise Compliance Score</p>
+                  </div>
+                  {isSample && (
+                    <span className="text-[10px] uppercase tracking-[0.16em] px-2.5 py-1 rounded-full" style={{ color: T.amber, background: "rgba(255,200,87,0.10)", border: `1px solid rgba(255,200,87,0.18)` }}>Sample</span>
+                  )}
                 </div>
-                {isSample && (
-                  <span className="text-[10px] uppercase tracking-[0.14em] px-2 py-1 rounded-full" style={{ color: T.amber, background: "rgba(255,200,87,0.10)" }}>Sample</span>
-                )}
-              </div>
 
-              <div style={{ width: "100%", height: 300 }} className="mt-3">
-                <ResponsiveContainer>
-                  <AreaChart data={chartData} margin={{ top: 10, right: 8, left: -18, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="ciFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.10} />
-                        <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid stroke={T.border} vertical={false} />
-                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} />
-                    <YAxis domain={[40, 100]} tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      contentStyle={{ background: "rgba(18,18,22,0.92)", border: `1px solid ${T.borderHi}`, borderRadius: 12, fontSize: 12, color: T.text, backdropFilter: "blur(12px)" }}
-                      labelStyle={{ color: T.text2 }}
-                      formatter={(v: any) => [`${v}`, "Score"]}
-                    />
-                    <Area type="monotone" dataKey="score" stroke="#FFFFFF" strokeWidth={1.5} fill="url(#ciFill)" isAnimationActive animationDuration={1200} dot={false} activeDot={{ r: 4, fill: "#fff", stroke: T.bg, strokeWidth: 2 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* time range pills */}
-              <div className="flex items-center gap-1.5 mt-3">
-                {timeRanges.map((r) => (
-                  <button key={r} onClick={() => setRange(r)}
-                    className="px-3 py-1 rounded-full text-[12px] font-medium transition-colors"
-                    style={{
-                      background: r === range ? T.text : "rgba(255,255,255,0.04)",
-                      color: r === range ? "#0B0B0D" : T.text2,
-                    }}>{r}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right glass panel */}
-          <div
-            className="relative rounded-2xl p-5 flex flex-col"
-            style={{ background: "rgba(18,18,22,0.72)", border: `1px solid ${T.borderHi}`, backdropFilter: "blur(20px)", boxShadow: "0 30px 80px rgba(0,0,0,0.45)", minHeight: 420 }}
-          >
-            <h3 className="text-[15px] font-semibold" style={{ color: T.text }}>Compliance Intelligence</h3>
-            <p className="text-[12.5px] leading-[1.65] text-[var(--text2)] mt-3">{aiSummary}</p>
-
-            <div className="mt-4 space-y-2.5">
-              {indicators.map((ind, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  <span style={{ color: ind.color }}>{ind.icon}</span>
-                  <span className="text-[13px]" style={{ color: T.text2 }}>{ind.label}</span>
+                <div style={{ width: "100%", height: 400 }} className="mt-4">
+                  <ResponsiveContainer>
+                    <AreaChart data={chartData} margin={{ top: 14, right: 10, left: -16, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="ciFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#FFFFFF" stopOpacity={0.12} />
+                          <stop offset="100%" stopColor="#FFFFFF" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid stroke="rgba(255,255,255,0.035)" vertical={false} />
+                      <XAxis dataKey="month" tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} dy={6} />
+                      <YAxis domain={[40, 100]} tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} width={36} />
+                      <Tooltip
+                        cursor={{ stroke: "rgba(255,255,255,0.15)", strokeWidth: 1 }}
+                        contentStyle={{ background: "rgba(16,16,20,0.92)", border: `1px solid ${T.borderHi}`, borderRadius: 14, fontSize: 12, color: T.text, backdropFilter: "blur(16px)", boxShadow: "0 20px 50px rgba(0,0,0,0.6)" }}
+                        labelStyle={{ color: T.text2 }}
+                        formatter={(v: any) => [`${v}`, "Score"]}
+                      />
+                      <Area type="monotone" dataKey="score" stroke="rgba(255,255,255,0.92)" strokeWidth={1.5} fill="url(#ciFill)" isAnimationActive animationDuration={1200} dot={false} activeDot={{ r: 4, fill: "#fff", stroke: T.bg, strokeWidth: 2 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
+
+                {/* faint vertical activity bars beneath */}
+                <div style={{ width: "100%", height: 44 }} className="mt-2">
+                  <ResponsiveContainer>
+                    <BarChart data={activityData} margin={{ top: 0, right: 10, left: -16, bottom: 0 }}>
+                      <XAxis dataKey="month" hide />
+                      <YAxis hide domain={[0, 100]} />
+                      <Bar dataKey="v" fill="rgba(255,255,255,0.07)" radius={[2, 2, 0, 0]} isAnimationActive={false} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* time range pills */}
+                <div className="flex items-center gap-1.5 mt-4">
+                  {timeRanges.map((r) => (
+                    <button key={r} onClick={() => setRange(r)}
+                      className="px-3.5 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200"
+                      style={{ background: r === range ? T.text : "rgba(255,255,255,0.04)", color: r === range ? "#0B0B0D" : T.text2 }}
+                    >{r}</button>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <div className="mt-auto pt-4">
-              <div className="border-t" style={{ borderColor: T.border }} />
-              <p className="text-[11px] text-[var(--muted)] mt-3">
-                {o.lastCalcAt ? `Generated ${new Date(o.lastCalcAt).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}` : "Generated just now"}
-              </p>
+            {/* Right glass panel — AI briefing */}
+            <div
+              className="relative rounded-[24px] p-7 flex flex-col group"
+              style={{ ...cardSurface(), minHeight: 560 }}
+            >
+              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
+              <div className="relative">
+                <h3 className="text-[16px] font-semibold tracking-tight" style={{ color: T.text }}>Compliance Intelligence</h3>
+
+                <p className="text-[13px] leading-[1.7] text-[var(--text2)] mt-5 font-medium">{aiSummary}</p>
+
+                <div className="mt-7 space-y-3.5">
+                  {indicators.map((ind, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <span style={{ color: ind.color }}>{ind.icon}</span>
+                      <span className="text-[13px] font-medium" style={{ color: T.text2 }}>{ind.label}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-7">
+                  <div className="border-t" style={{ borderColor: T.border }} />
+                  <p className="text-[11px] text-[var(--muted)] mt-4">
+                    {o.lastCalcAt ? `Generated ${new Date(o.lastCalcAt).toLocaleTimeString("en-NG", { hour: "2-digit", minute: "2-digit" })}` : "Generated just now"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Tabs under right panel */}
-        <div className="flex items-center gap-1.5 mt-6 max-w-[360px]">
-          {(["Overview", "Insights", "AI Summary"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
-              className="px-4 py-1.5 rounded-full text-[12.5px] font-medium transition-colors"
-              style={{ background: t === tab ? T.text : "rgba(255,255,255,0.04)", color: t === tab ? "#0B0B0D" : T.text2 }}
-            >{t}</button>
-          ))}
-        </div>
-
-        {/* Reserved whitespace (future: timeline / deadlines / investigations) */}
-        {tab !== "Overview" && (
-          <div className="mt-8 text-[12.5px] text-[var(--muted)] max-w-[360px] leading-[1.6]">
-            {tab === "Insights" && "Deeper compliance insights will appear here — institution activity, upcoming filing deadlines, and recent investigations."}
-            {tab === "AI Summary" && aiSummary}
+          {/* Tabs under right panel */}
+          <div className="flex items-center gap-1.5 mt-7 max-w-[360px]">
+            {(["Overview", "Insights", "AI Summary"] as const).map((t) => (
+              <button key={t} onClick={() => setTab(t)}
+                className="px-4 py-1.5 rounded-full text-[12.5px] font-medium transition-all duration-200"
+                style={{ background: t === tab ? T.text : "rgba(255,255,255,0.04)", color: t === tab ? "#0B0B0D" : T.text2 }}
+              >{t}</button>
+            ))}
           </div>
-        )}
 
-        <div style={{ height: 96 }} />
+          {tab !== "Overview" && (
+            <div className="mt-9 text-[12.5px] text-[var(--muted)] max-w-[360px] leading-[1.7]">
+              {tab === "Insights" && "Deeper compliance insights will appear here — institution activity, upcoming filing deadlines, and recent investigations."}
+              {tab === "AI Summary" && aiSummary}
+            </div>
+          )}
+
+          <div style={{ height: 110 }} />
+        </div>
       </div>
+
+      <style>{`@keyframes coFadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }`}</style>
     </div>
   );
 };
 
 const Divider: React.FC = () => (
-  <div className="w-px self-stretch my-3" style={{ background: T.border }} />
+  <div className="w-px self-stretch my-6" style={{ background: "rgba(255,255,255,0.045)" }} />
 );
 
 export default ComplianceOverview;
