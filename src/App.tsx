@@ -64,7 +64,7 @@ import Homepage from "./pages/marketing/Homepage";
 import SecurityPage from "./pages/marketing/SecurityPage";
 import NewProductPage from "./pages/marketing/ProductPage";
 import NewCompanyPage from "./pages/marketing/CompanyPage";
-import AboutPage from "./pages/marketing/AboutPage";
+import AboutPageLegacy from "./pages/marketing/AboutPage";
 import ProductAutomatedReturns from "./pages/marketing/ProductAutomatedReturns";
 import ProductLiveScreening from "./pages/marketing/ProductLiveScreening";
 import ProductTransactionMonitoring from "./pages/marketing/ProductTransactionMonitoring";
@@ -76,6 +76,7 @@ import ProductPage from "./pages/ProductPage";
 import EditorialAboutUs from "./pages/AboutUs";
 import WhoWeServeLegacy from "./pages/WhoWeServe";
 import WhoWeServeProduct from "./pages/WhoWeServePage";
+import AboutUsPage from "./pages/AboutUsPage";
 
 const queryClient = new QueryClient();
 
@@ -130,7 +131,8 @@ const App = () => (
             <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
             <Route path="/contact/support" element={<SupportPage />} />
             <Route path="/contact/partnerships" element={<PartnershipsPage />} />
-            <Route path="/about" element={<AboutPage />} />
+            <Route path="/about" element={<AboutUsPage />} />
+            <Route path="/about-legacy" element={<AboutPageLegacy />} />
             {/* Redirect old public pages to homepage */}
             <Route path="/features/*" element={<Navigate to="/#features" replace />} />
             <Route path="/use-cases/*" element={<Navigate to="/#platform" replace />} />
