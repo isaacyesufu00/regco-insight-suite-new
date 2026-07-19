@@ -9,7 +9,7 @@ import { useProfile } from "@/contexts/ProfileContext";
 import { Link } from "react-router-dom";
 import {
   Loader2, Search, Bell, Settings, User, Shield, AlertTriangle, CheckCircle2, ShieldAlert,
-  Clock, ChevronRight, ArrowUpRight, ArrowDownRight, Minus,
+  ArrowUpRight, ArrowDownRight, Minus,
   FileWarning,
 } from "lucide-react";
 
@@ -78,7 +78,6 @@ type Overview = {
   lastCalcAt?: string;
   hasData: boolean;
   // extended executive data
-  timeline: { time: string; label: string; detail: string; tone: "green" | "amber" | "red" | "blue" | "purple" }[];
   risk: { low: number; medium: number; high: number };
   deadlines: { id: string; title: string; regulator: string; due: number; priority: "High" | "Medium" | "Low"; ready: "Ready" | "In Progress" | "Blocked" }[];
   domains: { key: string; label: string; score: number; delta: number; note: string }[];
@@ -94,15 +93,6 @@ const SAMPLE_ACTIVITY = [
   { month: "Jan", v: 40 }, { month: "Feb", v: 62 }, { month: "Mar", v: 51 },
   { month: "Apr", v: 78 }, { month: "May", v: 70 }, { month: "Jun", v: 88 },
   { month: "Jul", v: 95 },
-];
-
-const SAMPLE_TIMELINE = [
-  { time: "06:42", label: "AML screenings completed", detail: "12,840 customers screened across 4 institutions", tone: "green" as const },
-  { time: "05:18", label: "Suspicious transactions detected", detail: "3 flagged for manual review in Savannah Cooperative", tone: "amber" as const },
-  { time: "04:55", label: "Identity verification completed", detail: "BVN/NIN matched for 1,204 new onboardings", tone: "blue" as const },
-  { time: "03:30", label: "Regulatory report generated", detail: "NDIC Return #2026-Q2 filed for Coastal Retail MFB", tone: "purple" as const },
-  { time: "02:10", label: "Audit export finalized", detail: "Governance pack exported for board review", tone: "green" as const },
-  { time: "01:05", label: "Customer approvals", detail: "248 accounts approved via automated KYC", tone: "green" as const },
 ];
 
 const SAMPLE_RISK = { low: 91234, medium: 14208, high: 1876 };
@@ -135,7 +125,7 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
     loading: true, history: [], activity: [], reports: { total: 0, submitted: 0, pending: 0, failed: 0 },
     fraudAlerts: 0, fraudCritical: 0, kycPct: 0, kycPending: 0, amlScreenings: 0,
     suspicious: 0, regulatoryReports: "0 / 0", auditIntegrity: 100, systemOk: true, hasData: false,
-    timeline: [], risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
+    risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
     domains: [], alerts: [],
   });
 
@@ -184,7 +174,7 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
         regulatoryReports: `${submitted} / ${repRows.length || submitted || 0}`,
         auditIntegrity: 100, systemOk: true,
         lastCalcAt: sc?.data?.calculated_at ?? undefined, hasData,
-        timeline: [], risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
+        risk: { low: 0, medium: 0, high: 0 }, deadlines: [],
         domains: [], alerts: [],
       };
 
@@ -192,7 +182,6 @@ function useComplianceOverview(userId?: string, institutionName?: string) {
       // it falls back to curated defaults so the command center is never empty.
       const withExec: Overview = {
         ...base,
-        timeline: SAMPLE_TIMELINE,
         risk: hasData ? { low: 0, medium: 0, high: 0 } : SAMPLE_RISK,
         deadlines: SAMPLE_DEADLINES,
         domains: SAMPLE_DOMAINS,
@@ -279,8 +268,6 @@ const Ring: React.FC<{ pct: number; color: string; size?: number; stroke?: numbe
     </div>
   );
 };
-
-const toneColor = { green: T.green, amber: T.amber, red: T.red, blue: T.blue, purple: T.purple, white: T.muted } as const;
 
 /* ─── Page ───────────────────────────────────────────────────────────── */
 const ComplianceOverview = () => {
@@ -553,54 +540,6 @@ const ComplianceOverview = () => {
           {/* ────────────────────────────────────────────────────────────
               EXECUTIVE COMMAND CENTER — below the existing hero
           ──────────────────────────────────────────────────────────── */}
-
-          {/* Today's Compliance Timeline */}
-          <div className="mt-7">
-            <div
-              className="relative rounded-[24px] p-7 overflow-hidden"
-              style={{ ...cardSurface() }}
-              onMouseEnter={(e) => surfaceHover(e, true)}
-              onMouseLeave={(e) => surfaceHover(e, false)}
-            >
-              <div aria-hidden style={{ position: "absolute", inset: 0, pointerEvents: "none", borderRadius: 24,
-                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06)" }} />
-              <div className="relative">
-                <SectionLabel hint="Most recent 6 of today">Today's Compliance Timeline</SectionLabel>
-                <div className="relative pl-1">
-                  {o.timeline.map((ev, i) => (
-                    <div key={i} className="relative pl-9 pb-5 last:pb-0">
-                      {i < o.timeline.length - 1 && (
-                        <span className="absolute left-[14px] top-4 bottom-0 w-px"
-                          style={{ background: "rgba(255,255,255,0.07)" }} />
-                      )}
-                      <span className="absolute left-0 top-0.5 grid place-items-center w-[29px] h-[29px] rounded-full"
-                        style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${T.border}`, color: toneColor[ev.tone] }}>
-                        {ev.tone === "green" && <CheckCircle2 size={14} strokeWidth={2} />}
-                        {ev.tone === "amber" && <AlertTriangle size={14} strokeWidth={2} />}
-                        {ev.tone === "red" && <ShieldAlert size={14} strokeWidth={2} />}
-                        {ev.tone === "blue" && <Shield size={14} strokeWidth={2} />}
-                        {ev.tone === "purple" && <FileWarning size={14} strokeWidth={2} />}
-                      </span>
-                      <div className="flex items-baseline justify-between gap-3">
-                        <p className="text-[13px] font-semibold text-[var(--text)]">{ev.label}</p>
-                        <span className="text-[11px] tabular-nums text-[var(--muted)] shrink-0">{ev.time}</span>
-                      </div>
-                      <p className="text-[12px] text-[var(--text2)] mt-1 leading-relaxed">{ev.detail}</p>
-                    </div>
-                  ))}
-                </div>
-                <Link
-                  to="/dashboard/calendar"
-                  className="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-medium transition-colors"
-                  style={{ color: T.text2 }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = T.text)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = T.text2)}
-                >
-                  View Full Timeline <ChevronRight size={14} strokeWidth={2} />
-                </Link>
-              </div>
-            </div>
-          </div>
 
           {/* Executive summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-7 mt-7">
