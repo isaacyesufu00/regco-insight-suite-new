@@ -292,7 +292,7 @@ const ComplianceOverview = () => {
     return parts.join(" ");
   }, [o, isSample]);
 
-  const todos = [
+  const smartTodos = [
     {
       done: !o.fraudCritical,
       label: o.fraudCritical ? `Review ${o.fraudCritical} critical fraud alert${o.fraudCritical === 1 ? "" : "s"}` : "Critical fraud alerts cleared",
@@ -328,6 +328,36 @@ const ComplianceOverview = () => {
       to: "/dashboard/transactions",
       action: "Open Investigations",
     },
+  ];
+
+  type CustomTodo = { id: string; label: string; done: boolean };
+  const storageKey = `regco_todos_${user?.id || "anon"}`;
+  const [customTodos, setCustomTodos] = useState<CustomTodo[]>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? (JSON.parse(raw) as CustomTodo[]) : [];
+    } catch { return []; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem(storageKey, JSON.stringify(customTodos)); } catch {}
+  }, [customTodos, storageKey]);
+
+  const [draft, setDraft] = useState("");
+  const addCustomTodo = () => {
+    const label = draft.trim();
+    if (!label) return;
+    setCustomTodos((prev) => [...prev, { id: `c${Date.now()}`, label, done: false }]);
+    setDraft("");
+  };
+  const toggleCustomTodo = (id: string) =>
+    setCustomTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+  const removeCustomTodo = (id: string) =>
+    setCustomTodos((prev) => prev.filter((t) => t.id !== id));
+
+  type TodoItem = { id: string; label: string; done: boolean; detail?: string; to?: string; action?: string; custom?: boolean };
+  const todos: TodoItem[] = [
+    ...smartTodos.map((t, i) => ({ ...t, id: `s${i}`, custom: false })),
+    ...customTodos.map((t) => ({ label: t.label, done: t.done, custom: true, id: t.id })),
   ];
 
   const domainTotal = o.domains.reduce((s, d) => s + d.score, 0);
@@ -483,18 +513,35 @@ const ComplianceOverview = () => {
 
                 <div className="mt-6 space-y-2.5">
                   {todos.map((t, i) => (
-                    <div key={i} className="flex items-start gap-3 rounded-2xl p-3.5 transition-all duration-200"
+                    <div key={t.custom ? `c-${t.id}` : `s-${i}`} className="flex items-start gap-3 rounded-2xl p-3.5 transition-all duration-200"
                       style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${T.border}` }}>
-                      <span className="grid place-items-center w-[20px] h-[20px] rounded-full mt-0.5 shrink-0"
+                      <button
+                        type="button"
+                        aria-label={t.done ? "Mark as not done" : "Mark as done"}
+                        onClick={() => t.custom && toggleCustomTodo(t.id)}
+                        className="grid place-items-center w-[20px] h-[20px] rounded-full mt-0.5 shrink-0 transition-all duration-200"
                         style={{
                           background: t.done ? "rgba(66,230,149,0.14)" : "rgba(255,255,255,0.04)",
                           border: `1px solid ${t.done ? T.green : T.borderHi}`,
                           color: t.done ? T.green : "transparent",
+                          cursor: t.custom ? "pointer" : "default",
                         }}>
                         {t.done && <CheckCircle2 size={13} strokeWidth={2.5} />}
-                      </span>
+                      </button>
                       <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-semibold leading-snug" style={{ color: t.done ? T.muted : T.text }}>{t.label}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-[13px] font-semibold leading-snug" style={{ color: t.done ? T.muted : T.text }}>{t.label}</p>
+                          {t.custom && (
+                            <button
+                              type="button"
+                              aria-label="Remove task"
+                              onClick={() => removeCustomTodo(t.id)}
+                              className="text-[var(--muted)] hover:text-[var(--text)] transition-colors shrink-0 -mr-1 -mt-1 p-1"
+                            >
+                              <span className="text-[15px] leading-none">×</span>
+                            </button>
+                          )}
+                        </div>
                         {t.detail && <p className="text-[11.5px] text-[var(--text2)] mt-1 leading-relaxed">{t.detail}</p>}
                         {t.to && (
                           <Link to={t.to}
@@ -508,6 +555,24 @@ const ComplianceOverview = () => {
                       </div>
                     </div>
                   ))}
+
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") addCustomTodo(); }}
+                      placeholder="Add a task…"
+                      className="flex-1 min-w-0 bg-transparent text-[13px] placeholder:text-[var(--muted)] outline-none"
+                      style={{ color: T.text }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomTodo}
+                      disabled={!draft.trim()}
+                      className="px-3 py-1.5 rounded-full text-[12px] font-medium transition-all duration-200 disabled:opacity-40"
+                      style={{ background: T.text, color: "#0B0B0D" }}
+                    >Add</button>
+                  </div>
                 </div>
 
                 <div className="mt-auto pt-7">
