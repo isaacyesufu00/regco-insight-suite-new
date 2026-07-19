@@ -9,6 +9,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import CookieConsent from "@/components/CookieConsent";
 import ScrollToTop from "@/components/ScrollToTop";
 import Index from "./pages/Index";
+import RegcoHome from "./pages/RegcoHome";
 import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -86,7 +87,8 @@ const App = () => (
         <AuthProvider>
           <ProfileProvider>
           <Routes>
-            <Route path="/" element={<Index />} />
+            <Route path="/" element={<RegcoHome />} />
+            <Route path="/research" element={<Index />} />
             <Route path="/home-legacy" element={<Homepage />} />
             <Route path="/login" element={<Navigate to="/sign-in" replace />} />
             <Route path="/sign-in" element={<SignIn />} />
