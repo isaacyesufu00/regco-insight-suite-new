@@ -144,8 +144,6 @@ function Hero() {
                 alt="RegCo platform preview"
                 style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
               />
-              {/* center logo mark placeholder (Paper SVG) */}
-              <div style={{ position: "absolute", top: "50%", left: "50%", translate: "-50% -50%", width: 144, height: 118, background: T.ink, borderRadius: 4, opacity: 0.9 }} />
             </div>
           </div>
         </div>
