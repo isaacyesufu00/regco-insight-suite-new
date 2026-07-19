@@ -72,6 +72,7 @@ import ProductAuditTrail from "./pages/marketing/ProductAuditTrail";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminTemplateEditor from "./pages/AdminTemplateEditor";
 import EditorialProduct from "./pages/Product";
+import ProductPage from "./pages/ProductPage";
 import EditorialAboutUs from "./pages/AboutUs";
 import EditorialWhoWeServe from "./pages/WhoWeServe";
 
@@ -103,7 +104,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPage />} />
-            <Route path="/product" element={<EditorialProduct />} />
+            <Route path="/product" element={<ProductPage />} />
             <Route path="/product-legacy" element={<NewProductPage />} />
             <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
             <Route path="/product/live-screening" element={<ProductLiveScreening />} />
