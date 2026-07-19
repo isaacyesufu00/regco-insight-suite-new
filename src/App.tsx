@@ -74,7 +74,8 @@ import AdminTemplateEditor from "./pages/AdminTemplateEditor";
 import EditorialProduct from "./pages/Product";
 import ProductPage from "./pages/ProductPage";
 import EditorialAboutUs from "./pages/AboutUs";
-import EditorialWhoWeServe from "./pages/WhoWeServe";
+import WhoWeServeLegacy from "./pages/WhoWeServe";
+import WhoWeServeProduct from "./pages/WhoWeServePage";
 
 const queryClient = new QueryClient();
 
@@ -111,8 +112,8 @@ const App = () => (
             <Route path="/product/transaction-monitoring" element={<ProductTransactionMonitoring />} />
             <Route path="/product/audit-trail" element={<ProductAuditTrail />} />
             <Route path="/about-us" element={<EditorialAboutUs />} />
-            <Route path="/who-we-serve" element={<EditorialWhoWeServe />} />
-            <Route path="/who-we-serve-legacy" element={<WhoWeServePage />} />
+            <Route path="/who-we-serve" element={<WhoWeServeProduct />} />
+            <Route path="/who-we-serve-legacy" element={<WhoWeServeLegacy />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/company" element={<NewCompanyPage />} />
             {/* Blog */}
