@@ -3251,6 +3251,89 @@ export type Database = {
         }
         Relationships: []
       }
+      cbs_feed_connections: {
+        Row: {
+          id: string
+          institution_id: string
+          user_id: string
+          feed_type: string
+          label: string
+          connection_secret_enc: string | null
+          endpoint: string | null
+          query: string | null
+          schedule: string
+          enabled: boolean
+          last_synced_at: string | null
+          last_status: string | null
+          last_error: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          institution_id: string
+          user_id: string
+          feed_type: string
+          label: string
+          connection_secret_enc?: string | null
+          endpoint?: string | null
+          query?: string | null
+          schedule?: string
+          enabled?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          institution_id?: string
+          user_id?: string
+          feed_type?: string
+          label?: string
+          connection_secret_enc?: string | null
+          endpoint?: string | null
+          query?: string | null
+          schedule?: string
+          enabled?: boolean
+          last_synced_at?: string | null
+          last_status?: string | null
+          last_error?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cbs_feed_sync_log: {
+        Row: {
+          id: string
+          connection_id: string
+          institution_id: string
+          started_at: string
+          finished_at: string | null
+          status: string
+          rows_ingested: number
+          error_message: string | null
+        }
+        Insert: {
+          id?: string
+          connection_id: string
+          institution_id: string
+          started_at?: string
+          finished_at?: string | null
+          status?: string
+          rows_ingested?: number
+          error_message?: string | null
+        }
+        Update: {
+          id?: string
+          connection_id?: string
+          institution_id?: string
+          started_at?: string
+          finished_at?: string | null
+          status?: string
+          rows_ingested?: number
+          error_message?: string | null
+        }
+        Relationships: []
+      }
       regulatory_filings: {
         Row: {
           case_id: string | null

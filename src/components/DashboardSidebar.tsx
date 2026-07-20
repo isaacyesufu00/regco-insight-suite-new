@@ -4,7 +4,7 @@ import {
   LayoutDashboard, FileText, FilePlus, Users, Activity,
   Shield, FileCheck, ClipboardCheck, Newspaper,
   Calendar, Settings, HelpCircle,
-  PanelLeftClose, PanelLeft, LogOut, ShieldAlert, History, FileWarning
+  PanelLeftClose, PanelLeft, LogOut, ShieldAlert, History, FileWarning, Database
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/contexts/ProfileContext";
@@ -22,6 +22,7 @@ const ITEMS: NavItem[] = [
   { path: "/dashboard/calendar",                 label: "Calendar",           icon: Calendar,        feature: null,                                    group: "Reporting" },
   { path: "/dashboard/customers",                label: "Customers",          icon: Users,           feature: "customerIntelligence",                  group: "Intelligence" },
   { path: "/dashboard/transactions",             label: "Monitoring",         icon: Activity,        feature: "transactionMonitor",                    group: "Intelligence" },
+  { path: "/dashboard/connectors",               label: "CBS connectors",     icon: Database,        feature: "transactionMonitor",                    group: "Intelligence" },
   { path: "/dashboard/screening",                label: "Screening",          icon: Shield,          feature: "sanctionsScreening",                    group: "Intelligence" },
   { path: "/dashboard/aml-rules",                 label: "Rules & alerts",     icon: ShieldAlert,     feature: "transactionMonitor",                    group: "Intelligence" },
   { path: "/dashboard/board-pack",               label: "Board pack",         icon: FileCheck,       feature: "boardPack",                             group: "Governance" },

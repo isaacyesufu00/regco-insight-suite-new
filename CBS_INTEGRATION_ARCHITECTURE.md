@@ -64,5 +64,6 @@ retained only as a compatibility shim, and its secret is **fail-closed from Vaul
 - [x] Orphaned legacy `ingest-transaction-webhook` function removed
 - [x] `cbs_feed_connections` table + `cbs-pull-connector` edge function (pull scaffold)
 - [x] `webhook_hmac_secret()` fail-closed SQL helper
-- [ ] Bank-facing connector setup UI (roadmap: pair with dashboard)
+- [x] `ingest_transaction_webhook` RPC migration (idempotent; resolves user via `institution_users`)
+- [x] Bank-facing connector setup UI (`/dashboard/connectors`) — **Pull is the documented default, File drop is the fallback**
 - [ ] mTLS/OIDC push shim (roadmap: only if a bank requests real-time push)

@@ -74,9 +74,13 @@ RegCo secret. See `CBS_INTEGRATION_ARCHITECTURE.md` for the full proposal.
   RegCo-held (Vault-encrypted) credentials; ingests via the same `ingest_transaction_webhook`
   RPC as push. Registered in `config.toml` (`verify_jwt = false`, cron-driven).
 
-**Open item to verify before bank go-live:** the `ingest_transaction_webhook` RPC is
-referenced by `receive-transaction` (live) but its `CREATE FUNCTION` is not present in
-any committed migration — confirm it exists in the deployed DB or add its migration.
+**Resolved (2026-07-20):** the `ingest_transaction_webhook` RPC is now committed as a
+migration (`20260720020000_ingest_transaction_webhook.sql`) — idempotent on
+`(institution_id, idempotency_key)`, resolves `user_id` via `institution_users`, inserts
+`unified_transactions`, and records the receipt in `receive_transaction_requests`. The
+bank-facing onboarding UI (`/dashboard/connectors`) documents **pull as the default** with
+**file drop as the fallback**, matching the live `receive-transaction` / `cbs-pull-connector`
+callers that read the returned `transaction_id`.
 
 ## Out of scope (pre-existing, unrelated)
 ~20 repo-wide typecheck errors from a Supabase `profiles` schema drift (migrated to

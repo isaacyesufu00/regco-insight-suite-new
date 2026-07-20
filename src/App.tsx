@@ -33,6 +33,7 @@ import AuditTracker from "./pages/AuditTracker";
 import CaseManagement from "./pages/CaseManagement";
 import AmlRules from "./pages/AmlRules";
 import AuditLog from "./pages/AuditLog";
+import CbsConnectors from "./pages/CbsConnectors";
 import NfiuReports from "./pages/NfiuReports";
 import FeatureGate from "./components/FeatureGate";
 import AdminLayout from "./pages/AdminLayout";
@@ -164,6 +165,7 @@ const App = () => (
               <Route path="cases" element={<FeatureGate feature="auditTracker" requiredTier="State MFB"><CaseManagement /></FeatureGate>} />
               <Route path="aml-rules" element={<AmlRules />} />
               <Route path="audit-log" element={<AuditLog />} />
+              <Route path="connectors" element={<FeatureGate feature="transactionMonitor"><CbsConnectors /></FeatureGate>} />
               <Route path="nfiu-reports" element={<NfiuReports />} />
             </Route>
             <Route
