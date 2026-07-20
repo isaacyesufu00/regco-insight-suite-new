@@ -214,3 +214,47 @@ export const DataRow: React.FC<{ label: string; value: string }> = ({ label, val
     <span style={{ color: T.inkCC, fontFamily: SANS, fontSize: 15, fontWeight: 600, lineHeight: 1.45, textAlign: "right" }}>{value}</span>
   </div>
 );
+
+export const List: React.FC<{ items: string[] }> = ({ items }) => (
+  <ul style={{ listStyle: "none", margin: "8px 0 0", padding: 0 }}>
+    {items.map((it) => (
+      <li key={it} style={{ display: "flex", alignItems: "flex-start", gap: 10, paddingBlock: 6 }}>
+        <span style={{ width: 6, height: 6, background: T.inkCC, borderRadius: 999, flexShrink: 0, marginTop: 8 }} />
+        <span style={{ color: T.ink99, fontFamily: SANS, fontSize: 16, fontWeight: 500, lineHeight: 1.45 }}>{it}</span>
+      </li>
+    ))}
+  </ul>
+);
+
+export const TierCard: React.FC<{
+  name: string; price: string; cycle: string; body: string;
+  features: string[]; cta: string; to: string; featured?: boolean;
+}> = ({ name, price, cycle, body, features, cta, to, featured }) => (
+  <div style={{
+    padding: 28, borderRadius: 8,
+    border: `1px solid ${featured ? T.ink : T.ink14}`,
+    background: "#FFFFFF",
+    display: "flex", flexDirection: "column",
+  }}>
+    <div style={{ color: T.ink66, fontFamily: SANS, fontSize: 13, fontWeight: 500, letterSpacing: "0.04em", textTransform: "uppercase" }}>{name}</div>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 12 }}>
+      <span style={{ color: T.inkCC, fontFamily: SANS, fontSize: 36, fontWeight: 600, letterSpacing: "-0.02em" }}>{price}</span>
+      <span style={{ color: T.ink66, fontFamily: SANS, fontSize: 14 }}>{cycle}</span>
+    </div>
+    <div style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, lineHeight: 1.5, marginTop: 12 }}>{body}</div>
+    <ul style={{ listStyle: "none", margin: "20px 0 0", padding: 0, flex: 1 }}>
+      {features.map((f) => (
+        <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, paddingBlock: 6 }}>
+          <span style={{ width: 6, height: 6, background: T.red, borderRadius: 999, flexShrink: 0, marginTop: 8 }} />
+          <span style={{ color: T.inkCC, fontFamily: SANS, fontSize: 14, lineHeight: 1.5 }}>{f}</span>
+        </li>
+      ))}
+    </ul>
+    <Link to={to} style={{
+      marginTop: 24, height: 40, display: "inline-flex", alignItems: "center", justifyContent: "center",
+      borderRadius: 999, fontFamily: SANS, fontSize: 14, fontWeight: 500, textDecoration: "none",
+      background: featured ? T.inkE6 : "transparent", color: featured ? T.canvasTone : T.inkCC,
+      border: featured ? "none" : `1px solid ${T.ink26}`,
+    }}>{cta}</Link>
+  </div>
+);

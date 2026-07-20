@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { PageShell, PageHero, ContentSection } from "@/components/eigen/PageShell";
-import { articles } from "./BlogUpdates";
+import { articles } from "../marketing/BlogUpdatesNewPage";
 
 const BlogUpdateDetail = () => {
   const { slug } = useParams();

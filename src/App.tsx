@@ -14,7 +14,7 @@ import Login from "./pages/Login";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import { Navigate } from "react-router-dom";
-import Contact from "./pages/Contact";
+import Contact from "./pages/marketing/ContactNewPage";
 import BookDemo from "./pages/BookDemo";
 import Dashboard from "./pages/Dashboard";
 import DashboardHome from "./pages/DashboardHome";
@@ -44,22 +44,23 @@ import AdminDemos from "./pages/AdminDemos";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
-import Security from "./pages/Security";
+import Security from "./pages/marketing/SecurityNewPage";
 import SupportTickets from "./pages/SupportTickets";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import AuthConfirm from "./pages/auth/Confirm";
-import BlogUpdates from "./pages/blog/BlogUpdates";
+import BlogUpdates from "./pages/marketing/BlogUpdatesNewPage";
 import BlogUpdateDetail from "./pages/blog/BlogUpdateDetail";
 import CBNCirculars from "./pages/blog/CBNCirculars";
-import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
-import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/marketing/PrivacyPolicyNewPage";
+import TermsOfServicePage from "./pages/marketing/TermsOfServiceNewPage";
 import DataProcessingPage from "./pages/legal/DataProcessingPage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
 import DashboardWorkspace from "./pages/DashboardWorkspace";
 import DashboardInsights from "./pages/DashboardInsights";
-import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
+import { WhoWeServePage } from "./pages/marketing/MarketingPages";
+import PricingNewPage from "./pages/marketing/PricingNewPage";
 import Homepage from "./pages/marketing/Homepage";
 import DocsPage from "./pages/marketing/DocsPage";
 import FraudDetectionPage from "./pages/marketing/FraudDetectionPage";
@@ -84,11 +85,11 @@ import ProductAuditTrail from "./pages/marketing/ProductAuditTrail";
 import AdminTemplates from "./pages/AdminTemplates";
 import AdminTemplateEditor from "./pages/AdminTemplateEditor";
 import EditorialProduct from "./pages/Product";
-import ProductPage from "./pages/ProductPage";
+import ProductPage from "./pages/marketing/ProductNewPage";
 import EditorialAboutUs from "./pages/AboutUs";
 import WhoWeServeLegacy from "./pages/WhoWeServe";
 import WhoWeServeProduct from "./pages/WhoWeServePage";
-import AboutUsPage from "./pages/AboutUsPage";
+import AboutUsPage from "./pages/marketing/AboutNewPage";
 
 const queryClient = new QueryClient();
 
@@ -135,7 +136,7 @@ const App = () => (
             <Route path="/about-us" element={<EditorialAboutUs />} />
             <Route path="/who-we-serve" element={<WhoWeServeProduct />} />
             <Route path="/who-we-serve-legacy" element={<WhoWeServeLegacy />} />
-            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/pricing" element={<PricingNewPage />} />
             <Route path="/company" element={<NewCompanyPage />} />
             {/* Blog */}
             <Route path="/blog/updates" element={<BlogUpdates />} />
