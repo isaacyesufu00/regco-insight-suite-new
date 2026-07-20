@@ -51,12 +51,10 @@ import ResetPassword from "./pages/ResetPassword";
 import AuthConfirm from "./pages/auth/Confirm";
 import BlogUpdates from "./pages/blog/BlogUpdates";
 import BlogUpdateDetail from "./pages/blog/BlogUpdateDetail";
-import ComplianceGuide from "./pages/blog/ComplianceGuide";
 import CBNCirculars from "./pages/blog/CBNCirculars";
 import PrivacyPolicyPage from "./pages/legal/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/legal/TermsOfServicePage";
 import DataProcessingPage from "./pages/legal/DataProcessingPage";
-import NDPCCompliancePage from "./pages/legal/NDPCCompliancePage";
 import SupportPage from "./pages/contact/SupportPage";
 import PartnershipsPage from "./pages/contact/PartnershipsPage";
 import DashboardWorkspace from "./pages/DashboardWorkspace";
@@ -72,6 +70,10 @@ import AiComplianceBrainPage from "./pages/marketing/AiComplianceBrainPage";
 import CustomersPage from "./pages/marketing/CustomersPage";
 import CareersPage from "./pages/marketing/CareersPage";
 import KnowledgeBasePage from "./pages/marketing/KnowledgeBasePage";
+import ComplianceGuidesPage from "./pages/marketing/ComplianceGuidesPage";
+import DataProcessingPageNew from "./pages/marketing/DataProcessingPage";
+import ResponsibleAiPage from "./pages/marketing/ResponsibleAiPage";
+import PlatformUpdatesPage from "./pages/marketing/PlatformUpdatesPage";
 import NewProductPage from "./pages/marketing/ProductPage";
 import NewCompanyPage from "./pages/marketing/CompanyPage";
 import AboutPageLegacy from "./pages/marketing/AboutPage";
@@ -138,13 +140,17 @@ const App = () => (
             {/* Blog */}
             <Route path="/blog/updates" element={<BlogUpdates />} />
             <Route path="/blog/updates/:slug" element={<BlogUpdateDetail />} />
-            <Route path="/blog/compliance-guide" element={<ComplianceGuide />} />
+            <Route path="/blog/compliance-guide" element={<Navigate to="/compliance-guides" replace />} />
             <Route path="/blog/cbn-circulars" element={<CBNCirculars />} />
             {/* Legal */}
             <Route path="/legal/privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="/legal/terms-of-service" element={<TermsOfServicePage />} />
-            <Route path="/legal/data-processing" element={<DataProcessingPage />} />
-            <Route path="/legal/ndpc-compliance" element={<NDPCCompliancePage />} />
+            <Route path="/legal/data-processing" element={<DataProcessingPageNew />} />
+            <Route path="/legal/ndpc-compliance" element={<Navigate to="/legal/responsible-ai" replace />} />
+            <Route path="/legal/responsible-ai" element={<ResponsibleAiPage />} />
+            {/* Marketing footer pages */}
+            <Route path="/compliance-guides" element={<ComplianceGuidesPage />} />
+            <Route path="/platform-updates" element={<PlatformUpdatesPage />} />
             {/* Contact */}
             <Route path="/contact/book-demo" element={<Navigate to="/book-demo" replace />} />
             <Route path="/contact/support" element={<SupportPage />} />

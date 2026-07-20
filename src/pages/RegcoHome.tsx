@@ -378,16 +378,16 @@ function Footer() {
     { h: "Resources", items: [
       { l: "Documentation", to: "/docs" },
       { l: "Knowledge Base", to: "/knowledge-base" },
-      { l: "Compliance Guides", to: "/blog/compliance-guide" },
+      { l: "Compliance Guides", to: "/compliance-guides" },
       { l: "Blog", to: "/blog/updates" },
-      { l: "Platform Updates", to: "/blog/updates" },
+      { l: "Platform Updates", to: "/platform-updates" },
     ] },
     { h: "Legal", items: [
       { l: "Privacy Policy", to: "/legal/privacy-policy" },
       { l: "Terms of Service", to: "/legal/terms-of-service" },
       { l: "Security", to: "/security" },
       { l: "Data Processing Agreement", to: "/legal/data-processing" },
-      { l: "Responsible AI", to: "/legal/ndpc-compliance" },
+      { l: "Responsible AI", to: "/legal/responsible-ai" },
     ] },
   ];
   return (

@@ -195,3 +195,22 @@ export const PageHero: React.FC<{ kicker: string; title: string; sub: string }> 
     </div>
   </div>
 );
+
+export const ProseSection: React.FC<{ id?: string; heading: string; children: React.ReactNode }> = ({ id, heading, children }) => (
+  <div id={id} style={{ paddingBlock: 32, scrollMarginTop: 96 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", gap: 16 }}>
+      <AccentBar />
+      <div>
+        <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, textWrap: "balance" }}>{heading}</div>
+        <div style={{ marginTop: 8 }}>{children}</div>
+      </div>
+    </div>
+  </div>
+);
+
+export const DataRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div style={{ display: "flex", justifyContent: "space-between", gap: 16, paddingBlock: 12, borderBottom: `1px solid ${T.ink14}` }}>
+    <span style={{ color: T.ink99, fontFamily: SANS, fontSize: 15, lineHeight: 1.45 }}>{label}</span>
+    <span style={{ color: T.inkCC, fontFamily: SANS, fontSize: 15, fontWeight: 600, lineHeight: 1.45, textAlign: "right" }}>{value}</span>
+  </div>
+);
