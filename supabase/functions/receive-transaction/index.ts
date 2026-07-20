@@ -103,10 +103,23 @@ JSON.stringify({ ok: false, error: "timestamp_skew_too_large" }),
 { status: 401, headers: { "content-type": "application/json" } },
 );
 }
-const secret =
-Deno.env.get("RECEIVE_TRANSACTION_HMAC_SECRET") ||
-Deno.env.get("HMAC_SECRET") ||
-"regco-sentinel-v1";
+// Fail-closed: the HMAC secret is read from Supabase Vault via webhook_hmac_secret().
+// If the secret row is absent the helper RAISES and we reject the request — we never
+// fall back to a known constant. The supabase client is created just below.
+const supabaseForSecret = createClient(
+Deno.env.get("SUPABASE_URL")!,
+Deno.env.get("REGCO_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+{ auth: { persistSession: false } },
+);
+const { data: secretData, error: secretErr } = await supabaseForSecret.rpc("webhook_hmac_secret");
+if (secretErr || !secretData) {
+console.error("webhook HMAC secret unavailable in Vault", secretErr?.message);
+return new Response(
+JSON.stringify({ ok: false, error: "webhook_secret_unavailable" }),
+{ status: 500, headers: { "content-type": "application/json" } },
+);
+}
+const secret = secretData as string;
 const canonical =
 "v1\nPOST\nreceive-transaction\n" +
 timestamp +

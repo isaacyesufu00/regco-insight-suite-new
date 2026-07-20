@@ -59,6 +59,25 @@ full mapping.
   but no review workflow surfaces it.
 - **Action:** Add a review/sign-off workflow on top of the ledger verification.
 
+## CBS integration hardening (2026-07-20) — ✅ DONE
+Design direction: **pull-by-default** so the bank writes no crypto in CBS and holds no
+RegCo secret. See `CBS_INTEGRATION_ARCHITECTURE.md` for the full proposal.
+
+- **Fail-closed webhook HMAC secret:** `receive-transaction` now reads its HMAC key
+  from Supabase Vault via `webhook_hmac_secret()` (migrated in
+  `20260720010000_cbs_integration_hardening.sql`). The hardcoded `"regco-sentinel-v1"`
+  fallback is removed — the endpoint refuses to verify when the secret is absent.
+- **Orphaned legacy function deleted:** `ingest-transaction-webhook` (not registered
+  in `config.toml`, carried the hardcoded fallback) removed.
+- **Pull connector scaffold:** `cbs-pull-connector` edge function + `cbs_feed_connections`
+  / `cbs_feed_sync_log` tables. RegCo pulls from a bank-provisioned read-only feed using
+  RegCo-held (Vault-encrypted) credentials; ingests via the same `ingest_transaction_webhook`
+  RPC as push. Registered in `config.toml` (`verify_jwt = false`, cron-driven).
+
+**Open item to verify before bank go-live:** the `ingest_transaction_webhook` RPC is
+referenced by `receive-transaction` (live) but its `CREATE FUNCTION` is not present in
+any committed migration — confirm it exists in the deployed DB or add its migration.
+
 ## Out of scope (pre-existing, unrelated)
 ~20 repo-wide typecheck errors from a Supabase `profiles` schema drift (migrated to
 hashed columns e.g. `company_name_hash`) in admin/dashboard pages — not introduced by
