@@ -64,6 +64,7 @@ import DashboardInsights from "./pages/DashboardInsights";
 import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
 import Homepage from "./pages/marketing/Homepage";
 import SecurityPage from "./pages/marketing/SecurityPage";
+import DocsPage from "./pages/marketing/DocsPage";
 import NewProductPage from "./pages/marketing/ProductPage";
 import NewCompanyPage from "./pages/marketing/CompanyPage";
 import AboutPageLegacy from "./pages/marketing/AboutPage";
@@ -108,6 +109,7 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPage />} />
+            <Route path="/docs" element={<DocsPage />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product-legacy" element={<NewProductPage />} />
             <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />

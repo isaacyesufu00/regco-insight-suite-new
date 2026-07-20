@@ -75,6 +75,7 @@ export const Navbar = () => {
           {[
             { label: 'Why Regco', href: '/why-regco' },
             { label: 'Enterprise', href: '/enterprise' },
+            { label: 'Docs', href: '/docs' },
             { label: 'Security', href: '/security' },
             { label: 'Resources', href: '/resources' },
           ].map(link => (
