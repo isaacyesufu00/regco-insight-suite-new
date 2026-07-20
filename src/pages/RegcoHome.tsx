@@ -72,6 +72,7 @@ function Nav() {
     { l: "Home", to: "/" },
     { l: "Product", to: "/product" },
     { l: "Who we serve", to: "/who-we-serve" },
+    { l: "Docs", to: "/docs" },
     { l: "About", to: "/about" },
   ];
   return (

@@ -12,6 +12,7 @@ const products = [
 const links = [
   { to: "/who-we-serve", label: "Who we serve" },
   { to: "/pricing",      label: "Pricing" },
+  { to: "/docs",         label: "Docs" },
   { to: "/about",        label: "About" },
 ];
 
