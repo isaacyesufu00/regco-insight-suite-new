@@ -70,14 +70,11 @@ serve(async (req) => {
       );
     }
 
-    // Initialize service client to run cryptographic verification (bypasses RLS to verify full chain)
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
-    // Call the database function to verify the audit chain
-    const { data, error } = await serviceClient.rpc("fn_verify_audit_chain");
+    // Run cryptographic verification AS the authenticated admin caller so that
+    // auth.uid() is populated and the chain is scoped to their institution.
+    // (Running as service_role evaluated auth.uid() as NULL and reported the
+    // chain as valid with 0 records checked — a silent false pass.)
+    const { data, error } = await userClient.rpc("fn_verify_audit_chain");
 
     if (error) {
       console.error("fn_verify_audit_chain database execution error:", error);

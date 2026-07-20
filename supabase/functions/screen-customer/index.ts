@@ -13,6 +13,11 @@ function corsHeaders(req: Request): HeadersInit {
   };
 }
 
+async function sha256Hex(input: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
 
@@ -57,18 +62,15 @@ Deno.serve(async (req) => {
 
     const cleanName = name.toUpperCase();
     const nameParts = cleanName.split(/\s+/).filter((p) => p.length > 2);
-    const tsQuery = nameParts.join(" | ") || cleanName;
     const lastName = nameParts[nameParts.length - 1] || cleanName;
 
-    const [ftsRes, ilikeRes, pepFtsRes, pepIlikeRes] = await Promise.all([
+    // NOTE: sanctions_entries.matched_name and pep_entries.full_name are the
+    // real (plaintext) name columns. The old code queried a non-existent
+    // `full_name` on both tables, so screening returned nothing. The trigram
+    // GIN indexes (Phase 1) make these ilike scans fast.
+    const [sanctionsRes, pepRes] = await Promise.all([
       admin.from("sanctions_entries").select("*")
-        .textSearch("full_name", tsQuery, { type: "websearch", config: "simple" })
-        .limit(25),
-      admin.from("sanctions_entries").select("*")
-        .ilike("full_name", `%${lastName}%`).limit(25),
-      admin.from("pep_entries").select("*")
-        .textSearch("full_name", tsQuery, { type: "websearch", config: "simple" })
-        .limit(15),
+        .ilike("matched_name", `%${lastName}%`).limit(25),
       admin.from("pep_entries").select("*")
         .ilike("full_name", `%${lastName}%`).limit(15),
     ]);
@@ -76,8 +78,8 @@ Deno.serve(async (req) => {
     const dedupe = <T extends { id: string }>(arr: T[]) =>
       arr.filter((m, i, a) => a.findIndex((x) => x.id === m.id) === i);
 
-    const allSanctions = dedupe([...(ftsRes.data || []), ...(ilikeRes.data || [])]);
-    const allPep = dedupe([...(pepFtsRes.data || []), ...(pepIlikeRes.data || [])]);
+    const allSanctions = dedupe(sanctionsRes.data || []);
+    const allPep = dedupe(pepRes.data || []);
 
     const score = (matchName: string) => {
       const upper = matchName.toUpperCase();
@@ -91,7 +93,7 @@ Deno.serve(async (req) => {
     };
 
     const sanctionsMatches = allSanctions
-      .map((m: any) => ({ ...m, relevance_score: score(m.full_name) }))
+      .map((m: any) => ({ ...m, relevance_score: score(m.matched_name) }))
       .filter((m) => m.relevance_score > 0)
       .sort((a, b) => b.relevance_score - a.relevance_score)
       .slice(0, 10);
@@ -108,11 +110,25 @@ Deno.serve(async (req) => {
 
     const total_matches = sanctionsMatches.length + pepMatches.length;
 
+    // Resolve institution for the (NOT NULL) institution_id column.
+    const { data: instRow } = await admin
+      .from("institution_users")
+      .select("institution_id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    if (!instRow?.institution_id) {
+      return new Response(JSON.stringify({ error: "Institution context required" }), {
+        status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" },
+      });
+    }
+
     await admin.from("screening_results").insert({
       user_id: userId,
+      institution_id: instRow.institution_id,
       customer_id,
-      search_name: name,
-      search_bvn: bvn,
+      search_name_hash: await sha256Hex(name),
+      search_bvn_hash: bvn ? await sha256Hex(bvn) : null,
       matches_found: total_matches,
       highest_risk: risk_level,
       match_details: { sanctions: sanctionsMatches.slice(0, 5), pep: pepMatches.slice(0, 5) },
@@ -123,7 +139,7 @@ Deno.serve(async (req) => {
       sanctions_matches: sanctionsMatches,
       pep_matches: pepMatches,
       total_matches,
-      lists_checked: ["UN Security Council", "OFAC SDN", "EU Consolidated", "UK HM Treasury", "CBN Watchlist"],
+      lists_checked: ["UN", "OFAC", "EU", "UK", "CBN"],
       screened_at: new Date().toISOString(),
     }), { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   } catch (e) {

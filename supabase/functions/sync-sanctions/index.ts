@@ -13,6 +13,18 @@ function corsHeaders(req: Request): HeadersInit {
   };
 }
 
+// Map the human-readable list names used by the upstream feeds to the
+// canonical watchlist_name codes accepted by the sanctions_entries CHECK
+// constraint (UN, OFAC, EU, UK, CBN). The old code wrote the long
+// names, which the CHECK rejected — so nothing was ever stored.
+const WL: Record<string, string> = {
+  "UN Security Council": "UN",
+  "OFAC SDN": "OFAC",
+  "EU Consolidated": "EU",
+  "UK HM Treasury": "UK",
+  "CBN Watchlist": "CBN",
+};
+
 // Public endpoint — invoked by cron daily and manually from dashboard.
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
@@ -28,6 +40,10 @@ Deno.serve(async (req) => {
 
   type ListResult = { added: number; total: number; duration: number; error?: string };
   const results: Record<string, ListResult> = {};
+
+  // Global watchlists are shared across every institution, so institution_id
+  // is left NULL (the column was made nullable in the Phase 1 migration).
+  const institutionId = null;
 
   const decodeXml = (s: string) =>
     s.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
@@ -63,17 +79,16 @@ Deno.serve(async (req) => {
 
         total++;
         const { error } = await supabase.from("sanctions_entries").upsert({
-          full_name: fullName,
+          matched_name: fullName,
           aliases: aliases.length ? aliases.join("; ") : null,
           nationality: nationality || null,
-          date_listed: dateListed || null,
-          list_name: "UN Security Council",
-          list_type: "sanctions",
           entity_type: "individual",
-          reason: comments ? comments.slice(0, 500) : null,
+          watchlist_name: WL["UN Security Council"],
+          notes: comments ? comments.slice(0, 500) : null,
           source_url: "https://scsanctions.un.org",
           last_updated: new Date().toISOString(),
-        }, { onConflict: "full_name,list_name" });
+          institution_id: institutionId,
+        }, { onConflict: "matched_name,watchlist_name" });
         if (!error) added++;
       }
 
@@ -83,13 +98,13 @@ Deno.serve(async (req) => {
         if (!name || name.length < 2) continue;
         total++;
         const { error } = await supabase.from("sanctions_entries").upsert({
-          full_name: name,
-          list_name: "UN Security Council",
-          list_type: "sanctions",
+          matched_name: name,
           entity_type: "entity",
+          watchlist_name: WL["UN Security Council"],
           source_url: "https://scsanctions.un.org",
           last_updated: new Date().toISOString(),
-        }, { onConflict: "full_name,list_name" });
+          institution_id: institutionId,
+        }, { onConflict: "matched_name,watchlist_name" });
         if (!error) added++;
       }
       results["UN Security Council"] = { added, total, duration: Date.now() - start };
@@ -118,14 +133,14 @@ Deno.serve(async (req) => {
         if (!name || name.length < 2 || name === "SDN_Name") continue;
         total++;
         const { error } = await supabase.from("sanctions_entries").upsert({
-          full_name: name,
-          list_name: "OFAC SDN",
-          list_type: "sanctions",
+          matched_name: name,
           entity_type: entityType.toLowerCase().includes("individual") ? "individual" : "entity",
-          reason: remarks ? remarks.slice(0, 500) : null,
+          watchlist_name: WL["OFAC SDN"],
+          notes: remarks ? remarks.slice(0, 500) : null,
           source_url: "https://www.treasury.gov/ofac",
           last_updated: new Date().toISOString(),
-        }, { onConflict: "full_name,list_name" });
+          institution_id: institutionId,
+        }, { onConflict: "matched_name,watchlist_name" });
         if (!error) added++;
       }
       results["OFAC SDN"] = { added, total, duration: Date.now() - start };
@@ -155,13 +170,13 @@ Deno.serve(async (req) => {
         const subjectType = block.match(/subjectType[^>]*classification="([^"]+)"/)?.[1]?.toLowerCase() || "entity";
         total++;
         const { error } = await supabase.from("sanctions_entries").upsert({
-          full_name: fullName.trim(),
-          list_name: "EU Consolidated",
-          list_type: "sanctions",
+          matched_name: fullName.trim(),
           entity_type: subjectType.includes("person") ? "individual" : "entity",
+          watchlist_name: WL["EU Consolidated"],
           source_url: "https://webgate.ec.europa.eu/fsd",
           last_updated: new Date().toISOString(),
-        }, { onConflict: "full_name,list_name" });
+          institution_id: institutionId,
+        }, { onConflict: "matched_name,watchlist_name" });
         if (!error) added++;
       }
       results["EU Consolidated"] = { added, total, duration: Date.now() - start };
@@ -190,13 +205,13 @@ Deno.serve(async (req) => {
         if (!fullName || fullName.length < 2 || fullName === "Name 6") continue;
         total++;
         const { error } = await supabase.from("sanctions_entries").upsert({
-          full_name: fullName,
-          list_name: "UK HM Treasury",
-          list_type: "sanctions",
+          matched_name: fullName,
           entity_type: entityType.toLowerCase().includes("individual") ? "individual" : "entity",
+          watchlist_name: WL["UK HM Treasury"],
           source_url: "https://www.gov.uk/government/publications/financial-sanctions-consolidated-list-of-targets",
           last_updated: new Date().toISOString(),
-        }, { onConflict: "full_name,list_name" });
+          institution_id: institutionId,
+        }, { onConflict: "matched_name,watchlist_name" });
         if (!error) added++;
       }
       results["UK HM Treasury"] = { added, total, duration: Date.now() - start };
@@ -217,14 +232,14 @@ Deno.serve(async (req) => {
     ];
     for (const e of cbnEntries) {
       const { error } = await supabase.from("sanctions_entries").upsert({
-        full_name: e.name,
-        list_name: "CBN Watchlist",
-        list_type: "sanctions",
+        matched_name: e.name,
         entity_type: e.type,
-        reason: e.reason,
+        watchlist_name: WL["CBN Watchlist"],
+        notes: e.reason,
         source_url: "https://www.cbn.gov.ng",
         last_updated: new Date().toISOString(),
-      }, { onConflict: "full_name,list_name" });
+        institution_id: institutionId,
+      }, { onConflict: "matched_name,watchlist_name" });
       if (!error) added++;
     }
     results["CBN Watchlist"] = { added, total: cbnEntries.length, duration: Date.now() - start };

@@ -83,14 +83,50 @@ serve(async (req) => {
       );
     }
 
-    // MOCK filing: simulate a successful submission to the NFIU gateway.
-    // In production this would POST the stored xml_content to the NFIU endpoint.
-    const ackReference = `NFIU-ACK-${Date.now().toString(36).toUpperCase()}`;
+    // REAL filing: POST the stored GoAML 4.0 XML to the NFIU gateway.
+    // Fail-closed: if the endpoint is not configured we do NOT pretend to
+    // file (no fabricated acknowledgement) — we surface a clear error so
+    // the operator enables NFIU_API_URL before relying on submission.
+    const nfiuUrl = Deno.env.get("NFIU_API_URL");
+    if (!nfiuUrl) {
+      return new Response(
+        JSON.stringify({ error: "NFIU submission endpoint not configured (set NFIU_API_URL)" }),
+        { status: 400, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    const { data: rep, error: repErr } = await admin
+      .from("nfiu_reports")
+      .select("xml_content, report_type")
+      .eq("id", report_id)
+      .single();
+    if (repErr || !rep) throw repErr || new Error("report not found");
+
+    const nfiuKey = Deno.env.get("NFIU_API_KEY") || "";
+    const nfiuRes = await fetch(nfiuUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/xml",
+        ...(nfiuKey ? { Authorization: `Bearer ${nfiuKey}` } : {}),
+        "X-RegCo-Report-Id": report_id,
+      },
+      body: rep.xml_content,
+    });
+
+    if (!nfiuRes.ok) {
+      const detail = await nfiuRes.text().catch(() => "");
+      return new Response(
+        JSON.stringify({ error: `NFIU rejected submission: ${nfiuRes.status}`, detail: detail.slice(0, 500) }),
+        { status: 502, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
+      );
+    }
+
+    const ackReference = (await nfiuRes.text().catch(() => "")) || `NFIU-ACK-${Date.now().toString(36).toUpperCase()}`;
     const filedAt = new Date().toISOString();
 
     const { error: updErr } = await admin
       .from("nfiu_reports")
-      .update({ status: "filed", filed_at: filedAt, updated_at: filedAt })
+      .update({ status: "filed", filed_at: filedAt, updated_at: filedAt, ack_reference: ackReference })
       .eq("id", report_id);
     if (updErr) throw updErr;
 
@@ -101,7 +137,7 @@ serve(async (req) => {
         status: "filed",
         ack_reference: ackReference,
         filed_at: filedAt,
-        message: `Mock filing accepted by NFIU. Acknowledgement ${ackReference}.`,
+        message: `Report submitted to NFIU. Acknowledgement ${ackReference}.`,
       }),
       { status: 200, headers: { ...corsHeaders(req), "Content-Type": "application/json" } }
     );

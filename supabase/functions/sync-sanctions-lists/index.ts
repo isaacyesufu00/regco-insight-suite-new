@@ -12,6 +12,8 @@ Deno.serve(async (req) => {
   );
 
   const results = { synced: 0, errors: [] as string[] };
+  // Global watchlists are shared across institutions (institution_id NULL).
+  const institutionId = null;
 
   // UN Security Council Consolidated List (XML)
   try {
@@ -26,15 +28,15 @@ Deno.serve(async (req) => {
         const s = seconds[i]?.replace(/<\/?SECOND_NAME>/g, "") || "";
         const full = `${f} ${s}`.trim();
         if (full.length > 2) {
-          await admin.from("sanctions_entries").upsert({
-            full_name: full,
-            list_name: "UN Security Council",
-            list_type: "sanctions",
+          const { error } = await admin.from("sanctions_entries").upsert({
+            matched_name: full,
+            watchlist_name: "UN",
             entity_type: "individual",
             source_url: "https://scsanctions.un.org",
             last_updated: new Date().toISOString(),
-          }, { onConflict: "full_name,list_name" });
-          results.synced++;
+            institution_id: institutionId,
+          }, { onConflict: "matched_name,watchlist_name" });
+          if (!error) results.synced++;
         }
       }
     }
@@ -52,15 +54,15 @@ Deno.serve(async (req) => {
         const parts = line.split(",");
         const name = parts[1]?.replace(/"/g, "").trim();
         if (name && name.length > 2) {
-          await admin.from("sanctions_entries").upsert({
-            full_name: name,
-            list_name: "OFAC SDN",
-            list_type: "sanctions",
+          const { error } = await admin.from("sanctions_entries").upsert({
+            matched_name: name,
+            watchlist_name: "OFAC",
             entity_type: parts[2]?.toLowerCase().includes("individual") ? "individual" : "entity",
             source_url: "https://treasury.gov/ofac",
             last_updated: new Date().toISOString(),
-          }, { onConflict: "full_name,list_name" });
-          results.synced++;
+            institution_id: institutionId,
+          }, { onConflict: "matched_name,watchlist_name" });
+          if (!error) results.synced++;
         }
       }
     }

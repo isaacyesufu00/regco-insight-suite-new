@@ -16,6 +16,11 @@ out |= a.charCodeAt(i) ^ b.charCodeAt(i);
 return out === 0;
 }
 
+async function sha256Hex(value) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return toHex(new Uint8Array(buf));
+}
+
 async function hmacSha256Hex(secret, message) {
 const key = await crypto.subtle.importKey(
 "raw",
@@ -103,6 +108,54 @@ JSON.stringify({ ok: false, error: "timestamp_skew_too_large" }),
 { status: 401, headers: { "content-type": "application/json" } },
 );
 }
+
+// Per-institution binding. The request also carries an API key
+// (x-api-key-prefix / x-api-key). We resolve the owning
+// institution from that key and reject any payload that targets a
+// different institution_id — otherwise a single shared HMAC secret
+// would let one institution push transactions attributed to another
+// (cross-institution forgery). The HMAC signature check below
+// still runs against the global Vault secret (contract unchanged).
+const keyClient = createClient(
+Deno.env.get("SUPABASE_URL")!,
+Deno.env.get("REGCO_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+{ auth: { persistSession: false } },
+);
+const { data: keyRow, error: keyErr } = await keyClient
+.from("webhook_api_keys")
+.select("key_hash, institution_id")
+.eq("key_prefix", apiKeyPrefix)
+.eq("active", true)
+.maybeSingle();
+if (keyErr || !keyRow || !keyRow.key_hash) {
+return new Response(
+JSON.stringify({ ok: false, error: "unknown_api_key" }),
+{ status: 401, headers: { "content-type": "application/json" } },
+);
+}
+const providedKeyHash = await sha256Hex(apiKey);
+if (!timingSafeEqual(providedKeyHash, keyRow.key_hash)) {
+return new Response(
+JSON.stringify({ ok: false, error: "bad_api_key" }),
+{ status: 401, headers: { "content-type": "application/json" } },
+);
+}
+const keyInstitution = keyRow.institution_id;
+if (!keyInstitution) {
+return new Response(
+JSON.stringify({ ok: false, error: "key_not_bound_to_institution" }),
+{ status: 401, headers: { "content-type": "application/json" } },
+);
+}
+// Bind: force the payload institution to the key's institution.
+if (payload.institution_id && payload.institution_id !== keyInstitution) {
+return new Response(
+JSON.stringify({ ok: false, error: "institution_mismatch" }),
+{ status: 403, headers: { "content-type": "application/json" } },
+);
+}
+payload.institution_id = keyInstitution;
+
 // Fail-closed: the HMAC secret is read from Supabase Vault via webhook_hmac_secret().
 // If the secret row is absent the helper RAISES and we reject the request — we never
 // fall back to a known constant. The supabase client is created just below.

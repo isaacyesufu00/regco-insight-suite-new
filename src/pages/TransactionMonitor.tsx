@@ -309,11 +309,15 @@ ${new Date().toISOString()}`;
       const toInsert = rows.map((r) => {
         const amount = parseFloat((r[iAmt] || "0").replace(/[,₦\s]/g, "")) || 0;
         const narration = iNarr >= 0 ? r[iNarr] : "";
-        let flagged = false, sev: string | null = null, reason: string | null = null, rule: string | null = null;
-        if (amount >= 5_000_000) { flagged = true; sev = "critical"; rule = "CTR"; reason = `Amount ${fmtNGN(amount)} meets CTR threshold (₦5,000,000)`; }
-        else if (amount >= 4_500_000 && amount < 5_000_000 && amount % 1000 === 0) { flagged = true; sev = "high"; rule = "STRUCTURING"; reason = `Possible structuring — ${fmtNGN(amount)} just below CTR`; }
-        else if (amount >= 1_000_000 && amount % 500_000 === 0) { flagged = true; sev = "medium"; rule = "ROUND_FIGURE"; reason = `Round-figure ${fmtNGN(amount)} ≥ ₦1M`; }
-
+        // Flagging is computed server-side by the transaction rules
+        // engine (fn_evaluate_transaction, fired by the AFTER INSERT
+        // trigger on unified_transactions). Values set here are overwritten
+        // on insert, so we deliberately do NOT pre-flag client-side —
+        // that keeps the single source of truth on the server and
+        // guarantees the STR/CTR/structuring/velocity/dormancy rules
+        // actually run. (Per-customer velocity/structuring requires a
+        // customer_id link; CBS push sets it — see Phase 2 enrichment
+        // for batch uploads that only carry a customer name.)
         return {
           user_id: user.id,
           account_number: iAcct >= 0 ? r[iAcct] : null,
@@ -324,11 +328,6 @@ ${new Date().toISOString()}`;
           narration: narration || null,
           channel: iChan >= 0 ? r[iChan] : null,
           branch_code: iBranch >= 0 ? r[iBranch] : null,
-          is_flagged: flagged,
-          flag_severity: sev,
-          flag_reason: reason,
-          flag_rule: rule,
-          review_status: flagged ? "pending" : "cleared",
         };
       });
 
@@ -337,9 +336,10 @@ ${new Date().toISOString()}`;
         await supabase.from("unified_transactions").insert(toInsert.slice(i, i + BATCH));
       }
 
-      const flagged = toInsert.filter((t) => t.is_flagged).length;
-      setBatchResult({ total: toInsert.length, flagged });
-      toast.success(`Processed ${toInsert.length} transactions — ${flagged} flagged`);
+      // Server-side flags are reflected after the refetch below; the
+      // upload only reports how many rows were ingested.
+      setBatchResult({ total: toInsert.length, flagged: 0 });
+      toast.success(`Processed ${toInsert.length} transactions — flags computed server-side`);
       fetchAllTx();
       fetchTodayStats();
       fetchLiveFeed();

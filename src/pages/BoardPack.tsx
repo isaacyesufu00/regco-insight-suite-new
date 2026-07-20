@@ -122,7 +122,7 @@ export default function BoardPack() {
         supabase.from('reports').select('report_type, regulator, status, generated_at, validation_passed, report_filename').eq('user_id', user.id).gte('created_at', since).order('generated_at', { ascending: false }),
         supabase.from('unified_transactions').select('flag_severity, flag_rule, review_status, str_reference, amount, transaction_date').eq('user_id', user.id).eq('is_flagged', true).gte('transaction_date', since),
         supabase.from('audit_issues').select('issue_ref, title, severity, status, owner_name, due_date, source, regulator').eq('user_id', user.id),
-        supabase.from('screening_results').select('search_name, highest_risk, matches_found, action_taken, created_at').eq('user_id', user.id).gte('created_at', since).order('created_at', { ascending: false }),
+        supabase.from('screening_results').select('id, highest_risk, matches_found, action_taken, search_date').eq('user_id', user.id).gte('search_date', since).order('search_date', { ascending: false }),
       ]);
 
       const r = reports || []; const f = flags || []; const a = issues || []; const s = screenings || [];

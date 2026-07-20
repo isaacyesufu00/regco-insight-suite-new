@@ -1,4 +1,5 @@
 import * as XLSX from 'https://esm.sh/xlsx@0.18.5';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = 'https://pdplkprcomjslilznbsl.supabase.co';
 const AI_GATEWAY_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
@@ -1243,14 +1244,43 @@ Deno.serve(async (req: Request) => {
   let reportId: string | null = null;
 
   try {
+    // Authenticate: derive identity from the verified JWT, never the body.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders(req) });
+    }
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const authClient = createClient(SUPABASE_URL, anonKey, { global: { headers: { Authorization: authHeader } } });
+    const { data: { user }, error: authErr } = await authClient.auth.getUser();
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders(req) });
+    }
+    const authUserId = user.id;
+
     const body = await req.json();
     const {
-      report_id, user_id, institution_name, cbn_license_number, cbn_license_category,
+      report_id, institution_name, cbn_license_number, cbn_license_category,
       compliance_lead_name, report_type, reporting_period_start, reporting_period_end,
       file_url, client_email,
     } = body;
 
     reportId = report_id;
+
+    // Enforce ownership: the report must belong to the authenticated user.
+    const ownRes = await fetch(`${SUPABASE_URL}/rest/v1/reports?id=eq.${encodeURIComponent(report_id)}&select=user_id`, {
+      method: "GET",
+      headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` },
+    });
+    if (ownRes.ok) {
+      const ownRows = await ownRes.json();
+      if (!Array.isArray(ownRows) || ownRows.length === 0 || ownRows[0].user_id !== authUserId) {
+        return new Response(JSON.stringify({ error: "Forbidden: report does not belong to you" }), {
+          status: 403,
+          headers: corsHeaders(req),
+        });
+      }
+    }
+
     const reportType: string = report_type || 'MFB Regulatory Return';
 
     await patchReport(report_id, { status: 'processing' }, serviceRoleKey);
@@ -1710,7 +1740,7 @@ Pre-computed Metrics: CAR=${metrics.car_percentage.toFixed(2)}%, Liquidity=${met
 
     const safeType = reportType.replace(/[^a-zA-Z0-9]/g, '_');
     const filename = `${institution_name.replace(/\s+/g, '_')}_${safeType}_${reporting_period_end}.txt`;
-    const storagePath = `${user_id}/${report_id}/${filename}`;
+    const storagePath = `${authUserId}/${report_id}/${filename}`;
 
     const uploadResponse = await fetch(
       `${SUPABASE_URL}/storage/v1/object/reports/${storagePath}`,

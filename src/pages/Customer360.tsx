@@ -135,7 +135,7 @@ export default function Customer360() {
         customer.account_number
           ? supabase.from("transaction_reviews").select("*").eq("account_number", customer.account_number).order("transaction_date", { ascending: false }).limit(20)
           : Promise.resolve({ data: [] }),
-        supabase.from("sanctions_entries").select("id, full_name, list_name, list_type").ilike("full_name", `%${firstName}%`).limit(5),
+        supabase.from("sanctions_entries").select("id, matched_name, watchlist_name, entity_type").ilike("matched_name", `%${firstName}%`).limit(5),
       ]);
       setCustomerAccounts(accountsRes.data || []);
       setCustomerKyc(kycRes.data || null);
@@ -619,10 +619,10 @@ export default function Customer360() {
                       {sanctionsMatches.map((match) => (
                         <div key={match.id} style={{ background: "#FFFFFF", borderRadius: "8px", padding: "12px 14px", marginBottom: "8px", border: "1px solid rgba(220,38,38,0.15)" }}>
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0A0A0A", margin: 0 }}>{match.full_name}</p>
-                            <span style={{ fontSize: "11px", background: "#FEF2F2", color: "#DC2626", borderRadius: "999px", padding: "2px 8px", fontWeight: 600 }}>{match.list_name}</span>
+                            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0A0A0A", margin: 0 }}>{match.matched_name}</p>
+                            <span style={{ fontSize: "11px", background: "#FEF2F2", color: "#DC2626", borderRadius: "999px", padding: "2px 8px", fontWeight: 600 }}>{match.watchlist_name}</span>
                           </div>
-                          <p style={{ fontSize: "12px", color: "#6B6B6B", margin: "4px 0 0" }}>Type: {match.list_type} · Action: Review and file STR if confirmed</p>
+                          <p style={{ fontSize: "12px", color: "#6B6B6B", margin: "4px 0 0" }}>Type: {match.entity_type || match.watchlist_name} · Action: Review and file STR if confirmed</p>
                         </div>
                       ))}
                     </div>

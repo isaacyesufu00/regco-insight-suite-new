@@ -103,7 +103,7 @@ serve(async (req) => {
     }
 
     // Pull related investigation context.
-    const [{ data: events }, { data: artifacts }, { data: customer }, { data: transactions }] =
+    const [{ data: events }, { data: artifacts }, { data: customer }, { data: transactions }, { data: institution }] =
       await Promise.all([
         admin.from("case_events").select("*").eq("case_id", case_id).order("created_at", { ascending: true }),
         admin.from("case_artifacts").select("*").eq("case_id", case_id),
@@ -113,15 +113,28 @@ serve(async (req) => {
         kase.customer_id
           ? admin.from("unified_transactions").select("*").eq("customer_id", kase.customer_id).order("transaction_date", { ascending: true }).limit(50)
           : Promise.resolve({ data: [] }),
+        kase.institution_id
+          ? admin.from("institutions").select("name, cbn_code").eq("id", kase.institution_id).maybeSingle()
+          : Promise.resolve({ data: null }),
       ]);
 
     const reportType = (report_type || (kase.trigger_kind === "transaction" ? "STR" : "STR")).toUpperCase();
     const now = new Date();
     const filingNo = `NFIU-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${case_id.slice(0, 8).toUpperCase()}`;
 
-    const subjectName = customer?.full_name_hash ? `[PII-ENCRYPTED:${xmlEscape(customer.full_name_hash)}]` : xmlEscape(kase.title || "Unknown Subject");
+    // The REPORTING INSTITUTION is the bank (institution), not the
+    // software vendor. Pull its registered name / CBN code.
+    const institutionName = institution?.name || "Unknown Institution";
+    const institutionCode = institution?.cbn_code || kase.institution_id || "";
+
+    // Subject real name lives on the transaction row (plaintext from the CBS
+    // feed). customers.full_name_hash is NOT reversible, so we never
+    // dump a hash as the subject name — use the transaction name,
+    // falling back to the case title.
+    const subjectName = (transactions && (transactions as any[])[0]?.customer_name)
+      ? xmlEscape((transactions as any[])[0].customer_name)
+      : xmlEscape(kase.title || "Unknown Subject");
     const customerSegment = customer?.customer_segment || "individual";
-    const institutionId = kase.institution_id || "";
 
     const txnRows = (transactions || [])
       .map((t) => {
@@ -179,8 +192,8 @@ serve(async (req) => {
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://goaml.org/schema/4.0 goaml_4_0.xsd">
   <ReportingInstitution>
-    <InstitutionCode>${xmlEscape(institutionId)}</InstitutionCode>
-    <InstitutionName>RegCo Insight Suite</InstitutionName>
+    <InstitutionCode>${xmlEscape(institutionCode)}</InstitutionCode>
+    <InstitutionName>${xmlEscape(institutionName)}</InstitutionName>
     <CountryCode>NG</CountryCode>
     <SubmissionDate>${xmlDateTime(now.toISOString())}</SubmissionDate>
   </ReportingInstitution>

@@ -37,8 +37,8 @@ interface BatchRow {
 }
 interface HistoryRow {
   id: string;
-  search_name: string;
-  search_bvn: string | null;
+  search_name_hash: string;
+  search_bvn_hash: string | null;
   highest_risk: string;
   matches_found: number;
   action_taken: string | null;
@@ -95,7 +95,7 @@ export default function Screening() {
     if (!user) return;
     const { data } = await supabase
       .from("screening_results")
-      .select("id, search_name, search_bvn, highest_risk, matches_found, action_taken, search_date")
+      .select("id, search_name_hash, search_bvn_hash, highest_risk, matches_found, action_taken, search_date")
       .eq("user_id", user.id)
       .order("search_date", { ascending: false })
       .limit(200);
@@ -123,12 +123,14 @@ export default function Screening() {
     const result = await runScreen(screenName.trim(), screenBvn.trim());
     if (result) {
       setScreeningResult(result);
-      // grab the newly-inserted record id for action_taken updates
+      // grab the newly-inserted record id for action_taken updates.
+      // screen-customer stores only a SHA-256 hash of the name (privacy by
+      // design), so we fetch the most recent row for this user rather than
+      // filtering on a plaintext name that is no longer stored.
       const { data: row } = await supabase
         .from("screening_results")
         .select("id")
         .eq("user_id", user!.id)
-        .eq("search_name", screenName.trim())
         .order("search_date", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -205,7 +207,7 @@ export default function Screening() {
   const filteredHistory = useMemo(() => {
     return history.filter((h) => {
       if (historyRiskFilter && h.highest_risk !== historyRiskFilter) return false;
-      if (historySearch && !h.search_name.toLowerCase().includes(historySearch.toLowerCase())) return false;
+      if (historySearch && !h.search_name_hash.toLowerCase().includes(historySearch.toLowerCase())) return false;
       return true;
     });
   }, [history, historySearch, historyRiskFilter]);
@@ -503,7 +505,7 @@ export default function Screening() {
                     const c = riskColor(h.highest_risk);
                     return (
                       <tr key={h.id} style={{ borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-                        <td style={{ padding: "10px 12px", color: "#0A0A0A", fontWeight: 500 }}>{h.search_name}</td>
+                        <td style={{ padding: "10px 12px", color: "#0A0A0A", fontWeight: 500 }} title={h.search_name_hash}>•••• {h.search_name_hash.slice(-6)}</td>
                         <td style={{ padding: "10px 12px", color: "#6B6B6B" }}>{new Date(h.search_date).toLocaleString()}</td>
                         <td style={{ padding: "10px 12px" }}>
                           <span style={{ background: c.bg, color: c.fg, border: `1px solid ${c.border}`, padding: "2px 8px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>
@@ -540,11 +542,11 @@ function ListStatusTab() {
     const sb = supabase as any;
     const [{ data: logs }, { data: entries }] = await Promise.all([
       sb.from("sanctions_sync_log").select("*").order("sync_date", { ascending: false }).limit(50),
-      sb.from("sanctions_entries").select("list_name").limit(20000),
+      sb.from("sanctions_entries").select("watchlist_name").limit(20000),
     ]);
     setSyncLogs(logs || []);
     const c: Record<string, number> = {};
-    (entries || []).forEach((r: any) => { c[r.list_name] = (c[r.list_name] || 0) + 1; });
+    (entries || []).forEach((r: any) => { c[r.watchlist_name] = (c[r.watchlist_name] || 0) + 1; });
     setCounts(c);
   };
 

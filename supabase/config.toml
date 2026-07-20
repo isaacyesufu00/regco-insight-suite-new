@@ -19,7 +19,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.process-report]
-verify_jwt = false
+verify_jwt = true
 
 [functions.agent-chat]
 verify_jwt = false
@@ -53,6 +53,15 @@ verify_jwt = false
 
 [functions.kyc-reminders]
 verify_jwt = false
+
+[functions.calculate-compliance-score]
+verify_jwt = true
+
+[functions.cac-lookup]
+verify_jwt = true
+
+[functions.regco-kyc-config]
+verify_jwt = true
 
 [functions.api-reports]
 verify_jwt = false

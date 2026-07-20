@@ -64,6 +64,17 @@ Deno.serve(async (req) => {
     const hash = await sha256(newKey);
     const prefix = newKey.slice(0, 10);
 
+    // Stamp the owning institution so receive-transaction can bind each
+    // request to the API key's institution (prevents cross-institution
+    // forgery). A user may belong to several institutions; pick the first.
+    const { data: instRow } = await supabase
+      .from("institution_users")
+      .select("institution_id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    const institutionId = instRow?.institution_id ?? null;
+
     const { data: existing } = await supabase
       .from("webhook_api_keys")
       .select("id")
@@ -73,13 +84,13 @@ Deno.serve(async (req) => {
     if (existing) {
       const { error } = await supabase
         .from("webhook_api_keys")
-        .update({ key_hash: hash, key_prefix: prefix, active: true })
+        .update({ key_hash: hash, key_prefix: prefix, active: true, institution_id: institutionId })
         .eq("user_id", userId);
       if (error) return json({ error: "Failed to rotate key" }, 500);
     } else {
       const { error } = await supabase
         .from("webhook_api_keys")
-        .insert({ user_id: userId, key_hash: hash, key_prefix: prefix, active: true });
+        .insert({ user_id: userId, key_hash: hash, key_prefix: prefix, active: true, institution_id: institutionId });
       if (error) return json({ error: "Failed to create key" }, 500);
     }
 

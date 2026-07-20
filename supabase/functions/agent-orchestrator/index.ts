@@ -324,7 +324,7 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
         const [kyc, accounts, screenings] = await Promise.all([
           userClient.from("customer_kyc").select("*").eq("customer_id", customer.id).maybeSingle(),
           userClient.from("customer_accounts").select("*").eq("customer_id", customer.id),
-          userClient.from("screening_results").select("*").eq("customer_id", customer.id).order("created_at", { ascending: false }).limit(3),
+          userClient.from("screening_results").select("*").eq("customer_id", customer.id).order("search_date", { ascending: false }).limit(3),
         ]);
         return { found: true, customer, kyc: kyc.data, accounts: accounts.data ?? [], recent_screenings: screenings.data ?? [] };
       }),
@@ -346,7 +346,7 @@ function buildTools(ctx: { userId: string; userClient: ReturnType<typeof createC
       execute: (args) => wrap("get_risk_score", args, async () => {
         const [kyc, screenings, txs] = await Promise.all([
           userClient.from("customer_kyc").select("*").eq("customer_id", args.customer_id).maybeSingle(),
-          userClient.from("screening_results").select("highest_risk,matches_found,created_at").eq("customer_id", args.customer_id).order("created_at", { ascending: false }).limit(5),
+          userClient.from("screening_results").select("highest_risk,matches_found,search_date").eq("customer_id", args.customer_id).order("search_date", { ascending: false }).limit(5),
           userClient.from("unified_transactions").select("amount").eq("customer_id", args.customer_id).limit(500),
         ]);
         let score = 20;

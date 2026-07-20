@@ -3049,6 +3049,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           full_name_hash: string | null
+          full_name: string | null
           id: string
           position: string | null
           source: string | null
@@ -3060,6 +3061,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           date_of_birth?: string | null
+          full_name?: string | null
           full_name_hash?: string | null
           id?: string
           position?: string | null
@@ -3923,19 +3925,31 @@ export type Database = {
           created_at: string | null
           customer_id: string | null
           id: string
-          institution_id: string
+          institution_id: string | null
           match_score: number | null
           matched_name: string
           watchlist_name: string
+          aliases: string | null
+          entity_type: string | null
+          last_updated: string | null
+          nationality: string | null
+          notes: string | null
+          source_url: string | null
         }
         Insert: {
           created_at?: string | null
           customer_id?: string | null
           id?: string
-          institution_id: string
+          institution_id?: string | null
           match_score?: number | null
           matched_name: string
           watchlist_name: string
+          aliases?: string | null
+          entity_type?: string | null
+          last_updated?: string | null
+          nationality?: string | null
+          notes?: string | null
+          source_url?: string | null
         }
         Update: {
           created_at?: string | null
@@ -3945,6 +3959,12 @@ export type Database = {
           match_score?: number | null
           matched_name?: string
           watchlist_name?: string
+          aliases?: string | null
+          entity_type?: string | null
+          last_updated?: string | null
+          nationality?: string | null
+          notes?: string | null
+          source_url?: string | null
         }
         Relationships: [
           {
@@ -4846,6 +4866,7 @@ export type Database = {
           active: boolean
           created_at: string
           id: string
+          institution_id: string | null
           key_hash: string
           key_prefix: string
           last_used_at: string | null
@@ -4855,6 +4876,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          institution_id?: string | null
           key_hash: string
           key_prefix: string
           last_used_at?: string | null
@@ -4864,6 +4886,7 @@ export type Database = {
           active?: boolean
           created_at?: string
           id?: string
+          institution_id?: string | null
           key_hash?: string
           key_prefix?: string
           last_used_at?: string | null

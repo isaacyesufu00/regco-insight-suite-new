@@ -1,12 +1,12 @@
 import { PageShell, PageHero, SectionHeading, Para, FeatureRow, ProseSection, MAX, NARROW, T } from "./_shared";
 
 const protectionCards = [
-  { title: "Encryption at Rest", body: "All data stored on RegCo is encrypted at rest using AES-256. This is the same encryption standard used by global financial institutions and is enforced at the infrastructure level by default." },
-  { title: "Encryption in Transit", body: "All data transmitted between your browser and our servers is protected using TLS 1.3. No data travels over the network in an unencrypted state." },
-  { title: "Strict Data Isolation", body: "Every institution's data is completely isolated using database-level Row Level Security. It is architecturally impossible for one institution's data to be accessed by another user or institution." },
-  { title: "Login Protection", body: "RegCo enforces automatic account lockout after 5 consecutive failed login attempts with a 15-minute cooldown period. All login activity is logged and visible to your compliance lead in their security activity log." },
-  { title: "Password Security", body: "RegCo checks every password against the HaveIBeenPwned database of over 800 million known compromised credentials. Any password that appears in a known data breach is automatically rejected." },
-  { title: "Full Audit Trail", body: "Every action taken on your account is recorded in a detailed audit log. Your compliance lead can review all account activity at any time directly from their settings page." },
+  { title: "Encryption at Rest", body: "Sensitive data is protected by two layers of encryption at rest: managed database volumes are encrypted by the infrastructure provider, and PII and BVN numbers are additionally encrypted at the field level using AES-256 with keys held in Supabase Vault. Encryption keys are never stored in application code." },
+  { title: "Encryption in Transit", body: "All data transmitted between your browser and our servers is protected using TLS 1.2 or higher (TLS 1.3 supported). No data travels over the network in an unencrypted state." },
+  { title: "Strict Data Isolation", body: "Every institution's data is isolated at the database layer using PostgreSQL Row Level Security with per-institution policies. Access is enforced by the database itself — not only by application code — so a user from one institution cannot read or write another institution's records." },
+  { title: "Login Protection", body: "RegCo enforces rate-limited login protection through Supabase Auth, including automatic account lockout after repeated failed attempts and a cooldown period. Login events are recorded in the immutable audit trail." },
+  { title: "Password Security", body: "RegCo enforces strong-password requirements and, where enabled in Supabase Auth, rejects passwords found in known breach datasets. Weak or compromised passwords are blocked at signup." },
+  { title: "Full Audit Trail", body: "Significant actions on your regulated records — customers, KYC, transactions, cases, alerts and reports — are written to a tamper-proof, immutable, per-institution audit trail with cryptographic hash chaining. Your compliance lead can verify the integrity of the trail at any time." },
 ];
 
 const dataChecklist = [
@@ -29,11 +29,11 @@ const accessLeft = [
   "Invitation-only access — no public signup",
   "Email confirmation required on all accounts",
   "Strong password requirements enforced at signup",
-  "Compromised password detection via HaveIBeenPwned",
-  "Automatic lockout after 5 failed login attempts",
-  "15-minute cooldown on locked accounts",
+  "Strong password requirements and breached-password checks (via Supabase Auth)",
+  "Automatic account lockout after repeated failed login attempts",
+  "Cooldown period on locked accounts",
   "Cryptographically signed JWT session tokens",
-  "All backend operations require a valid JWT",
+  "All user-facing backend operations require a valid JWT; scheduled jobs use isolated service credentials",
   "Admin operations fully separated from client operations",
   "Service role keys never exposed to the browser or frontend",
 ];
@@ -46,7 +46,7 @@ const accessRight = [
   "Brute force login attacks are blocked automatically",
   "Attackers cannot simply wait and retry immediately",
   "Sessions cannot be forged or tampered with",
-  "Our backend cannot be called directly from a browser",
+  "Our backend rejects unauthenticated calls — every user-facing endpoint requires a valid session JWT",
   "Clients and admins operate in completely separate environments",
   "The most sensitive credentials are inaccessible from the internet",
 ];
@@ -147,7 +147,7 @@ export default function SecurityNewPage() {
             </div>
           ))}
         </div>
-        <Para style={{ fontSize: 14, marginTop: 24 }}>RegCo is currently pursuing formal NDPC registration. We are working toward ISO 27001 certification. All security practices on this page reflect the current state of our platform and infrastructure as of March 2026.</Para>
+        <Para style={{ fontSize: 14, marginTop: 24 }}>RegCo is currently pursuing formal NDPC registration. We are working toward ISO 27001 certification. All security practices on this page reflect the current implemented state of our platform and infrastructure as of July 2026.</Para>
       </div>
 
       <div style={{ maxWidth: NARROW, margin: "0 auto", paddingInline: 16, paddingBottom: 64 }}>
@@ -173,7 +173,7 @@ export default function SecurityNewPage() {
             </div>
           ))}
         </div>
-        <Para style={{ fontSize: 12, marginTop: 32 }}>This page was last reviewed March 2026. RegCo is committed to maintaining and improving our security posture as the platform grows. Material changes to our security practices will be communicated to all active clients.</Para>
+        <Para style={{ fontSize: 12, marginTop: 32 }}>This page was last reviewed July 2026. RegCo runs a continuous security-hardening programme and independently reviews controls as the platform evolves; controls described here reflect the current implemented state. Material changes to our security practices will be communicated to all active clients.</Para>
       </div>
     </PageShell>
   );
