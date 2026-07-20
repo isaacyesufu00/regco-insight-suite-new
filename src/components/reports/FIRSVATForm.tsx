@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Section, Field, Row, TextInput, NumberInput, Computed, fmt } from "./FormShell";
+import { Section, Field, Row, TextInput, NumberInput, Computed, num, PaymentFields, DeclarationSection } from "./FormShell";
 
 export interface FIRSVATPayload {
   section_a: Record<string, string>;
@@ -16,7 +16,6 @@ interface Props {
   onValidChange: (valid: boolean, payload: FIRSVATPayload) => void;
 }
 
-const num = (s: string) => parseFloat(s) || 0;
 const RATE = 0.075;
 
 export default function FIRSVATForm({ institutionName, periodLabel, onValidChange }: Props) {
@@ -81,27 +80,24 @@ export default function FIRSVATForm({ institutionName, periodLabel, onValidChang
         {netVAT < 0 && (
           <p style={{ fontSize: 11, color: "#6E6E73", margin: 0 }}>If negative, this is a VAT credit carried forward.</p>
         )}
-        <Field label="Has payment been made? *">
-          <select value={d.paid} onChange={ev => setD({ ...d, paid: ev.target.value })}
-            style={{ width: "100%", background: "#FFF", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, padding: "10px 12px", fontSize: 14 }}>
-            <option value="">Select…</option><option>Yes</option><option>No</option><option>N/A — credit position</option>
-          </select>
-        </Field>
-        {d.paid === "Yes" && (
-          <Row>
-            <Field label="Payment date"><TextInput type="date" value={d.payment_date} onChange={ev => setD({ ...d, payment_date: ev.target.value })} /></Field>
-            <Field label="FIRS e-receipt number"><TextInput value={d.receipt_number} onChange={ev => setD({ ...d, receipt_number: ev.target.value })} /></Field>
-          </Row>
-        )}
+        <PaymentFields
+          label="Has payment been made? *"
+          options={["Yes", "No", "N/A — credit position"]}
+          paid={d.paid} onPaidChange={v => setD({ ...d, paid: v })}
+          paymentDate={d.payment_date} onPaymentDateChange={v => setD({ ...d, payment_date: v })}
+          receiptNumber={d.receipt_number} onReceiptChange={v => setD({ ...d, receipt_number: v })}
+          receiptLabel="FIRS e-receipt number"
+          showDetails={p => p === "Yes"}
+        />
       </Section>
 
-      <Section letter="E" title="Declaration">
-        <Row>
-          <Field label="Authorised Signatory *"><TextInput value={e.signatory_name} onChange={ev => setE({ ...e, signatory_name: ev.target.value })} /></Field>
-          <Field label="Designation *"><TextInput value={e.designation} onChange={ev => setE({ ...e, designation: ev.target.value })} placeholder="e.g. Chief Finance Officer" /></Field>
-        </Row>
-        <Field label="Date *"><TextInput type="date" value={e.date} onChange={ev => setE({ ...e, date: ev.target.value })} /></Field>
-      </Section>
+      <DeclarationSection
+        letter="E"
+        signatoryName={e.signatory_name} onSignatoryChange={v => setE({ ...e, signatory_name: v })}
+        designation={e.designation} onDesignationChange={v => setE({ ...e, designation: v })}
+        date={e.date} onDateChange={v => setE({ ...e, date: v })}
+        designationPlaceholder="e.g. Chief Finance Officer"
+      />
     </div>
   );
 }

@@ -1,10 +1,13 @@
 import { ReactNode } from "react";
+import { Plus, Trash2 } from "lucide-react";
 
 export const fmt = (n: number | string | undefined | null) => {
   const v = typeof n === "string" ? parseFloat(n) : n;
   if (v === null || v === undefined || isNaN(v as number)) return "0";
   return new Intl.NumberFormat("en-NG", { maximumFractionDigits: 2 }).format(v as number);
 };
+
+export const num = (s: string) => parseFloat(s) || 0;
 
 const baseField: React.CSSProperties = {
   width: "100%",
@@ -105,5 +108,100 @@ export function Computed({ label, value, prefix = "" }: { label: string; value: 
         {prefix}{typeof value === "number" ? fmt(value) : value}
       </div>
     </div>
+  );
+}
+
+export const tableInputStyle: React.CSSProperties = {
+  width: "100%", border: "1px solid rgba(0,0,0,0.12)", borderRadius: 6,
+  padding: "6px 8px", fontSize: 12, background: "#FFF",
+};
+
+export function TableHeader({ columns }: { columns: string[] }) {
+  return (
+    <thead>
+      <tr style={{ background: "#F5F5F0" }}>
+        {columns.map((h, i) => (
+          <th key={h || i} style={{ textAlign: "left", padding: "8px 6px", fontWeight: 600, color: "#0A0A0A", borderBottom: "1px solid rgba(0,0,0,0.12)", whiteSpace: "nowrap" }}>{h}</th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
+
+export function AddRowButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick}
+      style={{ marginTop: 12, display: "inline-flex", alignItems: "center", gap: 6, background: "#FFF", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 8, padding: "8px 14px", fontSize: 13, cursor: "pointer", color: "#0A0A0A" }}>
+      <Plus size={14} /> {label}
+    </button>
+  );
+}
+
+export function RemoveRowButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      style={{ background: "transparent", border: "none", color: disabled ? "#CCC" : "#0A0A0A", cursor: disabled ? "not-allowed" : "pointer", padding: 4 }}>
+      <Trash2 size={14} />
+    </button>
+  );
+}
+
+export function DeclarationSection({
+  letter, signatoryName, designation, date,
+  onSignatoryChange, onDesignationChange, onDateChange, designationPlaceholder,
+}: {
+  letter: string;
+  signatoryName: string;
+  designation: string;
+  date: string;
+  onSignatoryChange: (v: string) => void;
+  onDesignationChange: (v: string) => void;
+  onDateChange: (v: string) => void;
+  designationPlaceholder?: string;
+}) {
+  return (
+    <Section letter={letter} title="Declaration">
+      <Row>
+        <Field label="Authorised Signatory *"><TextInput value={signatoryName} onChange={ev => onSignatoryChange(ev.target.value)} /></Field>
+        <Field label="Designation *"><TextInput value={designation} onChange={ev => onDesignationChange(ev.target.value)} placeholder={designationPlaceholder} /></Field>
+      </Row>
+      <Field label="Date *"><TextInput type="date" value={date} onChange={ev => onDateChange(ev.target.value)} /></Field>
+    </Section>
+  );
+}
+
+export function PaymentFields({
+  label, options, paid, onPaidChange,
+  paymentDate, onPaymentDateChange, receiptNumber, onReceiptChange,
+  dateLabel = "Payment date", receiptLabel = "Receipt number",
+  showDetails,
+}: {
+  label: string;
+  options: string[];
+  paid: string;
+  onPaidChange: (v: string) => void;
+  paymentDate: string;
+  onPaymentDateChange: (v: string) => void;
+  receiptNumber: string;
+  onReceiptChange: (v: string) => void;
+  dateLabel?: string;
+  receiptLabel?: string;
+  showDetails: (paid: string) => boolean;
+}) {
+  return (
+    <>
+      <Field label={label}>
+        <Select value={paid} onChange={ev => onPaidChange(ev.target.value)}>
+          <option value="">Select…</option>
+          {options.map(o => <option key={o}>{o}</option>)}
+        </Select>
+      </Field>
+      {showDetails(paid) && (
+        <Row>
+          <Field label={dateLabel}><TextInput type="date" value={paymentDate} onChange={ev => onPaymentDateChange(ev.target.value)} /></Field>
+          <Field label={receiptLabel}><TextInput value={receiptNumber} onChange={ev => onReceiptChange(ev.target.value)} /></Field>
+        </Row>
+      )}
+    </>
   );
 }
