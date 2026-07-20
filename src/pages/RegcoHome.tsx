@@ -111,41 +111,32 @@ function Nav() {
   );
 }
 
-/* ---------- hero ---------- */
+/* ---------- hero (Paper reference) ---------- */
 function Hero() {
   return (
     <div style={{ background: T.canvas, flexGrow: 1, position: "relative" }}>
-      <div style={{ paddingTop: 80 }}>
-        <div style={{ maxWidth: 688, margin: "0 auto", paddingInline: 16 }}>
-          <div>
-            <div style={{ color: T.ink, fontFamily: SERIF, fontSize: 24, letterSpacing: "-0.24px", lineHeight: 1.15, maxWidth: 401.856, textWrap: "balance" }}>
-              Compliance intelligence for financial institutions.
+      <div style={{ paddingTop: 64, paddingBottom: 128 }}>
+        <div style={{ maxWidth: 1040, margin: "0 auto", width: "100%", paddingInline: 16 }}>
+          <div style={{ position: "relative" }}>
+            <div style={{ marginLeft: "auto", maxWidth: 520 }}>
+              <div style={{ color: T.ink66, display: "inline-block", fontFamily: SANS, fontSize: 14, fontWeight: 500, lineHeight: 1 }}>
+                Jul 20, 2026
+              </div>
+              <div style={{ color: T.inkCC, fontFamily: SERIF, fontSize: 38, letterSpacing: "-0.38px", lineHeight: 1.05, marginTop: 16, textWrap: "balance" }}>
+                Compliance intelligence for financial institutions.
+              </div>
+            </div>
+            <div style={{ position: "absolute", top: 4, left: 0, height: 36, width: 36, borderRadius: 999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ color: T.inkB3, fontFamily: SANS, fontSize: 16, lineHeight: 1.5 }}>←</span>
             </div>
           </div>
-          <div>
-            <div style={{ maxWidth: 550.16, marginTop: 20 }}>
-              <span style={{ display: "inline-block", color: T.ink8C, fontFamily: SERIF, fontSize: 20, lineHeight: 1.2, textWrap: "pretty" }}>
-                Compliance shouldn’t begin after an audit. The future of regulatory operations is continuous monitoring, intelligent detection, and automated reporting — so every transaction, customer, and regulatory return is always ready for review.
-              </span>
-            </div>
-          </div>
-          <div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 32 }}>
-              <DarkPill><Link to="/book-demo" style={{ color: T.canvasTone, textDecoration: "none" }}>Start Demo</Link></DarkPill>
-              <LightChip><Link to="/product" style={{ color: T.inkCC, textDecoration: "none" }}>Explore Platform</Link></LightChip>
-            </div>
-          </div>
-        </div>
 
-        <div style={{ maxWidth: 1136, margin: "80px auto 0", paddingInline: 16 }}>
-          <div>
-            <div style={{ borderRadius: 4, boxShadow: "inset 0 0 0 1px #0000001A", overflow: "clip", position: "relative", aspectRatio: "1040 / 419" }}>
-              <img
-                src="/hero-paperwork.png"
-                alt="RegCo platform preview"
-                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
-              />
-            </div>
+          <div style={{ marginTop: 64, borderRadius: 4, boxShadow: "inset 0 0 0 1px #00000026", overflow: "clip", position: "relative", aspectRatio: "2080 / 838" }}>
+            <img
+              src="/hero-paperwork.png"
+              alt="RegCo platform preview"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+            />
           </div>
         </div>
       </div>
