@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Activity, AlertTriangle, Upload, Copy, Eye, EyeOff, RefreshCw,
@@ -11,6 +11,26 @@ import { useFeatureAccess } from "@/hooks/useFeatureAccess";
 import { useProfile } from "@/contexts/ProfileContext";
 
 type Tab = "live" | "batch" | "flagged" | "str";
+type Domain = "ALL" | "AML" | "FRAUD" | "CTR";
+
+// Maps a flagged transaction's rule code to its regulatory monitoring domain.
+// Mirrors the server-side transaction_rules.category catalogue
+// (CBN Baseline Standards Art. 8 — fraud functionalities must be
+// clearly segregated from AML/CFT/CPF detection).
+const FRAUD_RULES = new Set(["VELOCITY_24H", "DORMANT_REACTIVATION"]);
+const CTR_RULES = new Set(["CTR_INDIVIDUAL_5M", "CTR_CORPORATE_10M"]);
+const domainOf = (rule?: string | null): Exclude<Domain, "ALL"> => {
+  if (!rule) return "AML";
+  if (CTR_RULES.has(rule)) return "CTR";
+  if (FRAUD_RULES.has(rule)) return "FRAUD";
+  return "AML";
+};
+
+const DOMAIN_META: Record<Exclude<Domain, "ALL">, { label: string; short: string; fg: string; bg: string; border: string }> = {
+  AML: { label: "AML / CFT / CPF", short: "AML", fg: "#991B1B", bg: "#FEF2F2", border: "#FCA5A5" },
+  FRAUD: { label: "Fraud Monitoring", short: "FRAUD", fg: "#9A3412", bg: "#FFF7ED", border: "#FDBA74" },
+  CTR: { label: "Currency Transaction", short: "CTR", fg: "#1E40AF", bg: "#EFF6FF", border: "#BFDBFE" },
+};
 const WEBHOOK_URL = `https://pdplkprcomjslilznbsl.supabase.co/functions/v1/receive-transaction`;
 
 interface UnifiedTx {
@@ -58,6 +78,7 @@ export default function TransactionMonitor() {
   const [loadingAll, setLoadingAll] = useState(true);
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [domainFilter, setDomainFilter] = useState<Domain>("ALL");
   const [search, setSearch] = useState("");
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
@@ -94,7 +115,7 @@ export default function TransactionMonitor() {
       .gte("transaction_date", since)
       .order("transaction_date", { ascending: false })
       .limit(100);
-    setLiveTransactions((data as UnifiedTx[]) || []);
+    setLiveTransactions((data as unknown as UnifiedTx[]) || []);
   }, [user]);
 
   const fetchAllTx = useCallback(async () => {
@@ -106,7 +127,7 @@ export default function TransactionMonitor() {
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false })
       .limit(500);
-    setAllTx((data as UnifiedTx[]) || []);
+    setAllTx((data as unknown as UnifiedTx[]) || []);
     setLoadingAll(false);
   }, [user]);
 
@@ -332,6 +353,7 @@ ${new Date().toISOString()}`;
 
   // ============== DERIVED ==============
   const flaggedRows = allTx.filter((t) => t.is_flagged).filter((t) => {
+    if (domainFilter !== "ALL" && domainOf(t.flag_rule) !== domainFilter) return false;
     if (severityFilter !== "all" && t.flag_severity !== severityFilter) return false;
     if (statusFilter !== "all" && t.review_status !== statusFilter) return false;
     if (search) {
@@ -342,16 +364,36 @@ ${new Date().toISOString()}`;
     return true;
   });
 
+  // Per-domain counts across all flagged transactions — surfaces the
+  // AML / Fraud / CTR segregation required by CBN Baseline Standards Art. 8.
+  const domainCounts = useMemo(() => {
+    const c: Record<Exclude<Domain, "ALL">, number> = { AML: 0, FRAUD: 0, CTR: 0 };
+    for (const t of allTx) {
+      if (t.is_flagged) c[domainOf(t.flag_rule)] += 1;
+    }
+    return c;
+  }, [allTx]);
+
   const strQueue = allTx.filter((t) => t.is_flagged && (t.review_status === "escalated" || t.review_status === "reported"));
 
   // ============== RENDER ==============
   return (
     <div style={{ fontFamily: "Inter, sans-serif", maxWidth: 1180, margin: "0 auto" }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.5px", margin: 0 }}>Transaction Fraud Prevention</h1>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#0A0A0A", letterSpacing: "-0.5px", margin: 0 }}>Transaction Monitoring</h1>
         <p style={{ fontSize: 14, color: "#6B6B6B", margin: "4px 0 0" }}>
           Live AML/CFT screening, batch review, and STR escalation in one console.
         </p>
+        {/* CBN Baseline Standards Art. 8 — fraud monitoring must be segregated
+            from AML/CFT/CPF detection and appropriately governed. */}
+        <div style={{ marginTop: 14, display: "flex", gap: 10, alignItems: "flex-start", background: "#F5F5F0", border: "1px solid rgba(0,0,0,0.07)", borderRadius: 10, padding: "12px 16px" }}>
+          <Shield size={16} color="#0A0A0A" style={{ flexShrink: 0, marginTop: 1 }} />
+          <p style={{ fontSize: 12.5, color: "#525252", margin: 0, lineHeight: 1.5 }}>
+            <strong style={{ color: "#0A0A0A" }}>Segregated monitoring.</strong> Fraud and AML/CFT/CPF detection run as
+            distinct, governed functions per CBN Baseline Standards (Art. 8). Each alert is tagged to its domain so fraud
+            signal volume never masks or degrades AML detection effectiveness.
+          </p>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -571,6 +613,25 @@ ${new Date().toISOString()}`;
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search account, customer, reason..."
                 style={{ width: "100%", height: 36, paddingLeft: 34, paddingRight: 12, fontSize: 13, border: "1px solid rgba(0,0,0,0.12)", borderRadius: 8, outline: "none", boxSizing: "border-box" }} />
             </div>
+            {(["ALL", "AML", "FRAUD", "CTR"] as Domain[]).map((d) => {
+              const active = domainFilter === d;
+              const meta = d === "ALL" ? null : DOMAIN_META[d];
+              const count = d === "ALL" ? allTx.filter((t) => t.is_flagged).length : domainCounts[d];
+              return (
+                <button key={d} onClick={() => setDomainFilter(d)}
+                  style={{
+                    padding: "6px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600,
+                    background: active ? (meta ? meta.fg : "#0A0A0A") : "transparent",
+                    color: active ? "#FFFFFF" : "#6B6B6B",
+                    border: active ? "1px solid transparent" : `1px solid ${meta ? meta.border : "rgba(0,0,0,0.12)"}`,
+                    cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+                  }}>
+                  {meta ? meta.short : "All Domains"}
+                  <span style={{ fontSize: 10, fontWeight: 700, opacity: 0.85 }}>{count}</span>
+                </button>
+              );
+            })}
+            <span style={{ width: 1, height: 24, background: "rgba(0,0,0,0.08)" }} />
             {["all", "critical", "high", "medium"].map((s) => (
               <FilterPill key={s} label={s === "all" ? "All Severity" : s} active={severityFilter === s} onClick={() => setSeverityFilter(s)} />
             ))}
@@ -639,6 +700,8 @@ function FlaggedRow({ tx, expanded, onToggle, onUpdate, onGenerateSTR }: {
 }) {
   const sev = tx.flag_severity || "medium";
   const sevColor = sev === "critical" ? "#DC2626" : sev === "high" ? "#D97706" : "#2563EB";
+  const dom = domainOf(tx.flag_rule);
+  const domMeta = DOMAIN_META[dom];
   return (
     <div style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}>
       <div onClick={onToggle} style={{ padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", borderLeft: `3px solid ${sevColor}` }}>
@@ -651,7 +714,8 @@ function FlaggedRow({ tx, expanded, onToggle, onUpdate, onGenerateSTR }: {
             </p>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, background: domMeta.bg, color: domMeta.fg, border: `1px solid ${domMeta.border}`, borderRadius: 999, padding: "2px 8px", textTransform: "uppercase" }}>{domMeta.short}</span>
           <span style={{ fontSize: 11, fontWeight: 700, background: `${sevColor}15`, color: sevColor, borderRadius: 999, padding: "2px 10px", textTransform: "uppercase" }}>{sev}</span>
           <span style={{ fontSize: 11, color: "#6B6B6B", textTransform: "capitalize" }}>{tx.review_status}</span>
           <p style={{ fontSize: 14, fontWeight: 700, color: "#0A0A0A", margin: 0, minWidth: 120, textAlign: "right" }}>{fmtNGN(tx.amount)}</p>

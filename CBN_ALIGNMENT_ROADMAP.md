@@ -22,23 +22,29 @@ full mapping.
 
 ## Backlog gaps
 
-### G1 — Fraud / AML segregation & governance (PRIORITY)
+### G1 — Fraud / AML segregation & governance (PRIORITY) — ✅ DONE (2026-07-20)
 - **Standard:** Where the AML Solution is also deployed for fraud monitoring, its
   fraud-related functionalities must be *clearly segregated and appropriately
   governed* so AML/CFT/CPF detection effectiveness is not compromised.
-- **Current state:** `TransactionMonitor.tsx` is titled "Transaction Fraud Prevention"
-  and blends AML and fraud in one console. Capability exists; the governance
-  separation is not explicit.
-- **Action:** Introduce a distinct fraud/AML configuration boundary — separate rule
-  sets, access scope, and audit scoping — and surface the segregation in the UI.
+- **Root model:** The DB already segregates via `transaction_rules.category`
+  ∈ {AML, FRAUD, CTR} and `transaction_alerts.category` (seeded rules: CTR ₦5M/₦10M,
+  AML structuring/round-figure/large-cash, FRAUD velocity/dormant-reactivation).
+- **UI/governance layer added:** `TransactionMonitor.tsx` now carries a governance
+  banner citing CBN Art. 8, an All/AML/Fraud/CTR domain switcher with per-domain
+  counts, and a domain badge on every flagged row. Domain is derived from `flag_rule`
+  using the same rule→category mapping as the server engine.
+- **Files:** `src/pages/TransactionMonitor.tsx`.
 
-### G2 — Enterprise Case Management workbench (PRIORITY)
+### G2 — Enterprise Case Management workbench (PRIORITY) — ✅ DONE (2026-07-20)
 - **Standard:** ECM capability that automates creation, assignment, prioritisation,
   and tracking of cases from AML/CFT/CPF alerts, with full audit trails.
-- **Current state:** Escalation queue exists inside `TransactionMonitor` (escalate →
-  reported), but no standalone assign/prioritise/SLA workbench.
-- **Action:** Build a dedicated Case Management page over the `cases` table with
-  owner assignment, priority, SLA timers, and per-case audit trail.
+- **Built:** New `src/pages/CaseManagement.tsx` over the existing `cases` table —
+  create, assign (assignee_id), prioritise (severity), SLA (`sla_due_at` with overdue
+  highlighting), status workflow (open→investigating→escalated→closed), and a
+  `case_status_history` row written on every transition (full audit trail).
+- **Routing:** `/dashboard/cases`, gated by `FeatureGate` `auditTracker`
+  (State MFB+), mirroring `audit-tracker`.
+- **Files:** `src/pages/CaseManagement.tsx`, `src/App.tsx`.
 
 ### G3 — Documented periodic ML/TF/PF risk assessment
 - **Standard:** Periodic risk assessments at enterprise and business-line level,
