@@ -360,10 +360,35 @@ function CareersCTA() {
 /* ---------- footer ---------- */
 function Footer() {
   const cols = [
-    { h: "Platform", items: ["Overview", "Fraud Detection", "Identity Screening", "Audit & Governance", "Regulatory Reporting", "AI Compliance Brain"] },
-    { h: "Company", items: ["About", "Customers", "Pricing", "Careers", "Contact"] },
-    { h: "Resources", items: ["Documentation", "Knowledge Base", "Compliance Guides", "Blog", "Platform Updates"] },
-    { h: "Legal", items: ["Privacy Policy", "Terms of Service", "Security", "Data Processing Agreement", "Responsible AI"] },
+    { h: "Platform", items: [
+      { l: "Overview", to: "/product" },
+      { l: "Fraud Detection", to: "/fraud-detection" },
+      { l: "Identity Screening", to: "/identity-screening" },
+      { l: "Audit & Governance", to: "/audit-governance" },
+      { l: "Regulatory Reporting", to: "/regulatory-reporting" },
+      { l: "AI Compliance Brain", to: "/ai-compliance-brain" },
+    ] },
+    { h: "Company", items: [
+      { l: "About", to: "/about" },
+      { l: "Customers", to: "/customers" },
+      { l: "Pricing", to: "/pricing" },
+      { l: "Careers", to: "/careers" },
+      { l: "Contact", to: "/contact" },
+    ] },
+    { h: "Resources", items: [
+      { l: "Documentation", to: "/docs" },
+      { l: "Knowledge Base", to: "/knowledge-base" },
+      { l: "Compliance Guides", to: "/blog/compliance-guide" },
+      { l: "Blog", to: "/blog/updates" },
+      { l: "Platform Updates", to: "/blog/updates" },
+    ] },
+    { h: "Legal", items: [
+      { l: "Privacy Policy", to: "/legal/privacy-policy" },
+      { l: "Terms of Service", to: "/legal/terms-of-service" },
+      { l: "Security", to: "/security" },
+      { l: "Data Processing Agreement", to: "/legal/data-processing" },
+      { l: "Responsible AI", to: "/legal/ndpc-compliance" },
+    ] },
   ];
   return (
     <div style={{ background: T.canvas }}>
@@ -378,7 +403,7 @@ function Footer() {
                 <div style={{ color: T.inkE6, fontFamily: SANS, fontSize: 14, fontWeight: 500, letterSpacing: "-0.14px", lineHeight: 1.43, textWrap: "balance" }}>{c.h}</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 16 }}>
                   {c.items.map((i) => (
-                    <a key={i} href="#" style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, fontWeight: 500, lineHeight: 1.43, textDecoration: "none" }}>{i}</a>
+                    <Link key={i.l} to={i.to} style={{ color: T.ink99, fontFamily: SANS, fontSize: 14, fontWeight: 500, lineHeight: 1.43, textDecoration: "none" }}>{i.l}</Link>
                   ))}
                 </div>
               </div>

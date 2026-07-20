@@ -64,6 +64,14 @@ import DashboardInsights from "./pages/DashboardInsights";
 import { WhoWeServePage, PricingPage } from "./pages/marketing/MarketingPages";
 import Homepage from "./pages/marketing/Homepage";
 import DocsPage from "./pages/marketing/DocsPage";
+import FraudDetectionPage from "./pages/marketing/FraudDetectionPage";
+import IdentityScreeningPage from "./pages/marketing/IdentityScreeningPage";
+import AuditGovernancePage from "./pages/marketing/AuditGovernancePage";
+import RegulatoryReportingPage from "./pages/marketing/RegulatoryReportingPage";
+import AiComplianceBrainPage from "./pages/marketing/AiComplianceBrainPage";
+import CustomersPage from "./pages/marketing/CustomersPage";
+import CareersPage from "./pages/marketing/CareersPage";
+import KnowledgeBasePage from "./pages/marketing/KnowledgeBasePage";
 import NewProductPage from "./pages/marketing/ProductPage";
 import NewCompanyPage from "./pages/marketing/CompanyPage";
 import AboutPageLegacy from "./pages/marketing/AboutPage";
@@ -108,6 +116,14 @@ const App = () => (
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/docs" element={<DocsPage />} />
+            <Route path="/fraud-detection" element={<FraudDetectionPage />} />
+            <Route path="/identity-screening" element={<IdentityScreeningPage />} />
+            <Route path="/audit-governance" element={<AuditGovernancePage />} />
+            <Route path="/regulatory-reporting" element={<RegulatoryReportingPage />} />
+            <Route path="/ai-compliance-brain" element={<AiComplianceBrainPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/careers" element={<CareersPage />} />
+            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/product" element={<ProductPage />} />
             <Route path="/product-legacy" element={<NewProductPage />} />
             <Route path="/product/automated-returns" element={<ProductAutomatedReturns />} />
