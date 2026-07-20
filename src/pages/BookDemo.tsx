@@ -47,7 +47,11 @@ const BookDemo = () => {
     };
     const { error: dbError } = await supabase.from("demo_requests").insert(payload);
     if (dbError) { setLoading(false); setError("Something went wrong. Please try again."); return; }
-    try { await supabase.functions.invoke("send-demo-notification", { body: payload }); } catch {}
+    try {
+      await supabase.functions.invoke("send-demo-notification", { body: payload });
+    } catch (notifyErr) {
+      console.error("Demo notification failed:", notifyErr);
+    }
     setLoading(false); setSubmitted(true);
   };
 

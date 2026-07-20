@@ -98,7 +98,8 @@ export default function RegulatoryIntelligence() {
       if (error) throw error;
       toast.success('News feed refreshed');
       await fetchNews();
-    } catch (e: any) {
+    } catch (e) {
+      console.error('Failed to refresh news feed:', e);
       toast.error('Unable to refresh news feed');
     } finally {
       setRefreshing(false);
@@ -304,7 +305,8 @@ function CircularsTab() {
       if (error) throw error;
       toast.success('CBN circulars synced');
       await load();
-    } catch {
+    } catch (e) {
+      console.error('Failed to sync CBN circulars:', e);
       toast.error('Unable to sync circulars');
     } finally {
       setSyncing(false);

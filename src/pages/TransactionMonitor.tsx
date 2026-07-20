@@ -145,7 +145,9 @@ export default function TransactionMonitor() {
       } else {
         setHasKey(false);
       }
-    } catch { /* ignore */ }
+    } catch (e) {
+      console.error("Failed to load webhook key metadata:", e);
+    }
   }, [session?.access_token]);
 
   useEffect(() => {
@@ -190,8 +192,9 @@ export default function TransactionMonitor() {
         `https://pdplkprcomjslilznbsl.supabase.co/functions/v1/provision-webhook-key`,
         { method: "POST", headers: { Authorization: `Bearer ${session.access_token}` } },
       );
-      const body = await res.json();
-      if (body.api_key) {
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.error || `Provisioning failed (${res.status})`);
+      if (body?.api_key) {
         setApiKey(body.api_key);
         setKeyPrefix(body.prefix);
         setHasKey(true);
@@ -200,6 +203,9 @@ export default function TransactionMonitor() {
       } else {
         toast.error("Could not generate key");
       }
+    } catch (e) {
+      console.error("Failed to provision webhook key:", e);
+      toast.error(e instanceof Error ? e.message : "Could not generate key");
     } finally {
       setProvisioning(false);
     }
@@ -274,11 +280,17 @@ ${new Date().toISOString()}`;
     URL.revokeObjectURL(url);
 
     if (!existingRef) {
-      await supabase
+      const filedAt = new Date().toISOString();
+      const { error } = await supabase
         .from("unified_transactions")
-        .update({ review_status: "reported", str_reference: strRef, str_filed_at: new Date().toISOString() })
+        .update({ review_status: "reported", str_reference: strRef, str_filed_at: filedAt })
         .eq("id", tx.id);
-      setAllTx((prev) => prev.map((r) => (r.id === tx.id ? { ...r, review_status: "reported", str_reference: strRef, str_filed_at: new Date().toISOString() } : r)));
+      if (error) {
+        console.error("Failed to record STR filing:", error);
+        toast.error("STR downloaded but the filing status could not be saved. Please retry.");
+        return;
+      }
+      setAllTx((prev) => prev.map((r) => (r.id === tx.id ? { ...r, review_status: "reported", str_reference: strRef, str_filed_at: filedAt } : r)));
       toast.success(`${strRef} generated. Update NFIU reference number after filing.`);
     } else {
       toast.success("STR re-downloaded");
@@ -334,7 +346,8 @@ ${new Date().toISOString()}`;
 
       const BATCH = 100;
       for (let i = 0; i < toInsert.length; i += BATCH) {
-        await supabase.from("unified_transactions").insert(toInsert.slice(i, i + BATCH));
+        const { error } = await supabase.from("unified_transactions").insert(toInsert.slice(i, i + BATCH));
+        if (error) throw error;
       }
 
       const flagged = toInsert.filter((t) => t.is_flagged).length;
@@ -344,7 +357,8 @@ ${new Date().toISOString()}`;
       fetchTodayStats();
       fetchLiveFeed();
     } catch (e) {
-      toast.error("Failed to process file");
+      console.error("Batch transaction upload failed:", e);
+      toast.error(e instanceof Error ? `Failed to process file: ${e.message}` : "Failed to process file");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";

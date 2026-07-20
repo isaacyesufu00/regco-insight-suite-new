@@ -598,10 +598,12 @@ function MutationApproval({ toolName, output }: { toolName: string; output: any 
     setErrorMsg(null);
     try {
       if (toolName === "request_account_freeze" && output.action_id) {
-        await supabase.from("account_actions").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.action_id);
+        const { error } = await supabase.from("account_actions").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.action_id);
+        if (error) throw error;
         setState("approved");
       } else if (toolName === "request_generate_return" && output.request_id) {
-        await supabase.from("report_requests").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.request_id);
+        const { error: updateError } = await supabase.from("report_requests").update({ status: "approved", approved_at: new Date().toISOString() }).eq("id", output.request_id);
+        if (updateError) throw updateError;
         const { data, error } = await supabase.functions.invoke("generate-return", { body: { request_id: output.request_id, override_readiness: override } });
         if (error) throw error;
         if (data?.ready === false && !override) {
@@ -622,14 +624,20 @@ function MutationApproval({ toolName, output }: { toolName: string; output: any 
   };
   const reject = async () => {
     setState("working");
+    setErrorMsg(null);
     try {
       if (toolName === "request_account_freeze" && output.action_id) {
-        await supabase.from("account_actions").update({ status: "rejected" }).eq("id", output.action_id);
+        const { error } = await supabase.from("account_actions").update({ status: "rejected" }).eq("id", output.action_id);
+        if (error) throw error;
       } else if (toolName === "request_generate_return" && output.request_id) {
-        await supabase.from("report_requests").update({ status: "rejected" }).eq("id", output.request_id);
+        const { error } = await supabase.from("report_requests").update({ status: "rejected" }).eq("id", output.request_id);
+        if (error) throw error;
       }
       setState("rejected");
-    } catch { setState("pending"); }
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Failed to reject");
+      setState("pending");
+    }
   };
 
   if (state === "approved") {
