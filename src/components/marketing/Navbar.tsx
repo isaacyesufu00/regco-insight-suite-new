@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+
+const SERIF = 'ui-serif, Georgia, Cambria, "Times New Roman", Times, serif';
+const SANS = '"DM Sans", system-ui, sans-serif';
 
 const productItems = [
   { label: 'Alert Triage', desc: 'Prioritize high-value compliance cases', href: '/product/alert-triage' },
@@ -9,6 +11,14 @@ const productItems = [
   { label: 'Case Management', desc: 'Route investigations through auditable workflows', href: '/product/case-management' },
   { label: 'Reporting', desc: 'Consistent outputs for regulators and teams', href: '/product/reporting' },
   { label: 'Audit Trail', desc: 'Preserve every decision for traceability', href: '/product/audit-trail' },
+];
+
+const navLinks = [
+  { label: 'Why Regco', href: '/why-regco' },
+  { label: 'Enterprise', href: '/enterprise' },
+  { label: 'Docs', href: '/docs' },
+  { label: 'Security', href: '/security' },
+  { label: 'Resources', href: '/resources' },
 ];
 
 export const Navbar = () => {
@@ -24,78 +34,77 @@ export const Navbar = () => {
 
   useEffect(() => { setProductOpen(false); }, [location.pathname]);
 
+  const isActive = (href: string) =>
+    href === '/docs' ? location.pathname.startsWith('/docs') : location.pathname === href;
+
   return (
     <header style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 300,
-      height: '60px',
-      background: scrolled ? 'rgba(255,255,255,0.97)' : '#FFFFFF',
+      height: '64px',
+      background: scrolled ? 'rgba(255,255,255,0.92)' : '#FFFFFF',
       backdropFilter: 'blur(8px)',
-      borderBottom: scrolled ? '1px solid var(--n-70)' : '1px solid var(--n-40)',
-      transition: 'border-color 0.2s',
+      borderBottom: `1px solid ${scrolled ? '#0000001A' : '#0000001A'}`,
       display: 'flex', alignItems: 'center',
+      fontFamily: SANS,
     }}>
-      <div className="atl-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
-          <div style={{ width: '28px', height: '28px', background: 'var(--blue-800)', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontSize: '14px', fontWeight: 800, color: '#FFFFFF', fontFamily: 'var(--font-display)', letterSpacing: '-0.5px' }}>R</span>
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--n-800)', fontFamily: 'var(--font-display)', letterSpacing: '-0.5px' }}>Regco</span>
+      <div style={{ boxSizing: 'border-box', marginLeft: 'auto', marginRight: 'auto', width: 'min(100% - 32px, 1040px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', flexShrink: 0 }}>
+          <span style={{ width: '6px', height: '16px', background: '#A76D3B', display: 'inline-block' }} />
+          <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 600, color: '#000000CC', letterSpacing: '-0.22px' }}>Regco</span>
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
           <div style={{ position: 'relative' }}>
             <button
-              onClick={() => setProductOpen(p => !p)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', fontWeight: 500, color: 'var(--n-500)', fontFamily: 'var(--font-body)', borderRadius: 'var(--radius-md)', transition: 'background 0.12s, color 0.12s' }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--n-30)'; el.style.color = 'var(--n-800)'; }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--n-500)'; }}
+              onClick={() => setProductOpen((p) => !p)}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '8px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, fontSize: '15px', color: '#00000099', borderRadius: '6px', transition: 'color 0.12s' }}
+              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#000000CC')}
+              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#00000099')}
             >
-              Products <ChevronDown size={14} style={{ transition: 'transform 0.18s', transform: productOpen ? 'rotate(180deg)' : 'none' }} />
+              Products
             </button>
-
             {productOpen && (
-              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', width: '520px', background: '#FFFFFF', border: '1px solid var(--n-70)', borderRadius: '8px', padding: '16px', boxShadow: 'var(--shadow-xl)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px' }}>
-                <div style={{ gridColumn: '1/-1', paddingBottom: '10px', marginBottom: '6px', borderBottom: '1px solid var(--n-40)' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 700, color: 'var(--n-200)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Platform features</p>
+              <div style={{ position: 'absolute', top: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', width: '520px', background: '#FFFFFF', border: '1px solid #0000001A', borderRadius: '12px', padding: '16px', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px' }}>
+                <div style={{ gridColumn: '1/-1', paddingBottom: '10px', marginBottom: '6px', borderBottom: '1px solid #0000001A' }}>
+                  <p style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 700, color: '#00000066', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Platform features</p>
                 </div>
-                {productItems.map(item => (
-                  <Link key={item.label} to={item.href} style={{ display: 'flex', flexDirection: 'column', padding: '10px 12px', borderRadius: '6px', textDecoration: 'none', transition: 'background 0.12s' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--n-30)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+                {productItems.map((item) => (
+                  <Link key={item.label} to={item.href} style={{ display: 'flex', flexDirection: 'column', padding: '10px 12px', borderRadius: '6px', textDecoration: 'none' }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#0000000A')}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
                   >
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--n-800)', marginBottom: '2px' }}>{item.label}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--n-400)' }}>{item.desc}</span>
+                    <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: '#000000CC', marginBottom: '2px' }}>{item.label}</span>
+                    <span style={{ fontFamily: SANS, fontSize: '12px', color: '#00000099' }}>{item.desc}</span>
                   </Link>
                 ))}
               </div>
             )}
           </div>
 
-          {[
-            { label: 'Why Regco', href: '/why-regco' },
-            { label: 'Enterprise', href: '/enterprise' },
-            { label: 'Docs', href: '/docs' },
-            { label: 'Security', href: '/security' },
-            { label: 'Resources', href: '/resources' },
-          ].map(link => (
-            <Link key={link.label} to={link.href} style={{ padding: '6px 14px', fontSize: '14px', fontWeight: 500, color: 'var(--n-500)', textDecoration: 'none', borderRadius: 'var(--radius-md)', transition: 'background 0.12s, color 0.12s' }}
-              onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'var(--n-30)'; el.style.color = 'var(--n-800)'; }}
-              onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.color = 'var(--n-500)'; }}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const active = isActive(link.href);
+            return (
+              <Link key={link.label} to={link.href} style={{ padding: '8px 14px', fontFamily: SANS, fontSize: '15px', color: active ? '#000000CC' : '#00000099', textDecoration: 'none', borderRadius: '6px', transition: 'color 0.12s' }}
+                onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#000000CC')}
+                onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = active ? '#000000CC' : '#00000099')}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <Link to="/login" style={{ padding: '6px 14px', fontSize: '14px', fontWeight: 500, color: 'var(--blue-800)', textDecoration: 'none', borderRadius: 'var(--radius-md)', transition: 'background 0.12s' }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'var(--blue-50)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'transparent'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          <Link to="/login" style={{ padding: '8px 14px', fontFamily: SANS, fontSize: '15px', color: '#00000099', textDecoration: 'none', borderRadius: '6px' }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = '#000000CC')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = '#00000099')}
           >
             Log in
           </Link>
-          <Link to="/book-demo" className="btn-primary" style={{ fontSize: '14px', padding: '8px 18px' }}>
+          <Link to="/book-demo" style={{ fontFamily: SANS, fontSize: '15px', fontWeight: 500, color: '#FFFFFF', background: '#000000CC', textDecoration: 'none', borderRadius: '999px', padding: '9px 18px', transition: 'background 0.15s' }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.background = '#000000')}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.background = '#000000CC')}
+          >
             Get it free
           </Link>
         </div>
